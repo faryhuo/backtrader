@@ -393,7 +393,7 @@ class UserStrategy(bt.Strategy):
                                         </div>
                                         <div className="stat-item">
                                             <span className="stat-label">Win Rate</span>
-                                            <span className={`stat-value ${winRate >= 50 ? 'green' : 'red'}`}>
+                                            <span className={`stat-value ${winRateColor}`}>
                                                 {formatPercent(winRate)}
                                             </span>
                                         </div>
@@ -455,15 +455,15 @@ class UserStrategy(bt.Strategy):
                                                     </li>
                                                     <li>
                                                         <span className="metric-label">Best Trade</span>
-                                                        <span className="metric-value positive">{formatCurrency(bestTrade)}</span>
+                                                        <span className={`metric-value ${bestTradeClass}`}>{formatCurrency(bestTrade)}</span>
                                                     </li>
                                                     <li>
                                                         <span className="metric-label">Worst Trade</span>
-                                                        <span className="metric-value negative">{formatCurrency(worstTrade)}</span>
+                                                        <span className={`metric-value ${worstTradeClass}`}>{formatCurrency(worstTrade)}</span>
                                                     </li>
                                                     <li>
                                                         <span className="metric-label">Win Rate</span>
-                                                        <span className={`metric-value ${winRate >= 50 ? 'positive' : 'negative'}`}>
+                                                        <span className={`metric-value ${winRateTone}`}>
                                                             {formatPercent(winRate)}
                                                         </span>
                                                     </li>
@@ -494,7 +494,7 @@ class UserStrategy(bt.Strategy):
                                                     </li>
                                                     <li>
                                                         <span className="metric-label">Net PnL</span>
-                                                        <span className={`metric-value ${totalNetPnl >= 0 ? 'positive' : 'negative'}`}>
+                                                        <span className={`metric-value ${netPnlClass}`}>
                                                             {formatCurrency(totalNetPnl)}
                                                         </span>
                                                     </li>
