@@ -1,26 +1,42 @@
 @echo off
 setlocal
 
-REM Determine repo root
-set "SCRIPT_DIR=%~dp0"
-cd /d "%SCRIPT_DIR%" || exit /b 1
+set "ROOT=%~dp0"
 
-REM Default image tag; can override by passing tag as first argument
-set "IMAGE_NAME=backtrader-app:latest"
-if not "%~1"=="" set "IMAGE_NAME=%~1"
-
-REM Optional pip mirror args for backend build
-set "BUILD_ARGS="
-if defined PIP_INDEX_URL set "BUILD_ARGS=%BUILD_ARGS% --build-arg PIP_INDEX_URL=%PIP_INDEX_URL%"
-if defined PIP_TRUSTED_HOST set "BUILD_ARGS=%BUILD_ARGS% --build-arg PIP_TRUSTED_HOST=%PIP_TRUSTED_HOST%"
-
-echo Building Docker image "%IMAGE_NAME%"...
-docker build %BUILD_ARGS% -t "%IMAGE_NAME%" .
-set "EXIT_CODE=%ERRORLEVEL%"
-if not "%EXIT_CODE%"=="0" (
-    echo Build failed with exit code %EXIT_CODE%.
-    exit /b %EXIT_CODE%
+cd /d "%ROOT%backend" || exit /b 1
+echo Installing backend dependencies...
+python -m pip install -r requirements.txt
+if errorlevel 1 (
+    echo Backend dependency install failed.
+    exit /b 1
 )
 
-echo Build complete.
+cd /d "%ROOT%frontend" || exit /b 1
+
+echo Installing frontend dependencies...
+npm install
+if errorlevel 1 (
+    echo npm install failed.
+    exit /b 1
+)
+
+echo Building frontend...
+npm run build
+if errorlevel 1 (
+    echo Frontend build failed.
+    exit /b 1
+)
+
+set "DEST=%ROOT%backend\resources\frontend"
+if not exist "%DEST%" mkdir "%DEST%"
+
+echo Copying build artifacts to backend resources...
+robocopy "%ROOT%frontend\dist" "%DEST%" /MIR >nul
+set "RC=%ERRORLEVEL%"
+if %RC% GEQ 8 (
+    echo Copying files failed with code %RC%.
+    exit /b %RC%
+)
+
+echo Build complete. Static files are in %DEST%.
 endlocal

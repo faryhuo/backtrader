@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 import sys
 import os
 import uuid
@@ -24,10 +25,21 @@ from backtest_engine import (
 
 app = FastAPI()
 
-# Mount static files for images
 # Ensure the directory exists
 ensure_resource_files()
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "resources", "frontend")
+ASSETS_DIR = os.path.join(FRONTEND_DIR, "assets")
+INDEX_HTML = os.path.join(FRONTEND_DIR, "index.html")
+
+# Ensure frontend directory exists (build artifacts will be copied here)
+os.makedirs(FRONTEND_DIR, exist_ok=True)
+
+# Mount static files for images and frontend assets
 app.mount("/images", StaticFiles(directory=IMAGE_DIR), name="images")
+if os.path.isdir(ASSETS_DIR):
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 # Enable CORS for frontend
 app.add_middleware(
@@ -148,6 +160,11 @@ def analyze_results(request: AnalysisRequest):
     
     return {"analysis": analysis}
 
-@app.get("/")
+@app.get("/", response_class=FileResponse)
 def read_root():
-    return {"status": "ok", "message": "Backtrader API is running"}
+    """
+    Serve the built frontend if available, otherwise show a simple JSON status.
+    """
+    if os.path.exists(INDEX_HTML):
+        return FileResponse(INDEX_HTML)
+    return JSONResponse({"status": "ok", "message": "Backtrader API is running (no frontend build found)"})
