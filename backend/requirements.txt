@@ -1,6 +1,6 @@
-fastapi==0.103.2
-uvicorn[standard]==0.23.2
-backtrader==1.9.78.123
-yfinance==0.2.38
-pandas==2.2.2
-matplotlib==3.8.0
+fastapi>=0.103.2
+daphne>=4.1.0
+backtrader
+yfinance
+pandas>=2.2.2
+matplotlib>=3.8.0

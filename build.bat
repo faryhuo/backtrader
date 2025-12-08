@@ -14,14 +14,14 @@ if errorlevel 1 (
 cd /d "%ROOT%frontend" || exit /b 1
 
 echo Installing frontend dependencies...
-npm install
+call npm install
 if errorlevel 1 (
     echo npm install failed.
     exit /b 1
 )
 
 echo Building frontend...
-npm run build
+call npm run build
 if errorlevel 1 (
     echo Frontend build failed.
     exit /b 1

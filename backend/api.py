@@ -8,9 +8,6 @@ import os
 import uuid
 import datetime
 
-# Ensure we can import from the same directory
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from backtest_engine import (
     run_backtest,
     get_user_strategy_code,
@@ -67,7 +64,7 @@ class AnalysisRequest(BaseModel):
     metrics: dict
 
 
-@app.get("/strategies")
+@app.get("/api/strategies")
 def get_strategy_list():
     try:
         names = list_strategies()
@@ -76,7 +73,7 @@ def get_strategy_list():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/backtest")
+@app.post("/api/backtest")
 async def backtest(request: BacktestRequest):
     try:
         # Generate unique filename for plot
@@ -110,7 +107,7 @@ async def backtest(request: BacktestRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/strategy")
+@app.get("/api/strategy")
 def get_strategy(name: str | None = None):
     try:
         if not name:
@@ -125,7 +122,7 @@ def get_strategy(name: str | None = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/strategy")
+@app.post("/api/strategy")
 def save_strategy(request: StrategyCode):
     try:
         save_user_strategy_code(request.name, request.code)
@@ -135,7 +132,7 @@ def save_strategy(request: StrategyCode):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/analyze")
+@app.post("/api/analyze")
 def analyze_results(request: AnalysisRequest):
     # Mock AI Analysis
     # In a real scenario, this would call an LLM API
