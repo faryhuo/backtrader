@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Editor from '@monaco-editor/react'
 import './index.css'
 
 function App() {
@@ -183,6 +184,19 @@ class UserStrategy(bt.Strategy):
             setAiAnalysis("Failed to perform AI analysis.");
         } finally {
             setAiLoading(false);
+        }
+    }
+
+    const strategyFileName = selectedStrategy ? `${selectedStrategy}${selectedStrategy.endsWith('.py') ? '' : '.py'}` : ''
+    const strategyRelativePath = strategyFileName ? `backend/strategy/${strategyFileName}` : ''
+
+    const copyPath = async () => {
+        if (!strategyRelativePath) return
+        try {
+            await navigator.clipboard.writeText(strategyRelativePath)
+            alert('Path copied')
+        } catch (_) {
+            alert('Copy failed')
         }
     }
 
@@ -430,13 +444,42 @@ class UserStrategy(bt.Strategy):
                                     New
                                 </button>
                             </div>
+                            {strategyRelativePath && (
+                                <div className="strategy-info">
+                                    <span>File: <code>{strategyRelativePath}</code></span>
+                                    <div className="strategy-actions">
+                                        <button type="button" className="btn-ghost" onClick={copyPath}>
+                                            Copy Path
+                                        </button>
+                                        <a
+                                            className="btn-ghost"
+                                            href={`vscode://file/${strategyRelativePath}`}
+                                            title="Open in VS Code"
+                                        >
+                                            Open in VS Code
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <textarea
-                            className="code-editor"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            spellCheck="false"
-                        />
+                        <div className="code-editor">
+                            <Editor
+                                height="60vh"
+                                defaultLanguage="python"
+                                language="python"
+                                theme="vs-dark"
+                                value={code}
+                                onChange={(value) => setCode(value ?? '')}
+                                options={{
+                                    fontSize: 14,
+                                    minimap: { enabled: false },
+                                    scrollBeyondLastLine: false,
+                                    wordWrap: 'on',
+                                    roundedSelection: false,
+                                    automaticLayout: true,
+                                }}
+                            />
+                        </div>
                         <div className="form-actions">
                             <button className="btn-primary" onClick={saveStrategy} disabled={codeLoading}>
                                 {codeLoading ? 'Saving...' : 'Save Strategy'}
