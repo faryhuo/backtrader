@@ -1,7 +1,7 @@
 FROM python:3.11-slim AS backend
 WORKDIR /app/backend
 COPY backend/requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 COPY backend /app/backend
 
 FROM node:20-alpine AS frontend
