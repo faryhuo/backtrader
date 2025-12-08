@@ -5,7 +5,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /app/backend
 COPY backend/requirements.txt ./requirements.txt
 # Longer timeout/retries help in slow networks; no cache keeps the layer small
-RUN pip3 install --no-cache-dir --default-timeout=100 --retries 5 -r requirements.txt
+RUN pip3 install --no-cache-dir --default-timeout=10000 --retries 5 -r requirements.txt
 COPY backend /app/backend
 
 ENV PYTHONPATH=/app/backend
