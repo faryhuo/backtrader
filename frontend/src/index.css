@@ -250,6 +250,107 @@ body {
     margin-top: 0;
 }
 
+.detail-card {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.detail-column {
+    background: #0f1621;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+}
+
+.muted {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.annual-returns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.annual-chip {
+    background: #111827;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.65rem 0.8rem;
+    min-width: 120px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.annual-chip.positive {
+    border-color: #2ea043;
+}
+
+.annual-chip.negative {
+    border-color: #f85149;
+}
+
+.chip-year {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.chip-value {
+    font-weight: 700;
+}
+
+.metric-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.metric-list li {
+    display: flex;
+    justify-content: space-between;
+    background: #0d1117;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.metric-value {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.metric-value.positive {
+    color: #3fb950;
+}
+
+.metric-value.negative {
+    color: #f85149;
+}
+
 .plot-container {
     text-align: center;
     background: #f8f9fb;
