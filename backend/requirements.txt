@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+backtrader
+yfinance
+pandas
+matplotlib

@@ -172,6 +172,10 @@ def run_backtest(
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
     cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+    cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="annual")
+    cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
+    cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
 
     try:
         results = cerebro.run()
@@ -185,6 +189,10 @@ def run_backtest(
         "sharpe": strat.analyzers.sharpe.get_analysis().get("sharperatio", None),
         "drawdown": strat.analyzers.drawdown.get_analysis().get("max", {}).get("drawdown", 0.0),
         "returns": strat.analyzers.returns.get_analysis().get("rnorm100", 0.0),
+        "annual_returns": strat.analyzers.annual.get_analysis(),
+        "sqn": strat.analyzers.sqn.get_analysis().get("sqn", None),
+        "trades": strat.analyzers.trades.get_analysis(),
+        "time_drawdown": strat.analyzers.timedraw.get_analysis(),
     }
 
     if save_path:
