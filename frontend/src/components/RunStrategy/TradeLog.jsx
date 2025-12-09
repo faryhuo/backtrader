@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { formatCurrency, formatPercent } from '../utils/formatters';
+import { formatCurrency, formatPercent } from '../../utils/formatters';
 
 function TradeLog({ trades }) {
     const { t } = useTranslation();

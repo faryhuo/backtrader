@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { formatCurrency, formatPercent, formatNumber, isNumber } from '../utils/formatters';
+import { formatCurrency, formatPercent, formatNumber, isNumber } from '../../utils/formatters';
 
 function PerformanceOverview({ result }) {
     const { t } = useTranslation();
