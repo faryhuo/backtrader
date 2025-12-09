@@ -95,6 +95,7 @@ Provide a comprehensive assessment including:
 4. Suggestions: Recommendations for improvement.
 5. Code Analysis: Comments on the strategy logic.
 6. Always return with Chinese.
+7. 不需要对策略代码逻辑进行点评
 `;
 
     // 4. Call API

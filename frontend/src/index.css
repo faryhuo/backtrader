@@ -958,6 +958,7 @@ body {
 .trade-table .negative {
     color: #f85149;
 }
+
 /* Tabs Interface */
 .tabs {
     display: flex;
@@ -987,9 +988,12 @@ body {
 }
 
 .tab.active {
-    background: #1c2128; /* Matches markdown content bg */
-    border-color: #8957e5; /* Matches markdown border */
-    border-bottom: 1px solid #1c2128; /* Hide bottom border */
+    background: #1c2128;
+    /* Matches markdown content bg */
+    border-color: #8957e5;
+    /* Matches markdown border */
+    border-bottom: 1px solid #1c2128;
+    /* Hide bottom border */
     color: #58a6ff;
     font-weight: 600;
     z-index: 10;
@@ -1004,3 +1008,44 @@ body {
     border-top-left-radius: 0;
 }
 
+
+/* Thought Process Styles */
+.thought-process-details {
+    background: rgba(13, 17, 23, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.thought-process-details summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.thought-process-details summary:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+}
+
+.thought-content {
+    padding: 1rem 1.5rem;
+    background: #0d1117;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.thought-content p {
+    margin: 0.5rem 0;
+}
