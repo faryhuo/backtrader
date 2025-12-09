@@ -1,26 +1,95 @@
+import os
 import yfinance as yf
 import pandas as pd
 import logging
 import backtrader as bt
+from sqlalchemy import create_engine, text
 
 logger = logging.getLogger(__name__)
 
 class DataLoadError(Exception):
     """Raised when market data cannot be loaded."""
 
+def get_data_from_db(ticker, start, end):
+    """
+    Attempt to fetch data from the database.
+    Returns a DataFrame or None if not found/configured.
+    """
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        return None
+
+    try:
+        engine = create_engine(db_url)
+        # Adjust table/column names as per your schema
+        query = text("""
+            SELECT date, open, high, low, close, volume
+            FROM stock_prices
+            WHERE ticker = :ticker
+              AND date >= :start
+              AND date <= :end
+            ORDER BY date
+        """)
+        
+        with engine.connect() as conn:
+            df = pd.read_sql(query, conn, params={
+                "ticker": ticker,
+                "start": start,
+                "end": end
+            })
+        
+        if df.empty:
+            return None
+
+        # Ensure standard columns and index
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index('date', inplace=True)
+        df.index.name = 'Date'
+        
+        # Rename columns to match Backtrader/yfinance expectation (Capitalized)
+        df.rename(columns={
+            'open': 'Open',
+            'high': 'High',
+            'low': 'Low',
+            'close': 'Close',
+            'volume': 'Volume'
+        }, inplace=True)
+        
+        # Add Adj Close if missing (assume same as Close)
+        if 'Adj Close' not in df.columns:
+            df['Adj Close'] = df['Close']
+            
+        return df
+
+    except Exception as exc:
+        logger.warning(f"Database fetch failed for {ticker}: {exc}")
+        return None
+
 def get_data(ticker, start, end):
     """
     Download data as a pandas DataFrame.
-    If unavailable (e.g., network issues or bad ticker), fall back to synthetic data.
+    Priority:
+    1. Database (if DATABASE_URL is set)
+    2. yfinance
+    3. Synthetic data (fallback)
     """
+    # 1. Try Database
+    db_data = get_data_from_db(ticker, start, end)
+    if db_data is not None and not db_data.empty:
+        logger.info(f"Loaded data for {ticker} from database.")
+        return db_data
+
+    # 2. Try yfinance
     try:
         data = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.get_level_values(0)
         if data is None or data.empty:
             raise DataLoadError("No data returned")
+        logger.info(f"Loaded data for {ticker} from yfinance.")
         return data
     except Exception as exc:
+        # 3. Fallback to Synthetic
         # Generate a simple synthetic price series to keep the pipeline alive
         dates = pd.date_range(start=start, end=end, freq="B")
         if len(dates) == 0:
