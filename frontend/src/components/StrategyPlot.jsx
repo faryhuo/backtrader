@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
 import { performFullStrategyAnalysis } from '../services/aiAnalysis';
+import AIInsight from './AIInsight';
 
 function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
     const [isPlotMaximized, setIsPlotMaximized] = useState(false);
@@ -88,24 +89,11 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                     </button>
                 </div>
 
-                {hasAnalyses && (
-                    <div className="ai-insight-section">
-                        <div className="tabs">
-                            {Object.keys(analyses).map(modelKey => (
-                                <button
-                                    key={modelKey}
-                                    className={`tab ${activeTab === modelKey ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(modelKey)}
-                                >
-                                    {modelKey}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="ai-markdown-content">
-                            <ReactMarkdown>{analyses[activeTab]}</ReactMarkdown>
-                        </div>
-                    </div>
-                )}
+                <AIInsight
+                    analyses={analyses}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
             </div>
 
             {isPlotMaximized && (
