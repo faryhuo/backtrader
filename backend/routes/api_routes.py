@@ -38,7 +38,7 @@ class AnalysisRequest(BaseModel):
 
 
 @router.get("/strategies")
-def get_strategy_list():
+def get_strategy_list() -> dict:
     try:
         names = list_strategies()
         return {"strategies": names}
@@ -47,7 +47,7 @@ def get_strategy_list():
 
 
 @router.post("/backtest")
-async def backtest(request: BacktestRequest):
+async def backtest(request: BacktestRequest) -> dict:
     try:
         filename = f"{uuid.uuid4()}.png"
         save_path = os.path.join(IMAGE_DIR, filename)
@@ -82,7 +82,7 @@ async def backtest(request: BacktestRequest):
 
 
 @router.get("/strategy")
-def get_strategy(name: str | None = None):
+def get_strategy(name: str | None = None) -> dict:
     try:
         if not name:
             names = list_strategies()
@@ -98,7 +98,7 @@ def get_strategy(name: str | None = None):
 
 
 @router.post("/strategy")
-def save_strategy(request: StrategyCode):
+def save_strategy(request: StrategyCode) -> dict:
     try:
         save_user_strategy_code(request.name, request.code)
         return {"status": "ok", "message": "Strategy saved", "name": request.name}
@@ -109,7 +109,7 @@ def save_strategy(request: StrategyCode):
 
 
 @router.post("/analyze")
-def analyze_results(request: AnalysisRequest):
+def analyze_results(request: AnalysisRequest) -> dict:
     sharpe = request.metrics.get("sharpe")
     returns = request.metrics.get("returns")
     drawdown = request.metrics.get("drawdown")

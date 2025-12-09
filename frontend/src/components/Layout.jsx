@@ -33,15 +33,6 @@ function Layout({ children }) {
                     <div className="header-title">
                         <h1>Backtrader Pro</h1>
                     </div>
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Trader</span>
-                            <span className="user-role">Admin</span>
-                        </div>
-                        <div className="user-avatar">
-                            <span>T</span>
-                        </div>
-                    </div>
                 </header>
 
                 <main className="content-area">

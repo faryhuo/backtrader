@@ -173,6 +173,28 @@ body {
     font-size: 1rem;
 }
 
+.logout-button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.logout-button:hover {
+    background-color: rgba(248, 81, 73, 0.1);
+    border-color: #f85149;
+    color: #f85149;
+}
+
 .content-area {
     padding: 2rem;
     flex: 1;
@@ -334,26 +356,121 @@ body {
     color: #fff;
 }
 
-.ai-section {
-    text-align: center;
+
+/* AI Insight Section */
+.ai-insight-section {
     margin-top: 2rem;
+    padding-top: 2rem;
     border-top: 1px solid var(--border-color);
-    padding-top: 1.5rem;
 }
 
-.ai-response {
-    background: #1c2128;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-top: 1rem;
-    text-align: left;
-    white-space: pre-wrap;
-    border: 1px solid #8957e5;
-}
-
-.ai-response h3 {
+.ai-insight-section h3 {
     color: #d2a8ff;
     margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.ai-markdown-content {
+    background: linear-gradient(135deg, #1c2128 0%, #161b22 100%);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #8957e5;
+    box-shadow: 0 4px 12px rgba(137, 87, 229, 0.1);
+}
+
+/* Markdown Typography */
+.ai-markdown-content p {
+    color: var(--text-main);
+    line-height: 1.7;
+    margin: 0.75rem 0;
+}
+
+.ai-markdown-content h1,
+.ai-markdown-content h2,
+.ai-markdown-content h3,
+.ai-markdown-content h4 {
+    color: #58a6ff;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.ai-markdown-content h1 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.ai-markdown-content h2 {
+    font-size: 1.3rem;
+}
+
+.ai-markdown-content h3 {
+    font-size: 1.1rem;
+}
+
+.ai-markdown-content ul,
+.ai-markdown-content ol {
+    color: var(--text-main);
+    line-height: 1.7;
+    margin: 0.75rem 0;
+    padding-left: 2rem;
+}
+
+.ai-markdown-content li {
+    margin: 0.5rem 0;
+}
+
+.ai-markdown-content code {
+    background: #0d1117;
+    color: #f0883e;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.ai-markdown-content pre {
+    background: #0d1117;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.ai-markdown-content pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text-main);
+}
+
+.ai-markdown-content strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.ai-markdown-content em {
+    color: #8b949e;
+    font-style: italic;
+}
+
+.ai-markdown-content blockquote {
+    border-left: 3px solid #8957e5;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.ai-markdown-content a {
+    color: #58a6ff;
+    text-decoration: none;
+}
+
+.ai-markdown-content a:hover {
+    text-decoration: underline;
 }
 
 .detail-card {
@@ -665,5 +782,63 @@ body {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    background: #161b22;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.2s ease-out;
+}
+
+.modal-header h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-main);
+    font-size: 1.25rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
     }
 }

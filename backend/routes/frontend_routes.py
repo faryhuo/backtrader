@@ -22,6 +22,15 @@ def read_root():
     return JSONResponse({"status": "ok", "message": "Backtrader API is running (no frontend build found)"})
 
 
+# Catch-all route for SPA - must be last
+@frontend_router.get("/{full_path:path}", response_class=FileResponse)
+def serve_spa(full_path: str):
+    """Serve index.html for all non-API routes to support client-side routing"""
+    if INDEX_HTML.exists():
+        return FileResponse(INDEX_HTML)
+    return JSONResponse({"status": "error", "message": "Frontend not built"})
+
+
 def mount_frontend(app: FastAPI):
     ensure_resource_files()
     FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
