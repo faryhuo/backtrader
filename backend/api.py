@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backtest_engine import ensure_resource_files
 from routes.api_routes import router as api_router
+from routes.ai_routes import router as ai_router
 from routes.frontend_routes import mount_frontend
 
 ensure_resource_files()
@@ -19,4 +20,5 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+app.include_router(ai_router, prefix="/api")
 mount_frontend(app)

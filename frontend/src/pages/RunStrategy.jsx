@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import '../index.css'
-import { api } from '../services/api'
+import { api, HOST } from '../services/api'
 
 function RunStrategy() {
     // Backtest State
@@ -85,14 +86,55 @@ function RunStrategy() {
         }
     }
 
-    const handleAnalyze = async () => {
-        if (!result) return;
+    const handleAIAnalysis = async () => {
+        if (!result || !result.plot_url) {
+            setAiAnalysis("No chart available for analysis.");
+            return;
+        }
         setAiLoading(true);
+        setAiAnalysis('');
+
         try {
-            const data = await api.analyzeResults(result.metrics)
+            // Fetch image blob
+            const imageUrl = `${HOST}${result.plot_url}`;
+            const res = await fetch(imageUrl);
+            if (!res.ok) throw new Error("Failed to download chart image");
+            const blob = await res.blob();
+            const file = new File([blob], "chart.png", { type: "image/png" });
+
+            const metrics = result.metrics || {};
+            const trades = metrics.trades || {};
+            const totalTrades = trades.total?.total ?? 0;
+            const winRate = trades.total?.closed ? ((trades.won?.total ?? 0) / trades.total.closed) * 100 : 0;
+
+            const metricsText = `
+Strategy Performance Metrics:
+- Final Value: ${formatCurrency(metrics.final_value)}
+- Return: ${formatPercent(metrics.returns)}
+- Sharpe Ratio: ${formatNumber(metrics.sharpe)}
+- Max Drawdown: ${formatPercent(metrics.drawdown)}
+- SQN: ${formatNumber(metrics.sqn)}
+- Total Trades: ${totalTrades}
+- Win Rate: ${formatPercent(winRate)}
+`;
+
+            const message = `Please analyze the trading strategy based on the following performance metrics and the attached equity curve chart.
+${metricsText}
+
+Provide a comprehensive assessment including:
+1. Overall Performance: Is it profitable and consistent?
+2. Risk Profile: analysis of drawdowns and volatility.
+3. Strengths & Weaknesses: What is working well and what isn't?
+4. Suggestions: Recommendations for improvement.
+5. Always return with Chinese.
+`;
+            const model = "gpt-5.1";
+
+            const data = await api.analyzeChart(message, model, file);
             setAiAnalysis(data.analysis);
         } catch (err) {
-            setAiAnalysis("Failed to perform AI analysis.");
+            console.error(err);
+            setAiAnalysis("Failed to perform AI analysis: " + err.message);
         } finally {
             setAiLoading(false);
         }
@@ -368,18 +410,6 @@ function RunStrategy() {
                                 </div>
                             </div>
                         </div>
-
-                        <div className="ai-section">
-                            <button className="btn-secondary" onClick={handleAnalyze} disabled={aiLoading}>
-                                {aiLoading ? 'Analyzing...' : 'AI Analysis'}
-                            </button>
-                            {aiAnalysis && (
-                                <div className="ai-response">
-                                    <h3>AI Insight:</h3>
-                                    <p>{aiAnalysis}</p>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {result.plot_url && (
@@ -399,6 +429,20 @@ function RunStrategy() {
                             <div className="plot-container">
                                 <img src={result.plot_url} alt="Strategy Plot" />
                             </div>
+                            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+                                <button className="btn-secondary" onClick={handleAIAnalysis} disabled={aiLoading}>
+                                    {aiLoading ? 'Interpreting...' : 'AI Interpretation'}
+                                </button>
+                            </div>
+
+                            {aiAnalysis && (
+                                <div className="ai-insight-section">
+                                    <h3>AI Insight</h3>
+                                    <div className="ai-markdown-content">
+                                        <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>

@@ -8,6 +8,7 @@ function StrategyMaintain() {
     const [strategies, setStrategies] = useState([])
     const [selectedStrategy, setSelectedStrategy] = useState('')
     const [newStrategyName, setNewStrategyName] = useState('')
+    const [showNewStrategyModal, setShowNewStrategyModal] = useState(false)
     const [code, setCode] = useState('')
     const [codeLoading, setCodeLoading] = useState(false)
 
@@ -95,6 +96,20 @@ class UserStrategy(bt.Strategy):
         setSelectedStrategy(name)
         setCode(defaultTemplate)
         setNewStrategyName('')
+        setShowNewStrategyModal(false)
+    }
+
+    const openNewStrategyModal = () => {
+        setNewStrategyName('')
+        setShowNewStrategyModal(true)
+    }
+
+    const handleAIAnalysis = () => {
+        alert("AI Analysis feature coming soon!")
+    }
+
+    const handleAIRewrite = () => {
+        alert("AI Rewrite feature coming soon!")
     }
 
 
@@ -102,7 +117,18 @@ class UserStrategy(bt.Strategy):
     return (
         <div className="page-container">
             <section className="card editor-card">
-                <h2>Strategy Editor (UserStrategy)</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                    <h2 style={{ margin: 0, border: 'none', padding: 0 }}>Strategy Editor (UserStrategy)</h2>
+                    <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={openNewStrategyModal}
+                        disabled={codeLoading}
+                        style={{ minWidth: '100px', padding: '0.5rem 1rem' }}
+                    >
+                        New
+                    </button>
+                </div>
                 <p className="subtitle">Edit only the strategy class below; backtest engine is fixed.</p>
                 <div className="strategy-toolbar">
                     <div className="strategy-row">
@@ -134,24 +160,7 @@ class UserStrategy(bt.Strategy):
                             Refresh List
                         </button>
                     </div>
-                    <div className="strategy-row">
-                        <label htmlFor="new-strategy">New Strategy Name</label>
-                        <input
-                            id="new-strategy"
-                            type="text"
-                            value={newStrategyName}
-                            onChange={(e) => setNewStrategyName(e.target.value)}
-                            placeholder="e.g., breakout_v1"
-                        />
-                        <button
-                            type="button"
-                            className="btn-primary"
-                            onClick={createStrategy}
-                            disabled={codeLoading}
-                        >
-                            New
-                        </button>
-                    </div>
+
 
                 </div>
                 <div className="code-editor">
@@ -173,11 +182,70 @@ class UserStrategy(bt.Strategy):
                     />
                 </div>
                 <div className="form-actions">
+                    <div style={{ display: 'flex', gap: '0.75rem', marginRight: 'auto' }}>
+                        <button
+                            className="btn-secondary"
+                            onClick={handleAIAnalysis}
+                            disabled={codeLoading}
+                            style={{ margin: 0 }}
+                        >
+                            AI Analysis
+                        </button>
+                        <button
+                            className="btn-secondary"
+                            onClick={handleAIRewrite}
+                            disabled={codeLoading}
+                            style={{ margin: 0 }}
+                        >
+                            AI - Rewrite
+                        </button>
+                    </div>
                     <button className="btn-primary" onClick={saveStrategy} disabled={codeLoading}>
                         {codeLoading ? 'Saving...' : 'Save Strategy'}
                     </button>
                 </div>
             </section>
+
+            {/* New Strategy Modal */}
+            {showNewStrategyModal && (
+                <div className="modal-overlay" onClick={() => setShowNewStrategyModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Create New Strategy</h3>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="modal-new-strategy-name">Strategy Name</label>
+                            <input
+                                id="modal-new-strategy-name"
+                                type="text"
+                                value={newStrategyName}
+                                onChange={(e) => setNewStrategyName(e.target.value)}
+                                placeholder="e.g., breakout_v2"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') createStrategy()
+                                    if (e.key === 'Escape') setShowNewStrategyModal(false)
+                                }}
+                            />
+                        </div>
+                        <div className="modal-actions">
+                            <button
+                                className="btn-ghost"
+                                onClick={() => setShowNewStrategyModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-primary"
+                                onClick={createStrategy}
+                                disabled={!newStrategyName.trim()}
+                            >
+                                Create
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
