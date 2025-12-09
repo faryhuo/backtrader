@@ -5,7 +5,9 @@ import PropTypes from 'prop-types';
 function CandleStickChart({ data }) {
     const chartContainerRef = useRef();
     const chartRef = useRef(null);
+    const seriesRef = useRef(null);
 
+    // 1. Initialize Chart
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
@@ -13,7 +15,7 @@ function CandleStickChart({ data }) {
             width: chartContainerRef.current.clientWidth,
             height: 500,
             layout: {
-                background: { color: '#0d1117' },
+                background: { type: 'solid', color: '#0d1117' },
                 textColor: '#c9d1d9',
             },
             grid: {
@@ -36,11 +38,8 @@ function CandleStickChart({ data }) {
             wickDownColor: '#f85149',
         });
 
-        candleSeries.setData(data);
-
-        chart.timeScale().fitContent();
-
         chartRef.current = chart;
+        seriesRef.current = candleSeries;
 
         const handleResize = () => {
             if (chartContainerRef.current) {
@@ -53,7 +52,24 @@ function CandleStickChart({ data }) {
         return () => {
             window.removeEventListener('resize', handleResize);
             chart.remove();
+            chartRef.current = null;
+            seriesRef.current = null;
         };
+    }, []);
+
+    // 2. Update Data
+    useEffect(() => {
+        if (seriesRef.current && data && data.length > 0) {
+            // Ensure unique and sorted data
+            const uniqueData = [...new Map(data.map(item => [item.time, item])).values()];
+            uniqueData.sort((a, b) => (new Date(a.time) - new Date(b.time)));
+            
+            seriesRef.current.setData(uniqueData);
+            
+            if (chartRef.current) {
+                chartRef.current.timeScale().fitContent();
+            }
+        }
     }, [data]);
 
     return (
