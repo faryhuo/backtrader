@@ -107,6 +107,87 @@ def load_user_strategy(name: str):
     return strategy_cls
 
 
+class TradeRecorder(bt.Analyzer):
+    """
+    自定义分析器，记录每笔交易的详细信息：
+    - 开仓价格、时间
+    - 平仓价格、时间
+    - 盈亏
+    - 手续费
+    - 止损止盈规则（如果策略有定义）
+    - 持仓时长
+    """
+    
+    def __init__(self):
+        self.trades = []
+        self.open_trades = {}  # 跟踪未平仓的交易
+    
+    def notify_order(self, order):
+        """订单状态变化时的回调"""
+        if order.status in [order.Completed]:
+            # 记录订单执行信息
+            trade_info = {
+                'date': self.strategy.datetime.date(0),
+                'type': 'BUY' if order.isbuy() else 'SELL',
+                'price': order.executed.price,
+                'size': order.executed.size,
+                'value': order.executed.value,
+                'commission': order.executed.comm,
+            }
+            
+            # 如果是开仓
+            if order.isbuy():
+                self.open_trades[order.ref] = trade_info
+            # 如果是平仓
+            elif order.issell() and len(self.open_trades) > 0:
+                # 找到对应的开仓订单（简化处理，取最早的）
+                if self.open_trades:
+                    open_ref = list(self.open_trades.keys())[0]
+                    open_info = self.open_trades.pop(open_ref)
+                    
+                    # 计算盈亏
+                    pnl = (trade_info['price'] - open_info['price']) * open_info['size']
+                    total_commission = open_info['commission'] + trade_info['commission']
+                    net_pnl = pnl - total_commission
+                    
+                    # 获取策略参数（止损止盈规则）
+                    stop_loss = getattr(self.strategy.params, 'stop_loss', None)
+                    take_profit = getattr(self.strategy.params, 'take_profit', None)
+                    
+                    # 计算持仓时长（天数）
+                    from datetime import datetime
+                    open_date = open_info['date']
+                    close_date = trade_info['date']
+                    duration = (close_date - open_date).days if isinstance(open_date, datetime) or hasattr(open_date, 'days') else 0
+                    
+                    # 记录完整的交易信息
+                    complete_trade = {
+                        'trade_num': len(self.trades) + 1,
+                        'open_date': str(open_info['date']),
+                        'open_price': round(open_info['price'], 2),
+                        'close_date': str(trade_info['date']),
+                        'close_price': round(trade_info['price'], 2),
+                        'size': open_info['size'],
+                        'pnl': round(pnl, 2),
+                        'commission': round(total_commission, 2),
+                        'net_pnl': round(net_pnl, 2),
+                        'return_pct': round((pnl / open_info['value']) * 100, 2)
+                    }
+                    
+                    self.trades.append(complete_trade)
+    
+    def get_analysis(self):
+        """返回所有交易记录"""
+        return {
+            'trades': self.trades,
+            'total_trades': len(self.trades),
+            'winning_trades': len([t for t in self.trades if t['net_pnl'] > 0]),
+            'losing_trades': len([t for t in self.trades if t['net_pnl'] < 0]),
+            'total_pnl': round(sum(t['net_pnl'] for t in self.trades), 2),
+            'avg_pnl': round(sum(t['net_pnl'] for t in self.trades) / len(self.trades), 2) if self.trades else 0,
+        }
+
+
 def get_data(ticker, start, end):
     """
     Download data; if unavailable (e.g., network issues or bad ticker), fall back to synthetic data.
@@ -176,6 +257,7 @@ def run_backtest(
     cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
     cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
+    cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")  # 添加自定义交易记录器
 
     try:
         results = cerebro.run()
@@ -183,6 +265,9 @@ def run_backtest(
         logger.exception("Backtest run failed: %s", exc)
         raise
     strat = results[0]
+
+    # 获取交易详情
+    trade_details = strat.analyzers.trade_recorder.get_analysis()
 
     metrics = {
         "final_value": cerebro.broker.getvalue(),
@@ -193,6 +278,7 @@ def run_backtest(
         "sqn": strat.analyzers.sqn.get_analysis().get("sqn", None),
         "trades": strat.analyzers.trades.get_analysis(),
         "time_drawdown": strat.analyzers.timedraw.get_analysis(),
+        "trade_details": trade_details,  # 添加详细的交易记录
     }
 
     if save_path:
