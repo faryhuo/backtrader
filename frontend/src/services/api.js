@@ -74,12 +74,49 @@ export const api = {
         const formData = new FormData()
         formData.append('message', message)
         formData.append('model', model)
-        formData.append('file', file)
+        if (file) {
+            formData.append('file', file)
+        }
 
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
             body: formData
         })
         return await parseResponse(res)
+    },
+
+    async analyzeCode(code, model = 'gpt-4o') {
+        const prompt = `Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n${code}`;
+        const formData = new FormData();
+        formData.append('message', prompt);
+        formData.append('model', model);
+
+        const res = await fetch(`${API_URL}/ai_analyze`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await parseResponse(res);
+        return data.analysis;
+    },
+
+    async rewriteCode(code, model = 'gpt-4o') {
+        const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n${code}`;
+        const formData = new FormData();
+        formData.append('message', prompt);
+        formData.append('model', model);
+
+        const res = await fetch(`${API_URL}/ai_analyze`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await parseResponse(res);
+        // Clean up markdown code blocks if present
+        let cleanCode = data.analysis;
+        if (cleanCode.startsWith('```python')) {
+            cleanCode = cleanCode.replace(/^```python\n/, '').replace(/\n```$/, '');
+        } else if (cleanCode.startsWith('```')) {
+            cleanCode = cleanCode.replace(/^```\n/, '').replace(/\n```$/, '');
+        }
+        return cleanCode;
     }
 }

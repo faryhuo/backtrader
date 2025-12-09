@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
+import Layout from './components/Layout/Layout'
 import RunStrategy from './pages/RunStrategy'
 import StrategyMaintain from './pages/StrategyMaintain'
 import DataSource from './pages/DataSource'

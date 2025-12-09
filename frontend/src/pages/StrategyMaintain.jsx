@@ -3,16 +3,21 @@ import Editor from '@monaco-editor/react'
 import { useTranslation } from 'react-i18next'
 import '../index.css'
 import { api } from '../services/api'
+import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
+import StrategySelector from '../components/StrategyMaintain/StrategySelector'
+import EditorActions from '../components/StrategyMaintain/EditorActions'
+import AnalysisModal from '../components/StrategyMaintain/AnalysisModal'
 
 function StrategyMaintain() {
     const { t } = useTranslation();
     // Strategy Editor State
     const [strategies, setStrategies] = useState([])
     const [selectedStrategy, setSelectedStrategy] = useState('')
-    const [newStrategyName, setNewStrategyName] = useState('')
     const [showNewStrategyModal, setShowNewStrategyModal] = useState(false)
     const [code, setCode] = useState('')
     const [codeLoading, setCodeLoading] = useState(false)
+    const [analysisResult, setAnalysisResult] = useState('')
+    const [showAnalysisModal, setShowAnalysisModal] = useState(false)
 
     useEffect(() => {
         const init = async () => {
@@ -92,26 +97,47 @@ class UserStrategy(bt.Strategy):
         }
     }
 
-    const createStrategy = async () => {
-        const name = newStrategyName.trim()
+    const createStrategy = async (name) => {
         if (!name) return
         setSelectedStrategy(name)
         setCode(defaultTemplate)
-        setNewStrategyName('')
         setShowNewStrategyModal(false)
     }
 
     const openNewStrategyModal = () => {
-        setNewStrategyName('')
         setShowNewStrategyModal(true)
     }
 
-    const handleAIAnalysis = () => {
-        alert(t('maintain.analysis_coming_soon'))
+    const handleAIAnalysis = async () => {
+        if (!code) return;
+        try {
+            setCodeLoading(true);
+            const result = await api.analyzeCode(code);
+            setAnalysisResult(result);
+            setShowAnalysisModal(true);
+        } catch (err) {
+            console.error("AI Analysis failed", err);
+            alert("AI Analysis failed: " + err.message);
+        } finally {
+            setCodeLoading(false);
+        }
     }
 
-    const handleAIRewrite = () => {
-        alert(t('maintain.rewrite_coming_soon'))
+    const handleAIRewrite = async () => {
+        if (!code) return;
+        if (!window.confirm("This will overwrite your current code with the AI optimized version. Are you sure?")) {
+            return;
+        }
+        try {
+            setCodeLoading(true);
+            const newCode = await api.rewriteCode(code);
+            setCode(newCode);
+        } catch (err) {
+            console.error("AI Rewrite failed", err);
+            alert("AI Rewrite failed: " + err.message);
+        } finally {
+            setCodeLoading(false);
+        }
     }
 
     return (
@@ -130,39 +156,19 @@ class UserStrategy(bt.Strategy):
                     </button>
                 </div>
                 <p className="subtitle">{t('maintain.subtitle')}</p>
-                <div className="strategy-toolbar">
-                    <div className="strategy-row">
-                        <label htmlFor="editor-strategy-select">{t('maintain.active_strategy')}</label>
-                        <select
-                            id="editor-strategy-select"
-                            value={selectedStrategy}
-                            onChange={(e) => setSelectedStrategy(e.target.value)}
-                            disabled={codeLoading}
-                        >
-                            {strategies.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            className="btn-ghost"
-                            onClick={() => fetchStrategy(selectedStrategy)}
-                            disabled={codeLoading}
-                        >
-                            {t('maintain.reload')}
-                        </button>
-                        <button
-                            type="button"
-                            className="btn-ghost"
-                            onClick={fetchStrategies}
-                            disabled={codeLoading}
-                        >
-                            {t('maintain.refresh_list')}
-                        </button>
-                    </div>
+                
+                <StrategySelector
+                    strategies={strategies}
+                    selectedStrategy={selectedStrategy}
+                    onSelectStrategy={setSelectedStrategy}
+                    onReload={() => fetchStrategy(selectedStrategy)}
+                    onRefreshList={fetchStrategies}
+                    onAIAnalysis={handleAIAnalysis}
+                    onAIRewrite={handleAIRewrite}
+                    loading={codeLoading}
+                    t={t}
+                />
 
-
-                </div>
                 <div className="code-editor">
                     <Editor
                         height="60vh"
@@ -181,71 +187,28 @@ class UserStrategy(bt.Strategy):
                         }}
                     />
                 </div>
-                <div className="form-actions">
-                    <div style={{ display: 'flex', gap: '0.75rem', marginRight: 'auto' }}>
-                        <button
-                            className="btn-secondary"
-                            onClick={handleAIAnalysis}
-                            disabled={codeLoading}
-                            style={{ margin: 0 }}
-                        >
-                            {t('maintain.ai_analysis')}
-                        </button>
-                        <button
-                            className="btn-secondary"
-                            onClick={handleAIRewrite}
-                            disabled={codeLoading}
-                            style={{ margin: 0 }}
-                        >
-                            {t('maintain.ai_rewrite')}
-                        </button>
-                    </div>
-                    <button className="btn-primary" onClick={saveStrategy} disabled={codeLoading}>
-                        {codeLoading ? t('maintain.saving') : t('maintain.save_strategy')}
-                    </button>
-                </div>
+                
+                <EditorActions
+                    onSave={saveStrategy}
+                    loading={codeLoading}
+                    t={t}
+                />
             </section>
 
-            {/* New Strategy Modal */}
-            {showNewStrategyModal && (
-                <div className="modal-overlay" onClick={() => setShowNewStrategyModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>{t('maintain.create_new_strategy')}</h3>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="modal-new-strategy-name">{t('maintain.strategy_name')}</label>
-                            <input
-                                id="modal-new-strategy-name"
-                                type="text"
-                                value={newStrategyName}
-                                onChange={(e) => setNewStrategyName(e.target.value)}
-                                placeholder={t('maintain.placeholder_name')}
-                                autoFocus
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') createStrategy()
-                                    if (e.key === 'Escape') setShowNewStrategyModal(false)
-                                }}
-                            />
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                className="btn-ghost"
-                                onClick={() => setShowNewStrategyModal(false)}
-                            >
-                                {t('common.cancel')}
-                            </button>
-                            <button
-                                className="btn-primary"
-                                onClick={createStrategy}
-                                disabled={!newStrategyName.trim()}
-                            >
-                                {t('maintain.create')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <NewStrategyModal
+                isOpen={showNewStrategyModal}
+                onClose={() => setShowNewStrategyModal(false)}
+                onCreate={createStrategy}
+                t={t}
+            />
+
+            <AnalysisModal
+                isOpen={showAnalysisModal}
+                onClose={() => setShowAnalysisModal(false)}
+                content={analysisResult}
+                title={t('maintain.ai_analysis')}
+                t={t}
+            />
         </div>
     )
 }

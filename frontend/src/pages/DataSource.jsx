@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
-import CandleStickChart from '../components/CandleStickChart';
+import CandleStickChart from '../components/DataSource/CandleStickChart';
 
 function DataSource() {
     const { t } = useTranslation();

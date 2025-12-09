@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import '../index.css'
 import { api } from '../services/api'
-import StrategyConfigForm from '../components/StrategyConfigForm'
-import PerformanceOverview from '../components/PerformanceOverview'
-import TradeLog from '../components/TradeLog'
-import StrategyPlot from '../components/StrategyPlot'
+import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm'
+import PerformanceOverview from '../components/RunStrategy/PerformanceOverview'
+import TradeLog from '../components/RunStrategy/TradeLog'
+import StrategyPlot from '../components/RunStrategy/StrategyPlot'
 
 function RunStrategy() {
     // Backtest State

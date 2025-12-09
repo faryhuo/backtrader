@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { performFullStrategyAnalysis } from '../services/aiAnalysis';
+import { performFullStrategyAnalysis } from '../../services/aiAnalysis';
 import AIInsight from './AIInsight';
 
 function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
