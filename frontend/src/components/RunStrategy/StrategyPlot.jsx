@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import { performFullStrategyAnalysis } from '../../services/aiAnalysis';
 import AIInsight from './AIInsight';
 
@@ -44,11 +45,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
 
         } catch (err) {
             console.error(err);
-            setAnalyses(prev => ({
-                ...prev,
-                [selectedModel]: "Failed to perform AI analysis: " + err.message
-            }));
-            setActiveTab(selectedModel);
+            message.error("Failed to perform AI analysis: " + err.message);
         } finally {
             setAiLoading(false);
         }
