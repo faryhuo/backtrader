@@ -1,34 +1,47 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import '../index.css'
 
 function Layout({ children }) {
     const location = useLocation()
+    const [collapsed, setCollapsed] = useState(false)
 
     return (
-        <div className="layout-container">
-            <aside className="sidebar">
+        <div className={`layout-container ${collapsed ? 'collapsed' : ''}`}>
+            <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
                 <div className="sidebar-header">
-                    <h2>Backtrader</h2>
+                    {!collapsed && <h2>Backtrader</h2>}
                 </div>
                 <nav className="sidebar-nav">
                     <Link
                         to="/"
                         className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
+                        title="Run Strategy"
                     >
                         <span className="icon">📈</span>
-                        Run Strategy
+                        {!collapsed && <span>Run Strategy</span>}
                     </Link>
                     <Link
                         to="/maintain"
                         className={`nav-item ${location.pathname === '/maintain' ? 'active' : ''}`}
+                        title="Strategy Maintain"
                     >
                         <span className="icon">📝</span>
-                        Strategy Maintain
+                        {!collapsed && <span>Strategy Maintain</span>}
                     </Link>
                 </nav>
+                <div className="sidebar-footer">
+                    <button
+                        className="collapse-toggle"
+                        onClick={() => setCollapsed(!collapsed)}
+                        title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {collapsed ? '»' : '«'}
+                    </button>
+                </div>
             </aside>
 
-            <div className="main-wrapper">
+            <div className={`main-wrapper ${collapsed ? 'collapsed' : ''}`}>
                 <header className="top-header">
                     <div className="header-title">
                         <h1>Backtrader Pro</h1>
