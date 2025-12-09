@@ -7,7 +7,10 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
     const [isPlotMaximized, setIsPlotMaximized] = useState(false);
     const [plotScale, setPlotScale] = useState(1);
     const [aiLoading, setAiLoading] = useState(false);
-    const [aiAnalysis, setAiAnalysis] = useState('');
+    const [analyses, setAnalyses] = useState({});
+    const [activeTab, setActiveTab] = useState(null);
+    const [selectedModel, setSelectedModel] = useState('gpt-5.1');
+    const AVAILABLE_MODELS = ['gpt-5.1', 'deepseek-v3.1', 'gemini-3-pro'];
 
     if (!result || !result.plot_url) {
         return null;
@@ -15,11 +18,10 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
 
     const handleAIAnalysis = async () => {
         if (!result || !result.plot_url) {
-            setAiAnalysis("No chart available for analysis.");
             return;
         }
         setAiLoading(true);
-        setAiAnalysis('');
+        // Do not clear previous analyses, just add/overwrite the selected model key later
 
         try {
             const data = await performFullStrategyAnalysis({
@@ -27,16 +29,29 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                 strategyName,
                 ticker,
                 startDate,
-                endDate
+                endDate,
+                model: selectedModel
             });
-            setAiAnalysis(data.analysis);
+
+            setAnalyses(prev => {
+                const newState = { ...prev, [selectedModel]: data.analysis };
+                return newState;
+            });
+            setActiveTab(selectedModel);
+
         } catch (err) {
             console.error(err);
-            setAiAnalysis("Failed to perform AI analysis: " + err.message);
+            setAnalyses(prev => ({
+                ...prev,
+                [selectedModel]: "Failed to perform AI analysis: " + err.message
+            }));
+            setActiveTab(selectedModel);
         } finally {
             setAiLoading(false);
         }
     }
+
+    const hasAnalyses = Object.keys(analyses).length > 0;
 
     return (
         <>
@@ -56,17 +71,38 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                 <div className="plot-container">
                     <img src={result.plot_url} alt="Strategy Plot" />
                 </div>
-                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+
+                <div className="analysis-controls" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem', alignItems: 'center' }}>
+                    <select
+                        className="input-field"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        style={{ maxWidth: '150px' }}
+                    >
+                        {AVAILABLE_MODELS.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                    </select>
                     <button className="btn-secondary" onClick={handleAIAnalysis} disabled={aiLoading}>
                         {aiLoading ? 'Interpreting...' : 'AI Interpretation'}
                     </button>
                 </div>
 
-                {aiAnalysis && (
+                {hasAnalyses && (
                     <div className="ai-insight-section">
-                        <h3>AI Insight</h3>
+                        <div className="tabs">
+                            {Object.keys(analyses).map(modelKey => (
+                                <button
+                                    key={modelKey}
+                                    className={`tab ${activeTab === modelKey ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(modelKey)}
+                                >
+                                    {modelKey}
+                                </button>
+                            ))}
+                        </div>
                         <div className="ai-markdown-content">
-                            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                            <ReactMarkdown>{analyses[activeTab]}</ReactMarkdown>
                         </div>
                     </div>
                 )}
