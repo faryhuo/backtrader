@@ -1,0 +1,104 @@
+{
+  "app": {
+    "title": "Backtrader",
+    "pro_title": "Backtrader Pro"
+  },
+  "nav": {
+    "run_strategy": "Run Strategy",
+    "strategy_maintain": "Strategy Maintain",
+    "datasource": "Data Source"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "expand_sidebar": "Expand Sidebar",
+    "collapse_sidebar": "Collapse Sidebar",
+    "na": "N/A"
+  },
+  "ai_insight": {
+    "thinking_process": "Thinking Process"
+  },
+  "config_form": {
+    "title": "Strategy Configuration",
+    "strategy": "Strategy",
+    "refresh": "Refresh",
+    "asset_ticker": "Asset Ticker",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "initial_capital": "Initial Capital ($)",
+    "commission": "Commission (rate)",
+    "order_size": "Order Size (shares/contracts)",
+    "run_backtest": "Run Backtest"
+  },
+  "performance": {
+    "title": "Performance Overview",
+    "final_value": "Final Value",
+    "return": "Return",
+    "sharpe_ratio": "Sharpe Ratio",
+    "max_drawdown": "Max Drawdown",
+    "sqn": "SQN",
+    "win_rate": "Win Rate",
+    "closed_trades": "Closed Trades",
+    "dd_duration": "DD Duration",
+    "annual_returns": "Annual Returns",
+    "per_calendar_year": "per calendar year",
+    "trades": "Trades",
+    "from_trade_analyzer": "from TradeAnalyzer",
+    "closed_total": "Closed / Total",
+    "open_positions": "Open Positions",
+    "avg_net_pnl": "Average Net PnL",
+    "best_trade": "Best Trade",
+    "worst_trade": "Worst Trade",
+    "avg_duration": "Avg Duration (bars)",
+    "time_drawdown": "Time Drawdown",
+    "depth_duration": "depth and duration",
+    "longest_duration": "Longest Duration",
+    "net_pnl": "Net PnL",
+    "bars": "bars"
+  },
+  "trade_log": {
+    "title": "Trade Log",
+    "open_date": "Open Date",
+    "open_price": "Open Price",
+    "close_date": "Close Date",
+    "close_price": "Close Price",
+    "size": "Size",
+    "net_pnl": "Net PnL",
+    "return": "Return"
+  },
+  "strategy_plot": {
+    "title": "Strategy Visualization",
+    "maximize": "Maximize",
+    "ai_interpretation": "AI Interpretation",
+    "interpreting": "Interpreting...",
+    "reset": "Reset",
+    "close": "Close"
+  },
+  "maintain": {
+    "editor_title": "Strategy Editor (UserStrategy)",
+    "new": "New",
+    "subtitle": "Edit only the strategy class below; backtest engine is fixed.",
+    "active_strategy": "Active Strategy",
+    "reload": "Reload",
+    "refresh_list": "Refresh List",
+    "ai_analysis": "AI Analysis",
+    "ai_rewrite": "AI - Rewrite",
+    "save_strategy": "Save Strategy",
+    "saving": "Saving...",
+    "create_new_strategy": "Create New Strategy",
+    "strategy_name": "Strategy Name",
+    "create": "Create",
+    "saved": "Strategy Saved!",
+        "save_failed": "Failed to save strategy",
+        "analysis_coming_soon": "AI Analysis feature coming soon!",
+        "rewrite_coming_soon": "AI Rewrite feature coming soon!",
+        "placeholder_name": "e.g., breakout_v2"
+      },
+      "datasource": {
+        "title": "Data Source Explorer",
+        "fetch_data": "Fetch Data"
+      }
+    }
+    

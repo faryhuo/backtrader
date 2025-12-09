@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import RunStrategy from './pages/RunStrategy'
 import StrategyMaintain from './pages/StrategyMaintain'
+import DataSource from './pages/DataSource'
 import './index.css'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<RunStrategy />} />
                     <Route path="/maintain" element={<StrategyMaintain />} />
+                    <Route path="/datasource" element={<DataSource />} />
                 </Routes>
             </Layout>
         </BrowserRouter>

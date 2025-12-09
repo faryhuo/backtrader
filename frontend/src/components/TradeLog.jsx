@@ -1,26 +1,29 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 
 function TradeLog({ trades }) {
+    const { t } = useTranslation();
+
     if (!trades || trades.length === 0) {
         return null;
     }
 
     return (
         <div className="card">
-            <h2>Trade Log</h2>
+            <h2>{t('trade_log.title')}</h2>
             <div className="table-container">
                 <table className="trade-table">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Open Date</th>
-                            <th>Open Price</th>
-                            <th>Close Date</th>
-                            <th>Close Price</th>
-                            <th>Size</th>
-                            <th>Net PnL</th>
-                            <th>Return</th>
+                            <th>{t('trade_log.open_date')}</th>
+                            <th>{t('trade_log.open_price')}</th>
+                            <th>{t('trade_log.close_date')}</th>
+                            <th>{t('trade_log.close_price')}</th>
+                            <th>{t('trade_log.size')}</th>
+                            <th>{t('trade_log.net_pnl')}</th>
+                            <th>{t('trade_log.return')}</th>
                         </tr>
                     </thead>
                     <tbody>

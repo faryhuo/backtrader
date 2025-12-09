@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
+import { useTranslation } from 'react-i18next'
 import '../index.css'
 import { api } from '../services/api'
 
 function StrategyMaintain() {
+    const { t } = useTranslation();
     // Strategy Editor State
     const [strategies, setStrategies] = useState([])
     const [selectedStrategy, setSelectedStrategy] = useState('')
@@ -82,9 +84,9 @@ class UserStrategy(bt.Strategy):
             setCodeLoading(true);
             await api.saveStrategy(selectedStrategy || 'default', code)
             await fetchStrategies();
-            alert("Strategy Saved!");
+            alert(t('maintain.saved'));
         } catch (err) {
-            alert("Failed to save strategy");
+            alert(t('maintain.save_failed'));
         } finally {
             setCodeLoading(false);
         }
@@ -105,20 +107,18 @@ class UserStrategy(bt.Strategy):
     }
 
     const handleAIAnalysis = () => {
-        alert("AI Analysis feature coming soon!")
+        alert(t('maintain.analysis_coming_soon'))
     }
 
     const handleAIRewrite = () => {
-        alert("AI Rewrite feature coming soon!")
+        alert(t('maintain.rewrite_coming_soon'))
     }
-
-
 
     return (
         <div className="page-container">
             <section className="card editor-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
-                    <h2 style={{ margin: 0, border: 'none', padding: 0 }}>Strategy Editor (UserStrategy)</h2>
+                    <h2 style={{ margin: 0, border: 'none', padding: 0 }}>{t('maintain.editor_title')}</h2>
                     <button
                         type="button"
                         className="btn-primary"
@@ -126,13 +126,13 @@ class UserStrategy(bt.Strategy):
                         disabled={codeLoading}
                         style={{ minWidth: '100px', padding: '0.5rem 1rem' }}
                     >
-                        New
+                        {t('maintain.new')}
                     </button>
                 </div>
-                <p className="subtitle">Edit only the strategy class below; backtest engine is fixed.</p>
+                <p className="subtitle">{t('maintain.subtitle')}</p>
                 <div className="strategy-toolbar">
                     <div className="strategy-row">
-                        <label htmlFor="editor-strategy-select">Active Strategy</label>
+                        <label htmlFor="editor-strategy-select">{t('maintain.active_strategy')}</label>
                         <select
                             id="editor-strategy-select"
                             value={selectedStrategy}
@@ -149,7 +149,7 @@ class UserStrategy(bt.Strategy):
                             onClick={() => fetchStrategy(selectedStrategy)}
                             disabled={codeLoading}
                         >
-                            Reload
+                            {t('maintain.reload')}
                         </button>
                         <button
                             type="button"
@@ -157,7 +157,7 @@ class UserStrategy(bt.Strategy):
                             onClick={fetchStrategies}
                             disabled={codeLoading}
                         >
-                            Refresh List
+                            {t('maintain.refresh_list')}
                         </button>
                     </div>
 
@@ -189,7 +189,7 @@ class UserStrategy(bt.Strategy):
                             disabled={codeLoading}
                             style={{ margin: 0 }}
                         >
-                            AI Analysis
+                            {t('maintain.ai_analysis')}
                         </button>
                         <button
                             className="btn-secondary"
@@ -197,11 +197,11 @@ class UserStrategy(bt.Strategy):
                             disabled={codeLoading}
                             style={{ margin: 0 }}
                         >
-                            AI - Rewrite
+                            {t('maintain.ai_rewrite')}
                         </button>
                     </div>
                     <button className="btn-primary" onClick={saveStrategy} disabled={codeLoading}>
-                        {codeLoading ? 'Saving...' : 'Save Strategy'}
+                        {codeLoading ? t('maintain.saving') : t('maintain.save_strategy')}
                     </button>
                 </div>
             </section>
@@ -211,16 +211,16 @@ class UserStrategy(bt.Strategy):
                 <div className="modal-overlay" onClick={() => setShowNewStrategyModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Create New Strategy</h3>
+                            <h3>{t('maintain.create_new_strategy')}</h3>
                         </div>
                         <div className="form-group">
-                            <label htmlFor="modal-new-strategy-name">Strategy Name</label>
+                            <label htmlFor="modal-new-strategy-name">{t('maintain.strategy_name')}</label>
                             <input
                                 id="modal-new-strategy-name"
                                 type="text"
                                 value={newStrategyName}
                                 onChange={(e) => setNewStrategyName(e.target.value)}
-                                placeholder="e.g., breakout_v2"
+                                placeholder={t('maintain.placeholder_name')}
                                 autoFocus
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') createStrategy()
@@ -233,14 +233,14 @@ class UserStrategy(bt.Strategy):
                                 className="btn-ghost"
                                 onClick={() => setShowNewStrategyModal(false)}
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                             <button
                                 className="btn-primary"
                                 onClick={createStrategy}
                                 disabled={!newStrategyName.trim()}
                             >
-                                Create
+                                {t('maintain.create')}
                             </button>
                         </div>
                     </div>

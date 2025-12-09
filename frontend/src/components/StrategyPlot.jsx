@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import { performFullStrategyAnalysis } from '../services/aiAnalysis';
 import AIInsight from './AIInsight';
 
 function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
+    const { t } = useTranslation();
     const [isPlotMaximized, setIsPlotMaximized] = useState(false);
     const [plotScale, setPlotScale] = useState(1);
     const [aiLoading, setAiLoading] = useState(false);
@@ -58,14 +60,14 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
         <>
             <div className="card plot-card">
                 <div className="plot-header">
-                    <h2>Strategy Visualization</h2>
+                    <h2>{t('strategy_plot.title')}</h2>
                     <div className="plot-actions">
                         <button
                             type="button"
                             className="btn-ghost"
                             onClick={() => setIsPlotMaximized(true)}
                         >
-                            Maximize
+                            {t('strategy_plot.maximize')}
                         </button>
                     </div>
                 </div>
@@ -85,7 +87,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                         ))}
                     </select>
                     <button className="btn-secondary" onClick={handleAIAnalysis} disabled={aiLoading}>
-                        {aiLoading ? 'Interpreting...' : 'AI Interpretation'}
+                        {aiLoading ? t('strategy_plot.interpreting') : t('strategy_plot.ai_interpretation')}
                     </button>
                 </div>
 
@@ -128,7 +130,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                                     className="btn-ghost"
                                     onClick={() => setPlotScale(1)}
                                 >
-                                    Reset
+                                    {t('strategy_plot.reset')}
                                 </button>
                             </div>
                             <button
@@ -136,7 +138,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                                 className="btn-ghost"
                                 onClick={() => setIsPlotMaximized(false)}
                             >
-                                Close
+                                {t('strategy_plot.close')}
                             </button>
                         </div>
                         <div className="plot-overlay-viewport">

@@ -1016,20 +1016,49 @@ body {
     border-radius: 8px;
     margin-bottom: 1.5rem;
     overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.thought-process-details[open] {
+    background: rgba(13, 17, 23, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: #58a6ff;
 }
 
 .thought-process-details summary {
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1.2rem;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.03);
     color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
     user-select: none;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    list-style: none;
+}
+
+.thought-process-details summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Custom chevron arrow */
+.thought-process-details summary::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid var(--text-secondary);
+    border-bottom: 2px solid var(--text-secondary);
+    transform: rotate(45deg);
+    transition: transform 0.3s ease, border-color 0.2s;
+}
+
+.thought-process-details[open] summary::after {
+    transform: rotate(225deg);
+    border-color: #58a6ff;
 }
 
 .thought-process-details summary:hover {
@@ -1037,15 +1066,31 @@ body {
     color: var(--text-main);
 }
 
+.thought-process-details summary:hover::after {
+    border-color: var(--text-main);
+}
+
 .thought-content {
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 1.5rem;
     background: #0d1117;
     border-top: 1px solid var(--border-color);
     font-size: 0.95rem;
     color: var(--text-secondary);
     line-height: 1.6;
+    animation: fadeInSlide 0.3s ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .thought-content p {
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
 }

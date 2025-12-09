@@ -3,13 +3,14 @@ import re
 import importlib.util
 import logging
 import backtrader as bt
-import yfinance as yf
 import pandas as pd
 import matplotlib
 
 # Use a non-interactive backend and silence any attempts to show figures
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+from datasource import get_bt_feed as get_data, get_raw_data_json, DataLoadError
 
 plt.ioff()
 plt.show = lambda *args, **kwargs: None  # Prevent local popups in API runs
@@ -27,10 +28,6 @@ DEFAULT_STRATEGY_NAME = None
 
 class StrategyLoadError(Exception):
     """Raised when the user strategy cannot be loaded."""
-
-
-class DataLoadError(Exception):
-    """Raised when market data cannot be loaded."""
 
 
 def ensure_resource_files():
@@ -188,40 +185,6 @@ class TradeRecorder(bt.Analyzer):
         }
 
 
-def get_data(ticker, start, end):
-    """
-    Download data; if unavailable (e.g., network issues or bad ticker), fall back to synthetic data.
-    """
-    error = None
-    try:
-        data = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
-        if isinstance(data.columns, pd.MultiIndex):
-            data.columns = data.columns.get_level_values(0)
-        if data is None or data.empty:
-            raise DataLoadError("No data returned")
-    except Exception as exc:
-        error = exc
-        # Generate a simple synthetic price series to keep the pipeline alive
-        dates = pd.date_range(start=start, end=end, freq="B")
-        if len(dates) == 0:
-            dates = pd.date_range(end=pd.Timestamp.today(), periods=200, freq="B")
-        prices = pd.Series(100.0, index=dates).cumsum()  # monotonic increasing baseline
-        data = pd.DataFrame(
-            {
-                "Open": prices * 0.999,
-                "High": prices * 1.001,
-                "Low": prices * 0.999,
-                "Close": prices,
-                "Adj Close": prices,
-                "Volume": 1_000_000,
-            },
-            index=dates,
-        )
-        logger.warning("Data download failed for %s (%s-%s); using synthetic data. Cause: %s", ticker, start, end, exc)
-
-    return bt.feeds.PandasData(dataname=data)
-
-
 def run_backtest(
     ticker="AAPL",
     start_date="2022-01-01",
@@ -310,4 +273,5 @@ __all__ = [
     "STRATEGY_DIR",
     "get_strategy_path",
     "IMAGE_DIR",
+    "get_raw_data_json",
 ]
