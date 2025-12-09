@@ -4,15 +4,18 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
 from backtest_engine import (
     run_backtest,
     get_user_strategy_code,
     save_user_strategy_code,
     list_strategies,
     StrategyLoadError,
-    DataLoadError,
     IMAGE_DIR,
 )
+from datasource import get_raw_data_json, DataLoadError
 
 
 router = APIRouter()
@@ -26,6 +29,12 @@ class BacktestRequest(BaseModel):
     commission: float | None = 0.0005
     stake: int | None = 100
     strategy_name: str | None = None
+
+
+class DataRequest(BaseModel):
+    ticker: str
+    start_date: str
+    end_date: str
 
 
 class StrategyCode(BaseModel):
@@ -44,6 +53,15 @@ def get_strategy_list() -> dict:
         return {"strategies": names}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/data")
+def fetch_market_data(request: DataRequest) -> dict:
+    try:
+        data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
+        return {"data": data}
+    except Exception as exc:
+         raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/backtest")

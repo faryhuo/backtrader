@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 function AIInsight({ analyses, activeTab, onTabChange }) {
+    const { t } = useTranslation();
+
     if (!analyses || Object.keys(analyses).length === 0) {
         return null;
     }
@@ -33,7 +36,7 @@ function AIInsight({ analyses, activeTab, onTabChange }) {
                         return (
                             <>
                                 <details className="thought-process-details">
-                                    <summary>Thinking Process</summary>
+                                    <summary>{t('ai_insight.thinking_process')}</summary>
                                     <div className="thought-content">
                                         <ReactMarkdown>{thoughtProcess}</ReactMarkdown>
                                     </div>

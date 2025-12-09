@@ -1,0 +1,104 @@
+{
+  "app": {
+    "title": "Backtrader",
+    "pro_title": "Backtrader Pro"
+  },
+  "nav": {
+    "run_strategy": "运行策略",
+    "strategy_maintain": "策略维护",
+    "datasource": "数据源"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "save": "保存",
+    "cancel": "取消",
+    "expand_sidebar": "展开侧边栏",
+    "collapse_sidebar": "收起侧边栏",
+    "na": "N/A"
+  },
+  "ai_insight": {
+    "thinking_process": "思考过程"
+  },
+  "config_form": {
+    "title": "策略配置",
+    "strategy": "策略",
+    "refresh": "刷新",
+    "asset_ticker": "资产代码",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "initial_capital": "初始资金 ($)",
+    "commission": "佣金 (费率)",
+    "order_size": "下单数量 (股/手)",
+    "run_backtest": "运行回测"
+  },
+  "performance": {
+    "title": "绩效概览",
+    "final_value": "最终价值",
+    "return": "收益率",
+    "sharpe_ratio": "夏普比率",
+    "max_drawdown": "最大回撤",
+    "sqn": "SQN",
+    "win_rate": "胜率",
+    "closed_trades": "已平仓交易",
+    "dd_duration": "回撤持续时间",
+    "annual_returns": "年度回报",
+    "per_calendar_year": "按日历年",
+    "trades": "交易详情",
+    "from_trade_analyzer": "来自 TradeAnalyzer",
+    "closed_total": "已平仓 / 总计",
+    "open_positions": "持仓中",
+    "avg_net_pnl": "平均净盈亏",
+    "best_trade": "最佳交易",
+    "worst_trade": "最差交易",
+    "avg_duration": "平均持仓 (K线数)",
+    "time_drawdown": "时间回撤",
+    "depth_duration": "深度与持续时间",
+    "longest_duration": "最长持续时间",
+    "net_pnl": "净盈亏",
+    "bars": "根K线"
+  },
+  "trade_log": {
+    "title": "交易日志",
+    "open_date": "开仓日期",
+    "open_price": "开仓价格",
+    "close_date": "平仓日期",
+    "close_price": "平仓价格",
+    "size": "数量",
+    "net_pnl": "净盈亏",
+    "return": "收益率"
+  },
+  "strategy_plot": {
+    "title": "策略可视化",
+    "maximize": "最大化",
+    "ai_interpretation": "AI 解读",
+    "interpreting": "解读中...",
+    "reset": "重置",
+    "close": "关闭"
+  },
+  "maintain": {
+    "editor_title": "策略编辑器 (UserStrategy)",
+    "new": "新建",
+    "subtitle": "仅编辑下方的策略类；回测引擎是固定的。",
+    "active_strategy": "当前策略",
+    "reload": "重新加载",
+    "refresh_list": "刷新列表",
+    "ai_analysis": "AI 分析",
+    "ai_rewrite": "AI 重写",
+    "save_strategy": "保存策略",
+    "saving": "保存中...",
+    "create_new_strategy": "创建新策略",
+    "strategy_name": "策略名称",
+    "create": "创建",
+    "saved": "策略已保存！",
+        "save_failed": "保存策略失败",
+        "analysis_coming_soon": "AI 分析功能即将推出！",
+        "rewrite_coming_soon": "AI 重写功能即将推出！",
+        "placeholder_name": "例如：breakout_v2"
+      },
+      "datasource": {
+        "title": "数据源浏览器",
+        "fetch_data": "获取数据"
+      }
+    }
+    

@@ -41,7 +41,7 @@ export const api = {
     async saveStrategy(name, code) {
         const res = await buildRequest('/strategy', {
             method: 'POST',
-            body: JSON.stringify({ name: name || 'default', code })
+            body: JSON.stringify({ name, code })
         })
         return await parseResponse(res)
     },
@@ -49,7 +49,15 @@ export const api = {
     async runBacktest(params) {
         const res = await buildRequest('/backtest', {
             method: 'POST',
-            body: JSON.stringify(params),
+            body: JSON.stringify(params)
+        })
+        return await parseResponse(res)
+    },
+
+    async fetchMarketData(params) {
+        const res = await buildRequest('/data', {
+            method: 'POST',
+            body: JSON.stringify(params)
         })
         return await parseResponse(res)
     },

@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 function StrategyConfigForm({
     strategies,
@@ -21,12 +22,14 @@ function StrategyConfigForm({
     onSubmit,
     error
 }) {
+    const { t } = useTranslation();
+
     return (
         <section className="card form-card">
-            <h2>Strategy Configuration</h2>
+            <h2>{t('config_form.title')}</h2>
             <form onSubmit={onSubmit} className="form-grid">
                 <div className="form-group">
-                    <label htmlFor="strategy-select">Strategy</label>
+                    <label htmlFor="strategy-select">{t('config_form.strategy')}</label>
                     <div className="strategy-row">
                         <select
                             id="strategy-select"
@@ -41,15 +44,15 @@ function StrategyConfigForm({
                             type="button"
                             className="btn-ghost"
                             onClick={fetchStrategies}
-                            title="Refresh strategies"
+                            title={t('config_form.refresh')}
                         >
-                            Refresh
+                            {t('config_form.refresh')}
                         </button>
                     </div>
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="ticker">Asset Ticker</label>
+                    <label htmlFor="ticker">{t('config_form.asset_ticker')}</label>
                     <input
                         id="ticker"
                         type="text"
@@ -60,7 +63,7 @@ function StrategyConfigForm({
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="start-date">Start Date</label>
+                    <label htmlFor="start-date">{t('config_form.start_date')}</label>
                     <input
                         id="start-date"
                         type="date"
@@ -71,7 +74,7 @@ function StrategyConfigForm({
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="end-date">End Date</label>
+                    <label htmlFor="end-date">{t('config_form.end_date')}</label>
                     <input
                         id="end-date"
                         type="date"
@@ -82,7 +85,7 @@ function StrategyConfigForm({
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="initial-cash">Initial Capital ($)</label>
+                    <label htmlFor="initial-cash">{t('config_form.initial_capital')}</label>
                     <input
                         id="initial-cash"
                         type="number"
@@ -93,7 +96,7 @@ function StrategyConfigForm({
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="commission">Commission (rate)</label>
+                    <label htmlFor="commission">{t('config_form.commission')}</label>
                     <input
                         id="commission"
                         type="number"
@@ -105,7 +108,7 @@ function StrategyConfigForm({
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="stake">Order Size (shares/contracts)</label>
+                    <label htmlFor="stake">{t('config_form.order_size')}</label>
                     <input
                         id="stake"
                         type="number"
@@ -117,7 +120,7 @@ function StrategyConfigForm({
 
                 <div className="form-actions">
                     <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? <span className="spinner"></span> : 'Run Backtest'}
+                        {loading ? <span className="spinner"></span> : t('config_form.run_backtest')}
                     </button>
                 </div>
             </form>
