@@ -9,7 +9,7 @@ Successfully integrated Logto authentication into the Backtrader platform with f
 ### Backend Changes (Python/FastAPI)
 
 #### 1. Dependencies Added (`backend/requirements.txt`)
-- `logto>=1.0.0` - Logto Python SDK
+- `logto>=0.2.1` - Logto Python SDK
 - `python-jose[cryptography]>=3.3.0` - JWT token verification
 - `requests>=2.31.0` - HTTP client for JWKS fetching
 
@@ -53,7 +53,7 @@ LOGTO_AUDIENCE=http://localhost:8000
 ### Frontend Changes (React)
 
 #### 1. Dependencies Added (`frontend/package.json`)
-- `@logto/react@^3.1.1` - Logto React SDK
+- `@logto/react@^4.0.9` - Logto React SDK
 
 #### 2. New File: `frontend/src/providers/LogtoProvider.jsx`
 Wraps app with Logto authentication context
@@ -339,5 +339,5 @@ The authentication integration follows the same license as the main Backtrader p
 ---
 
 **Integration Date**: 2025-12-10
-**Logto SDK Versions**: `@logto/react@^3.1.1`, `logto@^1.0.0`, `python-jose@^3.3.0`
+**Logto SDK Versions**: `@logto/react@^4.0.9`, `logto@>=0.2.1`, `python-jose@^3.3.0`
 **Status**: ✅ Complete and Ready for Testing

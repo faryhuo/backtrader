@@ -1,6 +1,8 @@
 const API_BASE = '/api'
-export const HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8000'
-const API_URL = `${HOST}${API_BASE}`
+// In development, use relative path (proxied by Vite)
+// In production, use full URL
+export const HOST = import.meta.env.VITE_API_HOST || ''
+const API_URL = HOST ? `${HOST}${API_BASE}` : API_BASE
 
 // Token getter function (set by App component)
 let getTokenFn = null
