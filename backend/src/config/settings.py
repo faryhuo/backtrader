@@ -30,6 +30,9 @@ LOGTO_REQUIRED_SCOPES = [
 DATABASE_URL = os.getenv("DATABASE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+# Optional outbound proxies for backend requests.
+HTTP_PROXY = os.getenv("HTTP_PROXY") or os.getenv("http_proxy")
+HTTPS_PROXY = os.getenv("HTTPS_PROXY") or os.getenv("https_proxy")
 
 
 def ensure_resource_dirs() -> None:
@@ -51,6 +54,8 @@ __all__ = [
     "LOGTO_ISSUER",
     "LOGTO_JWKS_URI",
     "LOGTO_REQUIRED_SCOPES",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
     "OPENAI_API_KEY",
     "OPENAI_BASE_URL",
     "PROJECT_ROOT",
