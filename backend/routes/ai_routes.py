@@ -2,10 +2,9 @@ import base64
 import os
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-from auth import get_current_user
 
 router = APIRouter()
 load_dotenv()
@@ -19,7 +18,6 @@ async def analyze_chart(
     message: str = Form(...),
     model: str = Form("gpt-4o"),
     file: Optional[UploadFile] = File(None),
-    user: dict = Depends(get_current_user),
 ):
     try:
         # Check if API key is present

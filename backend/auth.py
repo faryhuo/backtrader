@@ -1,8 +1,8 @@
 """
-Logto Authentication Module
+Logto M2M Authentication Module
 
-This module provides JWT token verification and user authentication
-for the Backtrader platform using Logto as the identity provider.
+This module provides Machine-to-Machine (M2M) authentication using Logto.
+It obtains access tokens via client credentials flow and uses them for API requests.
 """
 
 import os
@@ -10,37 +10,38 @@ import json
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from functools import lru_cache
+import time
 
 import requests
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError
-from fastapi import HTTPException, Security, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import HTTPException, Request
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Security schemes for Bearer token
-security = HTTPBearer()
-optional_security = HTTPBearer(auto_error=False)
 
-
-class LogtoConfig:
-    """Logto configuration loaded from environment variables"""
+class LogtoM2MConfig:
+    """Logto M2M configuration loaded from environment variables"""
 
     def __init__(self):
         self.endpoint = os.getenv("LOGTO_ENDPOINT")
-        self.app_id = os.getenv("LOGTO_APP_ID")
-        self.app_secret = os.getenv("LOGTO_APP_SECRET")
-        self.audience = os.getenv("LOGTO_AUDIENCE", "http://localhost:8000")
+        self.app_id = os.getenv("LOGTO_M2M_APP_ID")
+        self.app_secret = os.getenv("LOGTO_M2M_APP_SECRET")
+        self.resource = os.getenv("LOGTO_API_RESOURCE", "https://logto.fary.chat/api")
 
         # Validate required configuration
         if not all([self.endpoint, self.app_id, self.app_secret]):
             raise ValueError(
-                "Missing required Logto configuration. "
-                "Please set LOGTO_ENDPOINT, LOGTO_APP_ID, and LOGTO_APP_SECRET in .env file"
+                "Missing required Logto M2M configuration. "
+                "Please set LOGTO_ENDPOINT, LOGTO_M2M_APP_ID, and LOGTO_M2M_APP_SECRET in .env file"
             )
+
+    @property
+    def token_endpoint(self) -> str:
+        """Get token endpoint for M2M authentication"""
+        return f"{self.endpoint}/oidc/token"
 
     @property
     def jwks_uri(self) -> str:
@@ -54,230 +55,115 @@ class LogtoConfig:
 
 
 # Global config instance
-_config: Optional[LogtoConfig] = None
+_config: Optional[LogtoM2MConfig] = None
+
+# Token cache: stores access token and expiration time
+_token_cache: Dict[str, Any] = {
+    "access_token": None,
+    "expires_at": 0
+}
 
 
-def get_logto_config() -> LogtoConfig:
-    """Get or initialize Logto configuration"""
+def get_logto_config() -> LogtoM2MConfig:
+    """Get or initialize Logto M2M configuration"""
     global _config
     if _config is None:
-        _config = LogtoConfig()
+        _config = LogtoM2MConfig()
     return _config
 
 
-@lru_cache(maxsize=1)
-def get_jwks(jwks_uri: str) -> Dict[str, Any]:
+def obtain_m2m_token(config: LogtoM2MConfig) -> str:
     """
-    Fetch JSON Web Key Set (JWKS) from Logto endpoint.
-    Cached to avoid repeated requests.
+    Obtain access token using client credentials flow (M2M).
+
+    This implements the OAuth 2.0 client credentials grant type,
+    where the application authenticates itself to get an access token.
 
     Args:
-        jwks_uri: The JWKS endpoint URL
+        config: Logto M2M configuration
 
     Returns:
-        Dictionary containing JWKS data
+        Access token string
 
     Raises:
-        HTTPException: If JWKS cannot be fetched
+        HTTPException: If token request fails
     """
+    global _token_cache
+
+    # Check if we have a valid cached token
+    current_time = time.time()
+    if _token_cache["access_token"] and current_time < _token_cache["expires_at"]:
+        return _token_cache["access_token"]
+
+    # Request new token using client credentials
     try:
-        response = requests.get(jwks_uri, timeout=10)
+        response = requests.post(
+            config.token_endpoint,
+            data={
+                "grant_type": "client_credentials",
+                "resource": config.resource,
+                "scope": ""  # M2M apps typically don't need scopes, or use specific API scopes
+            },
+            auth=(config.app_id, config.app_secret),
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=10
+        )
         response.raise_for_status()
-        return response.json()
+
+        token_data = response.json()
+        access_token = token_data.get("access_token")
+        expires_in = token_data.get("expires_in", 3600)  # Default to 1 hour
+
+        if not access_token:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to obtain access token from Logto"
+            )
+
+        # Cache token with 5-minute buffer before expiration
+        _token_cache["access_token"] = access_token
+        _token_cache["expires_at"] = current_time + expires_in - 300
+
+        return access_token
+
     except requests.RequestException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to fetch JWKS from Logto: {str(e)}"
+            detail=f"Failed to obtain M2M token: {str(e)}"
         )
 
 
-def get_signing_key(token: str, jwks_uri: str) -> str:
+async def get_m2m_token() -> str:
     """
-    Get the signing key from JWKS for the given token.
+    FastAPI dependency to get M2M access token.
 
-    Args:
-        token: JWT token to verify
-        jwks_uri: JWKS endpoint URL
-
-    Returns:
-        The signing key as a string
-
-    Raises:
-        HTTPException: If signing key cannot be found
-    """
-    try:
-        # Get unverified header to find the key ID
-        unverified_header = jwt.get_unverified_header(token)
-        kid = unverified_header.get("kid")
-
-        if not kid:
-            raise HTTPException(
-                status_code=401,
-                detail="Token missing key ID (kid)"
-            )
-
-        # Fetch JWKS
-        jwks = get_jwks(jwks_uri)
-
-        # Find the matching key
-        for key in jwks.get("keys", []):
-            if key.get("kid") == kid:
-                return json.dumps(key)
-
-        raise HTTPException(
-            status_code=401,
-            detail="Unable to find matching signing key"
-        )
-
-    except JWTError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Invalid token header: {str(e)}"
-        )
-
-
-def verify_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
-    """
-    Verify and decode JWT token from Logto.
-
-    Args:
-        token: The JWT token to verify
-        config: Logto configuration
-
-    Returns:
-        Decoded token claims as dictionary
-
-    Raises:
-        HTTPException: If token is invalid, expired, or verification fails
-    """
-    try:
-        # Get signing key
-        signing_key = get_signing_key(token, config.jwks_uri)
-
-        # Verify and decode token
-        payload = jwt.decode(
-            token,
-            signing_key,
-            algorithms=["RS256"],
-            audience=config.audience,
-            issuer=config.issuer,
-            options={
-                "verify_signature": True,
-                "verify_aud": True,
-                "verify_iss": True,
-                "verify_exp": True,
-            }
-        )
-
-        return payload
-
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired"
-        )
-    except JWTClaimsError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Invalid token claims: {str(e)}"
-        )
-    except JWTError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Token verification failed: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Authentication error: {str(e)}"
-        )
-
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> Dict[str, Any]:
-    """
-    FastAPI dependency to get current authenticated user.
-
-    This dependency can be used in route handlers to enforce authentication:
-
-    @router.get("/protected")
-    async def protected_route(user: dict = Depends(get_current_user)):
-        return {"user_id": user["sub"]}
-
-    Args:
-        credentials: HTTP Authorization credentials (Bearer token)
-
-    Returns:
-        User information from token claims containing:
-        - sub: User ID (subject)
-        - aud: Audience
-        - iss: Issuer
-        - exp: Expiration timestamp
-        - iat: Issued at timestamp
-        - Other custom claims
-
-    Raises:
-        HTTPException 401: If token is missing or invalid
-    """
-    if not credentials:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing authorization credentials"
-        )
-
-    token = credentials.credentials
-
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing access token"
-        )
-
-    # Get config and verify token
-    config = get_logto_config()
-    user_claims = verify_token(token, config)
-
-    return user_claims
-
-
-async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(optional_security)
-) -> Optional[Dict[str, Any]]:
-    """
-    FastAPI dependency to get current user if authenticated, None otherwise.
-
-    Useful for endpoints that have optional authentication.
-
-    Args:
-        credentials: HTTP Authorization credentials (Bearer token)
-
-    Returns:
-        User claims if authenticated, None otherwise
-    """
-    if not credentials:
-        return None
-
-    try:
-        config = get_logto_config()
-        return verify_token(credentials.credentials, config)
-    except HTTPException:
-        return None
-
-
-def require_user(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
-    """
-    Simplified dependency that just requires authentication.
+    This can be used in route handlers or service functions that need
+    to authenticate with external APIs using M2M credentials.
 
     Usage:
-    @router.get("/protected", dependencies=[Depends(require_user)])
-    async def protected_route():
-        return {"message": "authenticated"}
-
-    Args:
-        user: User claims from get_current_user
+    @router.get("/external-api")
+    async def call_external_api(token: str = Depends(get_m2m_token)):
+        headers = {"Authorization": f"Bearer {token}"}
+        # Make API call with token
 
     Returns:
-        User claims
+        Valid M2M access token
+
+    Raises:
+        HTTPException: If token cannot be obtained
     """
-    return user
+    config = get_logto_config()
+    return obtain_m2m_token(config)
+
+
+def clear_token_cache():
+    """
+    Clear the cached M2M token.
+
+    This is useful for testing or when token needs to be refreshed immediately.
+    """
+    global _token_cache
+    _token_cache["access_token"] = None
+    _token_cache["expires_at"] = 0
