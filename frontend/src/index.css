@@ -175,7 +175,9 @@ body {
 
 .top-header {
     height: 64px;
-    background-color: var(--header-bg);
+    background-color: rgba(22, 27, 34, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
@@ -184,13 +186,19 @@ body {
     position: sticky;
     top: 0;
     z-index: 5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .header-title h1 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     color: var(--text-main);
     margin: 0;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #c9d1d9, #8b949e);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .user-profile {
