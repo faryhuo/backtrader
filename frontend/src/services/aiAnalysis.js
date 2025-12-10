@@ -1,4 +1,4 @@
-import { api, HOST } from './api';
+import { API_URL } from './api';
 import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
 
 export const performFullStrategyAnalysis = async ({
@@ -13,7 +13,7 @@ export const performFullStrategyAnalysis = async ({
     let strategyCode = '';
     try {
         if (strategyName) {
-            const stratData = await api.getStrategy(strategyName);
+            const stratData = await fetch(`${API_URL}/strategy/${strategyName}`);
             strategyCode = stratData?.code || 'Code not available';
         }
     } catch (e) {
@@ -24,7 +24,7 @@ export const performFullStrategyAnalysis = async ({
     // 2. Fetch Plot Image Blob
     let file = null;
     try {
-        const imageUrl = `${HOST}${result.plot_url}`;
+        const imageUrl = `${API_URL}${result.plot_url}`;
         const res = await fetch(imageUrl);
         if (res.ok) {
             const blob = await res.blob();
