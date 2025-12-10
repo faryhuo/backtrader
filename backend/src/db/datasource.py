@@ -1,26 +1,28 @@
-import os
-import yfinance as yf
-import pandas as pd
 import logging
+from typing import Optional
+
 import backtrader as bt
+import pandas as pd
+import yfinance as yf
 from sqlalchemy import create_engine, text
+
+from src.config.settings import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
 class DataLoadError(Exception):
     """Raised when market data cannot be loaded."""
 
-def get_data_from_db(ticker, start, end):
+def get_data_from_db(ticker: str, start: str, end: str) -> Optional[pd.DataFrame]:
     """
     Attempt to fetch data from the database.
     Returns a DataFrame or None if not found/configured.
     """
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
+    if not DATABASE_URL:
         return None
 
     try:
-        engine = create_engine(db_url)
+        engine = create_engine(DATABASE_URL)
         # Adjust table/column names as per your schema
         query = text("""
             SELECT date, open, high, low, close, volume
@@ -65,7 +67,7 @@ def get_data_from_db(ticker, start, end):
         logger.warning(f"Database fetch failed for {ticker}: {exc}")
         return None
 
-def get_data(ticker, start, end):
+def get_data(ticker: str, start: str, end: str) -> pd.DataFrame:
     """
     Download data as a pandas DataFrame.
     Priority:
@@ -109,14 +111,14 @@ def get_data(ticker, start, end):
         logger.warning("Data download failed for %s (%s-%s); using synthetic data. Cause: %s", ticker, start, end, exc)
         return data
 
-def get_bt_feed(ticker, start, end):
+def get_bt_feed(ticker: str, start: str, end: str) -> bt.feeds.PandasData:
     """
     Wrapper to get data as a Backtrader feed.
     """
     data = get_data(ticker, start, end)
     return bt.feeds.PandasData(dataname=data)
 
-def get_raw_data_json(ticker, start_date, end_date):
+def get_raw_data_json(ticker: str, start_date: str, end_date: str):
     """
     Fetch market data and return as a list of dictionaries for the frontend.
     """
@@ -128,7 +130,7 @@ def get_raw_data_json(ticker, start_date, end_date):
             data = data.reset_index()
             # If the index name wasn't 'Date', rename the new column
             if 'index' in data.columns and 'Date' not in data.columns:
-                 data.rename(columns={'index': 'Date'}, inplace=True)
+                data.rename(columns={'index': 'Date'}, inplace=True)
 
         results = []
         for _, row in data.iterrows():

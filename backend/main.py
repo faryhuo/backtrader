@@ -1,6 +1,7 @@
 import os
 from daphne.server import Server
-from api import app
+
+from src.service.app import app
 
 
 def main() -> None:

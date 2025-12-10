@@ -1,14 +1,13 @@
 import base64
-import os
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from openai import AsyncOpenAI
-from dotenv import load_dotenv
-from auth import get_current_user
+
+from src.config.settings import OPENAI_API_KEY, OPENAI_BASE_URL
+from src.utils.auth import get_current_user
 
 router = APIRouter()
-load_dotenv()
 
 def encode_image(image_file):
     return base64.b64encode(image_file).decode("utf-8")
@@ -22,16 +21,13 @@ async def analyze_chart(
     user: dict = Depends(get_current_user),
 ):
     try:
-        # Check if API key is present
-        api_key = os.getenv("OPENAI_API_KEY")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        if not api_key or not base_url:
+        if not OPENAI_API_KEY or not OPENAI_BASE_URL:
             raise HTTPException(
                 status_code=500,
                 detail="OPENAI_API_KEY or OPENAI_BASE_URL not found in environment variables"
             )
 
-        client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
 
         # Prepare content based on whether there's an image
         content: list[dict] = [

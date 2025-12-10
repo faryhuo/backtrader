@@ -12338,2935 +12338,6 @@ function useViewTransitionState(to, { relative } = {}) {
   return matchPath(path2.pathname, nextPath) != null || matchPath(path2.pathname, currentPath) != null;
 }
 var reactDomExports = requireReactDom();
-const isObject$5 = (value) => typeof value === "object" && value !== null;
-const isObjectCustom = (value) => isObject$5(value) && !(value instanceof RegExp) && !(value instanceof Error) && !(value instanceof Date);
-const mapObjectSkip = Symbol("mapObjectSkip");
-const _mapObject = (object4, mapper, options, isSeen = /* @__PURE__ */ new WeakMap()) => {
-  options = {
-    deep: false,
-    target: {},
-    ...options
-  };
-  if (isSeen.has(object4)) {
-    return isSeen.get(object4);
-  }
-  isSeen.set(object4, options.target);
-  const { target } = options;
-  delete options.target;
-  const mapArray = (array4) => array4.map((element2) => isObjectCustom(element2) ? _mapObject(element2, mapper, options, isSeen) : element2);
-  if (Array.isArray(object4)) {
-    return mapArray(object4);
-  }
-  for (const [key, value] of Object.entries(object4)) {
-    const mapResult = mapper(key, value, object4);
-    if (mapResult === mapObjectSkip) {
-      continue;
-    }
-    let [newKey, newValue, { shouldRecurse = true } = {}] = mapResult;
-    if (newKey === "__proto__") {
-      continue;
-    }
-    if (options.deep && shouldRecurse && isObjectCustom(newValue)) {
-      newValue = Array.isArray(newValue) ? mapArray(newValue) : _mapObject(newValue, mapper, options, isSeen);
-    }
-    target[newKey] = newValue;
-  }
-  return target;
-};
-function mapObject(object4, mapper, options) {
-  if (!isObject$5(object4)) {
-    throw new TypeError(`Expected an object, got \`${object4}\` (${typeof object4})`);
-  }
-  return _mapObject(object4, mapper, options);
-}
-const UPPERCASE = /[\p{Lu}]/u;
-const LOWERCASE = /[\p{Ll}]/u;
-const LEADING_CAPITAL = /^[\p{Lu}](?![\p{Lu}])/gu;
-const IDENTIFIER = /([\p{Alpha}\p{N}_]|$)/u;
-const SEPARATORS = /[_.\- ]+/;
-const LEADING_SEPARATORS = new RegExp("^" + SEPARATORS.source);
-const SEPARATORS_AND_IDENTIFIER = new RegExp(SEPARATORS.source + IDENTIFIER.source, "gu");
-const NUMBERS_AND_IDENTIFIER = new RegExp("\\d+" + IDENTIFIER.source, "gu");
-const preserveCamelCase = (string3, toLowerCase, toUpperCase, preserveConsecutiveUppercase2) => {
-  let isLastCharLower = false;
-  let isLastCharUpper = false;
-  let isLastLastCharUpper = false;
-  let isLastLastCharPreserved = false;
-  for (let index2 = 0; index2 < string3.length; index2++) {
-    const character2 = string3[index2];
-    isLastLastCharPreserved = index2 > 2 ? string3[index2 - 3] === "-" : true;
-    if (isLastCharLower && UPPERCASE.test(character2)) {
-      string3 = string3.slice(0, index2) + "-" + string3.slice(index2);
-      isLastCharLower = false;
-      isLastLastCharUpper = isLastCharUpper;
-      isLastCharUpper = true;
-      index2++;
-    } else if (isLastCharUpper && isLastLastCharUpper && LOWERCASE.test(character2) && (!isLastLastCharPreserved || preserveConsecutiveUppercase2)) {
-      string3 = string3.slice(0, index2 - 1) + "-" + string3.slice(index2 - 1);
-      isLastLastCharUpper = isLastCharUpper;
-      isLastCharUpper = false;
-      isLastCharLower = true;
-    } else {
-      isLastCharLower = toLowerCase(character2) === character2 && toUpperCase(character2) !== character2;
-      isLastLastCharUpper = isLastCharUpper;
-      isLastCharUpper = toUpperCase(character2) === character2 && toLowerCase(character2) !== character2;
-    }
-  }
-  return string3;
-};
-const preserveConsecutiveUppercase = (input, toLowerCase) => {
-  LEADING_CAPITAL.lastIndex = 0;
-  return input.replaceAll(LEADING_CAPITAL, (match2) => toLowerCase(match2));
-};
-const postProcess = (input, toUpperCase) => {
-  SEPARATORS_AND_IDENTIFIER.lastIndex = 0;
-  NUMBERS_AND_IDENTIFIER.lastIndex = 0;
-  return input.replaceAll(NUMBERS_AND_IDENTIFIER, (match2, pattern4, offset) => ["_", "-"].includes(input.charAt(offset + match2.length)) ? match2 : toUpperCase(match2)).replaceAll(SEPARATORS_AND_IDENTIFIER, (_2, identifier2) => toUpperCase(identifier2));
-};
-function camelCase$1(input, options) {
-  if (!(typeof input === "string" || Array.isArray(input))) {
-    throw new TypeError("Expected the input to be `string | string[]`");
-  }
-  options = {
-    pascalCase: false,
-    preserveConsecutiveUppercase: false,
-    ...options
-  };
-  if (Array.isArray(input)) {
-    input = input.map((x2) => x2.trim()).filter((x2) => x2.length).join("-");
-  } else {
-    input = input.trim();
-  }
-  if (input.length === 0) {
-    return "";
-  }
-  const toLowerCase = options.locale === false ? (string3) => string3.toLowerCase() : (string3) => string3.toLocaleLowerCase(options.locale);
-  const toUpperCase = options.locale === false ? (string3) => string3.toUpperCase() : (string3) => string3.toLocaleUpperCase(options.locale);
-  if (input.length === 1) {
-    if (SEPARATORS.test(input)) {
-      return "";
-    }
-    return options.pascalCase ? toUpperCase(input) : toLowerCase(input);
-  }
-  const hasUpperCase = input !== toLowerCase(input);
-  if (hasUpperCase) {
-    input = preserveCamelCase(input, toLowerCase, toUpperCase, options.preserveConsecutiveUppercase);
-  }
-  input = input.replace(LEADING_SEPARATORS, "");
-  input = options.preserveConsecutiveUppercase ? preserveConsecutiveUppercase(input, toLowerCase) : toLowerCase(input);
-  if (options.pascalCase) {
-    input = toUpperCase(input.charAt(0)) + input.slice(1);
-  }
-  return postProcess(input, toUpperCase);
-}
-class QuickLRU extends Map {
-  constructor(options = {}) {
-    super();
-    if (!(options.maxSize && options.maxSize > 0)) {
-      throw new TypeError("`maxSize` must be a number greater than 0");
-    }
-    if (typeof options.maxAge === "number" && options.maxAge === 0) {
-      throw new TypeError("`maxAge` must be a number greater than 0");
-    }
-    this.maxSize = options.maxSize;
-    this.maxAge = options.maxAge || Number.POSITIVE_INFINITY;
-    this.onEviction = options.onEviction;
-    this.cache = /* @__PURE__ */ new Map();
-    this.oldCache = /* @__PURE__ */ new Map();
-    this._size = 0;
-  }
-  // TODO: Use private class methods when targeting Node.js 16.
-  _emitEvictions(cache2) {
-    if (typeof this.onEviction !== "function") {
-      return;
-    }
-    for (const [key, item] of cache2) {
-      this.onEviction(key, item.value);
-    }
-  }
-  _deleteIfExpired(key, item) {
-    if (typeof item.expiry === "number" && item.expiry <= Date.now()) {
-      if (typeof this.onEviction === "function") {
-        this.onEviction(key, item.value);
-      }
-      return this.delete(key);
-    }
-    return false;
-  }
-  _getOrDeleteIfExpired(key, item) {
-    const deleted = this._deleteIfExpired(key, item);
-    if (deleted === false) {
-      return item.value;
-    }
-  }
-  _getItemValue(key, item) {
-    return item.expiry ? this._getOrDeleteIfExpired(key, item) : item.value;
-  }
-  _peek(key, cache2) {
-    const item = cache2.get(key);
-    return this._getItemValue(key, item);
-  }
-  _set(key, value) {
-    this.cache.set(key, value);
-    this._size++;
-    if (this._size >= this.maxSize) {
-      this._size = 0;
-      this._emitEvictions(this.oldCache);
-      this.oldCache = this.cache;
-      this.cache = /* @__PURE__ */ new Map();
-    }
-  }
-  _moveToRecent(key, item) {
-    this.oldCache.delete(key);
-    this._set(key, item);
-  }
-  *_entriesAscending() {
-    for (const item of this.oldCache) {
-      const [key, value] = item;
-      if (!this.cache.has(key)) {
-        const deleted = this._deleteIfExpired(key, value);
-        if (deleted === false) {
-          yield item;
-        }
-      }
-    }
-    for (const item of this.cache) {
-      const [key, value] = item;
-      const deleted = this._deleteIfExpired(key, value);
-      if (deleted === false) {
-        yield item;
-      }
-    }
-  }
-  get(key) {
-    if (this.cache.has(key)) {
-      const item = this.cache.get(key);
-      return this._getItemValue(key, item);
-    }
-    if (this.oldCache.has(key)) {
-      const item = this.oldCache.get(key);
-      if (this._deleteIfExpired(key, item) === false) {
-        this._moveToRecent(key, item);
-        return item.value;
-      }
-    }
-  }
-  set(key, value, { maxAge = this.maxAge } = {}) {
-    const expiry = typeof maxAge === "number" && maxAge !== Number.POSITIVE_INFINITY ? Date.now() + maxAge : void 0;
-    if (this.cache.has(key)) {
-      this.cache.set(key, {
-        value,
-        expiry
-      });
-    } else {
-      this._set(key, { value, expiry });
-    }
-    return this;
-  }
-  has(key) {
-    if (this.cache.has(key)) {
-      return !this._deleteIfExpired(key, this.cache.get(key));
-    }
-    if (this.oldCache.has(key)) {
-      return !this._deleteIfExpired(key, this.oldCache.get(key));
-    }
-    return false;
-  }
-  peek(key) {
-    if (this.cache.has(key)) {
-      return this._peek(key, this.cache);
-    }
-    if (this.oldCache.has(key)) {
-      return this._peek(key, this.oldCache);
-    }
-  }
-  delete(key) {
-    const deleted = this.cache.delete(key);
-    if (deleted) {
-      this._size--;
-    }
-    return this.oldCache.delete(key) || deleted;
-  }
-  clear() {
-    this.cache.clear();
-    this.oldCache.clear();
-    this._size = 0;
-  }
-  resize(newSize) {
-    if (!(newSize && newSize > 0)) {
-      throw new TypeError("`maxSize` must be a number greater than 0");
-    }
-    const items = [...this._entriesAscending()];
-    const removeCount = items.length - newSize;
-    if (removeCount < 0) {
-      this.cache = new Map(items);
-      this.oldCache = /* @__PURE__ */ new Map();
-      this._size = items.length;
-    } else {
-      if (removeCount > 0) {
-        this._emitEvictions(items.slice(0, removeCount));
-      }
-      this.oldCache = new Map(items.slice(removeCount));
-      this.cache = /* @__PURE__ */ new Map();
-      this._size = 0;
-    }
-    this.maxSize = newSize;
-  }
-  *keys() {
-    for (const [key] of this) {
-      yield key;
-    }
-  }
-  *values() {
-    for (const [, value] of this) {
-      yield value;
-    }
-  }
-  *[Symbol.iterator]() {
-    for (const item of this.cache) {
-      const [key, value] = item;
-      const deleted = this._deleteIfExpired(key, value);
-      if (deleted === false) {
-        yield [key, value.value];
-      }
-    }
-    for (const item of this.oldCache) {
-      const [key, value] = item;
-      if (!this.cache.has(key)) {
-        const deleted = this._deleteIfExpired(key, value);
-        if (deleted === false) {
-          yield [key, value.value];
-        }
-      }
-    }
-  }
-  *entriesDescending() {
-    let items = [...this.cache];
-    for (let i = items.length - 1; i >= 0; --i) {
-      const item = items[i];
-      const [key, value] = item;
-      const deleted = this._deleteIfExpired(key, value);
-      if (deleted === false) {
-        yield [key, value.value];
-      }
-    }
-    items = [...this.oldCache];
-    for (let i = items.length - 1; i >= 0; --i) {
-      const item = items[i];
-      const [key, value] = item;
-      if (!this.cache.has(key)) {
-        const deleted = this._deleteIfExpired(key, value);
-        if (deleted === false) {
-          yield [key, value.value];
-        }
-      }
-    }
-  }
-  *entriesAscending() {
-    for (const [key, value] of this._entriesAscending()) {
-      yield [key, value.value];
-    }
-  }
-  get size() {
-    if (!this._size) {
-      return this.oldCache.size;
-    }
-    let oldCacheSize = 0;
-    for (const key of this.oldCache.keys()) {
-      if (!this.cache.has(key)) {
-        oldCacheSize++;
-      }
-    }
-    return Math.min(this._size + oldCacheSize, this.maxSize);
-  }
-  entries() {
-    return this.entriesAscending();
-  }
-  forEach(callbackFunction, thisArgument = this) {
-    for (const [key, value] of this.entriesAscending()) {
-      callbackFunction.call(thisArgument, value, key, this);
-    }
-  }
-  get [Symbol.toStringTag]() {
-    return JSON.stringify([...this.entriesAscending()]);
-  }
-}
-const has = (array4, key) => array4.some((element2) => {
-  if (typeof element2 === "string") {
-    return element2 === key;
-  }
-  element2.lastIndex = 0;
-  return element2.test(key);
-});
-const cache = new QuickLRU({ maxSize: 1e5 });
-const isObject$4 = (value) => typeof value === "object" && value !== null && !(value instanceof RegExp) && !(value instanceof Error) && !(value instanceof Date);
-const transform = (input, options = {}) => {
-  if (!isObject$4(input)) {
-    return input;
-  }
-  const {
-    exclude,
-    pascalCase = false,
-    stopPaths,
-    deep = false,
-    preserveConsecutiveUppercase: preserveConsecutiveUppercase2 = false
-  } = options;
-  const stopPathsSet = new Set(stopPaths);
-  const makeMapper = (parentPath) => (key, value) => {
-    if (deep && isObject$4(value)) {
-      const path2 = parentPath === void 0 ? key : `${parentPath}.${key}`;
-      if (!stopPathsSet.has(path2)) {
-        value = mapObject(value, makeMapper(path2));
-      }
-    }
-    if (!(exclude && has(exclude, key))) {
-      const cacheKey = pascalCase ? `${key}_` : key;
-      if (cache.has(cacheKey)) {
-        key = cache.get(cacheKey);
-      } else {
-        const returnValue = camelCase$1(key, { pascalCase, locale: false, preserveConsecutiveUppercase: preserveConsecutiveUppercase2 });
-        if (key.length < 100) {
-          cache.set(cacheKey, returnValue);
-        }
-        key = returnValue;
-      }
-    }
-    return [key, value];
-  };
-  return mapObject(input, makeMapper(void 0));
-};
-function camelcaseKeys(input, options) {
-  if (Array.isArray(input)) {
-    return Object.keys(input).map((key) => transform(input[key], options));
-  }
-  return transform(input, options);
-}
-var ReservedScope;
-(function(ReservedScope2) {
-  ReservedScope2["OpenId"] = "openid";
-  ReservedScope2["OfflineAccess"] = "offline_access";
-})(ReservedScope || (ReservedScope = {}));
-var ReservedResource;
-(function(ReservedResource2) {
-  ReservedResource2["Organization"] = "urn:logto:resource:organizations";
-})(ReservedResource || (ReservedResource = {}));
-var UserScope;
-(function(UserScope2) {
-  UserScope2["Profile"] = "profile";
-  UserScope2["Email"] = "email";
-  UserScope2["Phone"] = "phone";
-  UserScope2["Address"] = "address";
-  UserScope2["CustomData"] = "custom_data";
-  UserScope2["Identities"] = "identities";
-  UserScope2["Roles"] = "roles";
-  UserScope2["Organizations"] = "urn:logto:scope:organizations";
-  UserScope2["OrganizationRoles"] = "urn:logto:scope:organization_roles";
-})(UserScope || (UserScope = {}));
-const idTokenClaims = Object.freeze({
-  [UserScope.Profile]: ["name", "picture", "username"],
-  [UserScope.Email]: ["email", "email_verified"],
-  [UserScope.Phone]: ["phone_number", "phone_number_verified"],
-  [UserScope.Address]: [],
-  [UserScope.Roles]: ["roles"],
-  [UserScope.Organizations]: ["organizations"],
-  [UserScope.OrganizationRoles]: ["organization_roles"],
-  [UserScope.CustomData]: [],
-  [UserScope.Identities]: []
-});
-const userinfoClaims = Object.freeze({
-  [UserScope.Profile]: [],
-  [UserScope.Email]: [],
-  [UserScope.Phone]: [],
-  [UserScope.Address]: [],
-  [UserScope.Roles]: [],
-  [UserScope.Organizations]: [],
-  [UserScope.OrganizationRoles]: [],
-  [UserScope.CustomData]: ["custom_data"],
-  [UserScope.Identities]: ["identities"]
-});
-Object.freeze(
-  // Hard to infer type directly, use `as` for a workaround.
-  // eslint-disable-next-line no-restricted-syntax
-  Object.fromEntries(Object.values(UserScope).map((current) => [
-    current,
-    [...idTokenClaims[current], ...userinfoClaims[current]]
-  ]))
-);
-const ContentType = {
-  formUrlEncoded: { "Content-Type": "application/x-www-form-urlencoded" }
-};
-var TokenGrantType;
-(function(TokenGrantType2) {
-  TokenGrantType2["AuthorizationCode"] = "authorization_code";
-  TokenGrantType2["RefreshToken"] = "refresh_token";
-})(TokenGrantType || (TokenGrantType = {}));
-var QueryKey;
-(function(QueryKey2) {
-  QueryKey2["ClientId"] = "client_id";
-  QueryKey2["Code"] = "code";
-  QueryKey2["CodeChallenge"] = "code_challenge";
-  QueryKey2["CodeChallengeMethod"] = "code_challenge_method";
-  QueryKey2["CodeVerifier"] = "code_verifier";
-  QueryKey2["Error"] = "error";
-  QueryKey2["ErrorDescription"] = "error_description";
-  QueryKey2["GrantType"] = "grant_type";
-  QueryKey2["IdToken"] = "id_token";
-  QueryKey2["IdTokenHint"] = "id_token_hint";
-  QueryKey2["LoginHint"] = "login_hint";
-  QueryKey2["PostLogoutRedirectUri"] = "post_logout_redirect_uri";
-  QueryKey2["Prompt"] = "prompt";
-  QueryKey2["RedirectUri"] = "redirect_uri";
-  QueryKey2["RefreshToken"] = "refresh_token";
-  QueryKey2["Resource"] = "resource";
-  QueryKey2["ResponseType"] = "response_type";
-  QueryKey2["Scope"] = "scope";
-  QueryKey2["State"] = "state";
-  QueryKey2["Token"] = "token";
-  QueryKey2["InteractionMode"] = "interaction_mode";
-  QueryKey2["OrganizationId"] = "organization_id";
-  QueryKey2["FirstScreen"] = "first_screen";
-  QueryKey2["Identifier"] = "identifier";
-  QueryKey2["DirectSignIn"] = "direct_sign_in";
-  QueryKey2["OneTimeToken"] = "one_time_token";
-})(QueryKey || (QueryKey = {}));
-var Prompt;
-(function(Prompt2) {
-  Prompt2["None"] = "none";
-  Prompt2["Consent"] = "consent";
-  Prompt2["Login"] = "login";
-})(Prompt || (Prompt = {}));
-const fetchTokenByAuthorizationCode = async ({ clientId, tokenEndpoint, redirectUri, codeVerifier, code: code2, resource }, requester) => {
-  const parameters = new URLSearchParams();
-  parameters.append(QueryKey.ClientId, clientId);
-  parameters.append(QueryKey.Code, code2);
-  parameters.append(QueryKey.CodeVerifier, codeVerifier);
-  parameters.append(QueryKey.RedirectUri, redirectUri);
-  parameters.append(QueryKey.GrantType, TokenGrantType.AuthorizationCode);
-  if (resource) {
-    parameters.append(QueryKey.Resource, resource);
-  }
-  const snakeCaseCodeTokenResponse = await requester(tokenEndpoint, {
-    method: "POST",
-    headers: ContentType.formUrlEncoded,
-    body: parameters.toString()
-  });
-  return camelcaseKeys(snakeCaseCodeTokenResponse);
-};
-const fetchTokenByRefreshToken = async (params, requester) => {
-  const { clientId, tokenEndpoint, refreshToken, resource, organizationId, scopes } = params;
-  const parameters = new URLSearchParams();
-  parameters.append(QueryKey.ClientId, clientId);
-  parameters.append(QueryKey.RefreshToken, refreshToken);
-  parameters.append(QueryKey.GrantType, TokenGrantType.RefreshToken);
-  if (resource) {
-    parameters.append(QueryKey.Resource, resource);
-  }
-  if (organizationId) {
-    parameters.append(QueryKey.OrganizationId, organizationId);
-  }
-  if (scopes == null ? void 0 : scopes.length) {
-    parameters.append(QueryKey.Scope, scopes.join(" "));
-  }
-  const snakeCaseRefreshTokenTokenResponse = await requester(tokenEndpoint, {
-    method: "POST",
-    headers: ContentType.formUrlEncoded,
-    body: parameters.toString()
-  });
-  return camelcaseKeys(snakeCaseRefreshTokenTokenResponse);
-};
-const discoveryPath = "/oidc/.well-known/openid-configuration";
-const fetchOidcConfig = async (endpoint, requester) => camelcaseKeys(await requester(endpoint));
-const revoke = async (revocationEndpoint, clientId, token2, requester) => requester(revocationEndpoint, {
-  method: "POST",
-  headers: ContentType.formUrlEncoded,
-  body: new URLSearchParams({
-    [QueryKey.ClientId]: clientId,
-    [QueryKey.Token]: token2
-  }).toString()
-});
-const withReservedScopes = (originalScopes) => {
-  const reservedScopes = Object.values(ReservedScope);
-  const uniqueScopes = /* @__PURE__ */ new Set([...reservedScopes, UserScope.Profile, ...originalScopes ?? []]);
-  return Array.from(uniqueScopes).join(" ");
-};
-const codeChallengeMethod = "S256";
-const responseType = "code";
-const buildPrompt = (prompt) => {
-  if (Array.isArray(prompt)) {
-    return prompt.join(" ");
-  }
-  return prompt ?? Prompt.Consent;
-};
-const generateSignInUri = ({ authorizationEndpoint, clientId, redirectUri, codeChallenge, state, scopes, resources, prompt, firstScreen, identifiers: identifier2, interactionMode, loginHint, directSignIn, oneTimeToken, extraParams, includeReservedScopes = true }) => {
-  const urlSearchParameters = new URLSearchParams({
-    [QueryKey.ClientId]: clientId,
-    [QueryKey.RedirectUri]: redirectUri,
-    [QueryKey.CodeChallenge]: codeChallenge,
-    [QueryKey.CodeChallengeMethod]: codeChallengeMethod,
-    [QueryKey.State]: state,
-    [QueryKey.ResponseType]: responseType,
-    [QueryKey.Prompt]: buildPrompt(prompt)
-  });
-  const computedScopes = includeReservedScopes ? withReservedScopes(scopes) : scopes == null ? void 0 : scopes.join(" ");
-  if (computedScopes) {
-    urlSearchParameters.append(QueryKey.Scope, computedScopes);
-  }
-  if (loginHint) {
-    urlSearchParameters.append(QueryKey.LoginHint, loginHint);
-  }
-  if (directSignIn) {
-    urlSearchParameters.append(QueryKey.DirectSignIn, `${directSignIn.method}:${directSignIn.target}`);
-  }
-  for (const resource of resources ?? []) {
-    urlSearchParameters.append(QueryKey.Resource, resource);
-  }
-  if (firstScreen) {
-    urlSearchParameters.append(QueryKey.FirstScreen, firstScreen);
-  } else if (interactionMode) {
-    urlSearchParameters.append(QueryKey.InteractionMode, interactionMode);
-  }
-  if (identifier2 && identifier2.length > 0) {
-    urlSearchParameters.append(QueryKey.Identifier, identifier2.join(" "));
-  }
-  if (oneTimeToken) {
-    urlSearchParameters.append(QueryKey.OneTimeToken, oneTimeToken);
-  }
-  if (extraParams) {
-    for (const [key, value] of Object.entries(extraParams)) {
-      urlSearchParameters.append(key, value);
-    }
-  }
-  return `${authorizationEndpoint}?${urlSearchParameters.toString()}`;
-};
-const generateSignOutUri = ({ endSessionEndpoint, clientId, postLogoutRedirectUri }) => {
-  const urlSearchParameters = new URLSearchParams({ [QueryKey.ClientId]: clientId });
-  if (postLogoutRedirectUri) {
-    urlSearchParameters.append(QueryKey.PostLogoutRedirectUri, postLogoutRedirectUri);
-  }
-  return `${endSessionEndpoint}?${urlSearchParameters.toString()}`;
-};
-const fetchUserInfo = async (userInfoEndpoint, accessToken, requester) => requester(userInfoEndpoint, {
-  headers: { Authorization: `Bearer ${accessToken}` }
-});
-const deduplicate = (array4) => [...new Set(array4)];
-const notFalsy = (value) => Boolean(value);
-const conditional = (exp) => notFalsy(exp) ? exp : void 0;
-const conditionalString = (exp) => notFalsy(exp) ? String(exp) : "";
-const isPromise = (value) => value !== null && (typeof value === "object" || typeof value === "function") && "then" in value && typeof value.then === "function";
-const trySafe = (exec, onError) => {
-  try {
-    const unwrapped = typeof exec === "function" ? exec() : exec;
-    return isPromise(unwrapped) ? (
-      // eslint-disable-next-line promise/prefer-await-to-then
-      unwrapped.catch((error) => {
-        onError == null ? void 0 : onError(error);
-      })
-    ) : unwrapped;
-  } catch (error) {
-    onError == null ? void 0 : onError(error);
-  }
-};
-const replaceNonUrlSafeCharacters = (base64String) => base64String.replaceAll("+", "-").replaceAll("/", "_").replaceAll(/=+$/g, "");
-const restoreNonUrlSafeCharacters = (base64String) => base64String.replaceAll("-", "+").replaceAll("_", "/");
-const urlSafeBase64 = {
-  isSafe: (input) => /^[\w-]*$/.test(input),
-  encode: (rawString) => {
-    const encodedString = btoa(unescape(encodeURIComponent(rawString)));
-    return replaceNonUrlSafeCharacters(encodedString);
-  },
-  decode: (encodedString) => {
-    const nonUrlSafeEncodedString = restoreNonUrlSafeCharacters(encodedString);
-    return decodeURIComponent(escape(atob(nonUrlSafeEncodedString)));
-  },
-  replaceNonUrlSafeCharacters,
-  restoreNonUrlSafeCharacters
-};
-const isArbitraryObject = (data) => typeof data === "object" && data !== null;
-const logtoErrorCodes = Object.freeze({
-  "id_token.invalid_iat": "Invalid issued at time in the ID token",
-  "id_token.invalid_token": "Invalid ID token",
-  "callback_uri_verification.redirect_uri_mismatched": "The callback URI mismatches the redirect URI.",
-  "callback_uri_verification.error_found": "Error found in the callback URI",
-  "callback_uri_verification.missing_state": "Missing state in the callback URI",
-  "callback_uri_verification.state_mismatched": "State mismatched in the callback URI",
-  "callback_uri_verification.missing_code": "Missing code in the callback URI",
-  crypto_subtle_unavailable: "Crypto.subtle is unavailable in insecure contexts (non-HTTPS).",
-  unexpected_response_error: "Unexpected response error from the server."
-});
-class LogtoError extends Error {
-  constructor(code2, data) {
-    super(logtoErrorCodes[code2]);
-    this.code = code2;
-    this.data = data;
-    this.name = "LogtoError";
-  }
-}
-const isLogtoRequestErrorJson = (data) => {
-  if (!isArbitraryObject(data)) {
-    return false;
-  }
-  return typeof data.code === "string" && typeof data.message === "string";
-};
-class LogtoRequestError extends Error {
-  constructor(code2, message2, cause) {
-    super(message2);
-    this.code = code2;
-    this.cause = cause;
-    this.name = "LogtoRequestError";
-  }
-}
-class OidcError {
-  constructor(error, errorDescription) {
-    this.error = error;
-    this.errorDescription = errorDescription;
-    this.name = "OidcError";
-  }
-}
-const parseUriParameters = (uri) => {
-  const [, queryString = ""] = uri.split("?");
-  return new URLSearchParams(queryString);
-};
-const verifyAndParseCodeFromCallbackUri = (callbackUri, redirectUri, state) => {
-  if (!callbackUri.startsWith(redirectUri)) {
-    throw new LogtoError("callback_uri_verification.redirect_uri_mismatched");
-  }
-  const uriParameters = parseUriParameters(callbackUri);
-  const error = conditional(uriParameters.get(QueryKey.Error));
-  const errorDescription = conditional(uriParameters.get(QueryKey.ErrorDescription));
-  if (error) {
-    throw new LogtoError("callback_uri_verification.error_found", new OidcError(error, errorDescription));
-  }
-  const stateFromCallbackUri = uriParameters.get(QueryKey.State);
-  if (!stateFromCallbackUri) {
-    throw new LogtoError("callback_uri_verification.missing_state");
-  }
-  if (stateFromCallbackUri !== state) {
-    throw new LogtoError("callback_uri_verification.state_mismatched");
-  }
-  const code2 = uriParameters.get(QueryKey.Code);
-  if (!code2) {
-    throw new LogtoError("callback_uri_verification.missing_code");
-  }
-  return code2;
-};
-function assertIdTokenClaims(data) {
-  if (!isArbitraryObject(data)) {
-    throw new TypeError("IdToken is expected to be an object");
-  }
-  for (const key of ["iss", "sub", "aud"]) {
-    if (typeof data[key] !== "string") {
-      throw new TypeError(`At path: IdToken.${key}: expected a string`);
-    }
-  }
-  for (const key of ["exp", "iat"]) {
-    if (typeof data[key] !== "number") {
-      throw new TypeError(`At path: IdToken.${key}: expected a number`);
-    }
-  }
-  for (const key of ["at_hash", "name", "username", "picture", "email", "phone_number"]) {
-    if (data[key] === void 0) {
-      continue;
-    }
-    if (typeof data[key] !== "string" && data[key] !== null) {
-      throw new TypeError(`At path: IdToken.${key}: expected null or a string`);
-    }
-  }
-  for (const key of ["email_verified", "phone_number_verified"]) {
-    if (data[key] === void 0) {
-      continue;
-    }
-    if (typeof data[key] !== "boolean") {
-      throw new TypeError(`At path: IdToken.${key}: expected a boolean`);
-    }
-  }
-}
-const decodeIdToken = (token2) => {
-  const { 1: encodedPayload } = token2.split(".");
-  if (!encodedPayload) {
-    throw new LogtoError("id_token.invalid_token");
-  }
-  const json = urlSafeBase64.decode(encodedPayload);
-  const idTokenClaims2 = JSON.parse(json);
-  assertIdTokenClaims(idTokenClaims2);
-  return idTokenClaims2;
-};
-function assertAccessTokenClaims(data) {
-  if (!isArbitraryObject(data)) {
-    throw new TypeError("AccessToken is expected to be an object");
-  }
-  for (const key of ["jti", "iss", "sub", "aud", "client_id", "scope"]) {
-    if (data[key] === void 0) {
-      continue;
-    }
-    if (typeof data[key] !== "string" && data[key] !== null) {
-      throw new TypeError(`At path: AccessToken.${key}: expected null or a string`);
-    }
-  }
-  for (const key of ["exp", "iat"]) {
-    if (data[key] === void 0) {
-      continue;
-    }
-    if (typeof data[key] !== "number" && data[key] !== null) {
-      throw new TypeError(`At path: AccessToken.${key}: expected null or a number`);
-    }
-  }
-}
-const decodeAccessToken = (accessToken) => {
-  const { 1: encodedPayload } = accessToken.split(".");
-  if (!encodedPayload) {
-    return {};
-  }
-  const json = urlSafeBase64.decode(encodedPayload);
-  const accessTokenClaims = JSON.parse(json);
-  assertAccessTokenClaims(accessTokenClaims);
-  return accessTokenClaims;
-};
-const crypto$1 = crypto;
-const isCryptoKey = (key) => key instanceof CryptoKey;
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
-function concat(...buffers) {
-  const size2 = buffers.reduce((acc, { length: length2 }) => acc + length2, 0);
-  const buf = new Uint8Array(size2);
-  let i = 0;
-  for (const buffer of buffers) {
-    buf.set(buffer, i);
-    i += buffer.length;
-  }
-  return buf;
-}
-const decodeBase64 = (encoded) => {
-  const binary = atob(encoded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-};
-const decode$1 = (input) => {
-  let encoded = input;
-  if (encoded instanceof Uint8Array) {
-    encoded = decoder.decode(encoded);
-  }
-  encoded = encoded.replace(/-/g, "+").replace(/_/g, "/").replace(/\s/g, "");
-  try {
-    return decodeBase64(encoded);
-  } catch {
-    throw new TypeError("The input to be decoded is not correctly encoded.");
-  }
-};
-class JOSEError extends Error {
-  constructor(message2, options) {
-    var _a2;
-    super(message2, options);
-    this.code = "ERR_JOSE_GENERIC";
-    this.name = this.constructor.name;
-    (_a2 = Error.captureStackTrace) == null ? void 0 : _a2.call(Error, this, this.constructor);
-  }
-}
-JOSEError.code = "ERR_JOSE_GENERIC";
-class JWTClaimValidationFailed extends JOSEError {
-  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
-    super(message2, { cause: { claim, reason, payload } });
-    this.code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
-    this.claim = claim;
-    this.reason = reason;
-    this.payload = payload;
-  }
-}
-JWTClaimValidationFailed.code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
-class JWTExpired extends JOSEError {
-  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
-    super(message2, { cause: { claim, reason, payload } });
-    this.code = "ERR_JWT_EXPIRED";
-    this.claim = claim;
-    this.reason = reason;
-    this.payload = payload;
-  }
-}
-JWTExpired.code = "ERR_JWT_EXPIRED";
-class JOSEAlgNotAllowed extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JOSE_ALG_NOT_ALLOWED";
-  }
-}
-JOSEAlgNotAllowed.code = "ERR_JOSE_ALG_NOT_ALLOWED";
-class JOSENotSupported extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JOSE_NOT_SUPPORTED";
-  }
-}
-JOSENotSupported.code = "ERR_JOSE_NOT_SUPPORTED";
-class JWEDecryptionFailed extends JOSEError {
-  constructor(message2 = "decryption operation failed", options) {
-    super(message2, options);
-    this.code = "ERR_JWE_DECRYPTION_FAILED";
-  }
-}
-JWEDecryptionFailed.code = "ERR_JWE_DECRYPTION_FAILED";
-class JWEInvalid extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JWE_INVALID";
-  }
-}
-JWEInvalid.code = "ERR_JWE_INVALID";
-class JWSInvalid extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JWS_INVALID";
-  }
-}
-JWSInvalid.code = "ERR_JWS_INVALID";
-class JWTInvalid extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JWT_INVALID";
-  }
-}
-JWTInvalid.code = "ERR_JWT_INVALID";
-class JWKInvalid extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JWK_INVALID";
-  }
-}
-JWKInvalid.code = "ERR_JWK_INVALID";
-class JWKSInvalid extends JOSEError {
-  constructor() {
-    super(...arguments);
-    this.code = "ERR_JWKS_INVALID";
-  }
-}
-JWKSInvalid.code = "ERR_JWKS_INVALID";
-class JWKSNoMatchingKey extends JOSEError {
-  constructor(message2 = "no applicable key found in the JSON Web Key Set", options) {
-    super(message2, options);
-    this.code = "ERR_JWKS_NO_MATCHING_KEY";
-  }
-}
-JWKSNoMatchingKey.code = "ERR_JWKS_NO_MATCHING_KEY";
-class JWKSMultipleMatchingKeys extends JOSEError {
-  constructor(message2 = "multiple matching keys found in the JSON Web Key Set", options) {
-    super(message2, options);
-    this.code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
-  }
-}
-JWKSMultipleMatchingKeys.code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
-class JWKSTimeout extends JOSEError {
-  constructor(message2 = "request timed out", options) {
-    super(message2, options);
-    this.code = "ERR_JWKS_TIMEOUT";
-  }
-}
-JWKSTimeout.code = "ERR_JWKS_TIMEOUT";
-class JWSSignatureVerificationFailed extends JOSEError {
-  constructor(message2 = "signature verification failed", options) {
-    super(message2, options);
-    this.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
-  }
-}
-JWSSignatureVerificationFailed.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
-function unusable(name2, prop = "algorithm.name") {
-  return new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name2}`);
-}
-function isAlgorithm(algorithm, name2) {
-  return algorithm.name === name2;
-}
-function getHashLength(hash2) {
-  return parseInt(hash2.name.slice(4), 10);
-}
-function getNamedCurve(alg) {
-  switch (alg) {
-    case "ES256":
-      return "P-256";
-    case "ES384":
-      return "P-384";
-    case "ES512":
-      return "P-521";
-    default:
-      throw new Error("unreachable");
-  }
-}
-function checkUsage(key, usages) {
-  if (usages.length && !usages.some((expected) => key.usages.includes(expected))) {
-    let msg = "CryptoKey does not support this operation, its usages must include ";
-    if (usages.length > 2) {
-      const last = usages.pop();
-      msg += `one of ${usages.join(", ")}, or ${last}.`;
-    } else if (usages.length === 2) {
-      msg += `one of ${usages[0]} or ${usages[1]}.`;
-    } else {
-      msg += `${usages[0]}.`;
-    }
-    throw new TypeError(msg);
-  }
-}
-function checkSigCryptoKey(key, alg, ...usages) {
-  switch (alg) {
-    case "HS256":
-    case "HS384":
-    case "HS512": {
-      if (!isAlgorithm(key.algorithm, "HMAC"))
-        throw unusable("HMAC");
-      const expected = parseInt(alg.slice(2), 10);
-      const actual = getHashLength(key.algorithm.hash);
-      if (actual !== expected)
-        throw unusable(`SHA-${expected}`, "algorithm.hash");
-      break;
-    }
-    case "RS256":
-    case "RS384":
-    case "RS512": {
-      if (!isAlgorithm(key.algorithm, "RSASSA-PKCS1-v1_5"))
-        throw unusable("RSASSA-PKCS1-v1_5");
-      const expected = parseInt(alg.slice(2), 10);
-      const actual = getHashLength(key.algorithm.hash);
-      if (actual !== expected)
-        throw unusable(`SHA-${expected}`, "algorithm.hash");
-      break;
-    }
-    case "PS256":
-    case "PS384":
-    case "PS512": {
-      if (!isAlgorithm(key.algorithm, "RSA-PSS"))
-        throw unusable("RSA-PSS");
-      const expected = parseInt(alg.slice(2), 10);
-      const actual = getHashLength(key.algorithm.hash);
-      if (actual !== expected)
-        throw unusable(`SHA-${expected}`, "algorithm.hash");
-      break;
-    }
-    case "EdDSA": {
-      if (key.algorithm.name !== "Ed25519" && key.algorithm.name !== "Ed448") {
-        throw unusable("Ed25519 or Ed448");
-      }
-      break;
-    }
-    case "Ed25519": {
-      if (!isAlgorithm(key.algorithm, "Ed25519"))
-        throw unusable("Ed25519");
-      break;
-    }
-    case "ES256":
-    case "ES384":
-    case "ES512": {
-      if (!isAlgorithm(key.algorithm, "ECDSA"))
-        throw unusable("ECDSA");
-      const expected = getNamedCurve(alg);
-      const actual = key.algorithm.namedCurve;
-      if (actual !== expected)
-        throw unusable(expected, "algorithm.namedCurve");
-      break;
-    }
-    default:
-      throw new TypeError("CryptoKey does not support this operation");
-  }
-  checkUsage(key, usages);
-}
-function message$1(msg, actual, ...types2) {
-  var _a2;
-  types2 = types2.filter(Boolean);
-  if (types2.length > 2) {
-    const last = types2.pop();
-    msg += `one of type ${types2.join(", ")}, or ${last}.`;
-  } else if (types2.length === 2) {
-    msg += `one of type ${types2[0]} or ${types2[1]}.`;
-  } else {
-    msg += `of type ${types2[0]}.`;
-  }
-  if (actual == null) {
-    msg += ` Received ${actual}`;
-  } else if (typeof actual === "function" && actual.name) {
-    msg += ` Received function ${actual.name}`;
-  } else if (typeof actual === "object" && actual != null) {
-    if ((_a2 = actual.constructor) == null ? void 0 : _a2.name) {
-      msg += ` Received an instance of ${actual.constructor.name}`;
-    }
-  }
-  return msg;
-}
-const invalidKeyInput = (actual, ...types2) => {
-  return message$1("Key must be ", actual, ...types2);
-};
-function withAlg(alg, actual, ...types2) {
-  return message$1(`Key for the ${alg} algorithm must be `, actual, ...types2);
-}
-const isKeyLike = (key) => {
-  if (isCryptoKey(key)) {
-    return true;
-  }
-  return (key == null ? void 0 : key[Symbol.toStringTag]) === "KeyObject";
-};
-const types$2 = ["CryptoKey"];
-const isDisjoint = (...headers) => {
-  const sources = headers.filter(Boolean);
-  if (sources.length === 0 || sources.length === 1) {
-    return true;
-  }
-  let acc;
-  for (const header of sources) {
-    const parameters = Object.keys(header);
-    if (!acc || acc.size === 0) {
-      acc = new Set(parameters);
-      continue;
-    }
-    for (const parameter of parameters) {
-      if (acc.has(parameter)) {
-        return false;
-      }
-      acc.add(parameter);
-    }
-  }
-  return true;
-};
-function isObjectLike(value) {
-  return typeof value === "object" && value !== null;
-}
-function isObject$3(input) {
-  if (!isObjectLike(input) || Object.prototype.toString.call(input) !== "[object Object]") {
-    return false;
-  }
-  if (Object.getPrototypeOf(input) === null) {
-    return true;
-  }
-  let proto = input;
-  while (Object.getPrototypeOf(proto) !== null) {
-    proto = Object.getPrototypeOf(proto);
-  }
-  return Object.getPrototypeOf(input) === proto;
-}
-const checkKeyLength = (alg, key) => {
-  if (alg.startsWith("RS") || alg.startsWith("PS")) {
-    const { modulusLength } = key.algorithm;
-    if (typeof modulusLength !== "number" || modulusLength < 2048) {
-      throw new TypeError(`${alg} requires key modulusLength to be 2048 bits or larger`);
-    }
-  }
-};
-function isJWK(key) {
-  return isObject$3(key) && typeof key.kty === "string";
-}
-function isPrivateJWK(key) {
-  return key.kty !== "oct" && typeof key.d === "string";
-}
-function isPublicJWK(key) {
-  return key.kty !== "oct" && typeof key.d === "undefined";
-}
-function isSecretJWK(key) {
-  return isJWK(key) && key.kty === "oct" && typeof key.k === "string";
-}
-function subtleMapping(jwk) {
-  let algorithm;
-  let keyUsages;
-  switch (jwk.kty) {
-    case "RSA": {
-      switch (jwk.alg) {
-        case "PS256":
-        case "PS384":
-        case "PS512":
-          algorithm = { name: "RSA-PSS", hash: `SHA-${jwk.alg.slice(-3)}` };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "RS256":
-        case "RS384":
-        case "RS512":
-          algorithm = { name: "RSASSA-PKCS1-v1_5", hash: `SHA-${jwk.alg.slice(-3)}` };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "RSA-OAEP":
-        case "RSA-OAEP-256":
-        case "RSA-OAEP-384":
-        case "RSA-OAEP-512":
-          algorithm = {
-            name: "RSA-OAEP",
-            hash: `SHA-${parseInt(jwk.alg.slice(-3), 10) || 1}`
-          };
-          keyUsages = jwk.d ? ["decrypt", "unwrapKey"] : ["encrypt", "wrapKey"];
-          break;
-        default:
-          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
-      }
-      break;
-    }
-    case "EC": {
-      switch (jwk.alg) {
-        case "ES256":
-          algorithm = { name: "ECDSA", namedCurve: "P-256" };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "ES384":
-          algorithm = { name: "ECDSA", namedCurve: "P-384" };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "ES512":
-          algorithm = { name: "ECDSA", namedCurve: "P-521" };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "ECDH-ES":
-        case "ECDH-ES+A128KW":
-        case "ECDH-ES+A192KW":
-        case "ECDH-ES+A256KW":
-          algorithm = { name: "ECDH", namedCurve: jwk.crv };
-          keyUsages = jwk.d ? ["deriveBits"] : [];
-          break;
-        default:
-          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
-      }
-      break;
-    }
-    case "OKP": {
-      switch (jwk.alg) {
-        case "Ed25519":
-          algorithm = { name: "Ed25519" };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "EdDSA":
-          algorithm = { name: jwk.crv };
-          keyUsages = jwk.d ? ["sign"] : ["verify"];
-          break;
-        case "ECDH-ES":
-        case "ECDH-ES+A128KW":
-        case "ECDH-ES+A192KW":
-        case "ECDH-ES+A256KW":
-          algorithm = { name: jwk.crv };
-          keyUsages = jwk.d ? ["deriveBits"] : [];
-          break;
-        default:
-          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
-      }
-      break;
-    }
-    default:
-      throw new JOSENotSupported('Invalid or unsupported JWK "kty" (Key Type) Parameter value');
-  }
-  return { algorithm, keyUsages };
-}
-const parse$2 = async (jwk) => {
-  if (!jwk.alg) {
-    throw new TypeError('"alg" argument is required when "jwk.alg" is not present');
-  }
-  const { algorithm, keyUsages } = subtleMapping(jwk);
-  const rest = [
-    algorithm,
-    jwk.ext ?? false,
-    jwk.key_ops ?? keyUsages
-  ];
-  const keyData = { ...jwk };
-  delete keyData.alg;
-  delete keyData.use;
-  return crypto$1.subtle.importKey("jwk", keyData, ...rest);
-};
-const exportKeyValue = (k2) => decode$1(k2);
-let privCache;
-let pubCache;
-const isKeyObject = (key) => {
-  return (key == null ? void 0 : key[Symbol.toStringTag]) === "KeyObject";
-};
-const importAndCache = async (cache2, key, jwk, alg, freeze = false) => {
-  let cached = cache2.get(key);
-  if (cached == null ? void 0 : cached[alg]) {
-    return cached[alg];
-  }
-  const cryptoKey = await parse$2({ ...jwk, alg });
-  if (freeze)
-    Object.freeze(key);
-  if (!cached) {
-    cache2.set(key, { [alg]: cryptoKey });
-  } else {
-    cached[alg] = cryptoKey;
-  }
-  return cryptoKey;
-};
-const normalizePublicKey = (key, alg) => {
-  if (isKeyObject(key)) {
-    let jwk = key.export({ format: "jwk" });
-    delete jwk.d;
-    delete jwk.dp;
-    delete jwk.dq;
-    delete jwk.p;
-    delete jwk.q;
-    delete jwk.qi;
-    if (jwk.k) {
-      return exportKeyValue(jwk.k);
-    }
-    pubCache || (pubCache = /* @__PURE__ */ new WeakMap());
-    return importAndCache(pubCache, key, jwk, alg);
-  }
-  if (isJWK(key)) {
-    if (key.k)
-      return decode$1(key.k);
-    pubCache || (pubCache = /* @__PURE__ */ new WeakMap());
-    const cryptoKey = importAndCache(pubCache, key, key, alg, true);
-    return cryptoKey;
-  }
-  return key;
-};
-const normalizePrivateKey = (key, alg) => {
-  if (isKeyObject(key)) {
-    let jwk = key.export({ format: "jwk" });
-    if (jwk.k) {
-      return exportKeyValue(jwk.k);
-    }
-    privCache || (privCache = /* @__PURE__ */ new WeakMap());
-    return importAndCache(privCache, key, jwk, alg);
-  }
-  if (isJWK(key)) {
-    if (key.k)
-      return decode$1(key.k);
-    privCache || (privCache = /* @__PURE__ */ new WeakMap());
-    const cryptoKey = importAndCache(privCache, key, key, alg, true);
-    return cryptoKey;
-  }
-  return key;
-};
-const normalize$3 = { normalizePublicKey, normalizePrivateKey };
-async function importJWK(jwk, alg) {
-  if (!isObject$3(jwk)) {
-    throw new TypeError("JWK must be an object");
-  }
-  alg || (alg = jwk.alg);
-  switch (jwk.kty) {
-    case "oct":
-      if (typeof jwk.k !== "string" || !jwk.k) {
-        throw new TypeError('missing "k" (Key Value) Parameter value');
-      }
-      return decode$1(jwk.k);
-    case "RSA":
-      if ("oth" in jwk && jwk.oth !== void 0) {
-        throw new JOSENotSupported('RSA JWK "oth" (Other Primes Info) Parameter value is not supported');
-      }
-    case "EC":
-    case "OKP":
-      return parse$2({ ...jwk, alg });
-    default:
-      throw new JOSENotSupported('Unsupported "kty" (Key Type) Parameter value');
-  }
-}
-const tag = (key) => key == null ? void 0 : key[Symbol.toStringTag];
-const jwkMatchesOp = (alg, key, usage) => {
-  var _a2, _b2;
-  if (key.use !== void 0 && key.use !== "sig") {
-    throw new TypeError("Invalid key for this operation, when present its use must be sig");
-  }
-  if (key.key_ops !== void 0 && ((_b2 = (_a2 = key.key_ops).includes) == null ? void 0 : _b2.call(_a2, usage)) !== true) {
-    throw new TypeError(`Invalid key for this operation, when present its key_ops must include ${usage}`);
-  }
-  if (key.alg !== void 0 && key.alg !== alg) {
-    throw new TypeError(`Invalid key for this operation, when present its alg must be ${alg}`);
-  }
-  return true;
-};
-const symmetricTypeCheck = (alg, key, usage, allowJwk) => {
-  if (key instanceof Uint8Array)
-    return;
-  if (allowJwk && isJWK(key)) {
-    if (isSecretJWK(key) && jwkMatchesOp(alg, key, usage))
-      return;
-    throw new TypeError(`JSON Web Key for symmetric algorithms must have JWK "kty" (Key Type) equal to "oct" and the JWK "k" (Key Value) present`);
-  }
-  if (!isKeyLike(key)) {
-    throw new TypeError(withAlg(alg, key, ...types$2, "Uint8Array", allowJwk ? "JSON Web Key" : null));
-  }
-  if (key.type !== "secret") {
-    throw new TypeError(`${tag(key)} instances for symmetric algorithms must be of type "secret"`);
-  }
-};
-const asymmetricTypeCheck = (alg, key, usage, allowJwk) => {
-  if (allowJwk && isJWK(key)) {
-    switch (usage) {
-      case "sign":
-        if (isPrivateJWK(key) && jwkMatchesOp(alg, key, usage))
-          return;
-        throw new TypeError(`JSON Web Key for this operation be a private JWK`);
-      case "verify":
-        if (isPublicJWK(key) && jwkMatchesOp(alg, key, usage))
-          return;
-        throw new TypeError(`JSON Web Key for this operation be a public JWK`);
-    }
-  }
-  if (!isKeyLike(key)) {
-    throw new TypeError(withAlg(alg, key, ...types$2, allowJwk ? "JSON Web Key" : null));
-  }
-  if (key.type === "secret") {
-    throw new TypeError(`${tag(key)} instances for asymmetric algorithms must not be of type "secret"`);
-  }
-  if (usage === "sign" && key.type === "public") {
-    throw new TypeError(`${tag(key)} instances for asymmetric algorithm signing must be of type "private"`);
-  }
-  if (usage === "decrypt" && key.type === "public") {
-    throw new TypeError(`${tag(key)} instances for asymmetric algorithm decryption must be of type "private"`);
-  }
-  if (key.algorithm && usage === "verify" && key.type === "private") {
-    throw new TypeError(`${tag(key)} instances for asymmetric algorithm verifying must be of type "public"`);
-  }
-  if (key.algorithm && usage === "encrypt" && key.type === "private") {
-    throw new TypeError(`${tag(key)} instances for asymmetric algorithm encryption must be of type "public"`);
-  }
-};
-function checkKeyType(allowJwk, alg, key, usage) {
-  const symmetric = alg.startsWith("HS") || alg === "dir" || alg.startsWith("PBES2") || /^A\d{3}(?:GCM)?KW$/.test(alg);
-  if (symmetric) {
-    symmetricTypeCheck(alg, key, usage, allowJwk);
-  } else {
-    asymmetricTypeCheck(alg, key, usage, allowJwk);
-  }
-}
-checkKeyType.bind(void 0, false);
-const checkKeyTypeWithJwk = checkKeyType.bind(void 0, true);
-function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
-  if (joseHeader.crit !== void 0 && (protectedHeader == null ? void 0 : protectedHeader.crit) === void 0) {
-    throw new Err('"crit" (Critical) Header Parameter MUST be integrity protected');
-  }
-  if (!protectedHeader || protectedHeader.crit === void 0) {
-    return /* @__PURE__ */ new Set();
-  }
-  if (!Array.isArray(protectedHeader.crit) || protectedHeader.crit.length === 0 || protectedHeader.crit.some((input) => typeof input !== "string" || input.length === 0)) {
-    throw new Err('"crit" (Critical) Header Parameter MUST be an array of non-empty strings when present');
-  }
-  let recognized;
-  if (recognizedOption !== void 0) {
-    recognized = new Map([...Object.entries(recognizedOption), ...recognizedDefault.entries()]);
-  } else {
-    recognized = recognizedDefault;
-  }
-  for (const parameter of protectedHeader.crit) {
-    if (!recognized.has(parameter)) {
-      throw new JOSENotSupported(`Extension Header Parameter "${parameter}" is not recognized`);
-    }
-    if (joseHeader[parameter] === void 0) {
-      throw new Err(`Extension Header Parameter "${parameter}" is missing`);
-    }
-    if (recognized.get(parameter) && protectedHeader[parameter] === void 0) {
-      throw new Err(`Extension Header Parameter "${parameter}" MUST be integrity protected`);
-    }
-  }
-  return new Set(protectedHeader.crit);
-}
-const validateAlgorithms = (option, algorithms) => {
-  if (algorithms !== void 0 && (!Array.isArray(algorithms) || algorithms.some((s) => typeof s !== "string"))) {
-    throw new TypeError(`"${option}" option must be an array of strings`);
-  }
-  if (!algorithms) {
-    return void 0;
-  }
-  return new Set(algorithms);
-};
-function subtleDsa(alg, algorithm) {
-  const hash2 = `SHA-${alg.slice(-3)}`;
-  switch (alg) {
-    case "HS256":
-    case "HS384":
-    case "HS512":
-      return { hash: hash2, name: "HMAC" };
-    case "PS256":
-    case "PS384":
-    case "PS512":
-      return { hash: hash2, name: "RSA-PSS", saltLength: alg.slice(-3) >> 3 };
-    case "RS256":
-    case "RS384":
-    case "RS512":
-      return { hash: hash2, name: "RSASSA-PKCS1-v1_5" };
-    case "ES256":
-    case "ES384":
-    case "ES512":
-      return { hash: hash2, name: "ECDSA", namedCurve: algorithm.namedCurve };
-    case "Ed25519":
-      return { name: "Ed25519" };
-    case "EdDSA":
-      return { name: algorithm.name };
-    default:
-      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
-  }
-}
-async function getCryptoKey(alg, key, usage) {
-  {
-    key = await normalize$3.normalizePublicKey(key, alg);
-  }
-  if (isCryptoKey(key)) {
-    checkSigCryptoKey(key, alg, usage);
-    return key;
-  }
-  if (key instanceof Uint8Array) {
-    if (!alg.startsWith("HS")) {
-      throw new TypeError(invalidKeyInput(key, ...types$2));
-    }
-    return crypto$1.subtle.importKey("raw", key, { hash: `SHA-${alg.slice(-3)}`, name: "HMAC" }, false, [usage]);
-  }
-  throw new TypeError(invalidKeyInput(key, ...types$2, "Uint8Array", "JSON Web Key"));
-}
-const verify = async (alg, key, signature, data) => {
-  const cryptoKey = await getCryptoKey(alg, key, "verify");
-  checkKeyLength(alg, cryptoKey);
-  const algorithm = subtleDsa(alg, cryptoKey.algorithm);
-  try {
-    return await crypto$1.subtle.verify(algorithm, cryptoKey, signature, data);
-  } catch {
-    return false;
-  }
-};
-async function flattenedVerify(jws, key, options) {
-  if (!isObject$3(jws)) {
-    throw new JWSInvalid("Flattened JWS must be an object");
-  }
-  if (jws.protected === void 0 && jws.header === void 0) {
-    throw new JWSInvalid('Flattened JWS must have either of the "protected" or "header" members');
-  }
-  if (jws.protected !== void 0 && typeof jws.protected !== "string") {
-    throw new JWSInvalid("JWS Protected Header incorrect type");
-  }
-  if (jws.payload === void 0) {
-    throw new JWSInvalid("JWS Payload missing");
-  }
-  if (typeof jws.signature !== "string") {
-    throw new JWSInvalid("JWS Signature missing or incorrect type");
-  }
-  if (jws.header !== void 0 && !isObject$3(jws.header)) {
-    throw new JWSInvalid("JWS Unprotected Header incorrect type");
-  }
-  let parsedProt = {};
-  if (jws.protected) {
-    try {
-      const protectedHeader = decode$1(jws.protected);
-      parsedProt = JSON.parse(decoder.decode(protectedHeader));
-    } catch {
-      throw new JWSInvalid("JWS Protected Header is invalid");
-    }
-  }
-  if (!isDisjoint(parsedProt, jws.header)) {
-    throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
-  }
-  const joseHeader = {
-    ...parsedProt,
-    ...jws.header
-  };
-  const extensions = validateCrit(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options == null ? void 0 : options.crit, parsedProt, joseHeader);
-  let b64 = true;
-  if (extensions.has("b64")) {
-    b64 = parsedProt.b64;
-    if (typeof b64 !== "boolean") {
-      throw new JWSInvalid('The "b64" (base64url-encode payload) Header Parameter must be a boolean');
-    }
-  }
-  const { alg } = joseHeader;
-  if (typeof alg !== "string" || !alg) {
-    throw new JWSInvalid('JWS "alg" (Algorithm) Header Parameter missing or invalid');
-  }
-  const algorithms = options && validateAlgorithms("algorithms", options.algorithms);
-  if (algorithms && !algorithms.has(alg)) {
-    throw new JOSEAlgNotAllowed('"alg" (Algorithm) Header Parameter value not allowed');
-  }
-  if (b64) {
-    if (typeof jws.payload !== "string") {
-      throw new JWSInvalid("JWS Payload must be a string");
-    }
-  } else if (typeof jws.payload !== "string" && !(jws.payload instanceof Uint8Array)) {
-    throw new JWSInvalid("JWS Payload must be a string or an Uint8Array instance");
-  }
-  let resolvedKey = false;
-  if (typeof key === "function") {
-    key = await key(parsedProt, jws);
-    resolvedKey = true;
-    checkKeyTypeWithJwk(alg, key, "verify");
-    if (isJWK(key)) {
-      key = await importJWK(key, alg);
-    }
-  } else {
-    checkKeyTypeWithJwk(alg, key, "verify");
-  }
-  const data = concat(encoder.encode(jws.protected ?? ""), encoder.encode("."), typeof jws.payload === "string" ? encoder.encode(jws.payload) : jws.payload);
-  let signature;
-  try {
-    signature = decode$1(jws.signature);
-  } catch {
-    throw new JWSInvalid("Failed to base64url decode the signature");
-  }
-  const verified = await verify(alg, key, signature, data);
-  if (!verified) {
-    throw new JWSSignatureVerificationFailed();
-  }
-  let payload;
-  if (b64) {
-    try {
-      payload = decode$1(jws.payload);
-    } catch {
-      throw new JWSInvalid("Failed to base64url decode the payload");
-    }
-  } else if (typeof jws.payload === "string") {
-    payload = encoder.encode(jws.payload);
-  } else {
-    payload = jws.payload;
-  }
-  const result = { payload };
-  if (jws.protected !== void 0) {
-    result.protectedHeader = parsedProt;
-  }
-  if (jws.header !== void 0) {
-    result.unprotectedHeader = jws.header;
-  }
-  if (resolvedKey) {
-    return { ...result, key };
-  }
-  return result;
-}
-async function compactVerify(jws, key, options) {
-  if (jws instanceof Uint8Array) {
-    jws = decoder.decode(jws);
-  }
-  if (typeof jws !== "string") {
-    throw new JWSInvalid("Compact JWS must be a string or Uint8Array");
-  }
-  const { 0: protectedHeader, 1: payload, 2: signature, length: length2 } = jws.split(".");
-  if (length2 !== 3) {
-    throw new JWSInvalid("Invalid Compact JWS");
-  }
-  const verified = await flattenedVerify({ payload, protected: protectedHeader, signature }, key, options);
-  const result = { payload: verified.payload, protectedHeader: verified.protectedHeader };
-  if (typeof key === "function") {
-    return { ...result, key: verified.key };
-  }
-  return result;
-}
-const epoch = (date4) => Math.floor(date4.getTime() / 1e3);
-const minute = 60;
-const hour = minute * 60;
-const day = hour * 24;
-const week = day * 7;
-const year = day * 365.25;
-const REGEX = /^(\+|\-)? ?(\d+|\d+\.\d+) ?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)(?: (ago|from now))?$/i;
-const secs = (str) => {
-  const matched = REGEX.exec(str);
-  if (!matched || matched[4] && matched[1]) {
-    throw new TypeError("Invalid time period format");
-  }
-  const value = parseFloat(matched[2]);
-  const unit2 = matched[3].toLowerCase();
-  let numericDate;
-  switch (unit2) {
-    case "sec":
-    case "secs":
-    case "second":
-    case "seconds":
-    case "s":
-      numericDate = Math.round(value);
-      break;
-    case "minute":
-    case "minutes":
-    case "min":
-    case "mins":
-    case "m":
-      numericDate = Math.round(value * minute);
-      break;
-    case "hour":
-    case "hours":
-    case "hr":
-    case "hrs":
-    case "h":
-      numericDate = Math.round(value * hour);
-      break;
-    case "day":
-    case "days":
-    case "d":
-      numericDate = Math.round(value * day);
-      break;
-    case "week":
-    case "weeks":
-    case "w":
-      numericDate = Math.round(value * week);
-      break;
-    default:
-      numericDate = Math.round(value * year);
-      break;
-  }
-  if (matched[1] === "-" || matched[4] === "ago") {
-    return -numericDate;
-  }
-  return numericDate;
-};
-const normalizeTyp = (value) => value.toLowerCase().replace(/^application\//, "");
-const checkAudiencePresence = (audPayload, audOption) => {
-  if (typeof audPayload === "string") {
-    return audOption.includes(audPayload);
-  }
-  if (Array.isArray(audPayload)) {
-    return audOption.some(Set.prototype.has.bind(new Set(audPayload)));
-  }
-  return false;
-};
-const jwtPayload = (protectedHeader, encodedPayload, options = {}) => {
-  let payload;
-  try {
-    payload = JSON.parse(decoder.decode(encodedPayload));
-  } catch {
-  }
-  if (!isObject$3(payload)) {
-    throw new JWTInvalid("JWT Claims Set must be a top-level JSON object");
-  }
-  const { typ } = options;
-  if (typ && (typeof protectedHeader.typ !== "string" || normalizeTyp(protectedHeader.typ) !== normalizeTyp(typ))) {
-    throw new JWTClaimValidationFailed('unexpected "typ" JWT header value', payload, "typ", "check_failed");
-  }
-  const { requiredClaims = [], issuer, subject, audience, maxTokenAge } = options;
-  const presenceCheck = [...requiredClaims];
-  if (maxTokenAge !== void 0)
-    presenceCheck.push("iat");
-  if (audience !== void 0)
-    presenceCheck.push("aud");
-  if (subject !== void 0)
-    presenceCheck.push("sub");
-  if (issuer !== void 0)
-    presenceCheck.push("iss");
-  for (const claim of new Set(presenceCheck.reverse())) {
-    if (!(claim in payload)) {
-      throw new JWTClaimValidationFailed(`missing required "${claim}" claim`, payload, claim, "missing");
-    }
-  }
-  if (issuer && !(Array.isArray(issuer) ? issuer : [issuer]).includes(payload.iss)) {
-    throw new JWTClaimValidationFailed('unexpected "iss" claim value', payload, "iss", "check_failed");
-  }
-  if (subject && payload.sub !== subject) {
-    throw new JWTClaimValidationFailed('unexpected "sub" claim value', payload, "sub", "check_failed");
-  }
-  if (audience && !checkAudiencePresence(payload.aud, typeof audience === "string" ? [audience] : audience)) {
-    throw new JWTClaimValidationFailed('unexpected "aud" claim value', payload, "aud", "check_failed");
-  }
-  let tolerance;
-  switch (typeof options.clockTolerance) {
-    case "string":
-      tolerance = secs(options.clockTolerance);
-      break;
-    case "number":
-      tolerance = options.clockTolerance;
-      break;
-    case "undefined":
-      tolerance = 0;
-      break;
-    default:
-      throw new TypeError("Invalid clockTolerance option type");
-  }
-  const { currentDate } = options;
-  const now = epoch(currentDate || /* @__PURE__ */ new Date());
-  if ((payload.iat !== void 0 || maxTokenAge) && typeof payload.iat !== "number") {
-    throw new JWTClaimValidationFailed('"iat" claim must be a number', payload, "iat", "invalid");
-  }
-  if (payload.nbf !== void 0) {
-    if (typeof payload.nbf !== "number") {
-      throw new JWTClaimValidationFailed('"nbf" claim must be a number', payload, "nbf", "invalid");
-    }
-    if (payload.nbf > now + tolerance) {
-      throw new JWTClaimValidationFailed('"nbf" claim timestamp check failed', payload, "nbf", "check_failed");
-    }
-  }
-  if (payload.exp !== void 0) {
-    if (typeof payload.exp !== "number") {
-      throw new JWTClaimValidationFailed('"exp" claim must be a number', payload, "exp", "invalid");
-    }
-    if (payload.exp <= now - tolerance) {
-      throw new JWTExpired('"exp" claim timestamp check failed', payload, "exp", "check_failed");
-    }
-  }
-  if (maxTokenAge) {
-    const age = now - payload.iat;
-    const max = typeof maxTokenAge === "number" ? maxTokenAge : secs(maxTokenAge);
-    if (age - tolerance > max) {
-      throw new JWTExpired('"iat" claim timestamp check failed (too far in the past)', payload, "iat", "check_failed");
-    }
-    if (age < 0 - tolerance) {
-      throw new JWTClaimValidationFailed('"iat" claim timestamp check failed (it should be in the past)', payload, "iat", "check_failed");
-    }
-  }
-  return payload;
-};
-async function jwtVerify(jwt, key, options) {
-  var _a2;
-  const verified = await compactVerify(jwt, key, options);
-  if (((_a2 = verified.protectedHeader.crit) == null ? void 0 : _a2.includes("b64")) && verified.protectedHeader.b64 === false) {
-    throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
-  }
-  const payload = jwtPayload(verified.protectedHeader, verified.payload, options);
-  const result = { payload, protectedHeader: verified.protectedHeader };
-  if (typeof key === "function") {
-    return { ...result, key: verified.key };
-  }
-  return result;
-}
-function getKtyFromAlg(alg) {
-  switch (typeof alg === "string" && alg.slice(0, 2)) {
-    case "RS":
-    case "PS":
-      return "RSA";
-    case "ES":
-      return "EC";
-    case "Ed":
-      return "OKP";
-    default:
-      throw new JOSENotSupported('Unsupported "alg" value for a JSON Web Key Set');
-  }
-}
-function isJWKSLike(jwks) {
-  return jwks && typeof jwks === "object" && Array.isArray(jwks.keys) && jwks.keys.every(isJWKLike);
-}
-function isJWKLike(key) {
-  return isObject$3(key);
-}
-function clone(obj) {
-  if (typeof structuredClone === "function") {
-    return structuredClone(obj);
-  }
-  return JSON.parse(JSON.stringify(obj));
-}
-class LocalJWKSet {
-  constructor(jwks) {
-    this._cached = /* @__PURE__ */ new WeakMap();
-    if (!isJWKSLike(jwks)) {
-      throw new JWKSInvalid("JSON Web Key Set malformed");
-    }
-    this._jwks = clone(jwks);
-  }
-  async getKey(protectedHeader, token2) {
-    const { alg, kid } = { ...protectedHeader, ...token2 == null ? void 0 : token2.header };
-    const kty = getKtyFromAlg(alg);
-    const candidates = this._jwks.keys.filter((jwk2) => {
-      let candidate = kty === jwk2.kty;
-      if (candidate && typeof kid === "string") {
-        candidate = kid === jwk2.kid;
-      }
-      if (candidate && typeof jwk2.alg === "string") {
-        candidate = alg === jwk2.alg;
-      }
-      if (candidate && typeof jwk2.use === "string") {
-        candidate = jwk2.use === "sig";
-      }
-      if (candidate && Array.isArray(jwk2.key_ops)) {
-        candidate = jwk2.key_ops.includes("verify");
-      }
-      if (candidate) {
-        switch (alg) {
-          case "ES256":
-            candidate = jwk2.crv === "P-256";
-            break;
-          case "ES256K":
-            candidate = jwk2.crv === "secp256k1";
-            break;
-          case "ES384":
-            candidate = jwk2.crv === "P-384";
-            break;
-          case "ES512":
-            candidate = jwk2.crv === "P-521";
-            break;
-          case "Ed25519":
-            candidate = jwk2.crv === "Ed25519";
-            break;
-          case "EdDSA":
-            candidate = jwk2.crv === "Ed25519" || jwk2.crv === "Ed448";
-            break;
-        }
-      }
-      return candidate;
-    });
-    const { 0: jwk, length: length2 } = candidates;
-    if (length2 === 0) {
-      throw new JWKSNoMatchingKey();
-    }
-    if (length2 !== 1) {
-      const error = new JWKSMultipleMatchingKeys();
-      const { _cached } = this;
-      error[Symbol.asyncIterator] = async function* () {
-        for (const jwk2 of candidates) {
-          try {
-            yield await importWithAlgCache(_cached, jwk2, alg);
-          } catch {
-          }
-        }
-      };
-      throw error;
-    }
-    return importWithAlgCache(this._cached, jwk, alg);
-  }
-}
-async function importWithAlgCache(cache2, jwk, alg) {
-  const cached = cache2.get(jwk) || cache2.set(jwk, {}).get(jwk);
-  if (cached[alg] === void 0) {
-    const key = await importJWK({ ...jwk, ext: true }, alg);
-    if (key instanceof Uint8Array || key.type !== "public") {
-      throw new JWKSInvalid("JSON Web Key Set members must be public keys");
-    }
-    cached[alg] = key;
-  }
-  return cached[alg];
-}
-function createLocalJWKSet(jwks) {
-  const set2 = new LocalJWKSet(jwks);
-  const localJWKSet = async (protectedHeader, token2) => set2.getKey(protectedHeader, token2);
-  Object.defineProperties(localJWKSet, {
-    jwks: {
-      value: () => clone(set2._jwks),
-      enumerable: true,
-      configurable: false,
-      writable: false
-    }
-  });
-  return localJWKSet;
-}
-const fetchJwks = async (url2, timeout, options) => {
-  let controller;
-  let id;
-  let timedOut = false;
-  if (typeof AbortController === "function") {
-    controller = new AbortController();
-    id = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, timeout);
-  }
-  const response = await fetch(url2.href, {
-    signal: controller ? controller.signal : void 0,
-    redirect: "manual",
-    headers: options.headers
-  }).catch((err) => {
-    if (timedOut)
-      throw new JWKSTimeout();
-    throw err;
-  });
-  if (id !== void 0)
-    clearTimeout(id);
-  if (response.status !== 200) {
-    throw new JOSEError("Expected 200 OK from the JSON Web Key Set HTTP response");
-  }
-  try {
-    return await response.json();
-  } catch {
-    throw new JOSEError("Failed to parse the JSON Web Key Set HTTP response as JSON");
-  }
-};
-function isCloudflareWorkers() {
-  return typeof WebSocketPair !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers" || typeof EdgeRuntime !== "undefined" && EdgeRuntime === "vercel";
-}
-let USER_AGENT;
-if (typeof navigator === "undefined" || !((_b = (_a = navigator.userAgent) == null ? void 0 : _a.startsWith) == null ? void 0 : _b.call(_a, "Mozilla/5.0 "))) {
-  const NAME = "jose";
-  const VERSION = "v5.10.0";
-  USER_AGENT = `${NAME}/${VERSION}`;
-}
-const jwksCache = Symbol();
-function isFreshJwksCache(input, cacheMaxAge) {
-  if (typeof input !== "object" || input === null) {
-    return false;
-  }
-  if (!("uat" in input) || typeof input.uat !== "number" || Date.now() - input.uat >= cacheMaxAge) {
-    return false;
-  }
-  if (!("jwks" in input) || !isObject$3(input.jwks) || !Array.isArray(input.jwks.keys) || !Array.prototype.every.call(input.jwks.keys, isObject$3)) {
-    return false;
-  }
-  return true;
-}
-class RemoteJWKSet {
-  constructor(url2, options) {
-    if (!(url2 instanceof URL)) {
-      throw new TypeError("url must be an instance of URL");
-    }
-    this._url = new URL(url2.href);
-    this._options = { agent: options == null ? void 0 : options.agent, headers: options == null ? void 0 : options.headers };
-    this._timeoutDuration = typeof (options == null ? void 0 : options.timeoutDuration) === "number" ? options == null ? void 0 : options.timeoutDuration : 5e3;
-    this._cooldownDuration = typeof (options == null ? void 0 : options.cooldownDuration) === "number" ? options == null ? void 0 : options.cooldownDuration : 3e4;
-    this._cacheMaxAge = typeof (options == null ? void 0 : options.cacheMaxAge) === "number" ? options == null ? void 0 : options.cacheMaxAge : 6e5;
-    if ((options == null ? void 0 : options[jwksCache]) !== void 0) {
-      this._cache = options == null ? void 0 : options[jwksCache];
-      if (isFreshJwksCache(options == null ? void 0 : options[jwksCache], this._cacheMaxAge)) {
-        this._jwksTimestamp = this._cache.uat;
-        this._local = createLocalJWKSet(this._cache.jwks);
-      }
-    }
-  }
-  coolingDown() {
-    return typeof this._jwksTimestamp === "number" ? Date.now() < this._jwksTimestamp + this._cooldownDuration : false;
-  }
-  fresh() {
-    return typeof this._jwksTimestamp === "number" ? Date.now() < this._jwksTimestamp + this._cacheMaxAge : false;
-  }
-  async getKey(protectedHeader, token2) {
-    if (!this._local || !this.fresh()) {
-      await this.reload();
-    }
-    try {
-      return await this._local(protectedHeader, token2);
-    } catch (err) {
-      if (err instanceof JWKSNoMatchingKey) {
-        if (this.coolingDown() === false) {
-          await this.reload();
-          return this._local(protectedHeader, token2);
-        }
-      }
-      throw err;
-    }
-  }
-  async reload() {
-    if (this._pendingFetch && isCloudflareWorkers()) {
-      this._pendingFetch = void 0;
-    }
-    const headers = new Headers(this._options.headers);
-    if (USER_AGENT && !headers.has("User-Agent")) {
-      headers.set("User-Agent", USER_AGENT);
-      this._options.headers = Object.fromEntries(headers.entries());
-    }
-    this._pendingFetch || (this._pendingFetch = fetchJwks(this._url, this._timeoutDuration, this._options).then((json) => {
-      this._local = createLocalJWKSet(json);
-      if (this._cache) {
-        this._cache.uat = Date.now();
-        this._cache.jwks = json;
-      }
-      this._jwksTimestamp = Date.now();
-      this._pendingFetch = void 0;
-    }).catch((err) => {
-      this._pendingFetch = void 0;
-      throw err;
-    }));
-    await this._pendingFetch;
-  }
-}
-function createRemoteJWKSet(url2, options) {
-  const set2 = new RemoteJWKSet(url2, options);
-  const remoteJWKSet = async (protectedHeader, token2) => set2.getKey(protectedHeader, token2);
-  Object.defineProperties(remoteJWKSet, {
-    coolingDown: {
-      get: () => set2.coolingDown(),
-      enumerable: true,
-      configurable: false
-    },
-    fresh: {
-      get: () => set2.fresh(),
-      enumerable: true,
-      configurable: false
-    },
-    reload: {
-      value: () => set2.reload(),
-      enumerable: true,
-      configurable: false,
-      writable: false
-    },
-    reloading: {
-      get: () => !!set2._pendingFetch,
-      enumerable: true,
-      configurable: false
-    },
-    jwks: {
-      value: () => {
-        var _a2;
-        return (_a2 = set2._local) == null ? void 0 : _a2.jwks();
-      },
-      enumerable: true,
-      configurable: false,
-      writable: false
-    }
-  });
-  return remoteJWKSet;
-}
-const defaultClockTolerance = 300;
-const verifyIdToken = async (idToken, clientId, issuer, jwks, clockTolerance = defaultClockTolerance) => {
-  const result = await jwtVerify(idToken, jwks, { audience: clientId, issuer, clockTolerance });
-  if (Math.abs((result.payload.iat ?? 0) - Date.now() / 1e3) > clockTolerance) {
-    throw new LogtoError("id_token.invalid_iat");
-  }
-};
-class DefaultJwtVerifier {
-  constructor(client2, clockTolerance = defaultClockTolerance) {
-    this.client = client2;
-    this.clockTolerance = clockTolerance;
-  }
-  async verifyIdToken(idToken) {
-    const { appId } = this.client.logtoConfig;
-    const { issuer, jwksUri } = await this.client.getOidcConfig();
-    this.getJwtVerifyGetKey || (this.getJwtVerifyGetKey = createRemoteJWKSet(new URL(jwksUri)));
-    await verifyIdToken(idToken, appId, issuer, this.getJwtVerifyGetKey, this.clockTolerance);
-  }
-}
-var PersistKey;
-(function(PersistKey2) {
-  PersistKey2["IdToken"] = "idToken";
-  PersistKey2["RefreshToken"] = "refreshToken";
-  PersistKey2["AccessToken"] = "accessToken";
-  PersistKey2["SignInSession"] = "signInSession";
-})(PersistKey || (PersistKey = {}));
-var CacheKey;
-(function(CacheKey2) {
-  CacheKey2["OpenidConfig"] = "openidConfiguration";
-  CacheKey2["Jwks"] = "jwks";
-})(CacheKey || (CacheKey = {}));
-class ClientAdapterInstance {
-  /* END OF IMPLEMENTATION */
-  constructor(adapter) {
-    Object.assign(this, adapter);
-  }
-  async setStorageItem(key, value) {
-    if (!value) {
-      await this.storage.removeItem(key);
-      return;
-    }
-    await this.storage.setItem(key, value);
-  }
-  /**
-   * Try to get the string value from the cache and parse as JSON.
-   * Return the parsed value if it is an object, return `undefined` otherwise.
-   *
-   * @param key The cache key to get value from.
-   */
-  async getCachedObject(key) {
-    const cached = await trySafe(async () => {
-      var _a2;
-      const data = await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.getItem(key));
-      return conditional(data && JSON.parse(data));
-    });
-    if (cached && typeof cached === "object") {
-      return cached;
-    }
-  }
-  /**
-   * Try to get the value from the cache first, if it doesn't exist in cache,
-   * run the getter function and store the result into cache.
-   *
-   * @param key The cache key to get value from.
-   */
-  async getWithCache(key, getter) {
-    var _a2;
-    const cached = await this.getCachedObject(key);
-    if (cached) {
-      return cached;
-    }
-    const result = await getter();
-    await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.setItem(key, JSON.stringify(result)));
-    return result;
-  }
-}
-const logtoClientErrorCodes = Object.freeze({
-  "sign_in_session.invalid": "Invalid sign-in session.",
-  "sign_in_session.not_found": "Sign-in session not found.",
-  not_authenticated: "Not authenticated.",
-  fetch_user_info_failed: "Unable to fetch user info. The access token may be invalid.",
-  user_cancelled: "The user cancelled the action.",
-  missing_scope_organizations: `The \`${UserScope.Organizations}\` scope is required`
-});
-class LogtoClientError extends Error {
-  constructor(code2, data) {
-    super(logtoClientErrorCodes[code2]);
-    this.name = "LogtoClientError";
-    this.code = code2;
-    this.data = data;
-  }
-}
-const normalizeLogtoConfig = (config2) => {
-  const { prompt = Prompt.Consent, scopes = [], resources, ...rest } = config2;
-  const includeReservedScopes = config2.includeReservedScopes ?? true;
-  return {
-    ...rest,
-    prompt,
-    scopes: includeReservedScopes ? withReservedScopes(scopes).split(" ") : scopes,
-    resources: scopes.includes(UserScope.Organizations) ? deduplicate([...resources ?? [], ReservedResource.Organization]) : resources
-  };
-};
-const isLogtoSignInSessionItem = (data) => {
-  if (!isArbitraryObject(data)) {
-    return false;
-  }
-  return ["redirectUri", "codeVerifier", "state"].every((key) => typeof data[key] === "string");
-};
-const isLogtoAccessTokenMap = (data) => {
-  if (!isArbitraryObject(data)) {
-    return false;
-  }
-  return Object.values(data).every((value) => {
-    if (!isArbitraryObject(value)) {
-      return false;
-    }
-    return typeof value.token === "string" && typeof value.scope === "string" && typeof value.expiresAt === "number";
-  });
-};
-const buildAccessTokenKey = (resource = "", organizationId, scopes = []) => `${scopes.slice().sort().join(" ")}@${resource}${conditionalString(organizationId && `#${organizationId}`)}`;
-const getDiscoveryEndpoint = (endpoint) => new URL(discoveryPath, endpoint).toString();
-function memoize(run) {
-  const promiseCache = /* @__PURE__ */ new Map();
-  const memoized = async function(...args) {
-    const promiseKey = JSON.stringify(args);
-    const cachedPromise = promiseCache.get(promiseKey);
-    if (cachedPromise) {
-      return cachedPromise;
-    }
-    const promise = (async () => {
-      try {
-        return await run.apply(this, args);
-      } finally {
-        promiseCache.delete(promiseKey);
-      }
-    })();
-    promiseCache.set(promiseKey, promise);
-    return promise;
-  };
-  return memoized;
-}
-function once(function_) {
-  let called = false;
-  let result;
-  return function(...args) {
-    if (!called) {
-      called = true;
-      result = function_.apply(this, args);
-    }
-    return result;
-  };
-}
-class StandardLogtoClient {
-  constructor(logtoConfig, adapter, buildJwtVerifier) {
-    __privateAdd(this, _StandardLogtoClient_instances);
-    this.getOidcConfig = once(__privateMethod(this, _StandardLogtoClient_instances, getOidcConfig_fn));
-    this.getAccessToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, getAccessToken_fn));
-    this.getOrganizationToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, getOrganizationToken_fn));
-    this.clearAccessToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, clearAccessToken_fn));
-    this.clearAllTokens = memoize(__privateMethod(this, _StandardLogtoClient_instances, clearAllTokens_fn));
-    this.handleSignInCallback = memoize(__privateMethod(this, _StandardLogtoClient_instances, handleSignInCallback_fn));
-    this.accessTokenMap = /* @__PURE__ */ new Map();
-    this.logtoConfig = normalizeLogtoConfig(logtoConfig);
-    this.adapter = new ClientAdapterInstance(adapter);
-    this.jwtVerifierInstance = buildJwtVerifier(this);
-    void this.loadAccessTokenMap();
-  }
-  get jwtVerifier() {
-    return this.jwtVerifierInstance;
-  }
-  /**
-   * Set the JWT verifier for the client.
-   * @param buildJwtVerifier The JWT verifier instance or a function that returns the JWT verifier instance.
-   */
-  setJwtVerifier(buildJwtVerifier) {
-    this.jwtVerifierInstance = typeof buildJwtVerifier === "function" ? buildJwtVerifier(this) : buildJwtVerifier;
-  }
-  /**
-   * Check if the user is authenticated by checking if the ID token exists.
-   */
-  async isAuthenticated() {
-    return Boolean(await this.getIdToken());
-  }
-  /**
-   * Get the Refresh Token from the storage.
-   */
-  async getRefreshToken() {
-    return this.adapter.storage.getItem("refreshToken");
-  }
-  /**
-   * Get the ID Token from the storage. If you want to get the ID Token claims,
-   * use {@link getIdTokenClaims} instead.
-   */
-  async getIdToken() {
-    return this.adapter.storage.getItem("idToken");
-  }
-  /**
-   * Get the ID Token claims.
-   */
-  async getIdTokenClaims() {
-    const idToken = await this.getIdToken();
-    if (!idToken) {
-      throw new LogtoClientError("not_authenticated", "ID token not found");
-    }
-    return decodeIdToken(idToken);
-  }
-  /**
-   * Get the access token claims for the specified resource.
-   *
-   * @param resource The resource that the access token is granted for. If not
-   * specified, the access token will be used for OpenID Connect or the default
-   * resource, as specified in the Logto Console.
-   */
-  async getAccessTokenClaims(resource) {
-    const accessToken = await this.getAccessToken(resource);
-    return decodeAccessToken(accessToken);
-  }
-  /**
-   * Get the organization token claims for the specified organization.
-   *
-   * @param organizationId The ID of the organization that the access token is granted for.
-   */
-  async getOrganizationTokenClaims(organizationId) {
-    const accessToken = await this.getOrganizationToken(organizationId);
-    return decodeAccessToken(accessToken);
-  }
-  /**
-   * Get the user information from the Userinfo Endpoint.
-   *
-   * Note the Userinfo Endpoint will return more claims than the ID Token. See
-   * {@link https://docs.logto.io/docs/recipes/integrate-logto/vanilla-js/#fetch-user-information | Fetch user information}
-   * for more information.
-   *
-   * @returns The user information.
-   * @throws LogtoClientError if the user is not authenticated.
-   */
-  async fetchUserInfo() {
-    const { userinfoEndpoint } = await this.getOidcConfig();
-    const accessToken = await this.getAccessToken();
-    if (!accessToken) {
-      throw new LogtoClientError("fetch_user_info_failed");
-    }
-    return fetchUserInfo(userinfoEndpoint, accessToken, this.adapter.requester);
-  }
-  async signIn(options, mode, hint) {
-    const { redirectUri: redirectUriUrl, postRedirectUri: postRedirectUriUrl, firstScreen, identifiers, interactionMode, loginHint, directSignIn, extraParams, prompt, clearTokens } = typeof options === "string" || options instanceof URL ? {
-      redirectUri: options,
-      postRedirectUri: void 0,
-      firstScreen: void 0,
-      identifiers: void 0,
-      interactionMode: mode,
-      loginHint: hint,
-      directSignIn: void 0,
-      extraParams: void 0,
-      prompt: void 0,
-      clearTokens: true
-    } : options;
-    const redirectUri = redirectUriUrl.toString();
-    const postRedirectUri = postRedirectUriUrl == null ? void 0 : postRedirectUriUrl.toString();
-    const { appId: clientId, prompt: promptViaConfig, resources, scopes } = this.logtoConfig;
-    const { authorizationEndpoint } = await this.getOidcConfig();
-    const [codeVerifier, state] = await Promise.all([
-      this.adapter.generateCodeVerifier(),
-      this.adapter.generateState()
-    ]);
-    const codeChallenge = await this.adapter.generateCodeChallenge(codeVerifier);
-    const signInUri = generateSignInUri({
-      authorizationEndpoint,
-      clientId,
-      redirectUri: redirectUri.toString(),
-      codeChallenge,
-      state,
-      scopes,
-      resources,
-      prompt: prompt ?? promptViaConfig,
-      firstScreen,
-      identifiers,
-      interactionMode,
-      loginHint,
-      directSignIn,
-      extraParams
-    });
-    await Promise.all([
-      this.setSignInSession({ redirectUri, postRedirectUri, codeVerifier, state }),
-      clearTokens === false ? void 0 : this.clearAllTokens()
-    ]);
-    await this.adapter.navigate(signInUri, { redirectUri, for: "sign-in" });
-  }
-  /**
-   * Check if the user is redirected from the sign-in page by checking if the
-   * current URL matches the redirect URI in the sign-in session.
-   *
-   * If there's no sign-in session, it will return `false`.
-   *
-   * @param url The current URL.
-   */
-  async isSignInRedirected(url2) {
-    const signInSession = await this.getSignInSession();
-    if (!signInSession) {
-      return false;
-    }
-    const { redirectUri } = signInSession;
-    const { origin, pathname } = new URL(url2);
-    return `${origin}${pathname}` === redirectUri;
-  }
-  /**
-   * Start the sign-out flow with the specified redirect URI. The URI must be
-   * registered in the Logto Console.
-   *
-   * It will also revoke all the tokens and clean up the storage.
-   *
-   * The user will be redirected that URI after the sign-out flow is completed.
-   * If the `postLogoutRedirectUri` is not specified, the user will be redirected
-   * to a default page.
-   */
-  async signOut(postLogoutRedirectUri) {
-    const { appId: clientId } = this.logtoConfig;
-    const { endSessionEndpoint, revocationEndpoint } = await this.getOidcConfig();
-    const refreshToken = await this.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await revoke(revocationEndpoint, clientId, refreshToken, this.adapter.requester);
-      } catch {
-      }
-    }
-    const url2 = generateSignOutUri({
-      endSessionEndpoint,
-      postLogoutRedirectUri,
-      clientId
-    });
-    await this.clearAllTokens();
-    await this.adapter.navigate(url2, { redirectUri: postLogoutRedirectUri, for: "sign-out" });
-  }
-  async getSignInSession() {
-    const jsonItem = await this.adapter.storage.getItem("signInSession");
-    if (!jsonItem) {
-      return null;
-    }
-    const item = JSON.parse(jsonItem);
-    if (!isLogtoSignInSessionItem(item)) {
-      throw new LogtoClientError("sign_in_session.invalid");
-    }
-    return item;
-  }
-  async setSignInSession(value) {
-    return this.adapter.setStorageItem(PersistKey.SignInSession, value && JSON.stringify(value));
-  }
-  async setIdToken(value) {
-    return this.adapter.setStorageItem(PersistKey.IdToken, value);
-  }
-  async setRefreshToken(value) {
-    return this.adapter.setStorageItem(PersistKey.RefreshToken, value);
-  }
-  async getAccessTokenByRefreshToken(resource, organizationId) {
-    const currentRefreshToken = await this.getRefreshToken();
-    if (!currentRefreshToken) {
-      throw new LogtoClientError("not_authenticated", "Refresh token not found");
-    }
-    const accessTokenKey = buildAccessTokenKey(resource, organizationId);
-    const { appId: clientId } = this.logtoConfig;
-    const { tokenEndpoint } = await this.getOidcConfig();
-    const requestedAt = Math.round(Date.now() / 1e3);
-    const { accessToken, refreshToken, idToken, scope, expiresIn } = await fetchTokenByRefreshToken({
-      clientId,
-      tokenEndpoint,
-      refreshToken: currentRefreshToken,
-      resource,
-      organizationId
-    }, this.adapter.requester);
-    this.accessTokenMap.set(accessTokenKey, {
-      token: accessToken,
-      scope,
-      /** The `expiresAt` variable provides an approximate estimation of the actual `exp` property
-       * in the token claims. It is utilized by the client to determine if the cached access token
-       * has expired and when a new access token should be requested.
-       */
-      expiresAt: requestedAt + expiresIn
-    });
-    await this.saveAccessTokenMap();
-    if (refreshToken) {
-      await this.setRefreshToken(refreshToken);
-    }
-    if (idToken) {
-      await this.jwtVerifier.verifyIdToken(idToken);
-      await this.setIdToken(idToken);
-    }
-    return accessToken;
-  }
-  async saveAccessTokenMap() {
-    const data = {};
-    for (const [key, accessToken] of this.accessTokenMap.entries()) {
-      data[key] = accessToken;
-    }
-    await this.adapter.storage.setItem("accessToken", JSON.stringify(data));
-  }
-  async loadAccessTokenMap() {
-    const raw = await this.adapter.storage.getItem("accessToken");
-    if (!raw) {
-      return;
-    }
-    try {
-      const json = JSON.parse(raw);
-      if (!isLogtoAccessTokenMap(json)) {
-        return;
-      }
-      this.accessTokenMap.clear();
-      for (const [key, accessToken] of Object.entries(json)) {
-        this.accessTokenMap.set(key, accessToken);
-      }
-    } catch (error) {
-      console.warn(error);
-    }
-  }
-}
-_StandardLogtoClient_instances = new WeakSet();
-getOidcConfig_fn = async function() {
-  return this.adapter.getWithCache(CacheKey.OpenidConfig, async () => {
-    return fetchOidcConfig(getDiscoveryEndpoint(this.logtoConfig.endpoint), this.adapter.requester);
-  });
-};
-getAccessToken_fn = async function(resource, organizationId) {
-  if (!await this.isAuthenticated()) {
-    throw new LogtoClientError("not_authenticated");
-  }
-  const accessTokenKey = buildAccessTokenKey(resource, organizationId);
-  const accessToken = this.accessTokenMap.get(accessTokenKey);
-  if (accessToken && accessToken.expiresAt > Date.now() / 1e3) {
-    return accessToken.token;
-  }
-  if (accessToken) {
-    this.accessTokenMap.delete(accessTokenKey);
-  }
-  return this.getAccessTokenByRefreshToken(resource, organizationId);
-};
-getOrganizationToken_fn = async function(organizationId) {
-  var _a2;
-  if (!((_a2 = this.logtoConfig.scopes) == null ? void 0 : _a2.includes(UserScope.Organizations))) {
-    throw new LogtoClientError("missing_scope_organizations");
-  }
-  return this.getAccessToken(void 0, organizationId);
-};
-clearAccessToken_fn = async function() {
-  this.accessTokenMap.clear();
-  await this.adapter.storage.removeItem("accessToken");
-};
-clearAllTokens_fn = async function() {
-  await Promise.all([this.setRefreshToken(null), this.setIdToken(null), this.clearAccessToken()]);
-};
-handleSignInCallback_fn = async function(callbackUri) {
-  const signInSession = await this.getSignInSession();
-  if (!signInSession) {
-    throw new LogtoClientError("sign_in_session.not_found");
-  }
-  const { redirectUri, postRedirectUri, state, codeVerifier } = signInSession;
-  const code2 = verifyAndParseCodeFromCallbackUri(callbackUri, redirectUri, state);
-  const accessTokenKey = buildAccessTokenKey();
-  const { appId: clientId } = this.logtoConfig;
-  const { tokenEndpoint } = await this.getOidcConfig();
-  const requestedAt = Math.round(Date.now() / 1e3);
-  const { idToken, refreshToken, accessToken, scope, expiresIn } = await fetchTokenByAuthorizationCode({
-    clientId,
-    tokenEndpoint,
-    redirectUri,
-    codeVerifier,
-    code: code2
-  }, this.adapter.requester);
-  await this.jwtVerifier.verifyIdToken(idToken);
-  await this.setRefreshToken(refreshToken ?? null);
-  await this.setIdToken(idToken);
-  this.accessTokenMap.set(accessTokenKey, {
-    token: accessToken,
-    scope,
-    /** The `expiresAt` variable provides an approximate estimation of the actual `exp` property
-     * in the token claims. It is utilized by the client to determine if the cached access token
-     * has expired and when a new access token should be requested.
-     */
-    expiresAt: requestedAt + expiresIn
-  });
-  await this.saveAccessTokenMap();
-  await this.setSignInSession(null);
-  if (postRedirectUri) {
-    await this.adapter.navigate(postRedirectUri, { for: "post-sign-in" });
-  }
-};
-const createRequester = (fetchFunction) => {
-  return async (...args) => {
-    const response = await fetchFunction(...args);
-    if (!response.ok) {
-      const cloned = response.clone();
-      const responseJson = await response.json();
-      console.error(`Logto requester error: [status=${response.status}]`, responseJson);
-      if (!isLogtoRequestErrorJson(responseJson)) {
-        throw new LogtoError("unexpected_response_error", responseJson);
-      }
-      const { code: code2, message: message2 } = responseJson;
-      throw new LogtoRequestError(code2, message2, cloned);
-    }
-    return response.json();
-  };
-};
-let LogtoClient$1 = class LogtoClient extends StandardLogtoClient {
-  constructor(logtoConfig, adapter, buildJwtVerifier) {
-    super(logtoConfig, adapter, buildJwtVerifier ?? ((client2) => new DefaultJwtVerifier(client2)));
-  }
-};
-const keyPrefix$1 = `logto_cache`;
-class CacheStorage {
-  constructor(appId) {
-    this.appId = appId;
-  }
-  getKey(item) {
-    if (item === void 0) {
-      return `${keyPrefix$1}:${this.appId}`;
-    }
-    return `${keyPrefix$1}:${this.appId}:${item}`;
-  }
-  async getItem(key) {
-    return sessionStorage.getItem(this.getKey(key));
-  }
-  async setItem(key, value) {
-    sessionStorage.setItem(this.getKey(key), value);
-  }
-  async removeItem(key) {
-    sessionStorage.removeItem(`${this.getKey(key)}`);
-  }
-}
-const keyPrefix = `logto`;
-class BrowserStorage {
-  constructor(appId) {
-    this.appId = appId;
-  }
-  getKey(item) {
-    if (item === void 0) {
-      return `${keyPrefix}:${this.appId}`;
-    }
-    return `${keyPrefix}:${this.appId}:${item}`;
-  }
-  async getItem(key) {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    if (key === "signInSession") {
-      return sessionStorage.getItem(this.getKey(key)) ?? sessionStorage.getItem(this.getKey());
-    }
-    return localStorage.getItem(this.getKey(key));
-  }
-  async setItem(key, value) {
-    if (typeof window === "undefined") {
-      return;
-    }
-    if (key === "signInSession") {
-      sessionStorage.setItem(this.getKey(key), value);
-      return;
-    }
-    localStorage.setItem(this.getKey(key), value);
-  }
-  async removeItem(key) {
-    if (typeof window === "undefined") {
-      return;
-    }
-    if (key === "signInSession") {
-      sessionStorage.removeItem(this.getKey(key));
-      return;
-    }
-    localStorage.removeItem(this.getKey(key));
-  }
-}
-const _hasBuffer = typeof Buffer === "function";
-typeof TextDecoder === "function" ? new TextDecoder() : void 0;
-typeof TextEncoder === "function" ? new TextEncoder() : void 0;
-const b64ch = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const b64chs = Array.prototype.slice.call(b64ch);
-((a2) => {
-  let tab2 = {};
-  a2.forEach((c2, i) => tab2[c2] = i);
-  return tab2;
-})(b64chs);
-const _fromCC = String.fromCharCode.bind(String);
-typeof Uint8Array.from === "function" ? Uint8Array.from.bind(Uint8Array) : (it2) => new Uint8Array(Array.prototype.slice.call(it2, 0));
-const _mkUriSafe = (src) => src.replace(/=/g, "").replace(/[+\/]/g, (m0) => m0 == "+" ? "-" : "_");
-const btoaPolyfill = (bin) => {
-  let u32, c0, c1, c2, asc = "";
-  const pad = bin.length % 3;
-  for (let i = 0; i < bin.length; ) {
-    if ((c0 = bin.charCodeAt(i++)) > 255 || (c1 = bin.charCodeAt(i++)) > 255 || (c2 = bin.charCodeAt(i++)) > 255)
-      throw new TypeError("invalid character found");
-    u32 = c0 << 16 | c1 << 8 | c2;
-    asc += b64chs[u32 >> 18 & 63] + b64chs[u32 >> 12 & 63] + b64chs[u32 >> 6 & 63] + b64chs[u32 & 63];
-  }
-  return pad ? asc.slice(0, pad - 3) + "===".substring(pad) : asc;
-};
-const _btoa = typeof btoa === "function" ? (bin) => btoa(bin) : _hasBuffer ? (bin) => Buffer.from(bin, "binary").toString("base64") : btoaPolyfill;
-const _fromUint8Array = _hasBuffer ? (u8a) => Buffer.from(u8a).toString("base64") : (u8a) => {
-  const maxargs = 4096;
-  let strs = [];
-  for (let i = 0, l2 = u8a.length; i < l2; i += maxargs) {
-    strs.push(_fromCC.apply(null, u8a.subarray(i, i + maxargs)));
-  }
-  return _btoa(strs.join(""));
-};
-const fromUint8Array = (u8a, urlsafe = false) => urlsafe ? _mkUriSafe(_fromUint8Array(u8a)) : _fromUint8Array(u8a);
-const generateRandomString = (length2 = 64) => fromUint8Array(crypto.getRandomValues(new Uint8Array(length2)), true);
-const generateState = () => generateRandomString();
-const generateCodeVerifier = () => generateRandomString();
-const generateCodeChallenge = async (codeVerifier) => {
-  if (crypto.subtle === void 0) {
-    throw new LogtoError("crypto_subtle_unavailable");
-  }
-  const encodedCodeVerifier = new TextEncoder().encode(codeVerifier);
-  const codeChallenge = new Uint8Array(await crypto.subtle.digest("SHA-256", encodedCodeVerifier));
-  return fromUint8Array(codeChallenge, true);
-};
-const navigate = (url2) => {
-  window.location.assign(url2);
-};
-class LogtoClient2 extends LogtoClient$1 {
-  /**
-   * @param config The configuration object for the client.
-   * @param [unstable_enableCache=false] Whether to enable cache for well-known data.
-   * Use sessionStorage by default.
-   */
-  constructor(config2, unstable_enableCache = false) {
-    const requester = createRequester(fetch);
-    super(config2, {
-      requester,
-      navigate,
-      storage: new BrowserStorage(config2.appId),
-      unstable_cache: conditional(unstable_enableCache && new CacheStorage(config2.appId)),
-      generateCodeChallenge,
-      generateCodeVerifier,
-      generateState
-    });
-  }
-}
-const throwContextError = () => {
-  throw new Error("Must be used inside <LogtoProvider> context.");
-};
-const LogtoContext = reactExports.createContext({
-  logtoClient: void 0,
-  isAuthenticated: false,
-  isLoading: false,
-  error: void 0,
-  setIsAuthenticated: throwContextError,
-  setIsLoading: throwContextError,
-  setError: throwContextError
-});
-const LogtoProvider$1 = ({ config: config2, LogtoClientClass = LogtoClient2, children, unstable_enableCache = false }) => {
-  const [loadingCount, setLoadingCount] = reactExports.useState(1);
-  const memorizedLogtoClient = reactExports.useMemo(() => ({ logtoClient: new LogtoClientClass(config2, unstable_enableCache) }), [LogtoClientClass, config2, unstable_enableCache]);
-  const [isAuthenticated, setIsAuthenticated] = reactExports.useState(false);
-  const [error, setError] = reactExports.useState();
-  const isLoading = reactExports.useMemo(() => loadingCount > 0, [loadingCount]);
-  const setIsLoading = reactExports.useCallback((state) => {
-    if (state) {
-      setLoadingCount((count) => count + 1);
-    } else {
-      setLoadingCount((count) => Math.max(0, count - 1));
-    }
-  }, [setLoadingCount]);
-  reactExports.useEffect(() => {
-    (async () => {
-      const isAuthenticated2 = await memorizedLogtoClient.logtoClient.isAuthenticated();
-      setIsAuthenticated(isAuthenticated2);
-      setLoadingCount((count) => Math.max(0, count - 1));
-    })();
-  }, [memorizedLogtoClient]);
-  const memorizedContextValue = reactExports.useMemo(() => ({
-    ...memorizedLogtoClient,
-    isAuthenticated,
-    setIsAuthenticated,
-    isLoading,
-    setIsLoading,
-    error,
-    setError
-  }), [memorizedLogtoClient, isAuthenticated, isLoading, setIsLoading, error]);
-  return jsxRuntimeExports.jsx(LogtoContext.Provider, { value: memorizedContextValue, children });
-};
-const useErrorHandler = () => {
-  const { setError } = reactExports.useContext(LogtoContext);
-  const handleError = reactExports.useCallback((error, fallbackErrorMessage) => {
-    if (error instanceof Error) {
-      setError(error);
-    } else if (fallbackErrorMessage) {
-      setError(new Error(fallbackErrorMessage));
-    }
-    console.error(error);
-  }, [setError]);
-  return { handleError };
-};
-const useHandleSignInCallback = (callback) => {
-  const { logtoClient, isAuthenticated, error, setIsAuthenticated, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
-  const { handleError } = useErrorHandler();
-  const callbackRef = reactExports.useRef();
-  reactExports.useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-  reactExports.useEffect(() => {
-    if (!logtoClient || isLoading || error) {
-      return;
-    }
-    (async () => {
-      const currentPageUrl = window.location.href;
-      const isRedirected = await logtoClient.isSignInRedirected(currentPageUrl);
-      if (!isAuthenticated && isRedirected) {
-        setIsLoading(true);
-        await trySafe(async () => {
-          var _a2;
-          await logtoClient.handleSignInCallback(currentPageUrl);
-          setIsAuthenticated(true);
-          (_a2 = callbackRef.current) == null ? void 0 : _a2.call(callbackRef);
-        }, (error2) => {
-          handleError(error2, "Unexpected error occurred while handling sign in callback.");
-        });
-        setIsLoading(false);
-      }
-    })();
-  }, [
-    error,
-    handleError,
-    isAuthenticated,
-    isLoading,
-    logtoClient,
-    setIsAuthenticated,
-    setIsLoading
-  ]);
-  return {
-    isLoading,
-    isAuthenticated,
-    error
-  };
-};
-const useLogto = () => {
-  const { logtoClient, isAuthenticated, error, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
-  const { handleError } = useErrorHandler();
-  const client2 = logtoClient ?? throwContextError();
-  const proxy = reactExports.useCallback((run, resetLoadingState = true) => {
-    return async (...args) => {
-      try {
-        setIsLoading(true);
-        return await run(...args);
-      } catch (error2) {
-        handleError(error2, `Unexpected error occurred while calling ${run.name}.`);
-      } finally {
-        if (resetLoadingState) {
-          setIsLoading(false);
-        }
-      }
-    };
-  }, [setIsLoading, handleError]);
-  const methods2 = reactExports.useMemo(() => ({
-    getRefreshToken: proxy(client2.getRefreshToken.bind(client2)),
-    getAccessToken: proxy(client2.getAccessToken.bind(client2)),
-    getAccessTokenClaims: proxy(client2.getAccessTokenClaims.bind(client2)),
-    getOrganizationToken: proxy(client2.getOrganizationToken.bind(client2)),
-    getOrganizationTokenClaims: proxy(client2.getOrganizationTokenClaims.bind(client2)),
-    getIdToken: proxy(client2.getIdToken.bind(client2)),
-    getIdTokenClaims: proxy(client2.getIdTokenClaims.bind(client2)),
-    // eslint-disable-next-line no-restricted-syntax -- TypeScript cannot infer the correct type.
-    signIn: proxy(client2.signIn.bind(client2), false),
-    // We deliberately do NOT set isAuthenticated to false in the function below, because the app state
-    // may change immediately even before navigating to the oidc end session endpoint, which might cause
-    // rendering problems.
-    // Moreover, since the location will be redirected, the isAuthenticated state will not matter any more.
-    signOut: proxy(client2.signOut.bind(client2)),
-    fetchUserInfo: proxy(client2.fetchUserInfo.bind(client2)),
-    clearAccessToken: proxy(client2.clearAccessToken.bind(client2)),
-    clearAllTokens: proxy(client2.clearAllTokens.bind(client2))
-  }), [client2, proxy]);
-  return {
-    isAuthenticated,
-    isLoading,
-    error,
-    ...methods2
-  };
-};
-var propTypes = { exports: {} };
-var ReactPropTypesSecret_1;
-var hasRequiredReactPropTypesSecret;
-function requireReactPropTypesSecret() {
-  if (hasRequiredReactPropTypesSecret) return ReactPropTypesSecret_1;
-  hasRequiredReactPropTypesSecret = 1;
-  var ReactPropTypesSecret = "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED";
-  ReactPropTypesSecret_1 = ReactPropTypesSecret;
-  return ReactPropTypesSecret_1;
-}
-var factoryWithThrowingShims;
-var hasRequiredFactoryWithThrowingShims;
-function requireFactoryWithThrowingShims() {
-  if (hasRequiredFactoryWithThrowingShims) return factoryWithThrowingShims;
-  hasRequiredFactoryWithThrowingShims = 1;
-  var ReactPropTypesSecret = /* @__PURE__ */ requireReactPropTypesSecret();
-  function emptyFunction() {
-  }
-  function emptyFunctionWithReset() {
-  }
-  emptyFunctionWithReset.resetWarningCache = emptyFunction;
-  factoryWithThrowingShims = function() {
-    function shim2(props, propName, componentName, location2, propFullName, secret) {
-      if (secret === ReactPropTypesSecret) {
-        return;
-      }
-      var err = new Error(
-        "Calling PropTypes validators directly is not supported by the `prop-types` package. Use PropTypes.checkPropTypes() to call them. Read more at http://fb.me/use-check-prop-types"
-      );
-      err.name = "Invariant Violation";
-      throw err;
-    }
-    shim2.isRequired = shim2;
-    function getShim() {
-      return shim2;
-    }
-    var ReactPropTypes = {
-      array: shim2,
-      bigint: shim2,
-      bool: shim2,
-      func: shim2,
-      number: shim2,
-      object: shim2,
-      string: shim2,
-      symbol: shim2,
-      any: shim2,
-      arrayOf: getShim,
-      element: shim2,
-      elementType: shim2,
-      instanceOf: getShim,
-      node: shim2,
-      objectOf: getShim,
-      oneOf: getShim,
-      oneOfType: getShim,
-      shape: getShim,
-      exact: getShim,
-      checkPropTypes: emptyFunctionWithReset,
-      resetWarningCache: emptyFunction
-    };
-    ReactPropTypes.PropTypes = ReactPropTypes;
-    return ReactPropTypes;
-  };
-  return factoryWithThrowingShims;
-}
-var hasRequiredPropTypes;
-function requirePropTypes() {
-  if (hasRequiredPropTypes) return propTypes.exports;
-  hasRequiredPropTypes = 1;
-  {
-    propTypes.exports = /* @__PURE__ */ requireFactoryWithThrowingShims()();
-  }
-  return propTypes.exports;
-}
-var propTypesExports = /* @__PURE__ */ requirePropTypes();
-const PropTypes = /* @__PURE__ */ getDefaultExportFromCjs(propTypesExports);
-function LogtoProvider({ children }) {
-  const config2 = {
-    endpoint: "https://logto.fary.chat",
-    appId: "ro4uk4fd2czd7cyx3wcbm",
-    resources: ["http://localhost:8000/api"]
-  };
-  if (!config2.endpoint || !config2.appId) {
-    console.error(
-      "Logto configuration missing. Please set VITE_LOGTO_ENDPOINT and VITE_LOGTO_APP_ID in .env file"
-    );
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(LogtoProvider$1, { config: config2, children });
-}
-LogtoProvider.propTypes = {
-  children: PropTypes.node.isRequired
-};
-const rawLoginFlag = "false".toString().toLowerCase();
-const LOGIN_ENABLED = !["false", "0", "no", "off"].includes(rawLoginFlag);
-const ANONYMOUS_AUTH = {
-  loginEnabled: false,
-  isAuthenticated: true,
-  isLoading: false,
-  error: null,
-  signIn: () => {
-  },
-  signOut: () => {
-  },
-  getAccessToken: async () => null,
-  getIdTokenClaims: async () => ({})
-};
-function useAuth() {
-  if (!LOGIN_ENABLED) {
-    return ANONYMOUS_AUTH;
-  }
-  const logto = useLogto();
-  return {
-    ...logto,
-    loginEnabled: true
-  };
-}
-function PrivateRoute({ children }) {
-  const { isAuthenticated, loginEnabled } = useAuth();
-  if (!loginEnabled) {
-    return children;
-  }
-  if (!isAuthenticated) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
-  }
-  return children;
-}
-PrivateRoute.propTypes = {
-  children: PropTypes.node.isRequired
-};
 function useEvent(callback) {
   const fnRef = reactExports.useRef(callback);
   fnRef.current = callback;
@@ -15555,7 +12626,7 @@ function set(entity, paths, value, removeIfUndefined = false) {
   }
   return internalSet(entity, paths, value, removeIfUndefined);
 }
-function isObject$2(obj) {
+function isObject$5(obj) {
   return typeof obj === "object" && obj !== null && Object.getPrototypeOf(obj) === Object.prototype;
 }
 function createEmpty(source) {
@@ -15573,7 +12644,7 @@ function mergeWith(sources, config2 = {}) {
       const loopSet = new Set(parentLoopSet);
       const value = get(src, path2);
       const isArr = Array.isArray(value);
-      if (isArr || isObject$2(value)) {
+      if (isArr || isObject$5(value)) {
         if (!loopSet.has(value)) {
           loopSet.add(value);
           const originValue = get(clone2, path2);
@@ -15795,8 +12866,8 @@ function SingleObserver(props, ref) {
   }) : mergedChildren;
 }
 const RefSingleObserver = /* @__PURE__ */ reactExports.forwardRef(SingleObserver);
-function _extends$C() {
-  _extends$C = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$J() {
+  _extends$J = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -15807,7 +12878,7 @@ function _extends$C() {
     }
     return target;
   };
-  return _extends$C.apply(this, arguments);
+  return _extends$J.apply(this, arguments);
 }
 const INTERNAL_PREFIX_KEY = "rc-observer-key";
 function ResizeObserver$1(props, ref) {
@@ -15817,7 +12888,7 @@ function ResizeObserver$1(props, ref) {
   const childNodes = typeof children === "function" ? [children] : toArray$2(children);
   return childNodes.map((child, index2) => {
     const key = (child == null ? void 0 : child.key) || `${INTERNAL_PREFIX_KEY}-${index2}`;
-    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$C({}, props, {
+    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$J({}, props, {
       key,
       ref: index2 === 0 ? ref : void 0
     }), child);
@@ -16524,8 +13595,8 @@ function cleanTokenStyle(tokenKey, instanceId) {
     });
   }
 }
-const getComputedToken$1 = (originToken, overrideToken, theme, format2) => {
-  const derivativeToken = theme.getDerivativeToken(originToken);
+const getComputedToken$1 = (originToken, overrideToken, theme2, format2) => {
+  const derivativeToken = theme2.getDerivativeToken(originToken);
   let mergedDerivativeToken = {
     ...derivativeToken,
     ...overrideToken
@@ -16536,7 +13607,7 @@ const getComputedToken$1 = (originToken, overrideToken, theme, format2) => {
   return mergedDerivativeToken;
 };
 const TOKEN_PREFIX = "token";
-function useCacheToken(theme, tokens, option) {
+function useCacheToken(theme2, tokens, option) {
   const {
     cache: {
       instanceId
@@ -16555,8 +13626,8 @@ function useCacheToken(theme, tokens, option) {
   const tokenStr = flattenToken(mergedToken);
   const overrideTokenStr = flattenToken(override);
   const cssVarStr = flattenToken(cssVar);
-  const cachedToken = useGlobalCache(TOKEN_PREFIX, [salt, theme.id, tokenStr, overrideTokenStr, cssVarStr], () => {
-    const mergedDerivativeToken = compute ? compute(mergedToken, override, theme) : getComputedToken$1(mergedToken, override, theme, formatToken2);
+  const cachedToken = useGlobalCache(TOKEN_PREFIX, [salt, theme2.id, tokenStr, overrideTokenStr, cssVarStr], () => {
+    const mergedDerivativeToken = compute ? compute(mergedToken, override, theme2) : getComputedToken$1(mergedToken, override, theme2, formatToken2);
     const actualToken = {
       ...mergedDerivativeToken
     };
@@ -16831,9 +13902,9 @@ function identifier(index2) {
   return slice(index2, position$3);
 }
 function compile(value) {
-  return dealloc(parse$1("", null, null, null, [""], value = alloc(value), 0, [0], value));
+  return dealloc(parse$2("", null, null, null, [""], value = alloc(value), 0, [0], value));
 }
-function parse$1(value, root2, parent, rule, rules2, rulesets, pseudo, points, declarations) {
+function parse$2(value, root2, parent, rule, rules2, rulesets, pseudo, points, declarations) {
   var index2 = 0;
   var offset = 0;
   var length2 = pseudo;
@@ -16913,7 +13984,7 @@ function parse$1(value, root2, parent, rule, rules2, rulesets, pseudo, points, d
             append(reference = ruleset(characters2, root2, parent, index2, offset, rules2, points, type4, props = [], children = [], length2, rulesets), rulesets);
             if (character2 === 123)
               if (offset === 0)
-                parse$1(characters2, root2, reference, reference, props, rulesets, length2, points, children);
+                parse$2(characters2, root2, reference, reference, props, rulesets, length2, points, children);
               else {
                 switch (atrule) {
                   // c(ontainer)
@@ -16929,8 +14000,8 @@ function parse$1(value, root2, parent, rule, rules2, rulesets, pseudo, points, d
                   case 109:
                   case 115:
                 }
-                if (offset) parse$1(value, reference, reference, rule && append(ruleset(value, reference, reference, 0, 0, rules2, points, type4, rules2, props = [], length2, children), children), rules2, children, length2, points, rule ? props : children);
-                else parse$1(characters2, reference, reference, reference, [""], children, 0, points, children);
+                if (offset) parse$2(value, reference, reference, rule && append(ruleset(value, reference, reference, 0, 0, rules2, points, type4, rules2, props = [], length2, children), children), rules2, children, length2, points, rule ? props : children);
+                else parse$2(characters2, reference, reference, reference, [""], children, 0, points, children);
               }
         }
         index2 = offset = property = 0, variable = ampersand = 1, type4 = characters2 = "", length2 = pseudo;
@@ -18134,7 +15205,7 @@ function genStyleUtils(config2) {
     };
     return function(prefixCls) {
       var rootCls = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : prefixCls;
-      var _useToken2 = useToken2(), theme = _useToken2.theme, realToken = _useToken2.realToken, hashId = _useToken2.hashId, token2 = _useToken2.token, cssVar = _useToken2.cssVar, zeroRuntime = _useToken2.zeroRuntime;
+      var _useToken2 = useToken2(), theme2 = _useToken2.theme, realToken = _useToken2.realToken, hashId = _useToken2.hashId, token2 = _useToken2.token, cssVar = _useToken2.cssVar, zeroRuntime = _useToken2.zeroRuntime;
       var memoizedZeroRuntime = reactExports.useMemo(function() {
         return zeroRuntime;
       }, []);
@@ -18154,7 +15225,7 @@ function genStyleUtils(config2) {
       }, [type4, component, cssVar === null || cssVar === void 0 ? void 0 : cssVar.prefix]);
       var _genMaxMin = genMaxMin(), max = _genMaxMin.max, min = _genMaxMin.min;
       var sharedConfig = {
-        theme,
+        theme: theme2,
         token: token2,
         hashId,
         nonce: function nonce() {
@@ -19353,12 +16424,12 @@ function genSizeMapToken(token2) {
     // 4
   };
 }
-const getAlphaColor$1 = (baseColor, alpha) => new FastColor(baseColor).setA(alpha).toRgbString();
-const getSolidColor = (baseColor, brightness) => {
+const getAlphaColor$2 = (baseColor, alpha) => new FastColor(baseColor).setA(alpha).toRgbString();
+const getSolidColor$1 = (baseColor, brightness) => {
   const instance2 = new FastColor(baseColor);
   return instance2.darken(brightness).toHexString();
 };
-const generateColorPalettes = (baseColor) => {
+const generateColorPalettes$1 = (baseColor) => {
   const colors = generate$1(baseColor);
   return {
     1: colors[0],
@@ -19373,34 +16444,34 @@ const generateColorPalettes = (baseColor) => {
     10: colors[6]
   };
 };
-const generateNeutralColorPalettes = (bgBaseColor, textBaseColor) => {
+const generateNeutralColorPalettes$1 = (bgBaseColor, textBaseColor) => {
   const colorBgBase = bgBaseColor || "#fff";
   const colorTextBase = textBaseColor || "#000";
   return {
     colorBgBase,
     colorTextBase,
-    colorText: getAlphaColor$1(colorTextBase, 0.88),
-    colorTextSecondary: getAlphaColor$1(colorTextBase, 0.65),
-    colorTextTertiary: getAlphaColor$1(colorTextBase, 0.45),
-    colorTextQuaternary: getAlphaColor$1(colorTextBase, 0.25),
-    colorFill: getAlphaColor$1(colorTextBase, 0.15),
-    colorFillSecondary: getAlphaColor$1(colorTextBase, 0.06),
-    colorFillTertiary: getAlphaColor$1(colorTextBase, 0.04),
-    colorFillQuaternary: getAlphaColor$1(colorTextBase, 0.02),
-    colorBgSolid: getAlphaColor$1(colorTextBase, 1),
-    colorBgSolidHover: getAlphaColor$1(colorTextBase, 0.75),
-    colorBgSolidActive: getAlphaColor$1(colorTextBase, 0.95),
-    colorBgLayout: getSolidColor(colorBgBase, 4),
-    colorBgContainer: getSolidColor(colorBgBase, 0),
-    colorBgElevated: getSolidColor(colorBgBase, 0),
-    colorBgSpotlight: getAlphaColor$1(colorTextBase, 0.85),
+    colorText: getAlphaColor$2(colorTextBase, 0.88),
+    colorTextSecondary: getAlphaColor$2(colorTextBase, 0.65),
+    colorTextTertiary: getAlphaColor$2(colorTextBase, 0.45),
+    colorTextQuaternary: getAlphaColor$2(colorTextBase, 0.25),
+    colorFill: getAlphaColor$2(colorTextBase, 0.15),
+    colorFillSecondary: getAlphaColor$2(colorTextBase, 0.06),
+    colorFillTertiary: getAlphaColor$2(colorTextBase, 0.04),
+    colorFillQuaternary: getAlphaColor$2(colorTextBase, 0.02),
+    colorBgSolid: getAlphaColor$2(colorTextBase, 1),
+    colorBgSolidHover: getAlphaColor$2(colorTextBase, 0.75),
+    colorBgSolidActive: getAlphaColor$2(colorTextBase, 0.95),
+    colorBgLayout: getSolidColor$1(colorBgBase, 4),
+    colorBgContainer: getSolidColor$1(colorBgBase, 0),
+    colorBgElevated: getSolidColor$1(colorBgBase, 0),
+    colorBgSpotlight: getAlphaColor$2(colorTextBase, 0.85),
     colorBgBlur: "transparent",
-    colorBorder: getSolidColor(colorBgBase, 15),
-    colorBorderDisabled: getSolidColor(colorBgBase, 15),
-    colorBorderSecondary: getSolidColor(colorBgBase, 6)
+    colorBorder: getSolidColor$1(colorBgBase, 15),
+    colorBorderDisabled: getSolidColor$1(colorBgBase, 15),
+    colorBorderSecondary: getSolidColor$1(colorBgBase, 6)
   };
 };
-function derivative(token2) {
+function derivative$1(token2) {
   presetPrimaryColors.pink = presetPrimaryColors.magenta;
   presetPalettes.pink = presetPalettes.magenta;
   const colorPalettes = Object.keys(defaultPresetColors).map((colorKey) => {
@@ -19424,8 +16495,8 @@ function derivative(token2) {
     ...colorPalettes,
     // Colors
     ...genColorMapToken(token2, {
-      generateColorPalettes,
-      generateNeutralColorPalettes
+      generateColorPalettes: generateColorPalettes$1,
+      generateNeutralColorPalettes: generateNeutralColorPalettes$1
     }),
     // Font
     ...genFontMapToken(token2.fontSize),
@@ -19437,7 +16508,7 @@ function derivative(token2) {
     ...genCommonMapToken(token2)
   };
 }
-const defaultTheme = createTheme(derivative);
+const defaultTheme = createTheme(derivative$1);
 const defaultConfig = {
   token: seedToken,
   override: {
@@ -19449,7 +16520,7 @@ const DesignTokenContext = /* @__PURE__ */ We.createContext(defaultConfig);
 function isStableColor(color2) {
   return color2 >= 0 && color2 <= 255;
 }
-function getAlphaColor(frontColor, backgroundColor) {
+function getAlphaColor$1(frontColor, backgroundColor) {
   const {
     r: fR,
     g: fG,
@@ -19520,7 +16591,7 @@ function formatToken(derivativeToken) {
     colorBgContainerDisabled: mergedToken.colorFillTertiary,
     // ============== Split ============== //
     colorBorderBg: mergedToken.colorBgContainer,
-    colorSplit: getAlphaColor(mergedToken.colorBorderSecondary, mergedToken.colorBgContainer),
+    colorSplit: getAlphaColor$1(mergedToken.colorBorderSecondary, mergedToken.colorBgContainer),
     // ============== Text ============== //
     colorTextPlaceholder: mergedToken.colorTextQuaternary,
     colorTextDisabled: mergedToken.colorTextQuaternary,
@@ -19533,8 +16604,8 @@ function formatToken(derivativeToken) {
     colorBgTextActive: mergedToken.colorFill,
     colorIcon: mergedToken.colorTextTertiary,
     colorIconHover: mergedToken.colorText,
-    colorErrorOutline: getAlphaColor(mergedToken.colorErrorBg, mergedToken.colorBgContainer),
-    colorWarningOutline: getAlphaColor(mergedToken.colorWarningBg, mergedToken.colorBgContainer),
+    colorErrorOutline: getAlphaColor$1(mergedToken.colorErrorBg, mergedToken.colorBgContainer),
+    colorWarningOutline: getAlphaColor$1(mergedToken.colorWarningBg, mergedToken.colorBgContainer),
     // Font
     fontSizeIcon: mergedToken.fontSizeSM,
     // Line
@@ -19549,7 +16620,7 @@ function formatToken(derivativeToken) {
     controlItemBgActiveHover: mergedToken.colorPrimaryBgHover,
     controlItemBgActiveDisabled: mergedToken.colorFill,
     controlTmpOutline: mergedToken.colorFillQuaternary,
-    controlOutline: getAlphaColor(mergedToken.colorPrimaryBg, mergedToken.colorBgContainer),
+    controlOutline: getAlphaColor$1(mergedToken.colorPrimaryBg, mergedToken.colorBgContainer),
     lineType: mergedToken.lineType,
     borderRadius: mergedToken.borderRadius,
     borderRadiusXS: mergedToken.borderRadiusXS,
@@ -19688,8 +16759,8 @@ const preserve = {
   screenXXL: true,
   screenXXLMin: true
 };
-const getComputedToken = (originToken, overrideToken, theme) => {
-  const derivativeToken = theme.getDerivativeToken(originToken);
+const getComputedToken = (originToken, overrideToken, theme2) => {
+  const derivativeToken = theme2.getDerivativeToken(originToken);
   const {
     override,
     ...components
@@ -19723,7 +16794,7 @@ function useToken() {
   const {
     token: rootDesignToken,
     hashed,
-    theme,
+    theme: theme2,
     override,
     cssVar: ctxCssVar,
     zeroRuntime
@@ -19733,7 +16804,7 @@ function useToken() {
     key: (ctxCssVar == null ? void 0 : ctxCssVar.key) || "css-var-root"
   };
   const salt = `${version}-${hashed || ""}`;
-  const mergedTheme = theme || defaultTheme;
+  const mergedTheme = theme2 || defaultTheme;
   const [token2, hashId, realToken] = useCacheToken(mergedTheme, [seedToken, rootDesignToken], {
     salt,
     override,
@@ -19912,9 +16983,9 @@ const {
     };
   },
   useToken: () => {
-    const [theme, realToken, hashId, token2, cssVar, zeroRuntime] = useToken();
+    const [theme2, realToken, hashId, token2, cssVar, zeroRuntime] = useToken();
     return {
-      theme,
+      theme: theme2,
       realToken,
       hashId,
       token: token2,
@@ -19984,7 +17055,7 @@ function inShadow(ele) {
 function getShadowRoot(ele) {
   return inShadow(ele) ? getRoot(ele) : null;
 }
-function camelCase(input) {
+function camelCase$1(input) {
   return input.replace(/-(.)/g, (match2, g2) => g2.toUpperCase());
 }
 function warning$1(valid2, message2) {
@@ -20003,7 +17074,7 @@ function normalizeAttrs(attrs = {}) {
         break;
       default:
         delete acc[key];
-        acc[camelCase(key)] = val;
+        acc[camelCase$1(key)] = val;
     }
     return acc;
   }, {});
@@ -20190,8 +17261,8 @@ function getTwoToneColor() {
   }
   return [colors.primaryColor, colors.secondaryColor];
 }
-function _extends$B() {
-  _extends$B = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$I() {
+  _extends$I = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20202,7 +17273,7 @@ function _extends$B() {
     }
     return target;
   };
-  return _extends$B.apply(this, arguments);
+  return _extends$I.apply(this, arguments);
 }
 setTwoToneColor(blue.primary);
 const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -20236,7 +17307,7 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     transform: `rotate(${rotate}deg)`
   } : void 0;
   const [primaryColor, secondaryColor] = normalizeTwoToneColors(twoToneColor);
-  return /* @__PURE__ */ reactExports.createElement("span", _extends$B({
+  return /* @__PURE__ */ reactExports.createElement("span", _extends$I({
     role: "img",
     "aria-label": icon.name
   }, restProps, {
@@ -20253,8 +17324,8 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
 });
 Icon$1.getTwoToneColor = getTwoToneColor;
 Icon$1.setTwoToneColor = setTwoToneColor;
-function _extends$A() {
-  _extends$A = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$H() {
+  _extends$H = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20265,16 +17336,16 @@ function _extends$A() {
     }
     return target;
   };
-  return _extends$A.apply(this, arguments);
+  return _extends$H.apply(this, arguments);
 }
-const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$A({}, props, {
+const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$H({}, props, {
   ref,
   icon: CheckCircleFilled$1
 }));
-const RefIcon$f = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
+const RefIcon$m = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
 var CloseCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z" } }] }, "name": "close-circle", "theme": "filled" };
-function _extends$z() {
-  _extends$z = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$G() {
+  _extends$G = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20285,16 +17356,16 @@ function _extends$z() {
     }
     return target;
   };
-  return _extends$z.apply(this, arguments);
+  return _extends$G.apply(this, arguments);
 }
-const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$z({}, props, {
+const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$G({}, props, {
   ref,
   icon: CloseCircleFilled$1
 }));
-const RefIcon$e = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
-var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
-function _extends$y() {
-  _extends$y = Object.assign ? Object.assign.bind() : function(target) {
+const RefIcon$l = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
+var CloseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z" } }] }, "name": "close", "theme": "outlined" };
+function _extends$F() {
+  _extends$F = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20305,16 +17376,36 @@ function _extends$y() {
     }
     return target;
   };
-  return _extends$y.apply(this, arguments);
+  return _extends$F.apply(this, arguments);
 }
-const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$y({}, props, {
+const CloseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$F({}, props, {
+  ref,
+  icon: CloseOutlined$1
+}));
+const RefIcon$k = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
+function _extends$E() {
+  _extends$E = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$E.apply(this, arguments);
+}
+const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$E({}, props, {
   ref,
   icon: ExclamationCircleFilled$1
 }));
-const RefIcon$d = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
+const RefIcon$j = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
 var InfoCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272zm-32-344a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "info-circle", "theme": "filled" };
-function _extends$x() {
-  _extends$x = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$D() {
+  _extends$D = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20325,13 +17416,13 @@ function _extends$x() {
     }
     return target;
   };
-  return _extends$x.apply(this, arguments);
+  return _extends$D.apply(this, arguments);
 }
-const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$x({}, props, {
+const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$D({}, props, {
   ref,
   icon: InfoCircleFilled$1
 }));
-const RefIcon$c = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
+const RefIcon$i = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
 const Context$1 = /* @__PURE__ */ reactExports.createContext({});
 function MotionProvider({
   children,
@@ -20884,8 +17975,8 @@ function diffKeys(prevKeys = [], currentKeys = []) {
   });
   return list2;
 }
-function _extends$w() {
-  _extends$w = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$C() {
+  _extends$C = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20896,7 +17987,7 @@ function _extends$w() {
     }
     return target;
   };
-  return _extends$w.apply(this, arguments);
+  return _extends$C.apply(this, arguments);
 }
 const MOTION_PROP_NAMES = ["eventProps", "visible", "children", "motionName", "motionAppear", "motionEnter", "motionLeave", "motionLeaveImmediately", "motionDeadline", "removeOnLeave", "leavedClassName", "onAppearPrepare", "onAppearStart", "onAppearActive", "onAppearEnd", "onEnterStart", "onEnterActive", "onEnterEnd", "onLeaveStart", "onLeaveActive", "onLeaveEnd"];
 function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
@@ -20974,7 +18065,7 @@ function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
         ...eventProps
       }, index2) => {
         const visible = status === STATUS_ADD || status === STATUS_KEEP;
-        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$w({}, motionProps, {
+        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$C({}, motionProps, {
           key: eventProps.key,
           visible,
           eventProps,
@@ -21342,7 +18433,7 @@ const LocaleContext = /* @__PURE__ */ reactExports.createContext(void 0);
 const useLocale = (componentName, defaultLocale) => {
   const fullLocale = reactExports.useContext(LocaleContext);
   const getLocale = reactExports.useMemo(() => {
-    const locale2 = localeValues[componentName];
+    const locale2 = defaultLocale || localeValues[componentName];
     const localeFromContext = (fullLocale == null ? void 0 : fullLocale[componentName]) ?? {};
     return {
       ...typeof locale2 === "function" ? locale2() : locale2,
@@ -21377,8 +18468,117 @@ const LocaleProvider = (props) => {
     value: getMemoizedContextValue
   }, children);
 };
+function mergeProps$1(...items) {
+  const ret = {};
+  items.forEach((item) => {
+    if (item) {
+      Object.keys(item).forEach((key) => {
+        if (item[key] !== void 0) {
+          ret[key] = item[key];
+        }
+      });
+    }
+  });
+  return ret;
+}
 const isNonNullable = (val) => {
   return val !== void 0 && val !== null;
+};
+const pickClosable = (context) => {
+  if (!context) {
+    return void 0;
+  }
+  const {
+    closable,
+    closeIcon
+  } = context;
+  return {
+    closable,
+    closeIcon
+  };
+};
+const EmptyFallbackCloseCollection = {};
+const computeClosableConfig = (closable, closeIcon) => {
+  if (!closable && (closable === false || closeIcon === false || closeIcon === null)) {
+    return false;
+  }
+  if (closable === void 0 && closeIcon === void 0) {
+    return null;
+  }
+  let closableConfig = {
+    closeIcon: typeof closeIcon !== "boolean" && closeIcon !== null ? closeIcon : void 0
+  };
+  if (closable && typeof closable === "object") {
+    closableConfig = {
+      ...closableConfig,
+      ...closable
+    };
+  }
+  return closableConfig;
+};
+const mergeClosableConfigs = (propConfig, contextConfig, fallbackConfig) => {
+  if (propConfig === false) {
+    return false;
+  }
+  if (propConfig) {
+    return mergeProps$1(fallbackConfig, contextConfig, propConfig);
+  }
+  if (contextConfig === false) {
+    return false;
+  }
+  if (contextConfig) {
+    return mergeProps$1(fallbackConfig, contextConfig);
+  }
+  return fallbackConfig.closable ? fallbackConfig : false;
+};
+const computeCloseIcon = (mergedConfig, fallbackCloseCollection, closeLabel) => {
+  const {
+    closeIconRender
+  } = fallbackCloseCollection;
+  const {
+    closeIcon,
+    ...restConfig
+  } = mergedConfig;
+  let finalCloseIcon = closeIcon;
+  const ariaOrDataProps = pickAttrs(restConfig, true);
+  if (isNonNullable(finalCloseIcon)) {
+    if (closeIconRender) {
+      finalCloseIcon = closeIconRender(finalCloseIcon);
+    }
+    finalCloseIcon = /* @__PURE__ */ We.isValidElement(finalCloseIcon) ? /* @__PURE__ */ We.cloneElement(finalCloseIcon, {
+      "aria-label": closeLabel,
+      ...finalCloseIcon.props,
+      ...ariaOrDataProps
+    }) : /* @__PURE__ */ We.createElement("span", {
+      "aria-label": closeLabel,
+      ...ariaOrDataProps
+    }, finalCloseIcon);
+  }
+  return [finalCloseIcon, ariaOrDataProps];
+};
+const computeClosable = (propCloseCollection, contextCloseCollection, fallbackCloseCollection = EmptyFallbackCloseCollection, closeLabel = "Close") => {
+  const propConfig = computeClosableConfig(propCloseCollection == null ? void 0 : propCloseCollection.closable, propCloseCollection == null ? void 0 : propCloseCollection.closeIcon);
+  const contextConfig = computeClosableConfig(contextCloseCollection == null ? void 0 : contextCloseCollection.closable, contextCloseCollection == null ? void 0 : contextCloseCollection.closeIcon);
+  const mergedFallback = {
+    closeIcon: /* @__PURE__ */ We.createElement(RefIcon$k, null),
+    ...fallbackCloseCollection
+  };
+  const mergedConfig = mergeClosableConfigs(propConfig, contextConfig, mergedFallback);
+  const closeBtnIsDisabled = typeof mergedConfig !== "boolean" ? !!(mergedConfig == null ? void 0 : mergedConfig.disabled) : false;
+  if (mergedConfig === false) {
+    return [false, null, closeBtnIsDisabled, {}];
+  }
+  const [closeIcon, ariaProps] = computeCloseIcon(mergedConfig, mergedFallback, closeLabel);
+  return [true, closeIcon, closeBtnIsDisabled, ariaProps];
+};
+const useClosable = (propCloseCollection, contextCloseCollection, fallbackCloseCollection = EmptyFallbackCloseCollection) => {
+  const [contextLocale] = useLocale("global", localeValues.global);
+  return We.useMemo(() => {
+    return computeClosable(propCloseCollection, contextCloseCollection, {
+      closeIcon: /* @__PURE__ */ We.createElement(RefIcon$k, null),
+      ...fallbackCloseCollection
+    }, contextLocale.close);
+  }, [propCloseCollection, contextCloseCollection, fallbackCloseCollection, contextLocale.close]);
 };
 const useForceUpdate = () => {
   return We.useReducer((ori) => ori + 1, 0);
@@ -21807,8 +19007,8 @@ function Arrow(props) {
     }
   }, content2);
 }
-function _extends$v() {
-  _extends$v = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$B() {
+  _extends$B = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21819,7 +19019,7 @@ function _extends$v() {
     }
     return target;
   };
-  return _extends$v.apply(this, arguments);
+  return _extends$B.apply(this, arguments);
 }
 function Mask(props) {
   const {
@@ -21833,7 +19033,7 @@ function Mask(props) {
   if (!mask) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$v({}, motion, {
+  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$B({}, motion, {
     motionAppear: true,
     visible: open2,
     removeOnLeave: true
@@ -21882,8 +19082,8 @@ function useOffsetStyle(isMobile, ready, open2, align, offsetR, offsetB, offsetX
   }
   return offsetStyle;
 }
-function _extends$u() {
-  _extends$u = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$A() {
+  _extends$A = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21894,7 +19094,7 @@ function _extends$u() {
     }
     return target;
   };
-  return _extends$u.apply(this, arguments);
+  return _extends$A.apply(this, arguments);
 }
 const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -22000,7 +19200,7 @@ const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onResize: onInternalResize,
     disabled: !open2
   }, (resizeObserverRef) => {
-    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$u({
+    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$A({
       motionAppear: true,
       motionEnter: true,
       motionLeave: true,
@@ -22769,8 +19969,8 @@ function useTargetState() {
   });
   return [trigger, open2, options, onVisibleChanged];
 }
-function _extends$t() {
-  _extends$t = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$z() {
+  _extends$z = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -22781,7 +19981,7 @@ function _extends$t() {
     }
     return target;
   };
-  return _extends$t.apply(this, arguments);
+  return _extends$z.apply(this, arguments);
 }
 const UniqueContainer = (props) => {
   const {
@@ -22812,7 +20012,7 @@ const UniqueContainer = (props) => {
     sizeStyle.width = popupSize.width;
     sizeStyle.height = popupSize.height;
   }
-  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$t({
+  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$z({
     motionAppear: true,
     motionEnter: true,
     motionLeave: true,
@@ -23510,8 +20710,8 @@ function useConfig() {
     componentSize
   };
 }
-function useTheme(theme, parentTheme, config2) {
-  const themeConfig = theme || {};
+function useTheme(theme2, parentTheme, config2) {
+  const themeConfig = theme2 || {};
   const parentThemeConfig = themeConfig.inherit === false || !parentTheme ? {
     ...defaultConfig,
     hashed: (parentTheme == null ? void 0 : parentTheme.hashed) ?? defaultConfig.hashed,
@@ -23520,16 +20720,16 @@ function useTheme(theme, parentTheme, config2) {
   const themeKey = reactExports.useId();
   return useMemo(() => {
     var _a2;
-    if (!theme) {
+    if (!theme2) {
       return parentTheme;
     }
     const mergedComponents = {
       ...parentThemeConfig.components
     };
-    Object.keys(theme.components || {}).forEach((componentName) => {
+    Object.keys(theme2.components || {}).forEach((componentName) => {
       mergedComponents[componentName] = {
         ...mergedComponents[componentName],
-        ...theme.components[componentName]
+        ...theme2.components[componentName]
       };
     });
     const cssVarKey = `css-var-${themeKey.replace(/:/g, "")}`;
@@ -23592,7 +20792,7 @@ const setGlobalConfig = (props) => {
   const {
     prefixCls,
     iconPrefixCls,
-    theme,
+    theme: theme2,
     holderRender
   } = props;
   if (prefixCls !== void 0) {
@@ -23604,8 +20804,8 @@ const setGlobalConfig = (props) => {
   if ("holderRender" in props) {
     globalHolderRender = holderRender;
   }
-  if (theme) {
-    globalTheme = theme;
+  if (theme2) {
+    globalTheme = theme2;
   }
 };
 const globalConfig = () => ({
@@ -23646,7 +20846,7 @@ const ProviderChildren = (props) => {
     legacyLocale,
     parentContext,
     iconPrefixCls: customIconPrefixCls,
-    theme,
+    theme: theme2,
     componentDisabled,
     segmented,
     statistic: statistic2,
@@ -23728,7 +20928,7 @@ const ProviderChildren = (props) => {
   const iconPrefixCls = customIconPrefixCls || parentContext.iconPrefixCls || defaultIconPrefixCls;
   const csp = customCsp || parentContext.csp;
   useResetIconStyle(iconPrefixCls, csp);
-  const mergedTheme = useTheme(theme, parentContext.theme, {
+  const mergedTheme = useTheme(theme2, parentContext.theme, {
     prefixCls: getPrefixCls("")
   });
   const baseConfig = {
@@ -23919,7 +21119,7 @@ const ProviderChildren = (props) => {
       cssVar
     };
   }, [mergedTheme]);
-  if (theme) {
+  if (theme2) {
     childNode = /* @__PURE__ */ reactExports.createElement(DesignTokenContext.Provider, {
       value: memoTheme
     }, childNode);
@@ -24001,8 +21201,8 @@ const KeyCode = {
    */
   DOWN: 40
 };
-function _extends$s() {
-  _extends$s = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$y() {
+  _extends$y = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -24013,7 +21213,7 @@ function _extends$s() {
     }
     return target;
   };
-  return _extends$s.apply(this, arguments);
+  return _extends$y.apply(this, arguments);
 }
 const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -24092,7 +21292,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const ariaProps = pickAttrs(closableObj, true);
   const validPercent = 100 - (!percent || percent < 0 ? 0 : percent > 100 ? 100 : percent);
   const noticePrefixCls = `${prefixCls}-notice`;
-  return /* @__PURE__ */ reactExports.createElement("div", _extends$s({}, divProps, {
+  return /* @__PURE__ */ reactExports.createElement("div", _extends$y({}, divProps, {
     ref,
     className: clsx(noticePrefixCls, className, {
       [`${noticePrefixCls}-closable`]: closable
@@ -24111,7 +21311,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onClick
   }), /* @__PURE__ */ reactExports.createElement("div", {
     className: `${noticePrefixCls}-content`
-  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$s({
+  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$y({
     className: `${noticePrefixCls}-close`,
     onKeyDown: onCloseKeyDown,
     "aria-label": "Close"
@@ -24154,8 +21354,8 @@ const useStack = (config2) => {
   }
   return [!!config2, result];
 };
-function _extends$r() {
-  _extends$r = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$x() {
+  _extends$x = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -24166,7 +21366,7 @@ function _extends$r() {
     }
     return target;
   };
-  return _extends$r.apply(this, arguments);
+  return _extends$x.apply(this, arguments);
 }
 const NoticeList = (props) => {
   const {
@@ -24210,7 +21410,7 @@ const NoticeList = (props) => {
       setLatestNotice(dictRef.current[(_b2 = keys2[keys2.length - 1]) == null ? void 0 : _b2.key]);
     }
   }, [keys2, stack]);
-  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$r({
+  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$x({
     key: placement,
     className: clsx(prefixCls, `${prefixCls}-${placement}`, ctxCls == null ? void 0 : ctxCls.list, className, {
       [`${prefixCls}-stack`]: !!stack,
@@ -24270,7 +21470,7 @@ const NoticeList = (props) => {
       },
       onMouseEnter: () => setHoverKeys((prev2) => prev2.includes(strKey) ? prev2 : [...prev2, strKey]),
       onMouseLeave: () => setHoverKeys((prev2) => prev2.filter((k2) => k2 !== strKey))
-    }, /* @__PURE__ */ We.createElement(Notify, _extends$r({}, restConfig, {
+    }, /* @__PURE__ */ We.createElement(Notify, _extends$x({}, restConfig, {
       ref: (node2) => {
         if (dataIndex > -1) {
           dictRef.current[strKey] = node2;
@@ -24508,8 +21708,8 @@ function useNotification(rootConfig = {}) {
   return [api2, contextHolder];
 }
 var LoadingOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z" } }] }, "name": "loading", "theme": "outlined" };
-function _extends$q() {
-  _extends$q = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$w() {
+  _extends$w = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -24520,13 +21720,13 @@ function _extends$q() {
     }
     return target;
   };
-  return _extends$q.apply(this, arguments);
+  return _extends$w.apply(this, arguments);
 }
-const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$q({}, props, {
+const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$w({}, props, {
   ref,
   icon: LoadingOutlined$1
 }));
-const RefIcon$b = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
+const RefIcon$h = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
 const genMessageStyle = (token2) => {
   const {
     componentCls,
@@ -24671,23 +21871,23 @@ const genMessageStyle = (token2) => {
     }
   ];
 };
-const prepareComponentToken$8 = (token2) => ({
+const prepareComponentToken$9 = (token2) => ({
   zIndexPopup: token2.zIndexPopupBase + CONTAINER_MAX_OFFSET + 10,
   contentBg: token2.colorBgElevated,
   contentPadding: `${(token2.controlHeightLG - token2.fontSize * token2.lineHeight) / 2}px ${token2.paddingSM}px`
 });
-const useStyle$d = genStyleHooks("Message", (token2) => {
+const useStyle$e = genStyleHooks("Message", (token2) => {
   const combinedToken = merge$2(token2, {
     height: 150
   });
   return genMessageStyle(combinedToken);
-}, prepareComponentToken$8);
+}, prepareComponentToken$9);
 const TypeIcon = {
-  info: /* @__PURE__ */ reactExports.createElement(RefIcon$c, null),
-  success: /* @__PURE__ */ reactExports.createElement(RefIcon$f, null),
-  error: /* @__PURE__ */ reactExports.createElement(RefIcon$e, null),
-  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$d, null),
-  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$b, null)
+  info: /* @__PURE__ */ reactExports.createElement(RefIcon$i, null),
+  success: /* @__PURE__ */ reactExports.createElement(RefIcon$m, null),
+  error: /* @__PURE__ */ reactExports.createElement(RefIcon$l, null),
+  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$j, null),
+  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$h, null)
 };
 const PureContent = (props) => {
   const {
@@ -24737,7 +21937,7 @@ const PurePanel$3 = (props) => {
   } = useComponentConfig("message");
   const prefixCls = staticPrefixCls || getPrefixCls("message");
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$d(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$e(prefixCls, rootCls);
   const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, messageClassNames], [contextStyles, styles], {
     props
   });
@@ -24787,7 +21987,7 @@ const Wrapper = ({
   prefixCls
 }) => {
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$d(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$e(prefixCls, rootCls);
   return /* @__PURE__ */ reactExports.createElement(NotificationProvider, {
     classNames: {
       list: clsx(hashId, cssVarCls, rootCls)
@@ -25079,7 +22279,7 @@ const genWaveStyle = (token2) => {
     }
   };
 };
-const useStyle$c = genComponentStyleHook("Wave", genWaveStyle);
+const useStyle$d = genComponentStyleHook("Wave", genWaveStyle);
 const TARGET_CLS = `${defaultPrefixCls}-wave-target`;
 function isValidWaveColor(color2) {
   return color2 && typeof color2 === "string" && color2 !== "#fff" && color2 !== "#ffffff" && color2 !== "rgb(255, 255, 255)" && color2 !== "rgba(255, 255, 255, 1)" && !/rgba\((?:\d*, ){3}0\)/.test(color2) && // any transparent rgba color
@@ -25256,7 +22456,7 @@ const Wave = (props) => {
   } = reactExports.useContext(ConfigContext);
   const containerRef = reactExports.useRef(null);
   const prefixCls = getPrefixCls("wave");
-  const [, hashId] = useStyle$c(prefixCls);
+  const [, hashId] = useStyle$d(prefixCls);
   const showWave = useWave(containerRef, clsx(prefixCls, hashId), component, colorSource);
   We.useEffect(() => {
     const node2 = containerRef.current;
@@ -25319,7 +22519,7 @@ const genSpaceCompactStyle = (token2) => {
     }
   };
 };
-const useStyle$b = genStyleHooks(["Space", "Compact"], (token2) => [genSpaceCompactStyle(token2)], () => ({}), {
+const useStyle$c = genStyleHooks(["Space", "Compact"], (token2) => [genSpaceCompactStyle(token2)], () => ({}), {
   // Space component don't apply extra font style
   // https://github.com/ant-design/ant-design/issues/40315
   resetStyle: false
@@ -25386,7 +22586,7 @@ const Compact$1 = (props) => {
   const [mergedOrientation, mergedVertical] = useOrientation(orientation, vertical, direction);
   const mergedSize = useSize((ctx) => size2 ?? ctx);
   const prefixCls = getPrefixCls("space-compact", customizePrefixCls);
-  const [hashId] = useStyle$b(prefixCls);
+  const [hashId] = useStyle$c(prefixCls);
   const clx = clsx(prefixCls, hashId, {
     [`${prefixCls}-rtl`]: directionConfig === "rtl",
     [`${prefixCls}-block`]: block,
@@ -25534,7 +22734,7 @@ const InnerLoadingIcon = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
     className: mergedIconCls,
     style: style2,
     ref
-  }, /* @__PURE__ */ We.createElement(RefIcon$b, {
+  }, /* @__PURE__ */ We.createElement(RefIcon$h, {
     className: iconClassName
   }));
 });
@@ -25822,8 +23022,8 @@ let AggregationColor = /* @__PURE__ */ (function() {
   }]);
 })();
 var RightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z" } }] }, "name": "right", "theme": "outlined" };
-function _extends$p() {
-  _extends$p = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$v() {
+  _extends$v = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -25834,21 +23034,21 @@ function _extends$p() {
     }
     return target;
   };
-  return _extends$p.apply(this, arguments);
+  return _extends$v.apply(this, arguments);
 }
-const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$p({}, props, {
+const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$v({}, props, {
   ref,
   icon: RightOutlined$1
 }));
-const RefIcon$a = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
-function _extends$o() {
-  return _extends$o = Object.assign ? Object.assign.bind() : function(n) {
+const RefIcon$g = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+function _extends$u() {
+  return _extends$u = Object.assign ? Object.assign.bind() : function(n) {
     for (var e2 = 1; e2 < arguments.length; e2++) {
       var t = arguments[e2];
       for (var r2 in t) ({}).hasOwnProperty.call(t, r2) && (n[r2] = t[r2]);
     }
     return n;
-  }, _extends$o.apply(null, arguments);
+  }, _extends$u.apply(null, arguments);
 }
 const genCollapseMotion = (token2) => ({
   [token2.componentCls]: {
@@ -26416,7 +23616,7 @@ const isBright = (value, bgColorToken) => {
   }
   return r2 * 0.299 + g2 * 0.587 + b2 * 0.114 > 192;
 };
-const prepareToken = (token2) => {
+const prepareToken$1 = (token2) => {
   const {
     paddingInline,
     onlyIconSize,
@@ -26430,7 +23630,7 @@ const prepareToken = (token2) => {
   });
   return buttonToken;
 };
-const prepareComponentToken$7 = (token2) => {
+const prepareComponentToken$8 = (token2) => {
   const contentFontSize = token2.contentFontSize ?? token2.fontSize;
   const contentFontSizeSM = token2.contentFontSizeSM ?? token2.fontSize;
   const contentFontSizeLG = token2.contentFontSizeLG ?? token2.fontSizeLG;
@@ -26440,7 +23640,7 @@ const prepareComponentToken$7 = (token2) => {
   const solidTextColor = isBright(new AggregationColor(token2.colorBgSolid), "#fff") ? "#000" : "#fff";
   const shadowColorTokens = PresetColors.reduce((prev2, colorKey) => ({
     ...prev2,
-    [`${colorKey}ShadowColor`]: `0 ${unit$1(token2.controlOutlineWidth)} 0 ${getAlphaColor(token2[`${colorKey}1`], token2.colorBgContainer)}`
+    [`${colorKey}ShadowColor`]: `0 ${unit$1(token2.controlOutlineWidth)} 0 ${getAlphaColor$1(token2[`${colorKey}1`], token2.colorBgContainer)}`
   }), {});
   const defaultBgDisabled = token2.colorBgContainerDisabled;
   const dashedBgDisabled = token2.colorBgContainerDisabled;
@@ -26920,8 +24120,8 @@ const genBlockButtonStyle = (token2) => {
     }
   };
 };
-const useStyle$a = genStyleHooks("Button", (token2) => {
-  const buttonToken = prepareToken(token2);
+const useStyle$b = genStyleHooks("Button", (token2) => {
+  const buttonToken = prepareToken$1(token2);
   return [
     // Shared
     genSharedButtonStyle(buttonToken),
@@ -26936,7 +24136,7 @@ const useStyle$a = genStyleHooks("Button", (token2) => {
     // Button Group
     genGroupStyle$2(buttonToken)
   ];
-}, prepareComponentToken$7, {
+}, prepareComponentToken$8, {
   unitless: {
     fontWeight: true,
     contentLineHeight: true,
@@ -27095,14 +24295,14 @@ const genButtonCompactStyle = (token2) => {
   };
 };
 const Compact = genSubStyleComponent(["Button", "compact"], (token2) => {
-  const buttonToken = prepareToken(token2);
+  const buttonToken = prepareToken$1(token2);
   return [
     // Space Compact
     genCompactItemStyle(buttonToken),
     genCompactItemVerticalStyle(buttonToken),
     genButtonCompactStyle(buttonToken)
   ];
-}, prepareComponentToken$7);
+}, prepareComponentToken$8);
 function getLoadingConfig(loading) {
   if (typeof loading === "object" && loading) {
     let delay = loading == null ? void 0 : loading.delay;
@@ -27195,7 +24395,7 @@ const InternalCompoundedButton = /* @__PURE__ */ We.forwardRef((props, ref) => {
   } = useComponentConfig("button");
   const mergedInsertSpace = autoInsertSpace ?? contextAutoInsertSpace ?? true;
   const prefixCls = getPrefixCls("btn", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$a(prefixCls);
+  const [hashId, cssVarCls] = useStyle$b(prefixCls);
   const disabled = reactExports.useContext(DisabledContext);
   const mergedDisabled = customDisabled ?? disabled;
   const groupSize = reactExports.useContext(GroupSizeContext);
@@ -27851,12 +25051,12 @@ var pattern$1 = {
   // ),
   hex: /^#?([a-f0-9]{6}|[a-f0-9]{3})$/i
 };
-var types$1 = {
+var types$2 = {
   integer: function integer(value) {
-    return types$1.number(value) && parseInt(value, 10) === value;
+    return types$2.number(value) && parseInt(value, 10) === value;
   },
   float: function float(value) {
-    return types$1.number(value) && !types$1.integer(value);
+    return types$2.number(value) && !types$2.integer(value);
   },
   array: function array(value) {
     return Array.isArray(value);
@@ -27881,7 +25081,7 @@ var types$1 = {
     return typeof value === "number";
   },
   object: function object(value) {
-    return _typeof$1(value) === "object" && !types$1.array(value);
+    return _typeof$1(value) === "object" && !types$2.array(value);
   },
   method: function method(value) {
     return typeof value === "function";
@@ -27904,7 +25104,7 @@ var type$1 = function type(rule, value, source, errors, options) {
   var custom = ["integer", "float", "array", "regexp", "object", "method", "email", "number", "date", "url", "hex"];
   var ruleType = rule.type;
   if (custom.indexOf(ruleType) > -1) {
-    if (!types$1[ruleType](value)) {
+    if (!types$2[ruleType](value)) {
       errors.push(format(options.messages.types[ruleType], rule.fullField, rule.type));
     }
   } else if (ruleType && _typeof$1(value) !== rule.type) {
@@ -28722,8 +25922,8 @@ function move(array4, moveIndex, toIndex) {
   }
   return array4;
 }
-function _extends$n() {
-  _extends$n = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$t() {
+  _extends$t = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -28734,7 +25934,7 @@ function _extends$n() {
     }
     return target;
   };
-  return _extends$n.apply(this, arguments);
+  return _extends$t.apply(this, arguments);
 }
 const EMPTY_ERRORS = [];
 const EMPTY_WARNINGS = [];
@@ -29221,7 +26421,7 @@ function WrapperField({
   if (!isMergedListField) {
     key = `_${(namePath || []).join("_")}`;
   }
-  return /* @__PURE__ */ reactExports.createElement(Field, _extends$n({
+  return /* @__PURE__ */ reactExports.createElement(Field, _extends$t({
     key,
     name: namePath,
     isListField: isMergedListField
@@ -29373,7 +26573,7 @@ function allPromiseFinish(promiseList) {
   });
 }
 const SPLIT = "__@field_split__";
-function normalize$2(namePath) {
+function normalize$3(namePath) {
   return namePath.map((cell) => `${typeof cell}:${cell}`).join(SPLIT);
 }
 class NameMap {
@@ -29381,10 +26581,10 @@ class NameMap {
     __publicField(this, "kvs", /* @__PURE__ */ new Map());
   }
   set(key, value) {
-    this.kvs.set(normalize$2(key), value);
+    this.kvs.set(normalize$3(key), value);
   }
   get(key) {
-    return this.kvs.get(normalize$2(key));
+    return this.kvs.get(normalize$3(key));
   }
   update(key, updater) {
     const origin = this.get(key);
@@ -29396,7 +26596,7 @@ class NameMap {
     }
   }
   delete(key) {
-    this.kvs.delete(normalize$2(key));
+    this.kvs.delete(normalize$3(key));
   }
   // Since we only use this in test, let simply realize this
   map(callback) {
@@ -30316,8 +27516,8 @@ const BatchUpdate = /* @__PURE__ */ reactExports.forwardRef((_2, ref) => {
   }));
   return null;
 });
-function _extends$m() {
-  _extends$m = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$s() {
+  _extends$s = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -30328,7 +27528,7 @@ function _extends$m() {
     }
     return target;
   };
-  return _extends$m.apply(this, arguments);
+  return _extends$s.apply(this, arguments);
 }
 const Form = ({
   name: name2,
@@ -30449,7 +27649,7 @@ const Form = ({
   if (Component === false) {
     return wrapperNode;
   }
-  return /* @__PURE__ */ reactExports.createElement(Component, _extends$m({}, restProps, {
+  return /* @__PURE__ */ reactExports.createElement(Component, _extends$s({}, restProps, {
     ref: nativeElementRef,
     onSubmit: (event) => {
       event.preventDefault();
@@ -30710,7 +27910,7 @@ function InternalItem(props, ref) {
   if (mergedHidden) {
     overflowProps["aria-hidden"] = true;
   }
-  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$o({
+  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$u({
     className: clsx(!invalidate && prefixCls, className),
     style: {
       ...overflowStyle,
@@ -30776,7 +27976,7 @@ const InternalRawItem = (props, ref) => {
       component: Component = "div",
       ...restProps2
     } = props;
-    return /* @__PURE__ */ reactExports.createElement(Component, _extends$o({}, restProps2, {
+    return /* @__PURE__ */ reactExports.createElement(Component, _extends$u({}, restProps2, {
       ref
     }));
   }
@@ -30790,7 +27990,7 @@ const InternalRawItem = (props, ref) => {
   } = props;
   return /* @__PURE__ */ reactExports.createElement(OverflowContext.Provider, {
     value: null
-  }, /* @__PURE__ */ reactExports.createElement(Item$1, _extends$o({
+  }, /* @__PURE__ */ reactExports.createElement(Item$1, _extends$u({
     ref,
     className: clsx(contextClassName, className)
   }, restContext, restProps)));
@@ -30978,7 +28178,7 @@ function Overflow(props, ref) {
     }, renderRawItem(item, index2));
   } : (item, index2) => {
     const key = getKey(item, index2);
-    return /* @__PURE__ */ reactExports.createElement(Item$1, _extends$o({}, itemSharedProps, {
+    return /* @__PURE__ */ reactExports.createElement(Item$1, _extends$u({}, itemSharedProps, {
       order: index2,
       key,
       item,
@@ -31000,19 +28200,19 @@ function Overflow(props, ref) {
       ...itemSharedProps,
       ...restContextProps
     }
-  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$1, _extends$o({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
-  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$o({
+  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$1, _extends$u({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
+  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$u({
     className: clsx(!invalidate && prefixCls, className),
     style: style2,
     ref
-  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$o({}, itemSharedProps, {
+  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$u({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: -1,
     className: `${itemPrefixCls}-prefix`,
     registerSize: registerPrefixSize,
     display: true
-  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$o({}, itemSharedProps, {
+  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$u({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: mergedDisplayCount,
@@ -31059,8 +28259,8 @@ const useVariant = (component, variant, legacyBordered) => {
   return [mergedVariant, enableVariantCls];
 };
 var CheckOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z" } }] }, "name": "check", "theme": "outlined" };
-function _extends$l() {
-  _extends$l = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$r() {
+  _extends$r = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31071,13 +28271,13 @@ function _extends$l() {
     }
     return target;
   };
-  return _extends$l.apply(this, arguments);
+  return _extends$r.apply(this, arguments);
 }
-const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$l({}, props, {
+const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$r({}, props, {
   ref,
   icon: CheckOutlined$1
 }));
-const RefIcon$9 = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
+const RefIcon$f = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
 const responsiveArray = ["xxl", "xl", "lg", "md", "sm", "xs"];
 const getResponsiveMap = (token2) => ({
   xs: `(max-width: ${token2.screenXSMax}px)`,
@@ -31191,7 +28391,7 @@ function useBreakpoint(refreshOnChange = true, defaultScreens = {}) {
   return screensRef.current;
 }
 const AvatarContext = /* @__PURE__ */ reactExports.createContext({});
-const genBaseStyle$2 = (token2) => {
+const genBaseStyle$3 = (token2) => {
   const {
     antCls,
     componentCls,
@@ -31288,7 +28488,7 @@ const genGroupStyle$1 = (token2) => {
     }
   };
 };
-const prepareComponentToken$6 = (token2) => {
+const prepareComponentToken$7 = (token2) => {
   const {
     controlHeight,
     controlHeightLG,
@@ -31316,7 +28516,7 @@ const prepareComponentToken$6 = (token2) => {
     groupBorderColor: colorBorderBg
   };
 };
-const useStyle$9 = genStyleHooks("Avatar", (token2) => {
+const useStyle$a = genStyleHooks("Avatar", (token2) => {
   const {
     colorTextLightSolid,
     colorTextPlaceholder
@@ -31325,8 +28525,8 @@ const useStyle$9 = genStyleHooks("Avatar", (token2) => {
     avatarBg: colorTextPlaceholder,
     avatarColor: colorTextLightSolid
   });
-  return [genBaseStyle$2(avatarToken), genGroupStyle$1(avatarToken)];
-}, prepareComponentToken$6);
+  return [genBaseStyle$3(avatarToken), genGroupStyle$1(avatarToken)];
+}, prepareComponentToken$7);
 const Avatar$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     prefixCls: customizePrefixCls,
@@ -31401,7 +28601,7 @@ const Avatar$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, [screens, size2, icon, children]);
   const prefixCls = getPrefixCls("avatar", customizePrefixCls);
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$9(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$a(prefixCls, rootCls);
   const sizeCls = clsx({
     [`${prefixCls}-lg`]: size2 === "large",
     [`${prefixCls}-sm`]: size2 === "small"
@@ -31575,8 +28775,8 @@ const placements$2 = {
     targetOffset: targetOffset$1
   }
 };
-function _extends$k() {
-  _extends$k = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$q() {
+  _extends$q = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31587,7 +28787,7 @@ function _extends$k() {
     }
     return target;
   };
-  return _extends$k.apply(this, arguments);
+  return _extends$q.apply(this, arguments);
 }
 const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -31645,7 +28845,7 @@ const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     };
     return /* @__PURE__ */ reactExports.cloneElement(child, ariaProps);
   };
-  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$k({
+  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$q({
     popupClassName: classNames == null ? void 0 : classNames.root,
     prefixCls,
     popup: /* @__PURE__ */ reactExports.createElement(Popup, {
@@ -32221,7 +29421,7 @@ const genTooltipStyle = (token2) => {
     }
   ];
 };
-const prepareComponentToken$5 = (token2) => ({
+const prepareComponentToken$6 = (token2) => ({
   zIndexPopup: token2.zIndexPopupBase + 70,
   ...getArrowOffsetToken({
     contentRadius: token2.borderRadius,
@@ -32231,7 +29431,7 @@ const prepareComponentToken$5 = (token2) => ({
     borderRadiusOuter: Math.min(token2.borderRadiusOuter, 4)
   }))
 });
-const useStyle$8 = (prefixCls, rootCls, injectStyle = true) => {
+const useStyle$9 = (prefixCls, rootCls, injectStyle = true) => {
   const useStyle2 = genStyleHooks("Tooltip", (token2) => {
     const {
       borderRadius,
@@ -32246,7 +29446,7 @@ const useStyle$8 = (prefixCls, rootCls, injectStyle = true) => {
       tooltipBg: colorBgSpotlight
     });
     return [genTooltipStyle(TooltipToken), initZoomMotion(token2, "zoom-big-fast")];
-  }, prepareComponentToken$5, {
+  }, prepareComponentToken$6, {
     resetStyle: false,
     // Popover use Tooltip as internal component. We do not need to handle this.
     injectStyle
@@ -32254,11 +29454,15 @@ const useStyle$8 = (prefixCls, rootCls, injectStyle = true) => {
   return useStyle2(prefixCls, rootCls);
 };
 const inverseColors = PresetColors.map((color2) => `${color2}-inverse`);
+const PresetStatusColors = ["success", "processing", "error", "default", "warning"];
 function isPresetColor(color2, includeInverse = true) {
   if (includeInverse) {
     return [].concat(_toConsumableArray(inverseColors), _toConsumableArray(PresetColors)).includes(color2);
   }
   return PresetColors.includes(color2);
+}
+function isPresetStatusColor(color2) {
+  return PresetStatusColors.includes(color2);
 }
 function parseColor(prefixCls, color2) {
   const isInternalColor = isPresetColor(color2);
@@ -32297,7 +29501,7 @@ const PurePanel$2 = (props) => {
   } = reactExports.useContext(ConfigContext);
   const prefixCls = getPrefixCls("tooltip", customizePrefixCls);
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$8(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$9(prefixCls, rootCls);
   const colorInfo = parseColor(prefixCls, color2);
   const arrowContentStyle = colorInfo.arrowStyle;
   const innerStyles = reactExports.useMemo(() => {
@@ -32444,7 +29648,7 @@ const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   const childProps = child.props;
   const childCls = !childProps.className || typeof childProps.className === "string" ? clsx(childProps.className, openClassName || `${prefixCls}-open`) : childProps.className;
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$8(prefixCls, rootCls, !injectFromPopover);
+  const [hashId, cssVarCls] = useStyle$9(prefixCls, rootCls, !injectFromPopover);
   const colorInfo = parseColor(prefixCls, color2);
   const arrowContentStyle = colorInfo.arrowStyle;
   const themeCls = clsx(rootCls, hashId, cssVarCls);
@@ -32509,7 +29713,7 @@ const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
 const Tooltip = InternalTooltip;
 Tooltip._InternalPanelDoNotUseOrYouWillBeFired = PurePanel$2;
 Tooltip.UniqueProvider = UniqueProvider;
-const genBaseStyle$1 = (token2) => {
+const genBaseStyle$2 = (token2) => {
   const {
     componentCls,
     popoverColor,
@@ -32614,7 +29818,7 @@ const genColorStyle = (token2) => {
     })
   };
 };
-const prepareComponentToken$4 = (token2) => {
+const prepareComponentToken$5 = (token2) => {
   const {
     lineWidth,
     controlHeight,
@@ -32648,7 +29852,7 @@ const prepareComponentToken$4 = (token2) => {
     innerContentPadding: wireframe ? `${paddingSM}px ${popoverPaddingHorizontal}px` : 0
   };
 };
-const useStyle$7 = genStyleHooks("Popover", (token2) => {
+const useStyle$8 = genStyleHooks("Popover", (token2) => {
   const {
     colorBgElevated,
     colorText
@@ -32657,8 +29861,8 @@ const useStyle$7 = genStyleHooks("Popover", (token2) => {
     popoverBg: colorBgElevated,
     popoverColor: colorText
   });
-  return [genBaseStyle$1(popoverToken), genColorStyle(popoverToken), initZoomMotion(popoverToken, "zoom-big")];
-}, prepareComponentToken$4, {
+  return [genBaseStyle$2(popoverToken), genColorStyle(popoverToken), initZoomMotion(popoverToken, "zoom-big")];
+}, prepareComponentToken$5, {
   resetStyle: false,
   deprecatedTokens: [["width", "titleMinWidth"], ["minWidth", "titleMinWidth"]]
 });
@@ -32733,7 +29937,7 @@ const PurePanel$1 = (props) => {
     getPrefixCls
   } = reactExports.useContext(ConfigContext);
   const prefixCls = getPrefixCls("popover", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$7(prefixCls);
+  const [hashId, cssVarCls] = useStyle$8(prefixCls);
   return /* @__PURE__ */ reactExports.createElement(RawPurePanel, {
     ...restProps,
     prefixCls,
@@ -32770,7 +29974,7 @@ const InternalPopover = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     trigger: contextTrigger
   } = useComponentConfig("popover");
   const prefixCls = getPrefixCls("popover", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$7(prefixCls);
+  const [hashId, cssVarCls] = useStyle$8(prefixCls);
   const rootPrefixCls = getPrefixCls();
   const mergedArrow = useMergedArrow(popoverArrow, contextArrow);
   const mergedTrigger = trigger || contextTrigger || "hover";
@@ -32888,7 +30092,7 @@ const AvatarGroup = (props) => {
   const prefixCls = getPrefixCls("avatar", customizePrefixCls);
   const groupPrefixCls = `${prefixCls}-group`;
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$9(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$a(prefixCls, rootCls);
   const cls = clsx(groupPrefixCls, {
     [`${groupPrefixCls}-rtl`]: direction === "rtl"
   }, cssVarCls, rootCls, className, rootClassName, hashId);
@@ -32937,8 +30141,8 @@ const AvatarGroup = (props) => {
 const Avatar = Avatar$1;
 Avatar.Group = AvatarGroup;
 var LeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" } }] }, "name": "left", "theme": "outlined" };
-function _extends$j() {
-  _extends$j = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$p() {
+  _extends$p = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -32949,13 +30153,13 @@ function _extends$j() {
     }
     return target;
   };
-  return _extends$j.apply(this, arguments);
+  return _extends$p.apply(this, arguments);
 }
-const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$j({}, props, {
+const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$p({}, props, {
   ref,
   icon: LeftOutlined$1
 }));
-const RefIcon$8 = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
+const RefIcon$e = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
 const {
   ESC: ESC$1,
   TAB
@@ -33084,8 +30288,8 @@ const placements$1 = {
     targetOffset
   }
 };
-function _extends$i() {
-  _extends$i = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$o() {
+  _extends$o = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -33096,7 +30300,7 @@ function _extends$i() {
     }
     return target;
   };
-  return _extends$i.apply(this, arguments);
+  return _extends$o.apply(this, arguments);
 }
 const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   var _a2;
@@ -33187,7 +30391,7 @@ const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   if (!triggerHideAction && trigger.indexOf("contextMenu") !== -1) {
     triggerHideAction = ["click"];
   }
-  return /* @__PURE__ */ We.createElement(Trigger, _extends$i({
+  return /* @__PURE__ */ We.createElement(Trigger, _extends$o({
     builtinPlacements: placements2
   }, otherProps, {
     prefixCls,
@@ -33700,8 +30904,8 @@ function warnItemProp({
   });
   return restInfo;
 }
-function _extends$h() {
-  _extends$h = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$n() {
+  _extends$n = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -33712,7 +30916,7 @@ function _extends$h() {
     }
     return target;
   };
-  return _extends$h.apply(this, arguments);
+  return _extends$n.apply(this, arguments);
 }
 class LegacyMenuItem extends reactExports.Component {
   render() {
@@ -33724,7 +30928,7 @@ class LegacyMenuItem extends reactExports.Component {
     } = this.props;
     const passedProps = omit(restProps, ["eventKey", "popupClassName", "popupOffset", "onTitleClick"]);
     warningOnce(!attribute, "`attribute` of Menu.Item is deprecated. Please pass attribute directly.");
-    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$h({}, attribute, {
+    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$n({}, attribute, {
       title: typeof title === "string" ? title : void 0
     }, passedProps, {
       ref: elementRef
@@ -33812,7 +31016,7 @@ const InternalMenuItem = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
   if (props.role === "option") {
     optionRoleProps["aria-selected"] = selected;
   }
-  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$h({
+  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$n({
     ref: legacyMenuItemRef,
     elementRef: mergedEleRef,
     role: role === null ? "none" : role || "menuitem",
@@ -33864,13 +31068,13 @@ function MenuItem$1(props, ref) {
   if (measure) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$h({}, props, {
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$n({}, props, {
     ref
   }));
 }
 const MenuItem$2 = /* @__PURE__ */ reactExports.forwardRef(MenuItem$1);
-function _extends$g() {
-  _extends$g = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$m() {
+  _extends$m = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -33881,7 +31085,7 @@ function _extends$g() {
     }
     return target;
   };
-  return _extends$g.apply(this, arguments);
+  return _extends$m.apply(this, arguments);
 }
 const InternalSubMenuList = ({
   className,
@@ -33893,7 +31097,7 @@ const InternalSubMenuList = ({
     mode,
     rtl
   } = reactExports.useContext(MenuContext$1);
-  return /* @__PURE__ */ reactExports.createElement("ul", _extends$g({
+  return /* @__PURE__ */ reactExports.createElement("ul", _extends$m({
     className: clsx(prefixCls, rtl && `${prefixCls}-rtl`, `${prefixCls}-sub`, `${prefixCls}-${mode === "inline" ? "inline" : "vertical"}`, className),
     role: "menu"
   }, restProps, {
@@ -34088,8 +31292,8 @@ function PopupTrigger({
     fresh: true
   }, children);
 }
-function _extends$f() {
-  _extends$f = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$l() {
+  _extends$l = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34100,7 +31304,7 @@ function _extends$f() {
     }
     return target;
   };
-  return _extends$f.apply(this, arguments);
+  return _extends$l.apply(this, arguments);
 }
 function InlineSubMenuList({
   id,
@@ -34144,7 +31348,7 @@ function InlineSubMenuList({
   return /* @__PURE__ */ reactExports.createElement(InheritableContextProvider, {
     mode: fixedMode,
     locked: !sameModeRef.current
-  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$f({
+  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$l({
     visible: mergedOpen
   }, mergedMotion, {
     forceRender: forceSubMenuRender,
@@ -34161,8 +31365,8 @@ function InlineSubMenuList({
     }, children);
   }));
 }
-function _extends$e() {
-  _extends$e = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$k() {
+  _extends$k = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34173,7 +31377,7 @@ function _extends$e() {
     }
     return target;
   };
-  return _extends$e.apply(this, arguments);
+  return _extends$k.apply(this, arguments);
 }
 const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -34311,7 +31515,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   }, /* @__PURE__ */ reactExports.createElement("i", {
     className: `${subMenuPrefixCls}-arrow`
   })), [mode, mergedExpandIcon, props, open2, subMenuPrefixCls]);
-  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$e({
+  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$k({
     role: "menuitem",
     style: directionStyle,
     className: `${subMenuPrefixCls}-title`,
@@ -34366,7 +31570,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
       onVisibleChange: onPopupVisibleChange
     }, titleNode);
   }
-  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$e({
+  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$k({
     ref,
     role: "none"
   }, restProps, {
@@ -34422,7 +31626,7 @@ const SubMenu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     renderNode = childList;
   } else {
-    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$e({
+    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$k({
       ref
     }, props), childList);
   }
@@ -34447,8 +31651,8 @@ function Divider({
     style: style2
   });
 }
-function _extends$d() {
-  _extends$d = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$j() {
+  _extends$j = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34459,7 +31663,7 @@ function _extends$d() {
     }
     return target;
   };
-  return _extends$d.apply(this, arguments);
+  return _extends$j.apply(this, arguments);
 }
 const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -34475,7 +31679,7 @@ const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, re
     styles
   } = reactExports.useContext(MenuContext$1);
   const groupPrefixCls = `${prefixCls}-item-group`;
-  return /* @__PURE__ */ reactExports.createElement("li", _extends$d({
+  return /* @__PURE__ */ reactExports.createElement("li", _extends$j({
     ref,
     role: "presentation"
   }, restProps, {
@@ -34503,12 +31707,12 @@ const MenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     return childList;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$d({
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$j({
     ref
   }, omit(props, ["warnKey"])), childList);
 });
-function _extends$c() {
-  _extends$c = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$i() {
+  _extends$i = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34519,7 +31723,7 @@ function _extends$c() {
     }
     return target;
   };
-  return _extends$c.apply(this, arguments);
+  return _extends$i.apply(this, arguments);
 }
 function convertItemsToNodes(list2, components, prefixCls) {
   const {
@@ -34541,24 +31745,24 @@ function convertItemsToNodes(list2, components, prefixCls) {
       const mergedKey = key ?? `tmp-${index2}`;
       if (children || type4 === "group") {
         if (type4 === "group") {
-          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$c({
+          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$i({
             key: mergedKey
           }, restProps, {
             title: label
           }), convertItemsToNodes(children, components, prefixCls));
         }
-        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$c({
+        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$i({
           key: mergedKey
         }, restProps, {
           title: label
         }), convertItemsToNodes(children, components, prefixCls));
       }
       if (type4 === "divider") {
-        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$c({
+        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$i({
           key: mergedKey
         }, restProps));
       }
-      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$c({
+      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$i({
         key: mergedKey
       }, restProps, {
         extra
@@ -34583,8 +31787,8 @@ function parseItems(children, items, keyPath, components, prefixCls) {
   }
   return parseChildren(childNodes, keyPath);
 }
-function _extends$b() {
-  _extends$b = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$h() {
+  _extends$h = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34595,7 +31799,7 @@ function _extends$b() {
     }
     return target;
   };
-  return _extends$b.apply(this, arguments);
+  return _extends$h.apply(this, arguments);
 }
 const EMPTY_LIST = [];
 const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -34858,7 +32062,7 @@ const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }, child)
     ))
   );
-  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$b({
+  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$h({
     id,
     ref: containerRef,
     prefixCls: `${prefixCls}-overflow`,
@@ -34942,8 +32146,8 @@ ExportMenu.ItemGroup = MenuItemGroup;
 ExportMenu.Divider = Divider;
 const SiderContext = /* @__PURE__ */ reactExports.createContext({});
 var EllipsisOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, "name": "ellipsis", "theme": "outlined" };
-function _extends$a() {
-  _extends$a = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$g() {
+  _extends$g = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34954,13 +32158,13 @@ function _extends$a() {
     }
     return target;
   };
-  return _extends$a.apply(this, arguments);
+  return _extends$g.apply(this, arguments);
 }
-const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$a({}, props, {
+const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$g({}, props, {
   ref,
   icon: EllipsisOutlined$1
 }));
-const RefIcon$7 = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
+const RefIcon$d = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
 const MenuContext = /* @__PURE__ */ reactExports.createContext({
   prefixCls: "",
   firstLevel: true,
@@ -35919,7 +33123,7 @@ const getBaseStyle = (token2) => {
     }
   ];
 };
-const prepareComponentToken$3 = (token2) => {
+const prepareComponentToken$4 = (token2) => {
   const {
     colorPrimary,
     colorError,
@@ -36036,7 +33240,7 @@ const prepareComponentToken$3 = (token2) => {
     itemWidth: activeBarWidth ? `calc(100% + ${activeBarBorderWidth}px)` : `calc(100% - ${itemMarginInline * 2}px)`
   };
 };
-const useStyle$6 = (prefixCls, rootCls = prefixCls, injectStyle = true) => {
+const useStyle$7 = (prefixCls, rootCls = prefixCls, injectStyle = true) => {
   const useStyle2 = genStyleHooks("Menu", (token2) => {
     const {
       colorBgElevated,
@@ -36115,7 +33319,7 @@ const useStyle$6 = (prefixCls, rootCls = prefixCls, injectStyle = true) => {
       initSlideMotion(menuToken, "slide-down"),
       initZoomMotion(menuToken, "zoom-big")
     ];
-  }, prepareComponentToken$3, {
+  }, prepareComponentToken$4, {
     deprecatedTokens: [["colorGroupTitle", "groupTitleColor"], ["radiusItem", "itemBorderRadius"], ["radiusSubMenuItem", "subMenuItemBorderRadius"], ["colorItemText", "itemColor"], ["colorItemTextHover", "itemHoverColor"], ["colorItemTextHoverHorizontal", "horizontalItemHoverColor"], ["colorItemTextSelected", "itemSelectedColor"], ["colorItemTextSelectedHorizontal", "horizontalItemSelectedColor"], ["colorItemTextDisabled", "itemDisabledColor"], ["colorDangerItemText", "dangerItemColor"], ["colorDangerItemTextHover", "dangerItemHoverColor"], ["colorDangerItemTextSelected", "dangerItemSelectedColor"], ["colorDangerItemBgActive", "dangerItemActiveBg"], ["colorDangerItemBgSelected", "dangerItemSelectedBg"], ["colorItemBg", "itemBg"], ["colorItemBgHover", "itemHoverBg"], ["colorSubItemBg", "subMenuItemBg"], ["colorItemBgActive", "itemActiveBg"], ["colorItemBgSelectedHorizontal", "horizontalItemSelectedBg"], ["colorActiveBarWidth", "activeBarWidth"], ["colorActiveBarHeight", "activeBarHeight"], ["colorActiveBarBorderSize", "activeBarBorderWidth"], ["colorItemBgSelected", "itemSelectedBg"]],
     // Dropdown will handle menu style self. We do not need to handle this.
     injectStyle,
@@ -36203,7 +33407,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     prefixCls: customizePrefixCls,
     className,
     style: style2,
-    theme = "light",
+    theme: theme2 = "light",
     expandIcon,
     _internalDisableMenuItemTitleTooltip,
     inlineCollapsed,
@@ -36247,7 +33451,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     mode: mergedMode,
     inlineCollapsed: mergedInlineCollapsed,
     selectable: mergedSelectable,
-    theme
+    theme: theme2
   };
   const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
     props: mergedProps
@@ -36270,8 +33474,8 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   };
   const prefixCls = getPrefixCls("menu", customizePrefixCls || overrideObj.prefixCls);
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$6(prefixCls, rootCls, !override);
-  const menuClassName = clsx(`${prefixCls}-${theme}`, contextClassName, className);
+  const [hashId, cssVarCls] = useStyle$7(prefixCls, rootCls, !override);
+  const menuClassName = clsx(`${prefixCls}-${theme2}`, contextClassName, className);
   const mergedExpandIcon = reactExports.useMemo(() => {
     var _a3;
     if (typeof expandIcon === "function" || isEmptyIcon(expandIcon)) {
@@ -36293,20 +33497,20 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     inlineCollapsed: mergedInlineCollapsed || false,
     direction,
     firstLevel: true,
-    theme,
+    theme: theme2,
     mode: mergedMode,
     disableMenuItemTitleTooltip: _internalDisableMenuItemTitleTooltip,
     classNames: mergedClassNames,
     styles: mergedStyles
-  }), [prefixCls, mergedInlineCollapsed, direction, _internalDisableMenuItemTitleTooltip, theme, mergedMode, mergedClassNames, mergedStyles]);
+  }), [prefixCls, mergedInlineCollapsed, direction, _internalDisableMenuItemTitleTooltip, theme2, mergedMode, mergedClassNames, mergedStyles]);
   return /* @__PURE__ */ reactExports.createElement(OverrideContext.Provider, {
     value: null
   }, /* @__PURE__ */ reactExports.createElement(MenuContext.Provider, {
     value: contextValue
   }, /* @__PURE__ */ reactExports.createElement(ExportMenu, {
     getPopupContainer,
-    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$7, null),
-    overflowedIndicatorPopupClassName: clsx(prefixCls, `${prefixCls}-${theme}`, overflowedIndicatorPopupClassName),
+    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$d, null),
+    overflowedIndicatorPopupClassName: clsx(prefixCls, `${prefixCls}-${theme2}`, overflowedIndicatorPopupClassName),
     classNames: {
       list: mergedClassNames.list,
       listTitle: mergedClassNames.itemTitle
@@ -36377,7 +33581,7 @@ const genStatusStyle = (token2) => {
     }
   };
 };
-const genBaseStyle = (token2) => {
+const genBaseStyle$1 = (token2) => {
   const {
     componentCls,
     menuCls,
@@ -36647,7 +33851,7 @@ const genBaseStyle = (token2) => {
     [initSlideMotion(token2, "slide-up"), initSlideMotion(token2, "slide-down"), initMoveMotion(token2, "move-up"), initMoveMotion(token2, "move-down"), initZoomMotion(token2, "zoom-big")]
   ];
 };
-const prepareComponentToken$2 = (token2) => ({
+const prepareComponentToken$3 = (token2) => ({
   zIndexPopup: token2.zIndexPopupBase + 50,
   paddingBlock: (token2.controlHeight - token2.fontSize * token2.lineHeight) / 2,
   ...getArrowOffsetToken({
@@ -36656,7 +33860,7 @@ const prepareComponentToken$2 = (token2) => ({
   }),
   ...getArrowToken(token2)
 });
-const useStyle$5 = genStyleHooks("Dropdown", (token2) => {
+const useStyle$6 = genStyleHooks("Dropdown", (token2) => {
   const {
     marginXXS,
     sizePopupArrow,
@@ -36668,8 +33872,8 @@ const useStyle$5 = genStyleHooks("Dropdown", (token2) => {
     dropdownArrowDistance: token2.calc(sizePopupArrow).div(2).add(marginXXS).equal(),
     dropdownEdgeChildPadding: paddingXXS
   });
-  return [genBaseStyle(dropdownToken), genStatusStyle(dropdownToken)];
-}, prepareComponentToken$2, {
+  return [genBaseStyle$1(dropdownToken), genStatusStyle(dropdownToken)];
+}, prepareComponentToken$3, {
   resetStyle: false
 });
 const Dropdown$1 = (props) => {
@@ -36743,7 +33947,7 @@ const Dropdown$1 = (props) => {
   }, [placement, direction]);
   const prefixCls = getPrefixCls("dropdown", customizePrefixCls);
   const rootCls = useCSSVarCls(prefixCls);
-  const [hashId, cssVarCls] = useStyle$5(prefixCls, rootCls);
+  const [hashId, cssVarCls] = useStyle$6(prefixCls, rootCls);
   const [, token2] = useToken();
   const child = reactExports.Children.only(isPrimitive(children) ? /* @__PURE__ */ reactExports.createElement("span", null, children) : children);
   const popupTrigger = cloneElement(child, {
@@ -36810,9 +34014,9 @@ const Dropdown$1 = (props) => {
       rootClassName: clsx(cssVarCls, rootCls),
       expandIcon: /* @__PURE__ */ reactExports.createElement("span", {
         className: `${prefixCls}-menu-submenu-arrow`
-      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$8, {
+      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$e, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
-      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$a, {
+      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$g, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
       })),
       mode: "vertical",
@@ -37836,7 +35040,127 @@ function debounce(delay, callback, options) {
     debounceMode: atBegin !== false
   });
 }
+var CodeOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M516 673c0 4.4 3.4 8 7.5 8h185c4.1 0 7.5-3.6 7.5-8v-48c0-4.4-3.4-8-7.5-8h-185c-4.1 0-7.5 3.6-7.5 8v48zm-194.9 6.1l192-161c3.8-3.2 3.8-9.1 0-12.3l-192-160.9A7.95 7.95 0 00308 351v62.7c0 2.4 1 4.6 2.9 6.1L420.7 512l-109.8 92.2a8.1 8.1 0 00-2.9 6.1V673c0 6.8 7.9 10.5 13.1 6.1zM880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z" } }] }, "name": "code", "theme": "outlined" };
+function _extends$f() {
+  _extends$f = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$f.apply(this, arguments);
+}
+const CodeOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$f({}, props, {
+  ref,
+  icon: CodeOutlined$1
+}));
+const RefIcon$c = /* @__PURE__ */ reactExports.forwardRef(CodeOutlined);
 var CopyOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M832 64H296c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h496v688c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V96c0-17.7-14.3-32-32-32zM704 192H192c-17.7 0-32 14.3-32 32v530.7c0 8.5 3.4 16.6 9.4 22.6l173.3 173.3c2.2 2.2 4.7 4 7.4 5.5v1.9h4.2c3.5 1.3 7.2 2 11 2H704c17.7 0 32-14.3 32-32V224c0-17.7-14.3-32-32-32zM350 856.2L263.9 770H350v86.2zM664 888H414V746c0-22.1-17.9-40-40-40H232V264h432v624z" } }] }, "name": "copy", "theme": "outlined" };
+function _extends$e() {
+  _extends$e = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$e.apply(this, arguments);
+}
+const CopyOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$e({}, props, {
+  ref,
+  icon: CopyOutlined$1
+}));
+const RefIcon$b = /* @__PURE__ */ reactExports.forwardRef(CopyOutlined);
+var DatabaseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zm-600 72h560v208H232V136zm560 480H232V408h560v208zm0 272H232V680h560v208zM304 240a40 40 0 1080 0 40 40 0 10-80 0zm0 272a40 40 0 1080 0 40 40 0 10-80 0zm0 272a40 40 0 1080 0 40 40 0 10-80 0z" } }] }, "name": "database", "theme": "outlined" };
+function _extends$d() {
+  _extends$d = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$d.apply(this, arguments);
+}
+const DatabaseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$d({}, props, {
+  ref,
+  icon: DatabaseOutlined$1
+}));
+const RefIcon$a = /* @__PURE__ */ reactExports.forwardRef(DatabaseOutlined);
+var EditOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 000-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 009.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z" } }] }, "name": "edit", "theme": "outlined" };
+function _extends$c() {
+  _extends$c = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$c.apply(this, arguments);
+}
+const EditOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$c({}, props, {
+  ref,
+  icon: EditOutlined$1
+}));
+const RefIcon$9 = /* @__PURE__ */ reactExports.forwardRef(EditOutlined);
+var EnterOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M864 170h-60c-4.4 0-8 3.6-8 8v518H310v-73c0-6.7-7.8-10.5-13-6.3l-141.9 112a8 8 0 000 12.6l141.9 112c5.3 4.2 13 .4 13-6.3v-75h498c35.3 0 64-28.7 64-64V178c0-4.4-3.6-8-8-8z" } }] }, "name": "enter", "theme": "outlined" };
+function _extends$b() {
+  _extends$b = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$b.apply(this, arguments);
+}
+const EnterOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$b({}, props, {
+  ref,
+  icon: EnterOutlined$1
+}));
+const RefIcon$8 = /* @__PURE__ */ reactExports.forwardRef(EnterOutlined);
+var FundOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M926 164H94c-17.7 0-32 14.3-32 32v640c0 17.7 14.3 32 32 32h832c17.7 0 32-14.3 32-32V196c0-17.7-14.3-32-32-32zm-40 632H134V236h752v560zm-658.9-82.3c3.1 3.1 8.2 3.1 11.3 0l172.5-172.5 114.4 114.5c3.1 3.1 8.2 3.1 11.3 0l297-297.2c3.1-3.1 3.1-8.2 0-11.3l-36.8-36.8a8.03 8.03 0 00-11.3 0L531 565 416.6 450.5a8.03 8.03 0 00-11.3 0l-214.9 215a8.03 8.03 0 000 11.3l36.7 36.9z" } }] }, "name": "fund", "theme": "outlined" };
+function _extends$a() {
+  _extends$a = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$a.apply(this, arguments);
+}
+const FundOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$a({}, props, {
+  ref,
+  icon: FundOutlined$1
+}));
+const RefIcon$7 = /* @__PURE__ */ reactExports.forwardRef(FundOutlined);
+var GlobalOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M854.4 800.9c.2-.3.5-.6.7-.9C920.6 722.1 960 621.7 960 512s-39.4-210.1-104.8-288c-.2-.3-.5-.5-.7-.8-1.1-1.3-2.1-2.5-3.2-3.7-.4-.5-.8-.9-1.2-1.4l-4.1-4.7-.1-.1c-1.5-1.7-3.1-3.4-4.6-5.1l-.1-.1c-3.2-3.4-6.4-6.8-9.7-10.1l-.1-.1-4.8-4.8-.3-.3c-1.5-1.5-3-2.9-4.5-4.3-.5-.5-1-1-1.6-1.5-1-1-2-1.9-3-2.8-.3-.3-.7-.6-1-1C736.4 109.2 629.5 64 512 64s-224.4 45.2-304.3 119.2c-.3.3-.7.6-1 1-1 .9-2 1.9-3 2.9-.5.5-1 1-1.6 1.5-1.5 1.4-3 2.9-4.5 4.3l-.3.3-4.8 4.8-.1.1c-3.3 3.3-6.5 6.7-9.7 10.1l-.1.1c-1.6 1.7-3.1 3.4-4.6 5.1l-.1.1c-1.4 1.5-2.8 3.1-4.1 4.7-.4.5-.8.9-1.2 1.4-1.1 1.2-2.1 2.5-3.2 3.7-.2.3-.5.5-.7.8C103.4 301.9 64 402.3 64 512s39.4 210.1 104.8 288c.2.3.5.6.7.9l3.1 3.7c.4.5.8.9 1.2 1.4l4.1 4.7c0 .1.1.1.1.2 1.5 1.7 3 3.4 4.6 5l.1.1c3.2 3.4 6.4 6.8 9.6 10.1l.1.1c1.6 1.6 3.1 3.2 4.7 4.7l.3.3c3.3 3.3 6.7 6.5 10.1 9.6 80.1 74 187 119.2 304.5 119.2s224.4-45.2 304.3-119.2a300 300 0 0010-9.6l.3-.3c1.6-1.6 3.2-3.1 4.7-4.7l.1-.1c3.3-3.3 6.5-6.7 9.6-10.1l.1-.1c1.5-1.7 3.1-3.3 4.6-5 0-.1.1-.1.1-.2 1.4-1.5 2.8-3.1 4.1-4.7.4-.5.8-.9 1.2-1.4a99 99 0 003.3-3.7zm4.1-142.6c-13.8 32.6-32 62.8-54.2 90.2a444.07 444.07 0 00-81.5-55.9c11.6-46.9 18.8-98.4 20.7-152.6H887c-3 40.9-12.6 80.6-28.5 118.3zM887 484H743.5c-1.9-54.2-9.1-105.7-20.7-152.6 29.3-15.6 56.6-34.4 81.5-55.9A373.86 373.86 0 01887 484zM658.3 165.5c39.7 16.8 75.8 40 107.6 69.2a394.72 394.72 0 01-59.4 41.8c-15.7-45-35.8-84.1-59.2-115.4 3.7 1.4 7.4 2.9 11 4.4zm-90.6 700.6c-9.2 7.2-18.4 12.7-27.7 16.4V697a389.1 389.1 0 01115.7 26.2c-8.3 24.6-17.9 47.3-29 67.8-17.4 32.4-37.8 58.3-59 75.1zm59-633.1c11 20.6 20.7 43.3 29 67.8A389.1 389.1 0 01540 327V141.6c9.2 3.7 18.5 9.1 27.7 16.4 21.2 16.7 41.6 42.6 59 75zM540 640.9V540h147.5c-1.6 44.2-7.1 87.1-16.3 127.8l-.3 1.2A445.02 445.02 0 00540 640.9zm0-156.9V383.1c45.8-2.8 89.8-12.5 130.9-28.1l.3 1.2c9.2 40.7 14.7 83.5 16.3 127.8H540zm-56 56v100.9c-45.8 2.8-89.8 12.5-130.9 28.1l-.3-1.2c-9.2-40.7-14.7-83.5-16.3-127.8H484zm-147.5-56c1.6-44.2 7.1-87.1 16.3-127.8l.3-1.2c41.1 15.6 85 25.3 130.9 28.1V484H336.5zM484 697v185.4c-9.2-3.7-18.5-9.1-27.7-16.4-21.2-16.7-41.7-42.7-59.1-75.1-11-20.6-20.7-43.3-29-67.8 37.2-14.6 75.9-23.3 115.8-26.1zm0-370a389.1 389.1 0 01-115.7-26.2c8.3-24.6 17.9-47.3 29-67.8 17.4-32.4 37.8-58.4 59.1-75.1 9.2-7.2 18.4-12.7 27.7-16.4V327zM365.7 165.5c3.7-1.5 7.3-3 11-4.4-23.4 31.3-43.5 70.4-59.2 115.4-21-12-40.9-26-59.4-41.8 31.8-29.2 67.9-52.4 107.6-69.2zM165.5 365.7c13.8-32.6 32-62.8 54.2-90.2 24.9 21.5 52.2 40.3 81.5 55.9-11.6 46.9-18.8 98.4-20.7 152.6H137c3-40.9 12.6-80.6 28.5-118.3zM137 540h143.5c1.9 54.2 9.1 105.7 20.7 152.6a444.07 444.07 0 00-81.5 55.9A373.86 373.86 0 01137 540zm228.7 318.5c-39.7-16.8-75.8-40-107.6-69.2 18.5-15.8 38.4-29.7 59.4-41.8 15.7 45 35.8 84.1 59.2 115.4-3.7-1.4-7.4-2.9-11-4.4zm292.6 0c-3.7 1.5-7.3 3-11 4.4 23.4-31.3 43.5-70.4 59.2-115.4 21 12 40.9 26 59.4 41.8a373.81 373.81 0 01-107.6 69.2z" } }] }, "name": "global", "theme": "outlined" };
 function _extends$9() {
   _extends$9 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -37851,12 +35175,12 @@ function _extends$9() {
   };
   return _extends$9.apply(this, arguments);
 }
-const CopyOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$9({}, props, {
+const GlobalOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$9({}, props, {
   ref,
-  icon: CopyOutlined$1
+  icon: GlobalOutlined$1
 }));
-const RefIcon$6 = /* @__PURE__ */ reactExports.forwardRef(CopyOutlined);
-var EditOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 000-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 009.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z" } }] }, "name": "edit", "theme": "outlined" };
+const RefIcon$6 = /* @__PURE__ */ reactExports.forwardRef(GlobalOutlined);
+var LoginOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "defs", "attrs": {}, "children": [{ "tag": "style", "attrs": {} }] }, { "tag": "path", "attrs": { "d": "M521.7 82c-152.5-.4-286.7 78.5-363.4 197.7-3.4 5.3.4 12.3 6.7 12.3h70.3c4.8 0 9.3-2.1 12.3-5.8 7-8.5 14.5-16.7 22.4-24.5 32.6-32.5 70.5-58.1 112.7-75.9 43.6-18.4 90-27.8 137.9-27.8 47.9 0 94.3 9.3 137.9 27.8 42.2 17.8 80.1 43.4 112.7 75.9 32.6 32.5 58.1 70.4 76 112.5C865.7 417.8 875 464.1 875 512c0 47.9-9.4 94.2-27.8 137.8-17.8 42.1-43.4 80-76 112.5s-70.5 58.1-112.7 75.9A352.8 352.8 0 01520.6 866c-47.9 0-94.3-9.4-137.9-27.8A353.84 353.84 0 01270 762.3c-7.9-7.9-15.3-16.1-22.4-24.5-3-3.7-7.6-5.8-12.3-5.8H165c-6.3 0-10.2 7-6.7 12.3C234.9 863.2 368.5 942 520.6 942c236.2 0 428-190.1 430.4-425.6C953.4 277.1 761.3 82.6 521.7 82zM395.02 624v-76h-314c-4.4 0-8-3.6-8-8v-56c0-4.4 3.6-8 8-8h314v-76c0-6.7 7.8-10.5 13-6.3l141.9 112a8 8 0 010 12.6l-141.9 112c-5.2 4.1-13 .4-13-6.3z" } }] }, "name": "login", "theme": "outlined" };
 function _extends$8() {
   _extends$8 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -37871,12 +35195,12 @@ function _extends$8() {
   };
   return _extends$8.apply(this, arguments);
 }
-const EditOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$8({}, props, {
+const LoginOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$8({}, props, {
   ref,
-  icon: EditOutlined$1
+  icon: LoginOutlined$1
 }));
-const RefIcon$5 = /* @__PURE__ */ reactExports.forwardRef(EditOutlined);
-var EnterOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M864 170h-60c-4.4 0-8 3.6-8 8v518H310v-73c0-6.7-7.8-10.5-13-6.3l-141.9 112a8 8 0 000 12.6l141.9 112c5.3 4.2 13 .4 13-6.3v-75h498c35.3 0 64-28.7 64-64V178c0-4.4-3.6-8-8-8z" } }] }, "name": "enter", "theme": "outlined" };
+const RefIcon$5 = /* @__PURE__ */ reactExports.forwardRef(LoginOutlined);
+var LogoutOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M868 732h-70.3c-4.8 0-9.3 2.1-12.3 5.8-7 8.5-14.5 16.7-22.4 24.5a353.84 353.84 0 01-112.7 75.9A352.8 352.8 0 01512.4 866c-47.9 0-94.3-9.4-137.9-27.8a353.84 353.84 0 01-112.7-75.9 353.28 353.28 0 01-76-112.5C167.3 606.2 158 559.9 158 512s9.4-94.2 27.8-137.8c17.8-42.1 43.4-80 76-112.5s70.5-58.1 112.7-75.9c43.6-18.4 90-27.8 137.9-27.8 47.9 0 94.3 9.3 137.9 27.8 42.2 17.8 80.1 43.4 112.7 75.9 7.9 7.9 15.3 16.1 22.4 24.5 3 3.7 7.6 5.8 12.3 5.8H868c6.3 0 10.2-7 6.7-12.3C798 160.5 663.8 81.6 511.3 82 271.7 82.6 79.6 277.1 82 516.4 84.4 751.9 276.2 942 512.4 942c152.1 0 285.7-78.8 362.3-197.7 3.4-5.3-.4-12.3-6.7-12.3zm88.9-226.3L815 393.7c-5.3-4.2-13-.4-13 6.3v76H488c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h314v76c0 6.7 7.8 10.5 13 6.3l141.9-112a8 8 0 000-12.6z" } }] }, "name": "logout", "theme": "outlined" };
 function _extends$7() {
   _extends$7 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -37891,12 +35215,12 @@ function _extends$7() {
   };
   return _extends$7.apply(this, arguments);
 }
-const EnterOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$7({}, props, {
+const LogoutOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$7({}, props, {
   ref,
-  icon: EnterOutlined$1
+  icon: LogoutOutlined$1
 }));
-const RefIcon$4 = /* @__PURE__ */ reactExports.forwardRef(EnterOutlined);
-var LoginOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "defs", "attrs": {}, "children": [{ "tag": "style", "attrs": {} }] }, { "tag": "path", "attrs": { "d": "M521.7 82c-152.5-.4-286.7 78.5-363.4 197.7-3.4 5.3.4 12.3 6.7 12.3h70.3c4.8 0 9.3-2.1 12.3-5.8 7-8.5 14.5-16.7 22.4-24.5 32.6-32.5 70.5-58.1 112.7-75.9 43.6-18.4 90-27.8 137.9-27.8 47.9 0 94.3 9.3 137.9 27.8 42.2 17.8 80.1 43.4 112.7 75.9 32.6 32.5 58.1 70.4 76 112.5C865.7 417.8 875 464.1 875 512c0 47.9-9.4 94.2-27.8 137.8-17.8 42.1-43.4 80-76 112.5s-70.5 58.1-112.7 75.9A352.8 352.8 0 01520.6 866c-47.9 0-94.3-9.4-137.9-27.8A353.84 353.84 0 01270 762.3c-7.9-7.9-15.3-16.1-22.4-24.5-3-3.7-7.6-5.8-12.3-5.8H165c-6.3 0-10.2 7-6.7 12.3C234.9 863.2 368.5 942 520.6 942c236.2 0 428-190.1 430.4-425.6C953.4 277.1 761.3 82.6 521.7 82zM395.02 624v-76h-314c-4.4 0-8-3.6-8-8v-56c0-4.4 3.6-8 8-8h314v-76c0-6.7 7.8-10.5 13-6.3l141.9 112a8 8 0 010 12.6l-141.9 112c-5.2 4.1-13 .4-13-6.3z" } }] }, "name": "login", "theme": "outlined" };
+const RefIcon$4 = /* @__PURE__ */ reactExports.forwardRef(LogoutOutlined);
+var MenuFoldOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 000 13.8z" } }] }, "name": "menu-fold", "theme": "outlined" };
 function _extends$6() {
   _extends$6 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -37911,12 +35235,12 @@ function _extends$6() {
   };
   return _extends$6.apply(this, arguments);
 }
-const LoginOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$6({}, props, {
+const MenuFoldOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$6({}, props, {
   ref,
-  icon: LoginOutlined$1
+  icon: MenuFoldOutlined$1
 }));
-const RefIcon$3 = /* @__PURE__ */ reactExports.forwardRef(LoginOutlined);
-var LogoutOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M868 732h-70.3c-4.8 0-9.3 2.1-12.3 5.8-7 8.5-14.5 16.7-22.4 24.5a353.84 353.84 0 01-112.7 75.9A352.8 352.8 0 01512.4 866c-47.9 0-94.3-9.4-137.9-27.8a353.84 353.84 0 01-112.7-75.9 353.28 353.28 0 01-76-112.5C167.3 606.2 158 559.9 158 512s9.4-94.2 27.8-137.8c17.8-42.1 43.4-80 76-112.5s70.5-58.1 112.7-75.9c43.6-18.4 90-27.8 137.9-27.8 47.9 0 94.3 9.3 137.9 27.8 42.2 17.8 80.1 43.4 112.7 75.9 7.9 7.9 15.3 16.1 22.4 24.5 3 3.7 7.6 5.8 12.3 5.8H868c6.3 0 10.2-7 6.7-12.3C798 160.5 663.8 81.6 511.3 82 271.7 82.6 79.6 277.1 82 516.4 84.4 751.9 276.2 942 512.4 942c152.1 0 285.7-78.8 362.3-197.7 3.4-5.3-.4-12.3-6.7-12.3zm88.9-226.3L815 393.7c-5.3-4.2-13-.4-13 6.3v76H488c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h314v76c0 6.7 7.8 10.5 13 6.3l141.9-112a8 8 0 000-12.6z" } }] }, "name": "logout", "theme": "outlined" };
+const RefIcon$3 = /* @__PURE__ */ reactExports.forwardRef(MenuFoldOutlined);
+var MenuUnfoldOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM142.4 642.1L298.7 519a8.84 8.84 0 000-13.9L142.4 381.9c-5.8-4.6-14.4-.5-14.4 6.9v246.3a8.9 8.9 0 0014.4 7z" } }] }, "name": "menu-unfold", "theme": "outlined" };
 function _extends$5() {
   _extends$5 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -37931,11 +35255,11 @@ function _extends$5() {
   };
   return _extends$5.apply(this, arguments);
 }
-const LogoutOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$5({}, props, {
+const MenuUnfoldOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$5({}, props, {
   ref,
-  icon: LogoutOutlined$1
+  icon: MenuUnfoldOutlined$1
 }));
-const RefIcon$2 = /* @__PURE__ */ reactExports.forwardRef(LogoutOutlined);
+const RefIcon$2 = /* @__PURE__ */ reactExports.forwardRef(MenuUnfoldOutlined);
 var RocketOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M864 736c0-111.6-65.4-208-160-252.9V317.3c0-15.1-5.3-29.7-15.1-41.2L536.5 95.4C530.1 87.8 521 84 512 84s-18.1 3.8-24.5 11.4L335.1 276.1a63.97 63.97 0 00-15.1 41.2v165.8C225.4 528 160 624.4 160 736h156.5c-2.3 7.2-3.5 15-3.5 23.8 0 22.1 7.6 43.7 21.4 60.8a97.2 97.2 0 0043.1 30.6c23.1 54 75.6 88.8 134.5 88.8 29.1 0 57.3-8.6 81.4-24.8 23.6-15.8 41.9-37.9 53-64a97 97 0 0043.1-30.5 97.52 97.52 0 0021.4-60.8c0-8.4-1.1-16.4-3.1-23.8H864zM762.3 621.4c9.4 14.6 17 30.3 22.5 46.6H700V558.7a211.6 211.6 0 0162.3 62.7zM388 483.1V318.8l124-147 124 147V668H388V483.1zM239.2 668c5.5-16.3 13.1-32 22.5-46.6 16.3-25.2 37.5-46.5 62.3-62.7V668h-84.8zm388.9 116.2c-5.2 3-11.2 4.2-17.1 3.4l-19.5-2.4-2.8 19.4c-5.4 37.9-38.4 66.5-76.7 66.5-38.3 0-71.3-28.6-76.7-66.5l-2.8-19.5-19.5 2.5a27.7 27.7 0 01-17.1-3.5c-8.7-5-14.1-14.3-14.1-24.4 0-10.6 5.9-19.4 14.6-23.8h231.3c8.8 4.5 14.6 13.3 14.6 23.8-.1 10.2-5.5 19.6-14.2 24.5zM464 400a48 48 0 1096 0 48 48 0 10-96 0z" } }] }, "name": "rocket", "theme": "outlined" };
 function _extends$4() {
   _extends$4 = Object.assign ? Object.assign.bind() : function(target) {
@@ -38091,7 +35415,7 @@ const genSpaceAddonStyle = (token2) => {
     ]
   };
 };
-const useStyle$4 = genStyleHooks(["Space", "Addon"], (token2) => [genSpaceAddonStyle(token2), genCompactItemStyle(token2, {
+const useStyle$5 = genStyleHooks(["Space", "Addon"], (token2) => [genSpaceAddonStyle(token2), genCompactItemStyle(token2, {
   focus: false
 })]);
 const SpaceAddon = /* @__PURE__ */ We.forwardRef((props, ref) => {
@@ -38110,7 +35434,7 @@ const SpaceAddon = /* @__PURE__ */ We.forwardRef((props, ref) => {
     direction: directionConfig
   } = We.useContext(ConfigContext);
   const prefixCls = getPrefixCls("space-addon", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$4(prefixCls);
+  const [hashId, cssVarCls] = useStyle$5(prefixCls);
   const {
     compactItemClassnames,
     compactSize
@@ -38333,7 +35657,7 @@ const getAllowClear = (allowClear) => {
     mergedAllowClear = allowClear;
   } else if (allowClear) {
     mergedAllowClear = {
-      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$e, null)
+      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$l, null)
     };
   }
   return mergedAllowClear;
@@ -38442,7 +35766,7 @@ const genSpaceGapStyle = (token2) => {
     }
   };
 };
-const useStyle$3 = genStyleHooks("Space", (token2) => {
+const useStyle$4 = genStyleHooks("Space", (token2) => {
   const spaceToken = merge$2(token2, {
     spaceGapSmallSize: token2.paddingXS,
     spaceGapMiddleSize: token2.padding,
@@ -38494,7 +35818,7 @@ const InternalSpace = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const mergedAlign = align === void 0 && !mergedVertical ? "center" : align;
   const mergedSeparator = separator ?? split;
   const prefixCls = getPrefixCls("space", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$3(prefixCls);
+  const [hashId, cssVarCls] = useStyle$4(prefixCls);
   const mergedProps = {
     ...props,
     size: size2,
@@ -38586,7 +35910,7 @@ const DropdownButton = (props) => {
     placement,
     getPopupContainer,
     href,
-    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$7, null),
+    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$d, null),
     title,
     buttonsRender = (buttons) => buttons,
     mouseEnterDelay,
@@ -39171,7 +36495,7 @@ const genTextAreaStyle = (token2) => {
     }
   };
 };
-const useStyle$2 = genStyleHooks(["Input", "TextArea"], (token2) => {
+const useStyle$3 = genStyleHooks(["Input", "TextArea"], (token2) => {
   const inputToken = merge$2(token2, initInputToken(token2));
   return genTextAreaStyle(inputToken);
 }, initComponentToken, {
@@ -39236,7 +36560,7 @@ const TextArea = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const prefixCls = getPrefixCls("input", customizePrefixCls);
   const rootCls = useCSSVarCls(prefixCls);
   const [hashId, cssVarCls] = useSharedStyle(prefixCls, rootClassName);
-  useStyle$2(prefixCls, rootCls);
+  useStyle$3(prefixCls, rootCls);
   const {
     compactSize,
     compactItemClassnames
@@ -39683,7 +37007,7 @@ const genSpinStyle = (token2) => {
     }
   };
 };
-const prepareComponentToken$1 = (token2) => {
+const prepareComponentToken$2 = (token2) => {
   const {
     controlHeightLG,
     controlHeight
@@ -39695,12 +37019,12 @@ const prepareComponentToken$1 = (token2) => {
     dotSizeLG: controlHeight
   };
 };
-const useStyle$1 = genStyleHooks("Spin", (token2) => {
+const useStyle$2 = genStyleHooks("Spin", (token2) => {
   const spinToken = merge$2(token2, {
     spinDotDefault: token2.colorTextDescription
   });
   return genSpinStyle(spinToken);
-}, prepareComponentToken$1);
+}, prepareComponentToken$2);
 const AUTO_INTERVAL = 200;
 const STEP_BUCKETS = [[30, 0.05], [70, 0.03], [96, 0.01]];
 function usePercent(spinning, percent) {
@@ -39765,7 +37089,7 @@ const Spin = (props) => {
     styles: contextStyles
   } = useComponentConfig("spin");
   const prefixCls = getPrefixCls("spin", customizePrefixCls);
-  const [hashId, cssVarCls] = useStyle$1(prefixCls);
+  const [hashId, cssVarCls] = useStyle$2(prefixCls);
   const [spinning, setSpinning] = reactExports.useState(() => customSpinning && !shouldDelay(customSpinning, delay));
   const mergedPercent = usePercent(spinning, percent);
   reactExports.useEffect(() => {
@@ -39859,7 +37183,7 @@ const toList$1 = (candidate, skipEmpty = false) => {
   }
   return Array.isArray(candidate) ? candidate : [candidate];
 };
-let message = null;
+let message$1 = null;
 let act = (callback) => callback();
 let taskQueue = [];
 let defaultGlobalConfig = {};
@@ -39921,7 +37245,7 @@ const GlobalHolderWrapper = /* @__PURE__ */ We.forwardRef((_2, ref) => {
   const global = globalConfig();
   const rootPrefixCls = global.getRootPrefixCls();
   const rootIconPrefixCls = global.getIconPrefixCls();
-  const theme = global.getTheme();
+  const theme2 = global.getTheme();
   const dom = /* @__PURE__ */ We.createElement(GlobalHolder, {
     ref,
     sync,
@@ -39930,16 +37254,16 @@ const GlobalHolderWrapper = /* @__PURE__ */ We.forwardRef((_2, ref) => {
   return /* @__PURE__ */ We.createElement(ConfigProvider, {
     prefixCls: rootPrefixCls,
     iconPrefixCls: rootIconPrefixCls,
-    theme
+    theme: theme2
   }, global.holderRender ? global.holderRender(dom) : dom);
 });
 const flushMessageQueue = () => {
-  if (!message) {
+  if (!message$1) {
     const holderFragment = document.createDocumentFragment();
     const newMessage = {
       fragment: holderFragment
     };
-    message = newMessage;
+    message$1 = newMessage;
     act(() => {
       render(/* @__PURE__ */ We.createElement(GlobalHolderWrapper, {
         ref: (node2) => {
@@ -39959,7 +37283,7 @@ const flushMessageQueue = () => {
     });
     return;
   }
-  if (!message.instance) {
+  if (!message$1.instance) {
     return;
   }
   taskQueue.forEach((task) => {
@@ -39971,7 +37295,7 @@ const flushMessageQueue = () => {
       switch (type4) {
         case "open": {
           act(() => {
-            const closeFn = message.instance.open({
+            const closeFn = message$1.instance.open({
               ...defaultGlobalConfig,
               ...task.config
             });
@@ -39982,14 +37306,14 @@ const flushMessageQueue = () => {
         }
         case "destroy":
           act(() => {
-            message == null ? void 0 : message.instance.destroy(task.key);
+            message$1 == null ? void 0 : message$1.instance.destroy(task.key);
           });
           break;
         // Other type open
         default: {
           act(() => {
             var _message$instance;
-            const closeFn = (_message$instance = message.instance)[type4].apply(_message$instance, _toConsumableArray(task.args));
+            const closeFn = (_message$instance = message$1.instance)[type4].apply(_message$instance, _toConsumableArray(task.args));
             closeFn == null ? void 0 : closeFn.then(task.resolve);
             task.setCloseFn(closeFn);
           });
@@ -40006,7 +37330,7 @@ function setMessageGlobalConfig(config2) {
   };
   act(() => {
     var _a2;
-    (_a2 = message == null ? void 0 : message.sync) == null ? void 0 : _a2.call(message);
+    (_a2 = message$1 == null ? void 0 : message$1.sync) == null ? void 0 : _a2.call(message$1);
   });
 }
 function open(config2) {
@@ -40078,6 +37402,631 @@ const staticMethods = baseStaticMethods;
 methods.forEach((type4) => {
   staticMethods[type4] = (...args) => typeOpen(type4, args);
 });
+const genBaseStyle = (token2) => {
+  const {
+    paddingXXS,
+    lineWidth,
+    tagPaddingHorizontal,
+    componentCls,
+    calc
+  } = token2;
+  const paddingInline = calc(tagPaddingHorizontal).sub(lineWidth).equal();
+  const iconMarginInline = calc(paddingXXS).sub(lineWidth).equal();
+  return {
+    // Result
+    [componentCls]: {
+      ...resetComponent(token2),
+      display: "inline-block",
+      height: "auto",
+      paddingInline,
+      fontSize: token2.tagFontSize,
+      lineHeight: token2.tagLineHeight,
+      whiteSpace: "nowrap",
+      backgroundColor: token2.defaultBg,
+      border: `${unit$1(token2.lineWidth)} ${token2.lineType} ${token2.colorBorder}`,
+      borderRadius: token2.borderRadiusSM,
+      opacity: 1,
+      transition: `all ${token2.motionDurationMid}`,
+      textAlign: "start",
+      position: "relative",
+      // RTL
+      [`&${componentCls}-rtl`]: {
+        direction: "rtl"
+      },
+      "&, a, a:hover": {
+        color: token2.defaultColor
+      },
+      [`${componentCls}-close-icon`]: {
+        marginInlineStart: iconMarginInline,
+        fontSize: token2.tagIconSize,
+        color: token2.colorIcon,
+        cursor: "pointer",
+        transition: `all ${token2.motionDurationMid}`,
+        "&:hover": {
+          color: token2.colorTextHeading
+        }
+      },
+      "&-checkable": {
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        cursor: "pointer",
+        [`&:not(${componentCls}-checkable-checked):hover`]: {
+          color: token2.colorPrimary,
+          backgroundColor: token2.colorFillSecondary
+        },
+        "&:active, &-checked": {
+          color: token2.colorTextLightSolid
+        },
+        "&-checked": {
+          backgroundColor: token2.colorPrimary,
+          "&:hover": {
+            backgroundColor: token2.colorPrimaryHover
+          }
+        },
+        "&:active": {
+          backgroundColor: token2.colorPrimaryActive
+        },
+        "&-disabled": {
+          cursor: "not-allowed",
+          [`&:not(${componentCls}-checkable-checked)`]: {
+            color: token2.colorTextDisabled,
+            "&:hover": {
+              backgroundColor: "transparent"
+            }
+          },
+          [`&${componentCls}-checkable-checked`]: {
+            color: token2.colorTextDisabled,
+            backgroundColor: token2.colorBgContainerDisabled
+          },
+          "&:hover, &:active": {
+            backgroundColor: token2.colorBgContainerDisabled,
+            color: token2.colorTextDisabled
+          },
+          [`&:not(${componentCls}-checkable-checked):hover`]: {
+            color: token2.colorTextDisabled
+          }
+        },
+        "&-group": {
+          display: "flex",
+          flexWrap: "wrap",
+          gap: token2.paddingXS
+        }
+      },
+      "&-hidden": {
+        display: "none"
+      },
+      // To ensure that a space will be placed between character and `Icon`.
+      [`> ${token2.iconCls} + span, > span + ${token2.iconCls}`]: {
+        marginInlineStart: paddingInline
+      }
+    },
+    [`&${token2.componentCls}-solid`]: {
+      borderColor: "transparent",
+      color: token2.colorTextLightSolid,
+      backgroundColor: token2.colorBgSolid,
+      [`&${componentCls}-default`]: {
+        color: token2.solidTextColor
+      }
+    },
+    [`${componentCls}-filled`]: {
+      borderColor: "transparent",
+      backgroundColor: token2.tagBorderlessBg
+    },
+    [`&${componentCls}-disabled`]: {
+      color: token2.colorTextDisabled,
+      cursor: "not-allowed",
+      backgroundColor: token2.colorBgContainerDisabled,
+      a: {
+        cursor: "not-allowed",
+        pointerEvents: "none",
+        color: token2.colorTextDisabled,
+        "&:hover": {
+          color: token2.colorTextDisabled
+        }
+      },
+      "a&": {
+        "&:hover, &:active": {
+          color: token2.colorTextDisabled
+        }
+      },
+      [`&${componentCls}-outlined`]: {
+        borderColor: token2.colorBorderDisabled
+      },
+      [`&${componentCls}-solid, &${componentCls}-filled`]: {
+        color: token2.colorTextDisabled,
+        [`${componentCls}-close-icon`]: {
+          color: token2.colorTextDisabled
+        }
+      },
+      [`${componentCls}-close-icon`]: {
+        cursor: "not-allowed",
+        color: token2.colorTextDisabled,
+        "&:hover": {
+          color: token2.colorTextDisabled
+        }
+      }
+    }
+  };
+};
+const prepareToken = (token2) => {
+  const {
+    lineWidth,
+    fontSizeIcon,
+    calc
+  } = token2;
+  const tagFontSize = token2.fontSizeSM;
+  const tagToken = merge$2(token2, {
+    tagFontSize,
+    tagLineHeight: unit$1(calc(token2.lineHeightSM).mul(tagFontSize).equal()),
+    tagIconSize: calc(fontSizeIcon).sub(calc(lineWidth).mul(2)).equal(),
+    // Tag icon is much smaller
+    tagPaddingHorizontal: 8,
+    // Fixed padding.
+    tagBorderlessBg: token2.defaultBg
+  });
+  return tagToken;
+};
+const prepareComponentToken$1 = (token2) => {
+  const solidTextColor = isBright(new AggregationColor(token2.colorBgSolid), "#fff") ? "#000" : "#fff";
+  return {
+    defaultBg: new FastColor(token2.colorFillQuaternary).onBackground(token2.colorBgContainer).toHexString(),
+    defaultColor: token2.colorText,
+    solidTextColor
+  };
+};
+const useStyle$1 = genStyleHooks("Tag", (token2) => {
+  const tagToken = prepareToken(token2);
+  return genBaseStyle(tagToken);
+}, prepareComponentToken$1);
+const CheckableTag = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
+  const {
+    prefixCls: customizePrefixCls,
+    style: style2,
+    className,
+    checked,
+    children,
+    icon,
+    onChange,
+    onClick,
+    disabled: customDisabled,
+    ...restProps
+  } = props;
+  const {
+    getPrefixCls,
+    tag: tag2
+  } = reactExports.useContext(ConfigContext);
+  const disabled = reactExports.useContext(DisabledContext);
+  const mergedDisabled = customDisabled ?? disabled;
+  const handleClick = (e2) => {
+    if (mergedDisabled) {
+      return;
+    }
+    onChange == null ? void 0 : onChange(!checked);
+    onClick == null ? void 0 : onClick(e2);
+  };
+  const prefixCls = getPrefixCls("tag", customizePrefixCls);
+  const [hashId, cssVarCls] = useStyle$1(prefixCls);
+  const cls = clsx(prefixCls, `${prefixCls}-checkable`, {
+    [`${prefixCls}-checkable-checked`]: checked,
+    [`${prefixCls}-checkable-disabled`]: mergedDisabled
+  }, tag2 == null ? void 0 : tag2.className, className, hashId, cssVarCls);
+  return /* @__PURE__ */ reactExports.createElement("span", {
+    ...restProps,
+    ref,
+    style: {
+      ...style2,
+      ...tag2 == null ? void 0 : tag2.style
+    },
+    className: cls,
+    onClick: handleClick
+  }, icon, /* @__PURE__ */ reactExports.createElement("span", null, children));
+});
+function CheckableTagGroup(props, ref) {
+  const {
+    id,
+    prefixCls: customizePrefixCls,
+    rootClassName,
+    className,
+    style: style2,
+    classNames,
+    styles,
+    disabled,
+    options,
+    value,
+    defaultValue,
+    onChange,
+    multiple,
+    ...restProps
+  } = props;
+  const {
+    getPrefixCls,
+    direction,
+    className: contextClassName,
+    style: contextStyle,
+    classNames: contextClassNames,
+    styles: contextStyles
+  } = useComponentConfig("tag");
+  const prefixCls = getPrefixCls("tag", customizePrefixCls);
+  const groupPrefixCls = `${prefixCls}-checkable-group`;
+  const rootCls = useCSSVarCls(prefixCls);
+  const [hashId, cssVarCls] = useStyle$1(prefixCls, rootCls);
+  const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
+    props
+  });
+  const parsedOptions = reactExports.useMemo(() => (options || []).map((option) => {
+    if (option && typeof option === "object") {
+      return option;
+    }
+    return {
+      value: option,
+      label: option
+    };
+  }), [options]);
+  const [mergedValue, setMergedValue] = useControlledState(defaultValue, value);
+  const handleChange = (checked, option) => {
+    let newValue = null;
+    if (multiple) {
+      const valueList = mergedValue || [];
+      newValue = checked ? [].concat(_toConsumableArray(valueList), [option.value]) : valueList.filter((item) => item !== option.value);
+    } else {
+      newValue = checked ? option.value : null;
+    }
+    setMergedValue(newValue);
+    onChange == null ? void 0 : onChange(newValue);
+  };
+  const divRef = We.useRef(null);
+  reactExports.useImperativeHandle(ref, () => ({
+    nativeElement: divRef.current
+  }));
+  const ariaProps = pickAttrs(restProps, {
+    aria: true,
+    data: true
+  });
+  return /* @__PURE__ */ We.createElement("div", {
+    ...ariaProps,
+    className: clsx(groupPrefixCls, contextClassName, rootClassName, {
+      [`${groupPrefixCls}-disabled`]: disabled,
+      [`${groupPrefixCls}-rtl`]: direction === "rtl"
+    }, hashId, cssVarCls, className, mergedClassNames.root),
+    style: {
+      ...contextStyle,
+      ...mergedStyles.root,
+      ...style2
+    },
+    id,
+    ref: divRef
+  }, parsedOptions.map((option) => /* @__PURE__ */ We.createElement(CheckableTag, {
+    key: option.value,
+    className: clsx(`${groupPrefixCls}-item`, mergedClassNames.item),
+    style: mergedStyles.item,
+    checked: multiple ? (mergedValue || []).includes(option.value) : mergedValue === option.value,
+    onChange: (checked) => handleChange(checked, option),
+    disabled
+  }, option.label)));
+}
+const ForwardCheckableTagGroup = /* @__PURE__ */ We.forwardRef(CheckableTagGroup);
+function useColor(props, contextVariant) {
+  const {
+    color: color2,
+    variant,
+    bordered
+  } = props;
+  return reactExports.useMemo(() => {
+    const isInverseColor = color2 == null ? void 0 : color2.endsWith("-inverse");
+    let nextVariant;
+    if (variant) {
+      nextVariant = variant;
+    } else if (isInverseColor) {
+      nextVariant = "solid";
+    } else if (bordered === false) {
+      nextVariant = "filled";
+    } else {
+      nextVariant = contextVariant || "filled";
+    }
+    const nextColor = isInverseColor ? color2 == null ? void 0 : color2.replace("-inverse", "") : color2;
+    const nextIsPreset = isPresetColor(color2);
+    const nextIsStatus = isPresetStatusColor(color2);
+    const tagStyle = {};
+    if (!nextIsPreset && !nextIsStatus && nextColor) {
+      if (nextVariant === "solid") {
+        tagStyle.backgroundColor = color2;
+      } else {
+        const hsl = new FastColor(nextColor).toHsl();
+        hsl.l = 0.95;
+        tagStyle.backgroundColor = new FastColor(hsl).toHexString();
+        tagStyle.color = color2;
+        if (nextVariant === "outlined") {
+          tagStyle.borderColor = color2;
+        }
+      }
+    }
+    return [nextVariant, nextColor, nextIsPreset, nextIsStatus, tagStyle];
+  }, [color2, variant, bordered, contextVariant]);
+}
+const genPresetStyle = (token2) => genPresetColor(token2, (colorKey, {
+  textColor,
+  lightBorderColor,
+  lightColor,
+  darkColor
+}) => ({
+  [`${token2.componentCls}${token2.componentCls}-${colorKey}:not(${token2.componentCls}-disabled)`]: {
+    [`&${token2.componentCls}-outlined`]: {
+      backgroundColor: lightColor,
+      borderColor: lightBorderColor,
+      color: textColor
+    },
+    [`&${token2.componentCls}-solid`]: {
+      backgroundColor: darkColor,
+      borderColor: darkColor,
+      color: token2.colorTextLightSolid
+    },
+    [`&${token2.componentCls}-filled`]: {
+      backgroundColor: lightColor,
+      color: textColor
+    }
+  }
+}));
+const PresetCmp = genSubStyleComponent(["Tag", "preset"], (token2) => {
+  const tagToken = prepareToken(token2);
+  return genPresetStyle(tagToken);
+}, prepareComponentToken$1);
+function capitalize(str) {
+  if (typeof str !== "string") {
+    return str;
+  }
+  const ret = str.charAt(0).toUpperCase() + str.slice(1);
+  return ret;
+}
+const genTagStatusStyle = (token2, status, cssVariableType) => {
+  const capitalizedCssVariableType = capitalize(cssVariableType);
+  return {
+    [`${token2.componentCls}${token2.componentCls}-${status}:not(${token2.componentCls}-disabled)`]: {
+      [`&${token2.componentCls}-outlined`]: {
+        backgroundColor: token2[`color${capitalizedCssVariableType}Bg`],
+        borderColor: token2[`color${capitalizedCssVariableType}Border`],
+        color: token2[`color${cssVariableType}`]
+      },
+      [`&${token2.componentCls}-solid`]: {
+        backgroundColor: token2[`color${cssVariableType}`],
+        borderColor: token2[`color${cssVariableType}`]
+      },
+      [`&${token2.componentCls}-filled`]: {
+        backgroundColor: token2[`color${capitalizedCssVariableType}Bg`],
+        color: token2[`color${cssVariableType}`]
+      }
+    }
+  };
+};
+const StatusCmp = genSubStyleComponent(["Tag", "status"], (token2) => {
+  const tagToken = prepareToken(token2);
+  return [genTagStatusStyle(tagToken, "success", "Success"), genTagStatusStyle(tagToken, "processing", "Info"), genTagStatusStyle(tagToken, "error", "Error"), genTagStatusStyle(tagToken, "warning", "Warning")];
+}, prepareComponentToken$1);
+const InternalTag = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
+  var _a2;
+  const {
+    prefixCls: customizePrefixCls,
+    className,
+    rootClassName,
+    style: style2,
+    children,
+    icon,
+    color: color2,
+    variant: _variant,
+    onClose,
+    bordered,
+    disabled: customDisabled,
+    href,
+    target,
+    styles,
+    classNames,
+    ...restProps
+  } = props;
+  const {
+    getPrefixCls,
+    direction,
+    className: contextClassName,
+    variant: contextVariant,
+    style: contextStyle,
+    classNames: contextClassNames,
+    styles: contextStyles
+  } = useComponentConfig("tag");
+  const [mergedVariant, mergedColor, isPreset, isStatus, customTagStyle] = useColor(props, contextVariant);
+  const isInternalColor = isPreset || isStatus;
+  const disabled = reactExports.useContext(DisabledContext);
+  const mergedDisabled = customDisabled ?? disabled;
+  const {
+    tag: tagContext
+  } = reactExports.useContext(ConfigContext);
+  const [visible, setVisible] = reactExports.useState(true);
+  const domProps = omit(restProps, ["closeIcon", "closable"]);
+  const mergedProps = {
+    ...props,
+    color: mergedColor,
+    variant: mergedVariant,
+    disabled: mergedDisabled,
+    href,
+    target,
+    icon
+  };
+  const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
+    props: mergedProps
+  });
+  const tagStyle = reactExports.useMemo(() => {
+    let nextTagStyle = {
+      ...mergedStyles.root,
+      ...contextStyle,
+      ...style2
+    };
+    if (!mergedDisabled) {
+      nextTagStyle = {
+        ...customTagStyle,
+        ...nextTagStyle
+      };
+    }
+    return nextTagStyle;
+  }, [mergedStyles.root, contextStyle, style2, customTagStyle, mergedDisabled]);
+  const prefixCls = getPrefixCls("tag", customizePrefixCls);
+  const [hashId, cssVarCls] = useStyle$1(prefixCls);
+  const tagClassName = clsx(prefixCls, contextClassName, mergedClassNames.root, `${prefixCls}-${mergedVariant}`, {
+    [`${prefixCls}-${mergedColor}`]: isInternalColor,
+    [`${prefixCls}-hidden`]: !visible,
+    [`${prefixCls}-rtl`]: direction === "rtl",
+    [`${prefixCls}-disabled`]: mergedDisabled
+  }, className, rootClassName, hashId, cssVarCls);
+  const handleCloseClick = (e2) => {
+    if (mergedDisabled) {
+      return;
+    }
+    e2.stopPropagation();
+    onClose == null ? void 0 : onClose(e2);
+    if (e2.defaultPrevented) {
+      return;
+    }
+    setVisible(false);
+  };
+  const [, mergedCloseIcon] = useClosable(pickClosable(props), pickClosable(tagContext), {
+    closable: false,
+    closeIconRender: (iconNode2) => {
+      const replacement = /* @__PURE__ */ reactExports.createElement("span", {
+        className: `${prefixCls}-close-icon`,
+        onClick: handleCloseClick
+      }, iconNode2);
+      return replaceElement(iconNode2, replacement, (originProps) => ({
+        onClick: (e2) => {
+          var _a3;
+          (_a3 = originProps == null ? void 0 : originProps.onClick) == null ? void 0 : _a3.call(originProps, e2);
+          handleCloseClick(e2);
+        },
+        className: clsx(originProps == null ? void 0 : originProps.className, `${prefixCls}-close-icon`)
+      }));
+    }
+  });
+  const isNeedWave = typeof restProps.onClick === "function" || children && children.type === "a";
+  const iconNode = cloneElement(icon, {
+    className: clsx(/* @__PURE__ */ reactExports.isValidElement(icon) ? (_a2 = icon.props) == null ? void 0 : _a2.className : "", mergedClassNames.icon),
+    style: mergedStyles.icon
+  });
+  const child = iconNode ? /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, iconNode, children && /* @__PURE__ */ reactExports.createElement("span", {
+    className: mergedClassNames.content,
+    style: mergedStyles.content
+  }, children)) : children;
+  const TagWrapper = href ? "a" : "span";
+  const tagNode = /* @__PURE__ */ reactExports.createElement(TagWrapper, {
+    ...domProps,
+    // @ts-expect-error
+    ref,
+    className: tagClassName,
+    style: tagStyle,
+    href: mergedDisabled ? void 0 : href,
+    target,
+    onClick: mergedDisabled ? void 0 : domProps.onClick,
+    ...href && mergedDisabled ? {
+      "aria-disabled": true
+    } : {}
+  }, child, mergedCloseIcon, isPreset && /* @__PURE__ */ reactExports.createElement(PresetCmp, {
+    key: "preset",
+    prefixCls
+  }), isStatus && /* @__PURE__ */ reactExports.createElement(StatusCmp, {
+    key: "status",
+    prefixCls
+  }));
+  return isNeedWave ? /* @__PURE__ */ reactExports.createElement(Wave, {
+    component: "Tag"
+  }, tagNode) : tagNode;
+});
+const Tag = InternalTag;
+Tag.CheckableTag = CheckableTag;
+Tag.CheckableTagGroup = ForwardCheckableTagGroup;
+const getAlphaColor = (baseColor, alpha) => new FastColor(baseColor).setA(alpha).toRgbString();
+const getSolidColor = (baseColor, brightness) => {
+  const instance2 = new FastColor(baseColor);
+  return instance2.lighten(brightness).toHexString();
+};
+const generateColorPalettes = (baseColor) => {
+  const colors = generate$1(baseColor, {
+    theme: "dark"
+  });
+  return {
+    1: colors[0],
+    2: colors[1],
+    3: colors[2],
+    4: colors[3],
+    5: colors[6],
+    6: colors[5],
+    7: colors[4],
+    8: colors[6],
+    9: colors[5],
+    10: colors[4]
+  };
+};
+const generateNeutralColorPalettes = (bgBaseColor, textBaseColor) => {
+  const colorBgBase = bgBaseColor || "#000";
+  const colorTextBase = textBaseColor || "#fff";
+  return {
+    colorBgBase,
+    colorTextBase,
+    colorText: getAlphaColor(colorTextBase, 0.85),
+    colorTextSecondary: getAlphaColor(colorTextBase, 0.65),
+    colorTextTertiary: getAlphaColor(colorTextBase, 0.45),
+    colorTextQuaternary: getAlphaColor(colorTextBase, 0.25),
+    colorFill: getAlphaColor(colorTextBase, 0.18),
+    colorFillSecondary: getAlphaColor(colorTextBase, 0.12),
+    colorFillTertiary: getAlphaColor(colorTextBase, 0.08),
+    colorFillQuaternary: getAlphaColor(colorTextBase, 0.04),
+    colorBgSolid: getAlphaColor(colorTextBase, 0.95),
+    colorBgSolidHover: getAlphaColor(colorTextBase, 1),
+    colorBgSolidActive: getAlphaColor(colorTextBase, 0.9),
+    colorBgElevated: getSolidColor(colorBgBase, 12),
+    colorBgContainer: getSolidColor(colorBgBase, 8),
+    colorBgLayout: getSolidColor(colorBgBase, 0),
+    colorBgSpotlight: getSolidColor(colorBgBase, 26),
+    colorBgBlur: getAlphaColor(colorTextBase, 0.04),
+    colorBorder: getSolidColor(colorBgBase, 26),
+    colorBorderDisabled: getSolidColor(colorBgBase, 26),
+    colorBorderSecondary: getSolidColor(colorBgBase, 19)
+  };
+};
+const derivative = (token2, mapToken) => {
+  const colorPalettes = Object.keys(defaultPresetColors).map((colorKey) => {
+    const colors = generate$1(token2[colorKey], {
+      theme: "dark"
+    });
+    return Array.from({
+      length: 10
+    }, () => 1).reduce((prev2, _2, i) => {
+      prev2[`${colorKey}-${i + 1}`] = colors[i];
+      prev2[`${colorKey}${i + 1}`] = colors[i];
+      return prev2;
+    }, {});
+  }).reduce((prev2, cur) => {
+    prev2 = {
+      ...prev2,
+      ...cur
+    };
+    return prev2;
+  }, {});
+  const mergedMapToken = mapToken ?? derivative$1(token2);
+  const colorMapToken = genColorMapToken(token2, {
+    generateColorPalettes,
+    generateNeutralColorPalettes
+  });
+  return {
+    ...mergedMapToken,
+    // Dark tokens
+    ...colorPalettes,
+    // Colors
+    ...colorMapToken,
+    // Customize selected item background color
+    // https://github.com/ant-design/ant-design/issues/30524#issuecomment-871961867
+    colorPrimaryBg: colorMapToken.colorPrimaryBorder,
+    colorPrimaryBgHover: colorMapToken.colorPrimaryBorderHover
+  };
+};
+const theme = {
+  /** Default seedToken */
+  defaultSeed: defaultConfig.token,
+  darkAlgorithm: derivative
+};
 const getTitleStyle = (fontSize, lineHeight, color2, token2) => {
   const {
     titleMarginBottom,
@@ -40403,7 +38352,7 @@ const Editable = (props) => {
     onCancel,
     onEnd,
     component,
-    enterIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$4, null)
+    enterIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$8, null)
   } = props;
   const ref = reactExports.useRef(null);
   const inComposition = reactExports.useRef(false);
@@ -40724,7 +38673,7 @@ const CopyBtn = ({
     onClick: onCopy,
     "aria-label": ariaLabel,
     tabIndex
-  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$9, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$b, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$6, null), true)));
+  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$f, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$h, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$b, null), true)));
 };
 const MeasureText = /* @__PURE__ */ reactExports.forwardRef(({
   style: style2,
@@ -41158,7 +39107,7 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       onClick: onEditClick,
       "aria-label": ariaLabel,
       tabIndex
-    }, icon || /* @__PURE__ */ reactExports.createElement(RefIcon$5, {
+    }, icon || /* @__PURE__ */ reactExports.createElement(RefIcon$9, {
       role: "button"
     }))) : null;
   };
@@ -41253,7 +39202,7 @@ const Paragraph$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     component: "div"
   }, children);
 });
-const Text = (props, ref) => {
+const Text$1 = (props, ref) => {
   const {
     ellipsis,
     children,
@@ -41272,7 +39221,7 @@ const Text = (props, ref) => {
     component: "span"
   }, children);
 };
-const Text$1 = /* @__PURE__ */ reactExports.forwardRef(Text);
+const Text$2 = /* @__PURE__ */ reactExports.forwardRef(Text$1);
 const TITLE_ELE_LIST = [1, 2, 3, 4, 5];
 const Title$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -41288,10 +39237,2939 @@ const Title$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, children);
 });
 const Typography = Typography$1;
-Typography.Text = Text$1;
+Typography.Text = Text$2;
 Typography.Link = Link;
 Typography.Title = Title$1;
 Typography.Paragraph = Paragraph$1;
+const isObject$4 = (value) => typeof value === "object" && value !== null;
+const isObjectCustom = (value) => isObject$4(value) && !(value instanceof RegExp) && !(value instanceof Error) && !(value instanceof Date);
+const mapObjectSkip = Symbol("mapObjectSkip");
+const _mapObject = (object4, mapper, options, isSeen = /* @__PURE__ */ new WeakMap()) => {
+  options = {
+    deep: false,
+    target: {},
+    ...options
+  };
+  if (isSeen.has(object4)) {
+    return isSeen.get(object4);
+  }
+  isSeen.set(object4, options.target);
+  const { target } = options;
+  delete options.target;
+  const mapArray = (array4) => array4.map((element2) => isObjectCustom(element2) ? _mapObject(element2, mapper, options, isSeen) : element2);
+  if (Array.isArray(object4)) {
+    return mapArray(object4);
+  }
+  for (const [key, value] of Object.entries(object4)) {
+    const mapResult = mapper(key, value, object4);
+    if (mapResult === mapObjectSkip) {
+      continue;
+    }
+    let [newKey, newValue, { shouldRecurse = true } = {}] = mapResult;
+    if (newKey === "__proto__") {
+      continue;
+    }
+    if (options.deep && shouldRecurse && isObjectCustom(newValue)) {
+      newValue = Array.isArray(newValue) ? mapArray(newValue) : _mapObject(newValue, mapper, options, isSeen);
+    }
+    target[newKey] = newValue;
+  }
+  return target;
+};
+function mapObject(object4, mapper, options) {
+  if (!isObject$4(object4)) {
+    throw new TypeError(`Expected an object, got \`${object4}\` (${typeof object4})`);
+  }
+  return _mapObject(object4, mapper, options);
+}
+const UPPERCASE = /[\p{Lu}]/u;
+const LOWERCASE = /[\p{Ll}]/u;
+const LEADING_CAPITAL = /^[\p{Lu}](?![\p{Lu}])/gu;
+const IDENTIFIER = /([\p{Alpha}\p{N}_]|$)/u;
+const SEPARATORS = /[_.\- ]+/;
+const LEADING_SEPARATORS = new RegExp("^" + SEPARATORS.source);
+const SEPARATORS_AND_IDENTIFIER = new RegExp(SEPARATORS.source + IDENTIFIER.source, "gu");
+const NUMBERS_AND_IDENTIFIER = new RegExp("\\d+" + IDENTIFIER.source, "gu");
+const preserveCamelCase = (string3, toLowerCase, toUpperCase, preserveConsecutiveUppercase2) => {
+  let isLastCharLower = false;
+  let isLastCharUpper = false;
+  let isLastLastCharUpper = false;
+  let isLastLastCharPreserved = false;
+  for (let index2 = 0; index2 < string3.length; index2++) {
+    const character2 = string3[index2];
+    isLastLastCharPreserved = index2 > 2 ? string3[index2 - 3] === "-" : true;
+    if (isLastCharLower && UPPERCASE.test(character2)) {
+      string3 = string3.slice(0, index2) + "-" + string3.slice(index2);
+      isLastCharLower = false;
+      isLastLastCharUpper = isLastCharUpper;
+      isLastCharUpper = true;
+      index2++;
+    } else if (isLastCharUpper && isLastLastCharUpper && LOWERCASE.test(character2) && (!isLastLastCharPreserved || preserveConsecutiveUppercase2)) {
+      string3 = string3.slice(0, index2 - 1) + "-" + string3.slice(index2 - 1);
+      isLastLastCharUpper = isLastCharUpper;
+      isLastCharUpper = false;
+      isLastCharLower = true;
+    } else {
+      isLastCharLower = toLowerCase(character2) === character2 && toUpperCase(character2) !== character2;
+      isLastLastCharUpper = isLastCharUpper;
+      isLastCharUpper = toUpperCase(character2) === character2 && toLowerCase(character2) !== character2;
+    }
+  }
+  return string3;
+};
+const preserveConsecutiveUppercase = (input, toLowerCase) => {
+  LEADING_CAPITAL.lastIndex = 0;
+  return input.replaceAll(LEADING_CAPITAL, (match2) => toLowerCase(match2));
+};
+const postProcess = (input, toUpperCase) => {
+  SEPARATORS_AND_IDENTIFIER.lastIndex = 0;
+  NUMBERS_AND_IDENTIFIER.lastIndex = 0;
+  return input.replaceAll(NUMBERS_AND_IDENTIFIER, (match2, pattern4, offset) => ["_", "-"].includes(input.charAt(offset + match2.length)) ? match2 : toUpperCase(match2)).replaceAll(SEPARATORS_AND_IDENTIFIER, (_2, identifier2) => toUpperCase(identifier2));
+};
+function camelCase(input, options) {
+  if (!(typeof input === "string" || Array.isArray(input))) {
+    throw new TypeError("Expected the input to be `string | string[]`");
+  }
+  options = {
+    pascalCase: false,
+    preserveConsecutiveUppercase: false,
+    ...options
+  };
+  if (Array.isArray(input)) {
+    input = input.map((x2) => x2.trim()).filter((x2) => x2.length).join("-");
+  } else {
+    input = input.trim();
+  }
+  if (input.length === 0) {
+    return "";
+  }
+  const toLowerCase = options.locale === false ? (string3) => string3.toLowerCase() : (string3) => string3.toLocaleLowerCase(options.locale);
+  const toUpperCase = options.locale === false ? (string3) => string3.toUpperCase() : (string3) => string3.toLocaleUpperCase(options.locale);
+  if (input.length === 1) {
+    if (SEPARATORS.test(input)) {
+      return "";
+    }
+    return options.pascalCase ? toUpperCase(input) : toLowerCase(input);
+  }
+  const hasUpperCase = input !== toLowerCase(input);
+  if (hasUpperCase) {
+    input = preserveCamelCase(input, toLowerCase, toUpperCase, options.preserveConsecutiveUppercase);
+  }
+  input = input.replace(LEADING_SEPARATORS, "");
+  input = options.preserveConsecutiveUppercase ? preserveConsecutiveUppercase(input, toLowerCase) : toLowerCase(input);
+  if (options.pascalCase) {
+    input = toUpperCase(input.charAt(0)) + input.slice(1);
+  }
+  return postProcess(input, toUpperCase);
+}
+class QuickLRU extends Map {
+  constructor(options = {}) {
+    super();
+    if (!(options.maxSize && options.maxSize > 0)) {
+      throw new TypeError("`maxSize` must be a number greater than 0");
+    }
+    if (typeof options.maxAge === "number" && options.maxAge === 0) {
+      throw new TypeError("`maxAge` must be a number greater than 0");
+    }
+    this.maxSize = options.maxSize;
+    this.maxAge = options.maxAge || Number.POSITIVE_INFINITY;
+    this.onEviction = options.onEviction;
+    this.cache = /* @__PURE__ */ new Map();
+    this.oldCache = /* @__PURE__ */ new Map();
+    this._size = 0;
+  }
+  // TODO: Use private class methods when targeting Node.js 16.
+  _emitEvictions(cache2) {
+    if (typeof this.onEviction !== "function") {
+      return;
+    }
+    for (const [key, item] of cache2) {
+      this.onEviction(key, item.value);
+    }
+  }
+  _deleteIfExpired(key, item) {
+    if (typeof item.expiry === "number" && item.expiry <= Date.now()) {
+      if (typeof this.onEviction === "function") {
+        this.onEviction(key, item.value);
+      }
+      return this.delete(key);
+    }
+    return false;
+  }
+  _getOrDeleteIfExpired(key, item) {
+    const deleted = this._deleteIfExpired(key, item);
+    if (deleted === false) {
+      return item.value;
+    }
+  }
+  _getItemValue(key, item) {
+    return item.expiry ? this._getOrDeleteIfExpired(key, item) : item.value;
+  }
+  _peek(key, cache2) {
+    const item = cache2.get(key);
+    return this._getItemValue(key, item);
+  }
+  _set(key, value) {
+    this.cache.set(key, value);
+    this._size++;
+    if (this._size >= this.maxSize) {
+      this._size = 0;
+      this._emitEvictions(this.oldCache);
+      this.oldCache = this.cache;
+      this.cache = /* @__PURE__ */ new Map();
+    }
+  }
+  _moveToRecent(key, item) {
+    this.oldCache.delete(key);
+    this._set(key, item);
+  }
+  *_entriesAscending() {
+    for (const item of this.oldCache) {
+      const [key, value] = item;
+      if (!this.cache.has(key)) {
+        const deleted = this._deleteIfExpired(key, value);
+        if (deleted === false) {
+          yield item;
+        }
+      }
+    }
+    for (const item of this.cache) {
+      const [key, value] = item;
+      const deleted = this._deleteIfExpired(key, value);
+      if (deleted === false) {
+        yield item;
+      }
+    }
+  }
+  get(key) {
+    if (this.cache.has(key)) {
+      const item = this.cache.get(key);
+      return this._getItemValue(key, item);
+    }
+    if (this.oldCache.has(key)) {
+      const item = this.oldCache.get(key);
+      if (this._deleteIfExpired(key, item) === false) {
+        this._moveToRecent(key, item);
+        return item.value;
+      }
+    }
+  }
+  set(key, value, { maxAge = this.maxAge } = {}) {
+    const expiry = typeof maxAge === "number" && maxAge !== Number.POSITIVE_INFINITY ? Date.now() + maxAge : void 0;
+    if (this.cache.has(key)) {
+      this.cache.set(key, {
+        value,
+        expiry
+      });
+    } else {
+      this._set(key, { value, expiry });
+    }
+    return this;
+  }
+  has(key) {
+    if (this.cache.has(key)) {
+      return !this._deleteIfExpired(key, this.cache.get(key));
+    }
+    if (this.oldCache.has(key)) {
+      return !this._deleteIfExpired(key, this.oldCache.get(key));
+    }
+    return false;
+  }
+  peek(key) {
+    if (this.cache.has(key)) {
+      return this._peek(key, this.cache);
+    }
+    if (this.oldCache.has(key)) {
+      return this._peek(key, this.oldCache);
+    }
+  }
+  delete(key) {
+    const deleted = this.cache.delete(key);
+    if (deleted) {
+      this._size--;
+    }
+    return this.oldCache.delete(key) || deleted;
+  }
+  clear() {
+    this.cache.clear();
+    this.oldCache.clear();
+    this._size = 0;
+  }
+  resize(newSize) {
+    if (!(newSize && newSize > 0)) {
+      throw new TypeError("`maxSize` must be a number greater than 0");
+    }
+    const items = [...this._entriesAscending()];
+    const removeCount = items.length - newSize;
+    if (removeCount < 0) {
+      this.cache = new Map(items);
+      this.oldCache = /* @__PURE__ */ new Map();
+      this._size = items.length;
+    } else {
+      if (removeCount > 0) {
+        this._emitEvictions(items.slice(0, removeCount));
+      }
+      this.oldCache = new Map(items.slice(removeCount));
+      this.cache = /* @__PURE__ */ new Map();
+      this._size = 0;
+    }
+    this.maxSize = newSize;
+  }
+  *keys() {
+    for (const [key] of this) {
+      yield key;
+    }
+  }
+  *values() {
+    for (const [, value] of this) {
+      yield value;
+    }
+  }
+  *[Symbol.iterator]() {
+    for (const item of this.cache) {
+      const [key, value] = item;
+      const deleted = this._deleteIfExpired(key, value);
+      if (deleted === false) {
+        yield [key, value.value];
+      }
+    }
+    for (const item of this.oldCache) {
+      const [key, value] = item;
+      if (!this.cache.has(key)) {
+        const deleted = this._deleteIfExpired(key, value);
+        if (deleted === false) {
+          yield [key, value.value];
+        }
+      }
+    }
+  }
+  *entriesDescending() {
+    let items = [...this.cache];
+    for (let i = items.length - 1; i >= 0; --i) {
+      const item = items[i];
+      const [key, value] = item;
+      const deleted = this._deleteIfExpired(key, value);
+      if (deleted === false) {
+        yield [key, value.value];
+      }
+    }
+    items = [...this.oldCache];
+    for (let i = items.length - 1; i >= 0; --i) {
+      const item = items[i];
+      const [key, value] = item;
+      if (!this.cache.has(key)) {
+        const deleted = this._deleteIfExpired(key, value);
+        if (deleted === false) {
+          yield [key, value.value];
+        }
+      }
+    }
+  }
+  *entriesAscending() {
+    for (const [key, value] of this._entriesAscending()) {
+      yield [key, value.value];
+    }
+  }
+  get size() {
+    if (!this._size) {
+      return this.oldCache.size;
+    }
+    let oldCacheSize = 0;
+    for (const key of this.oldCache.keys()) {
+      if (!this.cache.has(key)) {
+        oldCacheSize++;
+      }
+    }
+    return Math.min(this._size + oldCacheSize, this.maxSize);
+  }
+  entries() {
+    return this.entriesAscending();
+  }
+  forEach(callbackFunction, thisArgument = this) {
+    for (const [key, value] of this.entriesAscending()) {
+      callbackFunction.call(thisArgument, value, key, this);
+    }
+  }
+  get [Symbol.toStringTag]() {
+    return JSON.stringify([...this.entriesAscending()]);
+  }
+}
+const has = (array4, key) => array4.some((element2) => {
+  if (typeof element2 === "string") {
+    return element2 === key;
+  }
+  element2.lastIndex = 0;
+  return element2.test(key);
+});
+const cache = new QuickLRU({ maxSize: 1e5 });
+const isObject$3 = (value) => typeof value === "object" && value !== null && !(value instanceof RegExp) && !(value instanceof Error) && !(value instanceof Date);
+const transform = (input, options = {}) => {
+  if (!isObject$3(input)) {
+    return input;
+  }
+  const {
+    exclude,
+    pascalCase = false,
+    stopPaths,
+    deep = false,
+    preserveConsecutiveUppercase: preserveConsecutiveUppercase2 = false
+  } = options;
+  const stopPathsSet = new Set(stopPaths);
+  const makeMapper = (parentPath) => (key, value) => {
+    if (deep && isObject$3(value)) {
+      const path2 = parentPath === void 0 ? key : `${parentPath}.${key}`;
+      if (!stopPathsSet.has(path2)) {
+        value = mapObject(value, makeMapper(path2));
+      }
+    }
+    if (!(exclude && has(exclude, key))) {
+      const cacheKey = pascalCase ? `${key}_` : key;
+      if (cache.has(cacheKey)) {
+        key = cache.get(cacheKey);
+      } else {
+        const returnValue = camelCase(key, { pascalCase, locale: false, preserveConsecutiveUppercase: preserveConsecutiveUppercase2 });
+        if (key.length < 100) {
+          cache.set(cacheKey, returnValue);
+        }
+        key = returnValue;
+      }
+    }
+    return [key, value];
+  };
+  return mapObject(input, makeMapper(void 0));
+};
+function camelcaseKeys(input, options) {
+  if (Array.isArray(input)) {
+    return Object.keys(input).map((key) => transform(input[key], options));
+  }
+  return transform(input, options);
+}
+var ReservedScope;
+(function(ReservedScope2) {
+  ReservedScope2["OpenId"] = "openid";
+  ReservedScope2["OfflineAccess"] = "offline_access";
+})(ReservedScope || (ReservedScope = {}));
+var ReservedResource;
+(function(ReservedResource2) {
+  ReservedResource2["Organization"] = "urn:logto:resource:organizations";
+})(ReservedResource || (ReservedResource = {}));
+var UserScope;
+(function(UserScope2) {
+  UserScope2["Profile"] = "profile";
+  UserScope2["Email"] = "email";
+  UserScope2["Phone"] = "phone";
+  UserScope2["Address"] = "address";
+  UserScope2["CustomData"] = "custom_data";
+  UserScope2["Identities"] = "identities";
+  UserScope2["Roles"] = "roles";
+  UserScope2["Organizations"] = "urn:logto:scope:organizations";
+  UserScope2["OrganizationRoles"] = "urn:logto:scope:organization_roles";
+})(UserScope || (UserScope = {}));
+const idTokenClaims = Object.freeze({
+  [UserScope.Profile]: ["name", "picture", "username"],
+  [UserScope.Email]: ["email", "email_verified"],
+  [UserScope.Phone]: ["phone_number", "phone_number_verified"],
+  [UserScope.Address]: [],
+  [UserScope.Roles]: ["roles"],
+  [UserScope.Organizations]: ["organizations"],
+  [UserScope.OrganizationRoles]: ["organization_roles"],
+  [UserScope.CustomData]: [],
+  [UserScope.Identities]: []
+});
+const userinfoClaims = Object.freeze({
+  [UserScope.Profile]: [],
+  [UserScope.Email]: [],
+  [UserScope.Phone]: [],
+  [UserScope.Address]: [],
+  [UserScope.Roles]: [],
+  [UserScope.Organizations]: [],
+  [UserScope.OrganizationRoles]: [],
+  [UserScope.CustomData]: ["custom_data"],
+  [UserScope.Identities]: ["identities"]
+});
+Object.freeze(
+  // Hard to infer type directly, use `as` for a workaround.
+  // eslint-disable-next-line no-restricted-syntax
+  Object.fromEntries(Object.values(UserScope).map((current) => [
+    current,
+    [...idTokenClaims[current], ...userinfoClaims[current]]
+  ]))
+);
+const ContentType = {
+  formUrlEncoded: { "Content-Type": "application/x-www-form-urlencoded" }
+};
+var TokenGrantType;
+(function(TokenGrantType2) {
+  TokenGrantType2["AuthorizationCode"] = "authorization_code";
+  TokenGrantType2["RefreshToken"] = "refresh_token";
+})(TokenGrantType || (TokenGrantType = {}));
+var QueryKey;
+(function(QueryKey2) {
+  QueryKey2["ClientId"] = "client_id";
+  QueryKey2["Code"] = "code";
+  QueryKey2["CodeChallenge"] = "code_challenge";
+  QueryKey2["CodeChallengeMethod"] = "code_challenge_method";
+  QueryKey2["CodeVerifier"] = "code_verifier";
+  QueryKey2["Error"] = "error";
+  QueryKey2["ErrorDescription"] = "error_description";
+  QueryKey2["GrantType"] = "grant_type";
+  QueryKey2["IdToken"] = "id_token";
+  QueryKey2["IdTokenHint"] = "id_token_hint";
+  QueryKey2["LoginHint"] = "login_hint";
+  QueryKey2["PostLogoutRedirectUri"] = "post_logout_redirect_uri";
+  QueryKey2["Prompt"] = "prompt";
+  QueryKey2["RedirectUri"] = "redirect_uri";
+  QueryKey2["RefreshToken"] = "refresh_token";
+  QueryKey2["Resource"] = "resource";
+  QueryKey2["ResponseType"] = "response_type";
+  QueryKey2["Scope"] = "scope";
+  QueryKey2["State"] = "state";
+  QueryKey2["Token"] = "token";
+  QueryKey2["InteractionMode"] = "interaction_mode";
+  QueryKey2["OrganizationId"] = "organization_id";
+  QueryKey2["FirstScreen"] = "first_screen";
+  QueryKey2["Identifier"] = "identifier";
+  QueryKey2["DirectSignIn"] = "direct_sign_in";
+  QueryKey2["OneTimeToken"] = "one_time_token";
+})(QueryKey || (QueryKey = {}));
+var Prompt;
+(function(Prompt2) {
+  Prompt2["None"] = "none";
+  Prompt2["Consent"] = "consent";
+  Prompt2["Login"] = "login";
+})(Prompt || (Prompt = {}));
+const fetchTokenByAuthorizationCode = async ({ clientId, tokenEndpoint, redirectUri, codeVerifier, code: code2, resource }, requester) => {
+  const parameters = new URLSearchParams();
+  parameters.append(QueryKey.ClientId, clientId);
+  parameters.append(QueryKey.Code, code2);
+  parameters.append(QueryKey.CodeVerifier, codeVerifier);
+  parameters.append(QueryKey.RedirectUri, redirectUri);
+  parameters.append(QueryKey.GrantType, TokenGrantType.AuthorizationCode);
+  if (resource) {
+    parameters.append(QueryKey.Resource, resource);
+  }
+  const snakeCaseCodeTokenResponse = await requester(tokenEndpoint, {
+    method: "POST",
+    headers: ContentType.formUrlEncoded,
+    body: parameters.toString()
+  });
+  return camelcaseKeys(snakeCaseCodeTokenResponse);
+};
+const fetchTokenByRefreshToken = async (params, requester) => {
+  const { clientId, tokenEndpoint, refreshToken, resource, organizationId, scopes } = params;
+  const parameters = new URLSearchParams();
+  parameters.append(QueryKey.ClientId, clientId);
+  parameters.append(QueryKey.RefreshToken, refreshToken);
+  parameters.append(QueryKey.GrantType, TokenGrantType.RefreshToken);
+  if (resource) {
+    parameters.append(QueryKey.Resource, resource);
+  }
+  if (organizationId) {
+    parameters.append(QueryKey.OrganizationId, organizationId);
+  }
+  if (scopes == null ? void 0 : scopes.length) {
+    parameters.append(QueryKey.Scope, scopes.join(" "));
+  }
+  const snakeCaseRefreshTokenTokenResponse = await requester(tokenEndpoint, {
+    method: "POST",
+    headers: ContentType.formUrlEncoded,
+    body: parameters.toString()
+  });
+  return camelcaseKeys(snakeCaseRefreshTokenTokenResponse);
+};
+const discoveryPath = "/oidc/.well-known/openid-configuration";
+const fetchOidcConfig = async (endpoint, requester) => camelcaseKeys(await requester(endpoint));
+const revoke = async (revocationEndpoint, clientId, token2, requester) => requester(revocationEndpoint, {
+  method: "POST",
+  headers: ContentType.formUrlEncoded,
+  body: new URLSearchParams({
+    [QueryKey.ClientId]: clientId,
+    [QueryKey.Token]: token2
+  }).toString()
+});
+const withReservedScopes = (originalScopes) => {
+  const reservedScopes = Object.values(ReservedScope);
+  const uniqueScopes = /* @__PURE__ */ new Set([...reservedScopes, UserScope.Profile, ...originalScopes ?? []]);
+  return Array.from(uniqueScopes).join(" ");
+};
+const codeChallengeMethod = "S256";
+const responseType = "code";
+const buildPrompt = (prompt) => {
+  if (Array.isArray(prompt)) {
+    return prompt.join(" ");
+  }
+  return prompt ?? Prompt.Consent;
+};
+const generateSignInUri = ({ authorizationEndpoint, clientId, redirectUri, codeChallenge, state, scopes, resources, prompt, firstScreen, identifiers: identifier2, interactionMode, loginHint, directSignIn, oneTimeToken, extraParams, includeReservedScopes = true }) => {
+  const urlSearchParameters = new URLSearchParams({
+    [QueryKey.ClientId]: clientId,
+    [QueryKey.RedirectUri]: redirectUri,
+    [QueryKey.CodeChallenge]: codeChallenge,
+    [QueryKey.CodeChallengeMethod]: codeChallengeMethod,
+    [QueryKey.State]: state,
+    [QueryKey.ResponseType]: responseType,
+    [QueryKey.Prompt]: buildPrompt(prompt)
+  });
+  const computedScopes = includeReservedScopes ? withReservedScopes(scopes) : scopes == null ? void 0 : scopes.join(" ");
+  if (computedScopes) {
+    urlSearchParameters.append(QueryKey.Scope, computedScopes);
+  }
+  if (loginHint) {
+    urlSearchParameters.append(QueryKey.LoginHint, loginHint);
+  }
+  if (directSignIn) {
+    urlSearchParameters.append(QueryKey.DirectSignIn, `${directSignIn.method}:${directSignIn.target}`);
+  }
+  for (const resource of resources ?? []) {
+    urlSearchParameters.append(QueryKey.Resource, resource);
+  }
+  if (firstScreen) {
+    urlSearchParameters.append(QueryKey.FirstScreen, firstScreen);
+  } else if (interactionMode) {
+    urlSearchParameters.append(QueryKey.InteractionMode, interactionMode);
+  }
+  if (identifier2 && identifier2.length > 0) {
+    urlSearchParameters.append(QueryKey.Identifier, identifier2.join(" "));
+  }
+  if (oneTimeToken) {
+    urlSearchParameters.append(QueryKey.OneTimeToken, oneTimeToken);
+  }
+  if (extraParams) {
+    for (const [key, value] of Object.entries(extraParams)) {
+      urlSearchParameters.append(key, value);
+    }
+  }
+  return `${authorizationEndpoint}?${urlSearchParameters.toString()}`;
+};
+const generateSignOutUri = ({ endSessionEndpoint, clientId, postLogoutRedirectUri }) => {
+  const urlSearchParameters = new URLSearchParams({ [QueryKey.ClientId]: clientId });
+  if (postLogoutRedirectUri) {
+    urlSearchParameters.append(QueryKey.PostLogoutRedirectUri, postLogoutRedirectUri);
+  }
+  return `${endSessionEndpoint}?${urlSearchParameters.toString()}`;
+};
+const fetchUserInfo = async (userInfoEndpoint, accessToken, requester) => requester(userInfoEndpoint, {
+  headers: { Authorization: `Bearer ${accessToken}` }
+});
+const deduplicate = (array4) => [...new Set(array4)];
+const notFalsy = (value) => Boolean(value);
+const conditional = (exp) => notFalsy(exp) ? exp : void 0;
+const conditionalString = (exp) => notFalsy(exp) ? String(exp) : "";
+const isPromise = (value) => value !== null && (typeof value === "object" || typeof value === "function") && "then" in value && typeof value.then === "function";
+const trySafe = (exec, onError) => {
+  try {
+    const unwrapped = typeof exec === "function" ? exec() : exec;
+    return isPromise(unwrapped) ? (
+      // eslint-disable-next-line promise/prefer-await-to-then
+      unwrapped.catch((error) => {
+        onError == null ? void 0 : onError(error);
+      })
+    ) : unwrapped;
+  } catch (error) {
+    onError == null ? void 0 : onError(error);
+  }
+};
+const replaceNonUrlSafeCharacters = (base64String) => base64String.replaceAll("+", "-").replaceAll("/", "_").replaceAll(/=+$/g, "");
+const restoreNonUrlSafeCharacters = (base64String) => base64String.replaceAll("-", "+").replaceAll("_", "/");
+const urlSafeBase64 = {
+  isSafe: (input) => /^[\w-]*$/.test(input),
+  encode: (rawString) => {
+    const encodedString = btoa(unescape(encodeURIComponent(rawString)));
+    return replaceNonUrlSafeCharacters(encodedString);
+  },
+  decode: (encodedString) => {
+    const nonUrlSafeEncodedString = restoreNonUrlSafeCharacters(encodedString);
+    return decodeURIComponent(escape(atob(nonUrlSafeEncodedString)));
+  },
+  replaceNonUrlSafeCharacters,
+  restoreNonUrlSafeCharacters
+};
+const isArbitraryObject = (data) => typeof data === "object" && data !== null;
+const logtoErrorCodes = Object.freeze({
+  "id_token.invalid_iat": "Invalid issued at time in the ID token",
+  "id_token.invalid_token": "Invalid ID token",
+  "callback_uri_verification.redirect_uri_mismatched": "The callback URI mismatches the redirect URI.",
+  "callback_uri_verification.error_found": "Error found in the callback URI",
+  "callback_uri_verification.missing_state": "Missing state in the callback URI",
+  "callback_uri_verification.state_mismatched": "State mismatched in the callback URI",
+  "callback_uri_verification.missing_code": "Missing code in the callback URI",
+  crypto_subtle_unavailable: "Crypto.subtle is unavailable in insecure contexts (non-HTTPS).",
+  unexpected_response_error: "Unexpected response error from the server."
+});
+class LogtoError extends Error {
+  constructor(code2, data) {
+    super(logtoErrorCodes[code2]);
+    this.code = code2;
+    this.data = data;
+    this.name = "LogtoError";
+  }
+}
+const isLogtoRequestErrorJson = (data) => {
+  if (!isArbitraryObject(data)) {
+    return false;
+  }
+  return typeof data.code === "string" && typeof data.message === "string";
+};
+class LogtoRequestError extends Error {
+  constructor(code2, message2, cause) {
+    super(message2);
+    this.code = code2;
+    this.cause = cause;
+    this.name = "LogtoRequestError";
+  }
+}
+class OidcError {
+  constructor(error, errorDescription) {
+    this.error = error;
+    this.errorDescription = errorDescription;
+    this.name = "OidcError";
+  }
+}
+const parseUriParameters = (uri) => {
+  const [, queryString = ""] = uri.split("?");
+  return new URLSearchParams(queryString);
+};
+const verifyAndParseCodeFromCallbackUri = (callbackUri, redirectUri, state) => {
+  if (!callbackUri.startsWith(redirectUri)) {
+    throw new LogtoError("callback_uri_verification.redirect_uri_mismatched");
+  }
+  const uriParameters = parseUriParameters(callbackUri);
+  const error = conditional(uriParameters.get(QueryKey.Error));
+  const errorDescription = conditional(uriParameters.get(QueryKey.ErrorDescription));
+  if (error) {
+    throw new LogtoError("callback_uri_verification.error_found", new OidcError(error, errorDescription));
+  }
+  const stateFromCallbackUri = uriParameters.get(QueryKey.State);
+  if (!stateFromCallbackUri) {
+    throw new LogtoError("callback_uri_verification.missing_state");
+  }
+  if (stateFromCallbackUri !== state) {
+    throw new LogtoError("callback_uri_verification.state_mismatched");
+  }
+  const code2 = uriParameters.get(QueryKey.Code);
+  if (!code2) {
+    throw new LogtoError("callback_uri_verification.missing_code");
+  }
+  return code2;
+};
+function assertIdTokenClaims(data) {
+  if (!isArbitraryObject(data)) {
+    throw new TypeError("IdToken is expected to be an object");
+  }
+  for (const key of ["iss", "sub", "aud"]) {
+    if (typeof data[key] !== "string") {
+      throw new TypeError(`At path: IdToken.${key}: expected a string`);
+    }
+  }
+  for (const key of ["exp", "iat"]) {
+    if (typeof data[key] !== "number") {
+      throw new TypeError(`At path: IdToken.${key}: expected a number`);
+    }
+  }
+  for (const key of ["at_hash", "name", "username", "picture", "email", "phone_number"]) {
+    if (data[key] === void 0) {
+      continue;
+    }
+    if (typeof data[key] !== "string" && data[key] !== null) {
+      throw new TypeError(`At path: IdToken.${key}: expected null or a string`);
+    }
+  }
+  for (const key of ["email_verified", "phone_number_verified"]) {
+    if (data[key] === void 0) {
+      continue;
+    }
+    if (typeof data[key] !== "boolean") {
+      throw new TypeError(`At path: IdToken.${key}: expected a boolean`);
+    }
+  }
+}
+const decodeIdToken = (token2) => {
+  const { 1: encodedPayload } = token2.split(".");
+  if (!encodedPayload) {
+    throw new LogtoError("id_token.invalid_token");
+  }
+  const json = urlSafeBase64.decode(encodedPayload);
+  const idTokenClaims2 = JSON.parse(json);
+  assertIdTokenClaims(idTokenClaims2);
+  return idTokenClaims2;
+};
+function assertAccessTokenClaims(data) {
+  if (!isArbitraryObject(data)) {
+    throw new TypeError("AccessToken is expected to be an object");
+  }
+  for (const key of ["jti", "iss", "sub", "aud", "client_id", "scope"]) {
+    if (data[key] === void 0) {
+      continue;
+    }
+    if (typeof data[key] !== "string" && data[key] !== null) {
+      throw new TypeError(`At path: AccessToken.${key}: expected null or a string`);
+    }
+  }
+  for (const key of ["exp", "iat"]) {
+    if (data[key] === void 0) {
+      continue;
+    }
+    if (typeof data[key] !== "number" && data[key] !== null) {
+      throw new TypeError(`At path: AccessToken.${key}: expected null or a number`);
+    }
+  }
+}
+const decodeAccessToken = (accessToken) => {
+  const { 1: encodedPayload } = accessToken.split(".");
+  if (!encodedPayload) {
+    return {};
+  }
+  const json = urlSafeBase64.decode(encodedPayload);
+  const accessTokenClaims = JSON.parse(json);
+  assertAccessTokenClaims(accessTokenClaims);
+  return accessTokenClaims;
+};
+const crypto$1 = crypto;
+const isCryptoKey = (key) => key instanceof CryptoKey;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+function concat(...buffers) {
+  const size2 = buffers.reduce((acc, { length: length2 }) => acc + length2, 0);
+  const buf = new Uint8Array(size2);
+  let i = 0;
+  for (const buffer of buffers) {
+    buf.set(buffer, i);
+    i += buffer.length;
+  }
+  return buf;
+}
+const decodeBase64 = (encoded) => {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+const decode$1 = (input) => {
+  let encoded = input;
+  if (encoded instanceof Uint8Array) {
+    encoded = decoder.decode(encoded);
+  }
+  encoded = encoded.replace(/-/g, "+").replace(/_/g, "/").replace(/\s/g, "");
+  try {
+    return decodeBase64(encoded);
+  } catch {
+    throw new TypeError("The input to be decoded is not correctly encoded.");
+  }
+};
+class JOSEError extends Error {
+  constructor(message2, options) {
+    var _a2;
+    super(message2, options);
+    this.code = "ERR_JOSE_GENERIC";
+    this.name = this.constructor.name;
+    (_a2 = Error.captureStackTrace) == null ? void 0 : _a2.call(Error, this, this.constructor);
+  }
+}
+JOSEError.code = "ERR_JOSE_GENERIC";
+class JWTClaimValidationFailed extends JOSEError {
+  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+    super(message2, { cause: { claim, reason, payload } });
+    this.code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+    this.claim = claim;
+    this.reason = reason;
+    this.payload = payload;
+  }
+}
+JWTClaimValidationFailed.code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+class JWTExpired extends JOSEError {
+  constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+    super(message2, { cause: { claim, reason, payload } });
+    this.code = "ERR_JWT_EXPIRED";
+    this.claim = claim;
+    this.reason = reason;
+    this.payload = payload;
+  }
+}
+JWTExpired.code = "ERR_JWT_EXPIRED";
+class JOSEAlgNotAllowed extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JOSE_ALG_NOT_ALLOWED";
+  }
+}
+JOSEAlgNotAllowed.code = "ERR_JOSE_ALG_NOT_ALLOWED";
+class JOSENotSupported extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JOSE_NOT_SUPPORTED";
+  }
+}
+JOSENotSupported.code = "ERR_JOSE_NOT_SUPPORTED";
+class JWEDecryptionFailed extends JOSEError {
+  constructor(message2 = "decryption operation failed", options) {
+    super(message2, options);
+    this.code = "ERR_JWE_DECRYPTION_FAILED";
+  }
+}
+JWEDecryptionFailed.code = "ERR_JWE_DECRYPTION_FAILED";
+class JWEInvalid extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWE_INVALID";
+  }
+}
+JWEInvalid.code = "ERR_JWE_INVALID";
+class JWSInvalid extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWS_INVALID";
+  }
+}
+JWSInvalid.code = "ERR_JWS_INVALID";
+class JWTInvalid extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWT_INVALID";
+  }
+}
+JWTInvalid.code = "ERR_JWT_INVALID";
+class JWKInvalid extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWK_INVALID";
+  }
+}
+JWKInvalid.code = "ERR_JWK_INVALID";
+class JWKSInvalid extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWKS_INVALID";
+  }
+}
+JWKSInvalid.code = "ERR_JWKS_INVALID";
+class JWKSNoMatchingKey extends JOSEError {
+  constructor(message2 = "no applicable key found in the JSON Web Key Set", options) {
+    super(message2, options);
+    this.code = "ERR_JWKS_NO_MATCHING_KEY";
+  }
+}
+JWKSNoMatchingKey.code = "ERR_JWKS_NO_MATCHING_KEY";
+class JWKSMultipleMatchingKeys extends JOSEError {
+  constructor(message2 = "multiple matching keys found in the JSON Web Key Set", options) {
+    super(message2, options);
+    this.code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
+  }
+}
+JWKSMultipleMatchingKeys.code = "ERR_JWKS_MULTIPLE_MATCHING_KEYS";
+class JWKSTimeout extends JOSEError {
+  constructor(message2 = "request timed out", options) {
+    super(message2, options);
+    this.code = "ERR_JWKS_TIMEOUT";
+  }
+}
+JWKSTimeout.code = "ERR_JWKS_TIMEOUT";
+class JWSSignatureVerificationFailed extends JOSEError {
+  constructor(message2 = "signature verification failed", options) {
+    super(message2, options);
+    this.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+  }
+}
+JWSSignatureVerificationFailed.code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+function unusable(name2, prop = "algorithm.name") {
+  return new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name2}`);
+}
+function isAlgorithm(algorithm, name2) {
+  return algorithm.name === name2;
+}
+function getHashLength(hash2) {
+  return parseInt(hash2.name.slice(4), 10);
+}
+function getNamedCurve(alg) {
+  switch (alg) {
+    case "ES256":
+      return "P-256";
+    case "ES384":
+      return "P-384";
+    case "ES512":
+      return "P-521";
+    default:
+      throw new Error("unreachable");
+  }
+}
+function checkUsage(key, usages) {
+  if (usages.length && !usages.some((expected) => key.usages.includes(expected))) {
+    let msg = "CryptoKey does not support this operation, its usages must include ";
+    if (usages.length > 2) {
+      const last = usages.pop();
+      msg += `one of ${usages.join(", ")}, or ${last}.`;
+    } else if (usages.length === 2) {
+      msg += `one of ${usages[0]} or ${usages[1]}.`;
+    } else {
+      msg += `${usages[0]}.`;
+    }
+    throw new TypeError(msg);
+  }
+}
+function checkSigCryptoKey(key, alg, ...usages) {
+  switch (alg) {
+    case "HS256":
+    case "HS384":
+    case "HS512": {
+      if (!isAlgorithm(key.algorithm, "HMAC"))
+        throw unusable("HMAC");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "RS256":
+    case "RS384":
+    case "RS512": {
+      if (!isAlgorithm(key.algorithm, "RSASSA-PKCS1-v1_5"))
+        throw unusable("RSASSA-PKCS1-v1_5");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "PS256":
+    case "PS384":
+    case "PS512": {
+      if (!isAlgorithm(key.algorithm, "RSA-PSS"))
+        throw unusable("RSA-PSS");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "EdDSA": {
+      if (key.algorithm.name !== "Ed25519" && key.algorithm.name !== "Ed448") {
+        throw unusable("Ed25519 or Ed448");
+      }
+      break;
+    }
+    case "Ed25519": {
+      if (!isAlgorithm(key.algorithm, "Ed25519"))
+        throw unusable("Ed25519");
+      break;
+    }
+    case "ES256":
+    case "ES384":
+    case "ES512": {
+      if (!isAlgorithm(key.algorithm, "ECDSA"))
+        throw unusable("ECDSA");
+      const expected = getNamedCurve(alg);
+      const actual = key.algorithm.namedCurve;
+      if (actual !== expected)
+        throw unusable(expected, "algorithm.namedCurve");
+      break;
+    }
+    default:
+      throw new TypeError("CryptoKey does not support this operation");
+  }
+  checkUsage(key, usages);
+}
+function message(msg, actual, ...types2) {
+  var _a2;
+  types2 = types2.filter(Boolean);
+  if (types2.length > 2) {
+    const last = types2.pop();
+    msg += `one of type ${types2.join(", ")}, or ${last}.`;
+  } else if (types2.length === 2) {
+    msg += `one of type ${types2[0]} or ${types2[1]}.`;
+  } else {
+    msg += `of type ${types2[0]}.`;
+  }
+  if (actual == null) {
+    msg += ` Received ${actual}`;
+  } else if (typeof actual === "function" && actual.name) {
+    msg += ` Received function ${actual.name}`;
+  } else if (typeof actual === "object" && actual != null) {
+    if ((_a2 = actual.constructor) == null ? void 0 : _a2.name) {
+      msg += ` Received an instance of ${actual.constructor.name}`;
+    }
+  }
+  return msg;
+}
+const invalidKeyInput = (actual, ...types2) => {
+  return message("Key must be ", actual, ...types2);
+};
+function withAlg(alg, actual, ...types2) {
+  return message(`Key for the ${alg} algorithm must be `, actual, ...types2);
+}
+const isKeyLike = (key) => {
+  if (isCryptoKey(key)) {
+    return true;
+  }
+  return (key == null ? void 0 : key[Symbol.toStringTag]) === "KeyObject";
+};
+const types$1 = ["CryptoKey"];
+const isDisjoint = (...headers) => {
+  const sources = headers.filter(Boolean);
+  if (sources.length === 0 || sources.length === 1) {
+    return true;
+  }
+  let acc;
+  for (const header of sources) {
+    const parameters = Object.keys(header);
+    if (!acc || acc.size === 0) {
+      acc = new Set(parameters);
+      continue;
+    }
+    for (const parameter of parameters) {
+      if (acc.has(parameter)) {
+        return false;
+      }
+      acc.add(parameter);
+    }
+  }
+  return true;
+};
+function isObjectLike(value) {
+  return typeof value === "object" && value !== null;
+}
+function isObject$2(input) {
+  if (!isObjectLike(input) || Object.prototype.toString.call(input) !== "[object Object]") {
+    return false;
+  }
+  if (Object.getPrototypeOf(input) === null) {
+    return true;
+  }
+  let proto = input;
+  while (Object.getPrototypeOf(proto) !== null) {
+    proto = Object.getPrototypeOf(proto);
+  }
+  return Object.getPrototypeOf(input) === proto;
+}
+const checkKeyLength = (alg, key) => {
+  if (alg.startsWith("RS") || alg.startsWith("PS")) {
+    const { modulusLength } = key.algorithm;
+    if (typeof modulusLength !== "number" || modulusLength < 2048) {
+      throw new TypeError(`${alg} requires key modulusLength to be 2048 bits or larger`);
+    }
+  }
+};
+function isJWK(key) {
+  return isObject$2(key) && typeof key.kty === "string";
+}
+function isPrivateJWK(key) {
+  return key.kty !== "oct" && typeof key.d === "string";
+}
+function isPublicJWK(key) {
+  return key.kty !== "oct" && typeof key.d === "undefined";
+}
+function isSecretJWK(key) {
+  return isJWK(key) && key.kty === "oct" && typeof key.k === "string";
+}
+function subtleMapping(jwk) {
+  let algorithm;
+  let keyUsages;
+  switch (jwk.kty) {
+    case "RSA": {
+      switch (jwk.alg) {
+        case "PS256":
+        case "PS384":
+        case "PS512":
+          algorithm = { name: "RSA-PSS", hash: `SHA-${jwk.alg.slice(-3)}` };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "RS256":
+        case "RS384":
+        case "RS512":
+          algorithm = { name: "RSASSA-PKCS1-v1_5", hash: `SHA-${jwk.alg.slice(-3)}` };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "RSA-OAEP":
+        case "RSA-OAEP-256":
+        case "RSA-OAEP-384":
+        case "RSA-OAEP-512":
+          algorithm = {
+            name: "RSA-OAEP",
+            hash: `SHA-${parseInt(jwk.alg.slice(-3), 10) || 1}`
+          };
+          keyUsages = jwk.d ? ["decrypt", "unwrapKey"] : ["encrypt", "wrapKey"];
+          break;
+        default:
+          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
+      }
+      break;
+    }
+    case "EC": {
+      switch (jwk.alg) {
+        case "ES256":
+          algorithm = { name: "ECDSA", namedCurve: "P-256" };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "ES384":
+          algorithm = { name: "ECDSA", namedCurve: "P-384" };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "ES512":
+          algorithm = { name: "ECDSA", namedCurve: "P-521" };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "ECDH-ES":
+        case "ECDH-ES+A128KW":
+        case "ECDH-ES+A192KW":
+        case "ECDH-ES+A256KW":
+          algorithm = { name: "ECDH", namedCurve: jwk.crv };
+          keyUsages = jwk.d ? ["deriveBits"] : [];
+          break;
+        default:
+          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
+      }
+      break;
+    }
+    case "OKP": {
+      switch (jwk.alg) {
+        case "Ed25519":
+          algorithm = { name: "Ed25519" };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "EdDSA":
+          algorithm = { name: jwk.crv };
+          keyUsages = jwk.d ? ["sign"] : ["verify"];
+          break;
+        case "ECDH-ES":
+        case "ECDH-ES+A128KW":
+        case "ECDH-ES+A192KW":
+        case "ECDH-ES+A256KW":
+          algorithm = { name: jwk.crv };
+          keyUsages = jwk.d ? ["deriveBits"] : [];
+          break;
+        default:
+          throw new JOSENotSupported('Invalid or unsupported JWK "alg" (Algorithm) Parameter value');
+      }
+      break;
+    }
+    default:
+      throw new JOSENotSupported('Invalid or unsupported JWK "kty" (Key Type) Parameter value');
+  }
+  return { algorithm, keyUsages };
+}
+const parse$1 = async (jwk) => {
+  if (!jwk.alg) {
+    throw new TypeError('"alg" argument is required when "jwk.alg" is not present');
+  }
+  const { algorithm, keyUsages } = subtleMapping(jwk);
+  const rest = [
+    algorithm,
+    jwk.ext ?? false,
+    jwk.key_ops ?? keyUsages
+  ];
+  const keyData = { ...jwk };
+  delete keyData.alg;
+  delete keyData.use;
+  return crypto$1.subtle.importKey("jwk", keyData, ...rest);
+};
+const exportKeyValue = (k2) => decode$1(k2);
+let privCache;
+let pubCache;
+const isKeyObject = (key) => {
+  return (key == null ? void 0 : key[Symbol.toStringTag]) === "KeyObject";
+};
+const importAndCache = async (cache2, key, jwk, alg, freeze = false) => {
+  let cached = cache2.get(key);
+  if (cached == null ? void 0 : cached[alg]) {
+    return cached[alg];
+  }
+  const cryptoKey = await parse$1({ ...jwk, alg });
+  if (freeze)
+    Object.freeze(key);
+  if (!cached) {
+    cache2.set(key, { [alg]: cryptoKey });
+  } else {
+    cached[alg] = cryptoKey;
+  }
+  return cryptoKey;
+};
+const normalizePublicKey = (key, alg) => {
+  if (isKeyObject(key)) {
+    let jwk = key.export({ format: "jwk" });
+    delete jwk.d;
+    delete jwk.dp;
+    delete jwk.dq;
+    delete jwk.p;
+    delete jwk.q;
+    delete jwk.qi;
+    if (jwk.k) {
+      return exportKeyValue(jwk.k);
+    }
+    pubCache || (pubCache = /* @__PURE__ */ new WeakMap());
+    return importAndCache(pubCache, key, jwk, alg);
+  }
+  if (isJWK(key)) {
+    if (key.k)
+      return decode$1(key.k);
+    pubCache || (pubCache = /* @__PURE__ */ new WeakMap());
+    const cryptoKey = importAndCache(pubCache, key, key, alg, true);
+    return cryptoKey;
+  }
+  return key;
+};
+const normalizePrivateKey = (key, alg) => {
+  if (isKeyObject(key)) {
+    let jwk = key.export({ format: "jwk" });
+    if (jwk.k) {
+      return exportKeyValue(jwk.k);
+    }
+    privCache || (privCache = /* @__PURE__ */ new WeakMap());
+    return importAndCache(privCache, key, jwk, alg);
+  }
+  if (isJWK(key)) {
+    if (key.k)
+      return decode$1(key.k);
+    privCache || (privCache = /* @__PURE__ */ new WeakMap());
+    const cryptoKey = importAndCache(privCache, key, key, alg, true);
+    return cryptoKey;
+  }
+  return key;
+};
+const normalize$2 = { normalizePublicKey, normalizePrivateKey };
+async function importJWK(jwk, alg) {
+  if (!isObject$2(jwk)) {
+    throw new TypeError("JWK must be an object");
+  }
+  alg || (alg = jwk.alg);
+  switch (jwk.kty) {
+    case "oct":
+      if (typeof jwk.k !== "string" || !jwk.k) {
+        throw new TypeError('missing "k" (Key Value) Parameter value');
+      }
+      return decode$1(jwk.k);
+    case "RSA":
+      if ("oth" in jwk && jwk.oth !== void 0) {
+        throw new JOSENotSupported('RSA JWK "oth" (Other Primes Info) Parameter value is not supported');
+      }
+    case "EC":
+    case "OKP":
+      return parse$1({ ...jwk, alg });
+    default:
+      throw new JOSENotSupported('Unsupported "kty" (Key Type) Parameter value');
+  }
+}
+const tag = (key) => key == null ? void 0 : key[Symbol.toStringTag];
+const jwkMatchesOp = (alg, key, usage) => {
+  var _a2, _b2;
+  if (key.use !== void 0 && key.use !== "sig") {
+    throw new TypeError("Invalid key for this operation, when present its use must be sig");
+  }
+  if (key.key_ops !== void 0 && ((_b2 = (_a2 = key.key_ops).includes) == null ? void 0 : _b2.call(_a2, usage)) !== true) {
+    throw new TypeError(`Invalid key for this operation, when present its key_ops must include ${usage}`);
+  }
+  if (key.alg !== void 0 && key.alg !== alg) {
+    throw new TypeError(`Invalid key for this operation, when present its alg must be ${alg}`);
+  }
+  return true;
+};
+const symmetricTypeCheck = (alg, key, usage, allowJwk) => {
+  if (key instanceof Uint8Array)
+    return;
+  if (allowJwk && isJWK(key)) {
+    if (isSecretJWK(key) && jwkMatchesOp(alg, key, usage))
+      return;
+    throw new TypeError(`JSON Web Key for symmetric algorithms must have JWK "kty" (Key Type) equal to "oct" and the JWK "k" (Key Value) present`);
+  }
+  if (!isKeyLike(key)) {
+    throw new TypeError(withAlg(alg, key, ...types$1, "Uint8Array", allowJwk ? "JSON Web Key" : null));
+  }
+  if (key.type !== "secret") {
+    throw new TypeError(`${tag(key)} instances for symmetric algorithms must be of type "secret"`);
+  }
+};
+const asymmetricTypeCheck = (alg, key, usage, allowJwk) => {
+  if (allowJwk && isJWK(key)) {
+    switch (usage) {
+      case "sign":
+        if (isPrivateJWK(key) && jwkMatchesOp(alg, key, usage))
+          return;
+        throw new TypeError(`JSON Web Key for this operation be a private JWK`);
+      case "verify":
+        if (isPublicJWK(key) && jwkMatchesOp(alg, key, usage))
+          return;
+        throw new TypeError(`JSON Web Key for this operation be a public JWK`);
+    }
+  }
+  if (!isKeyLike(key)) {
+    throw new TypeError(withAlg(alg, key, ...types$1, allowJwk ? "JSON Web Key" : null));
+  }
+  if (key.type === "secret") {
+    throw new TypeError(`${tag(key)} instances for asymmetric algorithms must not be of type "secret"`);
+  }
+  if (usage === "sign" && key.type === "public") {
+    throw new TypeError(`${tag(key)} instances for asymmetric algorithm signing must be of type "private"`);
+  }
+  if (usage === "decrypt" && key.type === "public") {
+    throw new TypeError(`${tag(key)} instances for asymmetric algorithm decryption must be of type "private"`);
+  }
+  if (key.algorithm && usage === "verify" && key.type === "private") {
+    throw new TypeError(`${tag(key)} instances for asymmetric algorithm verifying must be of type "public"`);
+  }
+  if (key.algorithm && usage === "encrypt" && key.type === "private") {
+    throw new TypeError(`${tag(key)} instances for asymmetric algorithm encryption must be of type "public"`);
+  }
+};
+function checkKeyType(allowJwk, alg, key, usage) {
+  const symmetric = alg.startsWith("HS") || alg === "dir" || alg.startsWith("PBES2") || /^A\d{3}(?:GCM)?KW$/.test(alg);
+  if (symmetric) {
+    symmetricTypeCheck(alg, key, usage, allowJwk);
+  } else {
+    asymmetricTypeCheck(alg, key, usage, allowJwk);
+  }
+}
+checkKeyType.bind(void 0, false);
+const checkKeyTypeWithJwk = checkKeyType.bind(void 0, true);
+function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
+  if (joseHeader.crit !== void 0 && (protectedHeader == null ? void 0 : protectedHeader.crit) === void 0) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be integrity protected');
+  }
+  if (!protectedHeader || protectedHeader.crit === void 0) {
+    return /* @__PURE__ */ new Set();
+  }
+  if (!Array.isArray(protectedHeader.crit) || protectedHeader.crit.length === 0 || protectedHeader.crit.some((input) => typeof input !== "string" || input.length === 0)) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be an array of non-empty strings when present');
+  }
+  let recognized;
+  if (recognizedOption !== void 0) {
+    recognized = new Map([...Object.entries(recognizedOption), ...recognizedDefault.entries()]);
+  } else {
+    recognized = recognizedDefault;
+  }
+  for (const parameter of protectedHeader.crit) {
+    if (!recognized.has(parameter)) {
+      throw new JOSENotSupported(`Extension Header Parameter "${parameter}" is not recognized`);
+    }
+    if (joseHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" is missing`);
+    }
+    if (recognized.get(parameter) && protectedHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" MUST be integrity protected`);
+    }
+  }
+  return new Set(protectedHeader.crit);
+}
+const validateAlgorithms = (option, algorithms) => {
+  if (algorithms !== void 0 && (!Array.isArray(algorithms) || algorithms.some((s) => typeof s !== "string"))) {
+    throw new TypeError(`"${option}" option must be an array of strings`);
+  }
+  if (!algorithms) {
+    return void 0;
+  }
+  return new Set(algorithms);
+};
+function subtleDsa(alg, algorithm) {
+  const hash2 = `SHA-${alg.slice(-3)}`;
+  switch (alg) {
+    case "HS256":
+    case "HS384":
+    case "HS512":
+      return { hash: hash2, name: "HMAC" };
+    case "PS256":
+    case "PS384":
+    case "PS512":
+      return { hash: hash2, name: "RSA-PSS", saltLength: alg.slice(-3) >> 3 };
+    case "RS256":
+    case "RS384":
+    case "RS512":
+      return { hash: hash2, name: "RSASSA-PKCS1-v1_5" };
+    case "ES256":
+    case "ES384":
+    case "ES512":
+      return { hash: hash2, name: "ECDSA", namedCurve: algorithm.namedCurve };
+    case "Ed25519":
+      return { name: "Ed25519" };
+    case "EdDSA":
+      return { name: algorithm.name };
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+async function getCryptoKey(alg, key, usage) {
+  {
+    key = await normalize$2.normalizePublicKey(key, alg);
+  }
+  if (isCryptoKey(key)) {
+    checkSigCryptoKey(key, alg, usage);
+    return key;
+  }
+  if (key instanceof Uint8Array) {
+    if (!alg.startsWith("HS")) {
+      throw new TypeError(invalidKeyInput(key, ...types$1));
+    }
+    return crypto$1.subtle.importKey("raw", key, { hash: `SHA-${alg.slice(-3)}`, name: "HMAC" }, false, [usage]);
+  }
+  throw new TypeError(invalidKeyInput(key, ...types$1, "Uint8Array", "JSON Web Key"));
+}
+const verify = async (alg, key, signature, data) => {
+  const cryptoKey = await getCryptoKey(alg, key, "verify");
+  checkKeyLength(alg, cryptoKey);
+  const algorithm = subtleDsa(alg, cryptoKey.algorithm);
+  try {
+    return await crypto$1.subtle.verify(algorithm, cryptoKey, signature, data);
+  } catch {
+    return false;
+  }
+};
+async function flattenedVerify(jws, key, options) {
+  if (!isObject$2(jws)) {
+    throw new JWSInvalid("Flattened JWS must be an object");
+  }
+  if (jws.protected === void 0 && jws.header === void 0) {
+    throw new JWSInvalid('Flattened JWS must have either of the "protected" or "header" members');
+  }
+  if (jws.protected !== void 0 && typeof jws.protected !== "string") {
+    throw new JWSInvalid("JWS Protected Header incorrect type");
+  }
+  if (jws.payload === void 0) {
+    throw new JWSInvalid("JWS Payload missing");
+  }
+  if (typeof jws.signature !== "string") {
+    throw new JWSInvalid("JWS Signature missing or incorrect type");
+  }
+  if (jws.header !== void 0 && !isObject$2(jws.header)) {
+    throw new JWSInvalid("JWS Unprotected Header incorrect type");
+  }
+  let parsedProt = {};
+  if (jws.protected) {
+    try {
+      const protectedHeader = decode$1(jws.protected);
+      parsedProt = JSON.parse(decoder.decode(protectedHeader));
+    } catch {
+      throw new JWSInvalid("JWS Protected Header is invalid");
+    }
+  }
+  if (!isDisjoint(parsedProt, jws.header)) {
+    throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
+  }
+  const joseHeader = {
+    ...parsedProt,
+    ...jws.header
+  };
+  const extensions = validateCrit(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options == null ? void 0 : options.crit, parsedProt, joseHeader);
+  let b64 = true;
+  if (extensions.has("b64")) {
+    b64 = parsedProt.b64;
+    if (typeof b64 !== "boolean") {
+      throw new JWSInvalid('The "b64" (base64url-encode payload) Header Parameter must be a boolean');
+    }
+  }
+  const { alg } = joseHeader;
+  if (typeof alg !== "string" || !alg) {
+    throw new JWSInvalid('JWS "alg" (Algorithm) Header Parameter missing or invalid');
+  }
+  const algorithms = options && validateAlgorithms("algorithms", options.algorithms);
+  if (algorithms && !algorithms.has(alg)) {
+    throw new JOSEAlgNotAllowed('"alg" (Algorithm) Header Parameter value not allowed');
+  }
+  if (b64) {
+    if (typeof jws.payload !== "string") {
+      throw new JWSInvalid("JWS Payload must be a string");
+    }
+  } else if (typeof jws.payload !== "string" && !(jws.payload instanceof Uint8Array)) {
+    throw new JWSInvalid("JWS Payload must be a string or an Uint8Array instance");
+  }
+  let resolvedKey = false;
+  if (typeof key === "function") {
+    key = await key(parsedProt, jws);
+    resolvedKey = true;
+    checkKeyTypeWithJwk(alg, key, "verify");
+    if (isJWK(key)) {
+      key = await importJWK(key, alg);
+    }
+  } else {
+    checkKeyTypeWithJwk(alg, key, "verify");
+  }
+  const data = concat(encoder.encode(jws.protected ?? ""), encoder.encode("."), typeof jws.payload === "string" ? encoder.encode(jws.payload) : jws.payload);
+  let signature;
+  try {
+    signature = decode$1(jws.signature);
+  } catch {
+    throw new JWSInvalid("Failed to base64url decode the signature");
+  }
+  const verified = await verify(alg, key, signature, data);
+  if (!verified) {
+    throw new JWSSignatureVerificationFailed();
+  }
+  let payload;
+  if (b64) {
+    try {
+      payload = decode$1(jws.payload);
+    } catch {
+      throw new JWSInvalid("Failed to base64url decode the payload");
+    }
+  } else if (typeof jws.payload === "string") {
+    payload = encoder.encode(jws.payload);
+  } else {
+    payload = jws.payload;
+  }
+  const result = { payload };
+  if (jws.protected !== void 0) {
+    result.protectedHeader = parsedProt;
+  }
+  if (jws.header !== void 0) {
+    result.unprotectedHeader = jws.header;
+  }
+  if (resolvedKey) {
+    return { ...result, key };
+  }
+  return result;
+}
+async function compactVerify(jws, key, options) {
+  if (jws instanceof Uint8Array) {
+    jws = decoder.decode(jws);
+  }
+  if (typeof jws !== "string") {
+    throw new JWSInvalid("Compact JWS must be a string or Uint8Array");
+  }
+  const { 0: protectedHeader, 1: payload, 2: signature, length: length2 } = jws.split(".");
+  if (length2 !== 3) {
+    throw new JWSInvalid("Invalid Compact JWS");
+  }
+  const verified = await flattenedVerify({ payload, protected: protectedHeader, signature }, key, options);
+  const result = { payload: verified.payload, protectedHeader: verified.protectedHeader };
+  if (typeof key === "function") {
+    return { ...result, key: verified.key };
+  }
+  return result;
+}
+const epoch = (date4) => Math.floor(date4.getTime() / 1e3);
+const minute = 60;
+const hour = minute * 60;
+const day = hour * 24;
+const week = day * 7;
+const year = day * 365.25;
+const REGEX = /^(\+|\-)? ?(\d+|\d+\.\d+) ?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)(?: (ago|from now))?$/i;
+const secs = (str) => {
+  const matched = REGEX.exec(str);
+  if (!matched || matched[4] && matched[1]) {
+    throw new TypeError("Invalid time period format");
+  }
+  const value = parseFloat(matched[2]);
+  const unit2 = matched[3].toLowerCase();
+  let numericDate;
+  switch (unit2) {
+    case "sec":
+    case "secs":
+    case "second":
+    case "seconds":
+    case "s":
+      numericDate = Math.round(value);
+      break;
+    case "minute":
+    case "minutes":
+    case "min":
+    case "mins":
+    case "m":
+      numericDate = Math.round(value * minute);
+      break;
+    case "hour":
+    case "hours":
+    case "hr":
+    case "hrs":
+    case "h":
+      numericDate = Math.round(value * hour);
+      break;
+    case "day":
+    case "days":
+    case "d":
+      numericDate = Math.round(value * day);
+      break;
+    case "week":
+    case "weeks":
+    case "w":
+      numericDate = Math.round(value * week);
+      break;
+    default:
+      numericDate = Math.round(value * year);
+      break;
+  }
+  if (matched[1] === "-" || matched[4] === "ago") {
+    return -numericDate;
+  }
+  return numericDate;
+};
+const normalizeTyp = (value) => value.toLowerCase().replace(/^application\//, "");
+const checkAudiencePresence = (audPayload, audOption) => {
+  if (typeof audPayload === "string") {
+    return audOption.includes(audPayload);
+  }
+  if (Array.isArray(audPayload)) {
+    return audOption.some(Set.prototype.has.bind(new Set(audPayload)));
+  }
+  return false;
+};
+const jwtPayload = (protectedHeader, encodedPayload, options = {}) => {
+  let payload;
+  try {
+    payload = JSON.parse(decoder.decode(encodedPayload));
+  } catch {
+  }
+  if (!isObject$2(payload)) {
+    throw new JWTInvalid("JWT Claims Set must be a top-level JSON object");
+  }
+  const { typ } = options;
+  if (typ && (typeof protectedHeader.typ !== "string" || normalizeTyp(protectedHeader.typ) !== normalizeTyp(typ))) {
+    throw new JWTClaimValidationFailed('unexpected "typ" JWT header value', payload, "typ", "check_failed");
+  }
+  const { requiredClaims = [], issuer, subject, audience, maxTokenAge } = options;
+  const presenceCheck = [...requiredClaims];
+  if (maxTokenAge !== void 0)
+    presenceCheck.push("iat");
+  if (audience !== void 0)
+    presenceCheck.push("aud");
+  if (subject !== void 0)
+    presenceCheck.push("sub");
+  if (issuer !== void 0)
+    presenceCheck.push("iss");
+  for (const claim of new Set(presenceCheck.reverse())) {
+    if (!(claim in payload)) {
+      throw new JWTClaimValidationFailed(`missing required "${claim}" claim`, payload, claim, "missing");
+    }
+  }
+  if (issuer && !(Array.isArray(issuer) ? issuer : [issuer]).includes(payload.iss)) {
+    throw new JWTClaimValidationFailed('unexpected "iss" claim value', payload, "iss", "check_failed");
+  }
+  if (subject && payload.sub !== subject) {
+    throw new JWTClaimValidationFailed('unexpected "sub" claim value', payload, "sub", "check_failed");
+  }
+  if (audience && !checkAudiencePresence(payload.aud, typeof audience === "string" ? [audience] : audience)) {
+    throw new JWTClaimValidationFailed('unexpected "aud" claim value', payload, "aud", "check_failed");
+  }
+  let tolerance;
+  switch (typeof options.clockTolerance) {
+    case "string":
+      tolerance = secs(options.clockTolerance);
+      break;
+    case "number":
+      tolerance = options.clockTolerance;
+      break;
+    case "undefined":
+      tolerance = 0;
+      break;
+    default:
+      throw new TypeError("Invalid clockTolerance option type");
+  }
+  const { currentDate } = options;
+  const now = epoch(currentDate || /* @__PURE__ */ new Date());
+  if ((payload.iat !== void 0 || maxTokenAge) && typeof payload.iat !== "number") {
+    throw new JWTClaimValidationFailed('"iat" claim must be a number', payload, "iat", "invalid");
+  }
+  if (payload.nbf !== void 0) {
+    if (typeof payload.nbf !== "number") {
+      throw new JWTClaimValidationFailed('"nbf" claim must be a number', payload, "nbf", "invalid");
+    }
+    if (payload.nbf > now + tolerance) {
+      throw new JWTClaimValidationFailed('"nbf" claim timestamp check failed', payload, "nbf", "check_failed");
+    }
+  }
+  if (payload.exp !== void 0) {
+    if (typeof payload.exp !== "number") {
+      throw new JWTClaimValidationFailed('"exp" claim must be a number', payload, "exp", "invalid");
+    }
+    if (payload.exp <= now - tolerance) {
+      throw new JWTExpired('"exp" claim timestamp check failed', payload, "exp", "check_failed");
+    }
+  }
+  if (maxTokenAge) {
+    const age = now - payload.iat;
+    const max = typeof maxTokenAge === "number" ? maxTokenAge : secs(maxTokenAge);
+    if (age - tolerance > max) {
+      throw new JWTExpired('"iat" claim timestamp check failed (too far in the past)', payload, "iat", "check_failed");
+    }
+    if (age < 0 - tolerance) {
+      throw new JWTClaimValidationFailed('"iat" claim timestamp check failed (it should be in the past)', payload, "iat", "check_failed");
+    }
+  }
+  return payload;
+};
+async function jwtVerify(jwt, key, options) {
+  var _a2;
+  const verified = await compactVerify(jwt, key, options);
+  if (((_a2 = verified.protectedHeader.crit) == null ? void 0 : _a2.includes("b64")) && verified.protectedHeader.b64 === false) {
+    throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
+  }
+  const payload = jwtPayload(verified.protectedHeader, verified.payload, options);
+  const result = { payload, protectedHeader: verified.protectedHeader };
+  if (typeof key === "function") {
+    return { ...result, key: verified.key };
+  }
+  return result;
+}
+function getKtyFromAlg(alg) {
+  switch (typeof alg === "string" && alg.slice(0, 2)) {
+    case "RS":
+    case "PS":
+      return "RSA";
+    case "ES":
+      return "EC";
+    case "Ed":
+      return "OKP";
+    default:
+      throw new JOSENotSupported('Unsupported "alg" value for a JSON Web Key Set');
+  }
+}
+function isJWKSLike(jwks) {
+  return jwks && typeof jwks === "object" && Array.isArray(jwks.keys) && jwks.keys.every(isJWKLike);
+}
+function isJWKLike(key) {
+  return isObject$2(key);
+}
+function clone(obj) {
+  if (typeof structuredClone === "function") {
+    return structuredClone(obj);
+  }
+  return JSON.parse(JSON.stringify(obj));
+}
+class LocalJWKSet {
+  constructor(jwks) {
+    this._cached = /* @__PURE__ */ new WeakMap();
+    if (!isJWKSLike(jwks)) {
+      throw new JWKSInvalid("JSON Web Key Set malformed");
+    }
+    this._jwks = clone(jwks);
+  }
+  async getKey(protectedHeader, token2) {
+    const { alg, kid } = { ...protectedHeader, ...token2 == null ? void 0 : token2.header };
+    const kty = getKtyFromAlg(alg);
+    const candidates = this._jwks.keys.filter((jwk2) => {
+      let candidate = kty === jwk2.kty;
+      if (candidate && typeof kid === "string") {
+        candidate = kid === jwk2.kid;
+      }
+      if (candidate && typeof jwk2.alg === "string") {
+        candidate = alg === jwk2.alg;
+      }
+      if (candidate && typeof jwk2.use === "string") {
+        candidate = jwk2.use === "sig";
+      }
+      if (candidate && Array.isArray(jwk2.key_ops)) {
+        candidate = jwk2.key_ops.includes("verify");
+      }
+      if (candidate) {
+        switch (alg) {
+          case "ES256":
+            candidate = jwk2.crv === "P-256";
+            break;
+          case "ES256K":
+            candidate = jwk2.crv === "secp256k1";
+            break;
+          case "ES384":
+            candidate = jwk2.crv === "P-384";
+            break;
+          case "ES512":
+            candidate = jwk2.crv === "P-521";
+            break;
+          case "Ed25519":
+            candidate = jwk2.crv === "Ed25519";
+            break;
+          case "EdDSA":
+            candidate = jwk2.crv === "Ed25519" || jwk2.crv === "Ed448";
+            break;
+        }
+      }
+      return candidate;
+    });
+    const { 0: jwk, length: length2 } = candidates;
+    if (length2 === 0) {
+      throw new JWKSNoMatchingKey();
+    }
+    if (length2 !== 1) {
+      const error = new JWKSMultipleMatchingKeys();
+      const { _cached } = this;
+      error[Symbol.asyncIterator] = async function* () {
+        for (const jwk2 of candidates) {
+          try {
+            yield await importWithAlgCache(_cached, jwk2, alg);
+          } catch {
+          }
+        }
+      };
+      throw error;
+    }
+    return importWithAlgCache(this._cached, jwk, alg);
+  }
+}
+async function importWithAlgCache(cache2, jwk, alg) {
+  const cached = cache2.get(jwk) || cache2.set(jwk, {}).get(jwk);
+  if (cached[alg] === void 0) {
+    const key = await importJWK({ ...jwk, ext: true }, alg);
+    if (key instanceof Uint8Array || key.type !== "public") {
+      throw new JWKSInvalid("JSON Web Key Set members must be public keys");
+    }
+    cached[alg] = key;
+  }
+  return cached[alg];
+}
+function createLocalJWKSet(jwks) {
+  const set2 = new LocalJWKSet(jwks);
+  const localJWKSet = async (protectedHeader, token2) => set2.getKey(protectedHeader, token2);
+  Object.defineProperties(localJWKSet, {
+    jwks: {
+      value: () => clone(set2._jwks),
+      enumerable: true,
+      configurable: false,
+      writable: false
+    }
+  });
+  return localJWKSet;
+}
+const fetchJwks = async (url2, timeout, options) => {
+  let controller;
+  let id;
+  let timedOut = false;
+  if (typeof AbortController === "function") {
+    controller = new AbortController();
+    id = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeout);
+  }
+  const response = await fetch(url2.href, {
+    signal: controller ? controller.signal : void 0,
+    redirect: "manual",
+    headers: options.headers
+  }).catch((err) => {
+    if (timedOut)
+      throw new JWKSTimeout();
+    throw err;
+  });
+  if (id !== void 0)
+    clearTimeout(id);
+  if (response.status !== 200) {
+    throw new JOSEError("Expected 200 OK from the JSON Web Key Set HTTP response");
+  }
+  try {
+    return await response.json();
+  } catch {
+    throw new JOSEError("Failed to parse the JSON Web Key Set HTTP response as JSON");
+  }
+};
+function isCloudflareWorkers() {
+  return typeof WebSocketPair !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers" || typeof EdgeRuntime !== "undefined" && EdgeRuntime === "vercel";
+}
+let USER_AGENT;
+if (typeof navigator === "undefined" || !((_b = (_a = navigator.userAgent) == null ? void 0 : _a.startsWith) == null ? void 0 : _b.call(_a, "Mozilla/5.0 "))) {
+  const NAME = "jose";
+  const VERSION = "v5.10.0";
+  USER_AGENT = `${NAME}/${VERSION}`;
+}
+const jwksCache = Symbol();
+function isFreshJwksCache(input, cacheMaxAge) {
+  if (typeof input !== "object" || input === null) {
+    return false;
+  }
+  if (!("uat" in input) || typeof input.uat !== "number" || Date.now() - input.uat >= cacheMaxAge) {
+    return false;
+  }
+  if (!("jwks" in input) || !isObject$2(input.jwks) || !Array.isArray(input.jwks.keys) || !Array.prototype.every.call(input.jwks.keys, isObject$2)) {
+    return false;
+  }
+  return true;
+}
+class RemoteJWKSet {
+  constructor(url2, options) {
+    if (!(url2 instanceof URL)) {
+      throw new TypeError("url must be an instance of URL");
+    }
+    this._url = new URL(url2.href);
+    this._options = { agent: options == null ? void 0 : options.agent, headers: options == null ? void 0 : options.headers };
+    this._timeoutDuration = typeof (options == null ? void 0 : options.timeoutDuration) === "number" ? options == null ? void 0 : options.timeoutDuration : 5e3;
+    this._cooldownDuration = typeof (options == null ? void 0 : options.cooldownDuration) === "number" ? options == null ? void 0 : options.cooldownDuration : 3e4;
+    this._cacheMaxAge = typeof (options == null ? void 0 : options.cacheMaxAge) === "number" ? options == null ? void 0 : options.cacheMaxAge : 6e5;
+    if ((options == null ? void 0 : options[jwksCache]) !== void 0) {
+      this._cache = options == null ? void 0 : options[jwksCache];
+      if (isFreshJwksCache(options == null ? void 0 : options[jwksCache], this._cacheMaxAge)) {
+        this._jwksTimestamp = this._cache.uat;
+        this._local = createLocalJWKSet(this._cache.jwks);
+      }
+    }
+  }
+  coolingDown() {
+    return typeof this._jwksTimestamp === "number" ? Date.now() < this._jwksTimestamp + this._cooldownDuration : false;
+  }
+  fresh() {
+    return typeof this._jwksTimestamp === "number" ? Date.now() < this._jwksTimestamp + this._cacheMaxAge : false;
+  }
+  async getKey(protectedHeader, token2) {
+    if (!this._local || !this.fresh()) {
+      await this.reload();
+    }
+    try {
+      return await this._local(protectedHeader, token2);
+    } catch (err) {
+      if (err instanceof JWKSNoMatchingKey) {
+        if (this.coolingDown() === false) {
+          await this.reload();
+          return this._local(protectedHeader, token2);
+        }
+      }
+      throw err;
+    }
+  }
+  async reload() {
+    if (this._pendingFetch && isCloudflareWorkers()) {
+      this._pendingFetch = void 0;
+    }
+    const headers = new Headers(this._options.headers);
+    if (USER_AGENT && !headers.has("User-Agent")) {
+      headers.set("User-Agent", USER_AGENT);
+      this._options.headers = Object.fromEntries(headers.entries());
+    }
+    this._pendingFetch || (this._pendingFetch = fetchJwks(this._url, this._timeoutDuration, this._options).then((json) => {
+      this._local = createLocalJWKSet(json);
+      if (this._cache) {
+        this._cache.uat = Date.now();
+        this._cache.jwks = json;
+      }
+      this._jwksTimestamp = Date.now();
+      this._pendingFetch = void 0;
+    }).catch((err) => {
+      this._pendingFetch = void 0;
+      throw err;
+    }));
+    await this._pendingFetch;
+  }
+}
+function createRemoteJWKSet(url2, options) {
+  const set2 = new RemoteJWKSet(url2, options);
+  const remoteJWKSet = async (protectedHeader, token2) => set2.getKey(protectedHeader, token2);
+  Object.defineProperties(remoteJWKSet, {
+    coolingDown: {
+      get: () => set2.coolingDown(),
+      enumerable: true,
+      configurable: false
+    },
+    fresh: {
+      get: () => set2.fresh(),
+      enumerable: true,
+      configurable: false
+    },
+    reload: {
+      value: () => set2.reload(),
+      enumerable: true,
+      configurable: false,
+      writable: false
+    },
+    reloading: {
+      get: () => !!set2._pendingFetch,
+      enumerable: true,
+      configurable: false
+    },
+    jwks: {
+      value: () => {
+        var _a2;
+        return (_a2 = set2._local) == null ? void 0 : _a2.jwks();
+      },
+      enumerable: true,
+      configurable: false,
+      writable: false
+    }
+  });
+  return remoteJWKSet;
+}
+const defaultClockTolerance = 300;
+const verifyIdToken = async (idToken, clientId, issuer, jwks, clockTolerance = defaultClockTolerance) => {
+  const result = await jwtVerify(idToken, jwks, { audience: clientId, issuer, clockTolerance });
+  if (Math.abs((result.payload.iat ?? 0) - Date.now() / 1e3) > clockTolerance) {
+    throw new LogtoError("id_token.invalid_iat");
+  }
+};
+class DefaultJwtVerifier {
+  constructor(client2, clockTolerance = defaultClockTolerance) {
+    this.client = client2;
+    this.clockTolerance = clockTolerance;
+  }
+  async verifyIdToken(idToken) {
+    const { appId } = this.client.logtoConfig;
+    const { issuer, jwksUri } = await this.client.getOidcConfig();
+    this.getJwtVerifyGetKey || (this.getJwtVerifyGetKey = createRemoteJWKSet(new URL(jwksUri)));
+    await verifyIdToken(idToken, appId, issuer, this.getJwtVerifyGetKey, this.clockTolerance);
+  }
+}
+var PersistKey;
+(function(PersistKey2) {
+  PersistKey2["IdToken"] = "idToken";
+  PersistKey2["RefreshToken"] = "refreshToken";
+  PersistKey2["AccessToken"] = "accessToken";
+  PersistKey2["SignInSession"] = "signInSession";
+})(PersistKey || (PersistKey = {}));
+var CacheKey;
+(function(CacheKey2) {
+  CacheKey2["OpenidConfig"] = "openidConfiguration";
+  CacheKey2["Jwks"] = "jwks";
+})(CacheKey || (CacheKey = {}));
+class ClientAdapterInstance {
+  /* END OF IMPLEMENTATION */
+  constructor(adapter) {
+    Object.assign(this, adapter);
+  }
+  async setStorageItem(key, value) {
+    if (!value) {
+      await this.storage.removeItem(key);
+      return;
+    }
+    await this.storage.setItem(key, value);
+  }
+  /**
+   * Try to get the string value from the cache and parse as JSON.
+   * Return the parsed value if it is an object, return `undefined` otherwise.
+   *
+   * @param key The cache key to get value from.
+   */
+  async getCachedObject(key) {
+    const cached = await trySafe(async () => {
+      var _a2;
+      const data = await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.getItem(key));
+      return conditional(data && JSON.parse(data));
+    });
+    if (cached && typeof cached === "object") {
+      return cached;
+    }
+  }
+  /**
+   * Try to get the value from the cache first, if it doesn't exist in cache,
+   * run the getter function and store the result into cache.
+   *
+   * @param key The cache key to get value from.
+   */
+  async getWithCache(key, getter) {
+    var _a2;
+    const cached = await this.getCachedObject(key);
+    if (cached) {
+      return cached;
+    }
+    const result = await getter();
+    await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.setItem(key, JSON.stringify(result)));
+    return result;
+  }
+}
+const logtoClientErrorCodes = Object.freeze({
+  "sign_in_session.invalid": "Invalid sign-in session.",
+  "sign_in_session.not_found": "Sign-in session not found.",
+  not_authenticated: "Not authenticated.",
+  fetch_user_info_failed: "Unable to fetch user info. The access token may be invalid.",
+  user_cancelled: "The user cancelled the action.",
+  missing_scope_organizations: `The \`${UserScope.Organizations}\` scope is required`
+});
+class LogtoClientError extends Error {
+  constructor(code2, data) {
+    super(logtoClientErrorCodes[code2]);
+    this.name = "LogtoClientError";
+    this.code = code2;
+    this.data = data;
+  }
+}
+const normalizeLogtoConfig = (config2) => {
+  const { prompt = Prompt.Consent, scopes = [], resources, ...rest } = config2;
+  const includeReservedScopes = config2.includeReservedScopes ?? true;
+  return {
+    ...rest,
+    prompt,
+    scopes: includeReservedScopes ? withReservedScopes(scopes).split(" ") : scopes,
+    resources: scopes.includes(UserScope.Organizations) ? deduplicate([...resources ?? [], ReservedResource.Organization]) : resources
+  };
+};
+const isLogtoSignInSessionItem = (data) => {
+  if (!isArbitraryObject(data)) {
+    return false;
+  }
+  return ["redirectUri", "codeVerifier", "state"].every((key) => typeof data[key] === "string");
+};
+const isLogtoAccessTokenMap = (data) => {
+  if (!isArbitraryObject(data)) {
+    return false;
+  }
+  return Object.values(data).every((value) => {
+    if (!isArbitraryObject(value)) {
+      return false;
+    }
+    return typeof value.token === "string" && typeof value.scope === "string" && typeof value.expiresAt === "number";
+  });
+};
+const buildAccessTokenKey = (resource = "", organizationId, scopes = []) => `${scopes.slice().sort().join(" ")}@${resource}${conditionalString(organizationId && `#${organizationId}`)}`;
+const getDiscoveryEndpoint = (endpoint) => new URL(discoveryPath, endpoint).toString();
+function memoize(run) {
+  const promiseCache = /* @__PURE__ */ new Map();
+  const memoized = async function(...args) {
+    const promiseKey = JSON.stringify(args);
+    const cachedPromise = promiseCache.get(promiseKey);
+    if (cachedPromise) {
+      return cachedPromise;
+    }
+    const promise = (async () => {
+      try {
+        return await run.apply(this, args);
+      } finally {
+        promiseCache.delete(promiseKey);
+      }
+    })();
+    promiseCache.set(promiseKey, promise);
+    return promise;
+  };
+  return memoized;
+}
+function once(function_) {
+  let called = false;
+  let result;
+  return function(...args) {
+    if (!called) {
+      called = true;
+      result = function_.apply(this, args);
+    }
+    return result;
+  };
+}
+class StandardLogtoClient {
+  constructor(logtoConfig, adapter, buildJwtVerifier) {
+    __privateAdd(this, _StandardLogtoClient_instances);
+    this.getOidcConfig = once(__privateMethod(this, _StandardLogtoClient_instances, getOidcConfig_fn));
+    this.getAccessToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, getAccessToken_fn));
+    this.getOrganizationToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, getOrganizationToken_fn));
+    this.clearAccessToken = memoize(__privateMethod(this, _StandardLogtoClient_instances, clearAccessToken_fn));
+    this.clearAllTokens = memoize(__privateMethod(this, _StandardLogtoClient_instances, clearAllTokens_fn));
+    this.handleSignInCallback = memoize(__privateMethod(this, _StandardLogtoClient_instances, handleSignInCallback_fn));
+    this.accessTokenMap = /* @__PURE__ */ new Map();
+    this.logtoConfig = normalizeLogtoConfig(logtoConfig);
+    this.adapter = new ClientAdapterInstance(adapter);
+    this.jwtVerifierInstance = buildJwtVerifier(this);
+    void this.loadAccessTokenMap();
+  }
+  get jwtVerifier() {
+    return this.jwtVerifierInstance;
+  }
+  /**
+   * Set the JWT verifier for the client.
+   * @param buildJwtVerifier The JWT verifier instance or a function that returns the JWT verifier instance.
+   */
+  setJwtVerifier(buildJwtVerifier) {
+    this.jwtVerifierInstance = typeof buildJwtVerifier === "function" ? buildJwtVerifier(this) : buildJwtVerifier;
+  }
+  /**
+   * Check if the user is authenticated by checking if the ID token exists.
+   */
+  async isAuthenticated() {
+    return Boolean(await this.getIdToken());
+  }
+  /**
+   * Get the Refresh Token from the storage.
+   */
+  async getRefreshToken() {
+    return this.adapter.storage.getItem("refreshToken");
+  }
+  /**
+   * Get the ID Token from the storage. If you want to get the ID Token claims,
+   * use {@link getIdTokenClaims} instead.
+   */
+  async getIdToken() {
+    return this.adapter.storage.getItem("idToken");
+  }
+  /**
+   * Get the ID Token claims.
+   */
+  async getIdTokenClaims() {
+    const idToken = await this.getIdToken();
+    if (!idToken) {
+      throw new LogtoClientError("not_authenticated", "ID token not found");
+    }
+    return decodeIdToken(idToken);
+  }
+  /**
+   * Get the access token claims for the specified resource.
+   *
+   * @param resource The resource that the access token is granted for. If not
+   * specified, the access token will be used for OpenID Connect or the default
+   * resource, as specified in the Logto Console.
+   */
+  async getAccessTokenClaims(resource) {
+    const accessToken = await this.getAccessToken(resource);
+    return decodeAccessToken(accessToken);
+  }
+  /**
+   * Get the organization token claims for the specified organization.
+   *
+   * @param organizationId The ID of the organization that the access token is granted for.
+   */
+  async getOrganizationTokenClaims(organizationId) {
+    const accessToken = await this.getOrganizationToken(organizationId);
+    return decodeAccessToken(accessToken);
+  }
+  /**
+   * Get the user information from the Userinfo Endpoint.
+   *
+   * Note the Userinfo Endpoint will return more claims than the ID Token. See
+   * {@link https://docs.logto.io/docs/recipes/integrate-logto/vanilla-js/#fetch-user-information | Fetch user information}
+   * for more information.
+   *
+   * @returns The user information.
+   * @throws LogtoClientError if the user is not authenticated.
+   */
+  async fetchUserInfo() {
+    const { userinfoEndpoint } = await this.getOidcConfig();
+    const accessToken = await this.getAccessToken();
+    if (!accessToken) {
+      throw new LogtoClientError("fetch_user_info_failed");
+    }
+    return fetchUserInfo(userinfoEndpoint, accessToken, this.adapter.requester);
+  }
+  async signIn(options, mode, hint) {
+    const { redirectUri: redirectUriUrl, postRedirectUri: postRedirectUriUrl, firstScreen, identifiers, interactionMode, loginHint, directSignIn, extraParams, prompt, clearTokens } = typeof options === "string" || options instanceof URL ? {
+      redirectUri: options,
+      postRedirectUri: void 0,
+      firstScreen: void 0,
+      identifiers: void 0,
+      interactionMode: mode,
+      loginHint: hint,
+      directSignIn: void 0,
+      extraParams: void 0,
+      prompt: void 0,
+      clearTokens: true
+    } : options;
+    const redirectUri = redirectUriUrl.toString();
+    const postRedirectUri = postRedirectUriUrl == null ? void 0 : postRedirectUriUrl.toString();
+    const { appId: clientId, prompt: promptViaConfig, resources, scopes } = this.logtoConfig;
+    const { authorizationEndpoint } = await this.getOidcConfig();
+    const [codeVerifier, state] = await Promise.all([
+      this.adapter.generateCodeVerifier(),
+      this.adapter.generateState()
+    ]);
+    const codeChallenge = await this.adapter.generateCodeChallenge(codeVerifier);
+    const signInUri = generateSignInUri({
+      authorizationEndpoint,
+      clientId,
+      redirectUri: redirectUri.toString(),
+      codeChallenge,
+      state,
+      scopes,
+      resources,
+      prompt: prompt ?? promptViaConfig,
+      firstScreen,
+      identifiers,
+      interactionMode,
+      loginHint,
+      directSignIn,
+      extraParams
+    });
+    await Promise.all([
+      this.setSignInSession({ redirectUri, postRedirectUri, codeVerifier, state }),
+      clearTokens === false ? void 0 : this.clearAllTokens()
+    ]);
+    await this.adapter.navigate(signInUri, { redirectUri, for: "sign-in" });
+  }
+  /**
+   * Check if the user is redirected from the sign-in page by checking if the
+   * current URL matches the redirect URI in the sign-in session.
+   *
+   * If there's no sign-in session, it will return `false`.
+   *
+   * @param url The current URL.
+   */
+  async isSignInRedirected(url2) {
+    const signInSession = await this.getSignInSession();
+    if (!signInSession) {
+      return false;
+    }
+    const { redirectUri } = signInSession;
+    const { origin, pathname } = new URL(url2);
+    return `${origin}${pathname}` === redirectUri;
+  }
+  /**
+   * Start the sign-out flow with the specified redirect URI. The URI must be
+   * registered in the Logto Console.
+   *
+   * It will also revoke all the tokens and clean up the storage.
+   *
+   * The user will be redirected that URI after the sign-out flow is completed.
+   * If the `postLogoutRedirectUri` is not specified, the user will be redirected
+   * to a default page.
+   */
+  async signOut(postLogoutRedirectUri) {
+    const { appId: clientId } = this.logtoConfig;
+    const { endSessionEndpoint, revocationEndpoint } = await this.getOidcConfig();
+    const refreshToken = await this.getRefreshToken();
+    if (refreshToken) {
+      try {
+        await revoke(revocationEndpoint, clientId, refreshToken, this.adapter.requester);
+      } catch {
+      }
+    }
+    const url2 = generateSignOutUri({
+      endSessionEndpoint,
+      postLogoutRedirectUri,
+      clientId
+    });
+    await this.clearAllTokens();
+    await this.adapter.navigate(url2, { redirectUri: postLogoutRedirectUri, for: "sign-out" });
+  }
+  async getSignInSession() {
+    const jsonItem = await this.adapter.storage.getItem("signInSession");
+    if (!jsonItem) {
+      return null;
+    }
+    const item = JSON.parse(jsonItem);
+    if (!isLogtoSignInSessionItem(item)) {
+      throw new LogtoClientError("sign_in_session.invalid");
+    }
+    return item;
+  }
+  async setSignInSession(value) {
+    return this.adapter.setStorageItem(PersistKey.SignInSession, value && JSON.stringify(value));
+  }
+  async setIdToken(value) {
+    return this.adapter.setStorageItem(PersistKey.IdToken, value);
+  }
+  async setRefreshToken(value) {
+    return this.adapter.setStorageItem(PersistKey.RefreshToken, value);
+  }
+  async getAccessTokenByRefreshToken(resource, organizationId) {
+    const currentRefreshToken = await this.getRefreshToken();
+    if (!currentRefreshToken) {
+      throw new LogtoClientError("not_authenticated", "Refresh token not found");
+    }
+    const accessTokenKey = buildAccessTokenKey(resource, organizationId);
+    const { appId: clientId } = this.logtoConfig;
+    const { tokenEndpoint } = await this.getOidcConfig();
+    const requestedAt = Math.round(Date.now() / 1e3);
+    const { accessToken, refreshToken, idToken, scope, expiresIn } = await fetchTokenByRefreshToken({
+      clientId,
+      tokenEndpoint,
+      refreshToken: currentRefreshToken,
+      resource,
+      organizationId
+    }, this.adapter.requester);
+    this.accessTokenMap.set(accessTokenKey, {
+      token: accessToken,
+      scope,
+      /** The `expiresAt` variable provides an approximate estimation of the actual `exp` property
+       * in the token claims. It is utilized by the client to determine if the cached access token
+       * has expired and when a new access token should be requested.
+       */
+      expiresAt: requestedAt + expiresIn
+    });
+    await this.saveAccessTokenMap();
+    if (refreshToken) {
+      await this.setRefreshToken(refreshToken);
+    }
+    if (idToken) {
+      await this.jwtVerifier.verifyIdToken(idToken);
+      await this.setIdToken(idToken);
+    }
+    return accessToken;
+  }
+  async saveAccessTokenMap() {
+    const data = {};
+    for (const [key, accessToken] of this.accessTokenMap.entries()) {
+      data[key] = accessToken;
+    }
+    await this.adapter.storage.setItem("accessToken", JSON.stringify(data));
+  }
+  async loadAccessTokenMap() {
+    const raw = await this.adapter.storage.getItem("accessToken");
+    if (!raw) {
+      return;
+    }
+    try {
+      const json = JSON.parse(raw);
+      if (!isLogtoAccessTokenMap(json)) {
+        return;
+      }
+      this.accessTokenMap.clear();
+      for (const [key, accessToken] of Object.entries(json)) {
+        this.accessTokenMap.set(key, accessToken);
+      }
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+}
+_StandardLogtoClient_instances = new WeakSet();
+getOidcConfig_fn = async function() {
+  return this.adapter.getWithCache(CacheKey.OpenidConfig, async () => {
+    return fetchOidcConfig(getDiscoveryEndpoint(this.logtoConfig.endpoint), this.adapter.requester);
+  });
+};
+getAccessToken_fn = async function(resource, organizationId) {
+  if (!await this.isAuthenticated()) {
+    throw new LogtoClientError("not_authenticated");
+  }
+  const accessTokenKey = buildAccessTokenKey(resource, organizationId);
+  const accessToken = this.accessTokenMap.get(accessTokenKey);
+  if (accessToken && accessToken.expiresAt > Date.now() / 1e3) {
+    return accessToken.token;
+  }
+  if (accessToken) {
+    this.accessTokenMap.delete(accessTokenKey);
+  }
+  return this.getAccessTokenByRefreshToken(resource, organizationId);
+};
+getOrganizationToken_fn = async function(organizationId) {
+  var _a2;
+  if (!((_a2 = this.logtoConfig.scopes) == null ? void 0 : _a2.includes(UserScope.Organizations))) {
+    throw new LogtoClientError("missing_scope_organizations");
+  }
+  return this.getAccessToken(void 0, organizationId);
+};
+clearAccessToken_fn = async function() {
+  this.accessTokenMap.clear();
+  await this.adapter.storage.removeItem("accessToken");
+};
+clearAllTokens_fn = async function() {
+  await Promise.all([this.setRefreshToken(null), this.setIdToken(null), this.clearAccessToken()]);
+};
+handleSignInCallback_fn = async function(callbackUri) {
+  const signInSession = await this.getSignInSession();
+  if (!signInSession) {
+    throw new LogtoClientError("sign_in_session.not_found");
+  }
+  const { redirectUri, postRedirectUri, state, codeVerifier } = signInSession;
+  const code2 = verifyAndParseCodeFromCallbackUri(callbackUri, redirectUri, state);
+  const accessTokenKey = buildAccessTokenKey();
+  const { appId: clientId } = this.logtoConfig;
+  const { tokenEndpoint } = await this.getOidcConfig();
+  const requestedAt = Math.round(Date.now() / 1e3);
+  const { idToken, refreshToken, accessToken, scope, expiresIn } = await fetchTokenByAuthorizationCode({
+    clientId,
+    tokenEndpoint,
+    redirectUri,
+    codeVerifier,
+    code: code2
+  }, this.adapter.requester);
+  await this.jwtVerifier.verifyIdToken(idToken);
+  await this.setRefreshToken(refreshToken ?? null);
+  await this.setIdToken(idToken);
+  this.accessTokenMap.set(accessTokenKey, {
+    token: accessToken,
+    scope,
+    /** The `expiresAt` variable provides an approximate estimation of the actual `exp` property
+     * in the token claims. It is utilized by the client to determine if the cached access token
+     * has expired and when a new access token should be requested.
+     */
+    expiresAt: requestedAt + expiresIn
+  });
+  await this.saveAccessTokenMap();
+  await this.setSignInSession(null);
+  if (postRedirectUri) {
+    await this.adapter.navigate(postRedirectUri, { for: "post-sign-in" });
+  }
+};
+const createRequester = (fetchFunction) => {
+  return async (...args) => {
+    const response = await fetchFunction(...args);
+    if (!response.ok) {
+      const cloned = response.clone();
+      const responseJson = await response.json();
+      console.error(`Logto requester error: [status=${response.status}]`, responseJson);
+      if (!isLogtoRequestErrorJson(responseJson)) {
+        throw new LogtoError("unexpected_response_error", responseJson);
+      }
+      const { code: code2, message: message2 } = responseJson;
+      throw new LogtoRequestError(code2, message2, cloned);
+    }
+    return response.json();
+  };
+};
+let LogtoClient$1 = class LogtoClient extends StandardLogtoClient {
+  constructor(logtoConfig, adapter, buildJwtVerifier) {
+    super(logtoConfig, adapter, buildJwtVerifier ?? ((client2) => new DefaultJwtVerifier(client2)));
+  }
+};
+const keyPrefix$1 = `logto_cache`;
+class CacheStorage {
+  constructor(appId) {
+    this.appId = appId;
+  }
+  getKey(item) {
+    if (item === void 0) {
+      return `${keyPrefix$1}:${this.appId}`;
+    }
+    return `${keyPrefix$1}:${this.appId}:${item}`;
+  }
+  async getItem(key) {
+    return sessionStorage.getItem(this.getKey(key));
+  }
+  async setItem(key, value) {
+    sessionStorage.setItem(this.getKey(key), value);
+  }
+  async removeItem(key) {
+    sessionStorage.removeItem(`${this.getKey(key)}`);
+  }
+}
+const keyPrefix = `logto`;
+class BrowserStorage {
+  constructor(appId) {
+    this.appId = appId;
+  }
+  getKey(item) {
+    if (item === void 0) {
+      return `${keyPrefix}:${this.appId}`;
+    }
+    return `${keyPrefix}:${this.appId}:${item}`;
+  }
+  async getItem(key) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    if (key === "signInSession") {
+      return sessionStorage.getItem(this.getKey(key)) ?? sessionStorage.getItem(this.getKey());
+    }
+    return localStorage.getItem(this.getKey(key));
+  }
+  async setItem(key, value) {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (key === "signInSession") {
+      sessionStorage.setItem(this.getKey(key), value);
+      return;
+    }
+    localStorage.setItem(this.getKey(key), value);
+  }
+  async removeItem(key) {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (key === "signInSession") {
+      sessionStorage.removeItem(this.getKey(key));
+      return;
+    }
+    localStorage.removeItem(this.getKey(key));
+  }
+}
+const _hasBuffer = typeof Buffer === "function";
+typeof TextDecoder === "function" ? new TextDecoder() : void 0;
+typeof TextEncoder === "function" ? new TextEncoder() : void 0;
+const b64ch = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+const b64chs = Array.prototype.slice.call(b64ch);
+((a2) => {
+  let tab2 = {};
+  a2.forEach((c2, i) => tab2[c2] = i);
+  return tab2;
+})(b64chs);
+const _fromCC = String.fromCharCode.bind(String);
+typeof Uint8Array.from === "function" ? Uint8Array.from.bind(Uint8Array) : (it2) => new Uint8Array(Array.prototype.slice.call(it2, 0));
+const _mkUriSafe = (src) => src.replace(/=/g, "").replace(/[+\/]/g, (m0) => m0 == "+" ? "-" : "_");
+const btoaPolyfill = (bin) => {
+  let u32, c0, c1, c2, asc = "";
+  const pad = bin.length % 3;
+  for (let i = 0; i < bin.length; ) {
+    if ((c0 = bin.charCodeAt(i++)) > 255 || (c1 = bin.charCodeAt(i++)) > 255 || (c2 = bin.charCodeAt(i++)) > 255)
+      throw new TypeError("invalid character found");
+    u32 = c0 << 16 | c1 << 8 | c2;
+    asc += b64chs[u32 >> 18 & 63] + b64chs[u32 >> 12 & 63] + b64chs[u32 >> 6 & 63] + b64chs[u32 & 63];
+  }
+  return pad ? asc.slice(0, pad - 3) + "===".substring(pad) : asc;
+};
+const _btoa = typeof btoa === "function" ? (bin) => btoa(bin) : _hasBuffer ? (bin) => Buffer.from(bin, "binary").toString("base64") : btoaPolyfill;
+const _fromUint8Array = _hasBuffer ? (u8a) => Buffer.from(u8a).toString("base64") : (u8a) => {
+  const maxargs = 4096;
+  let strs = [];
+  for (let i = 0, l2 = u8a.length; i < l2; i += maxargs) {
+    strs.push(_fromCC.apply(null, u8a.subarray(i, i + maxargs)));
+  }
+  return _btoa(strs.join(""));
+};
+const fromUint8Array = (u8a, urlsafe = false) => urlsafe ? _mkUriSafe(_fromUint8Array(u8a)) : _fromUint8Array(u8a);
+const generateRandomString = (length2 = 64) => fromUint8Array(crypto.getRandomValues(new Uint8Array(length2)), true);
+const generateState = () => generateRandomString();
+const generateCodeVerifier = () => generateRandomString();
+const generateCodeChallenge = async (codeVerifier) => {
+  if (crypto.subtle === void 0) {
+    throw new LogtoError("crypto_subtle_unavailable");
+  }
+  const encodedCodeVerifier = new TextEncoder().encode(codeVerifier);
+  const codeChallenge = new Uint8Array(await crypto.subtle.digest("SHA-256", encodedCodeVerifier));
+  return fromUint8Array(codeChallenge, true);
+};
+const navigate = (url2) => {
+  window.location.assign(url2);
+};
+class LogtoClient2 extends LogtoClient$1 {
+  /**
+   * @param config The configuration object for the client.
+   * @param [unstable_enableCache=false] Whether to enable cache for well-known data.
+   * Use sessionStorage by default.
+   */
+  constructor(config2, unstable_enableCache = false) {
+    const requester = createRequester(fetch);
+    super(config2, {
+      requester,
+      navigate,
+      storage: new BrowserStorage(config2.appId),
+      unstable_cache: conditional(unstable_enableCache && new CacheStorage(config2.appId)),
+      generateCodeChallenge,
+      generateCodeVerifier,
+      generateState
+    });
+  }
+}
+const throwContextError = () => {
+  throw new Error("Must be used inside <LogtoProvider> context.");
+};
+const LogtoContext = reactExports.createContext({
+  logtoClient: void 0,
+  isAuthenticated: false,
+  isLoading: false,
+  error: void 0,
+  setIsAuthenticated: throwContextError,
+  setIsLoading: throwContextError,
+  setError: throwContextError
+});
+const LogtoProvider$1 = ({ config: config2, LogtoClientClass = LogtoClient2, children, unstable_enableCache = false }) => {
+  const [loadingCount, setLoadingCount] = reactExports.useState(1);
+  const memorizedLogtoClient = reactExports.useMemo(() => ({ logtoClient: new LogtoClientClass(config2, unstable_enableCache) }), [LogtoClientClass, config2, unstable_enableCache]);
+  const [isAuthenticated, setIsAuthenticated] = reactExports.useState(false);
+  const [error, setError] = reactExports.useState();
+  const isLoading = reactExports.useMemo(() => loadingCount > 0, [loadingCount]);
+  const setIsLoading = reactExports.useCallback((state) => {
+    if (state) {
+      setLoadingCount((count) => count + 1);
+    } else {
+      setLoadingCount((count) => Math.max(0, count - 1));
+    }
+  }, [setLoadingCount]);
+  reactExports.useEffect(() => {
+    (async () => {
+      const isAuthenticated2 = await memorizedLogtoClient.logtoClient.isAuthenticated();
+      setIsAuthenticated(isAuthenticated2);
+      setLoadingCount((count) => Math.max(0, count - 1));
+    })();
+  }, [memorizedLogtoClient]);
+  const memorizedContextValue = reactExports.useMemo(() => ({
+    ...memorizedLogtoClient,
+    isAuthenticated,
+    setIsAuthenticated,
+    isLoading,
+    setIsLoading,
+    error,
+    setError
+  }), [memorizedLogtoClient, isAuthenticated, isLoading, setIsLoading, error]);
+  return jsxRuntimeExports.jsx(LogtoContext.Provider, { value: memorizedContextValue, children });
+};
+const useErrorHandler = () => {
+  const { setError } = reactExports.useContext(LogtoContext);
+  const handleError = reactExports.useCallback((error, fallbackErrorMessage) => {
+    if (error instanceof Error) {
+      setError(error);
+    } else if (fallbackErrorMessage) {
+      setError(new Error(fallbackErrorMessage));
+    }
+    console.error(error);
+  }, [setError]);
+  return { handleError };
+};
+const useHandleSignInCallback = (callback) => {
+  const { logtoClient, isAuthenticated, error, setIsAuthenticated, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
+  const { handleError } = useErrorHandler();
+  const callbackRef = reactExports.useRef();
+  reactExports.useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+  reactExports.useEffect(() => {
+    if (!logtoClient || isLoading || error) {
+      return;
+    }
+    (async () => {
+      const currentPageUrl = window.location.href;
+      const isRedirected = await logtoClient.isSignInRedirected(currentPageUrl);
+      if (!isAuthenticated && isRedirected) {
+        setIsLoading(true);
+        await trySafe(async () => {
+          var _a2;
+          await logtoClient.handleSignInCallback(currentPageUrl);
+          setIsAuthenticated(true);
+          (_a2 = callbackRef.current) == null ? void 0 : _a2.call(callbackRef);
+        }, (error2) => {
+          handleError(error2, "Unexpected error occurred while handling sign in callback.");
+        });
+        setIsLoading(false);
+      }
+    })();
+  }, [
+    error,
+    handleError,
+    isAuthenticated,
+    isLoading,
+    logtoClient,
+    setIsAuthenticated,
+    setIsLoading
+  ]);
+  return {
+    isLoading,
+    isAuthenticated,
+    error
+  };
+};
+const useLogto = () => {
+  const { logtoClient, isAuthenticated, error, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
+  const { handleError } = useErrorHandler();
+  const client2 = logtoClient ?? throwContextError();
+  const proxy = reactExports.useCallback((run, resetLoadingState = true) => {
+    return async (...args) => {
+      try {
+        setIsLoading(true);
+        return await run(...args);
+      } catch (error2) {
+        handleError(error2, `Unexpected error occurred while calling ${run.name}.`);
+      } finally {
+        if (resetLoadingState) {
+          setIsLoading(false);
+        }
+      }
+    };
+  }, [setIsLoading, handleError]);
+  const methods2 = reactExports.useMemo(() => ({
+    getRefreshToken: proxy(client2.getRefreshToken.bind(client2)),
+    getAccessToken: proxy(client2.getAccessToken.bind(client2)),
+    getAccessTokenClaims: proxy(client2.getAccessTokenClaims.bind(client2)),
+    getOrganizationToken: proxy(client2.getOrganizationToken.bind(client2)),
+    getOrganizationTokenClaims: proxy(client2.getOrganizationTokenClaims.bind(client2)),
+    getIdToken: proxy(client2.getIdToken.bind(client2)),
+    getIdTokenClaims: proxy(client2.getIdTokenClaims.bind(client2)),
+    // eslint-disable-next-line no-restricted-syntax -- TypeScript cannot infer the correct type.
+    signIn: proxy(client2.signIn.bind(client2), false),
+    // We deliberately do NOT set isAuthenticated to false in the function below, because the app state
+    // may change immediately even before navigating to the oidc end session endpoint, which might cause
+    // rendering problems.
+    // Moreover, since the location will be redirected, the isAuthenticated state will not matter any more.
+    signOut: proxy(client2.signOut.bind(client2)),
+    fetchUserInfo: proxy(client2.fetchUserInfo.bind(client2)),
+    clearAccessToken: proxy(client2.clearAccessToken.bind(client2)),
+    clearAllTokens: proxy(client2.clearAllTokens.bind(client2))
+  }), [client2, proxy]);
+  return {
+    isAuthenticated,
+    isLoading,
+    error,
+    ...methods2
+  };
+};
+var propTypes = { exports: {} };
+var ReactPropTypesSecret_1;
+var hasRequiredReactPropTypesSecret;
+function requireReactPropTypesSecret() {
+  if (hasRequiredReactPropTypesSecret) return ReactPropTypesSecret_1;
+  hasRequiredReactPropTypesSecret = 1;
+  var ReactPropTypesSecret = "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED";
+  ReactPropTypesSecret_1 = ReactPropTypesSecret;
+  return ReactPropTypesSecret_1;
+}
+var factoryWithThrowingShims;
+var hasRequiredFactoryWithThrowingShims;
+function requireFactoryWithThrowingShims() {
+  if (hasRequiredFactoryWithThrowingShims) return factoryWithThrowingShims;
+  hasRequiredFactoryWithThrowingShims = 1;
+  var ReactPropTypesSecret = /* @__PURE__ */ requireReactPropTypesSecret();
+  function emptyFunction() {
+  }
+  function emptyFunctionWithReset() {
+  }
+  emptyFunctionWithReset.resetWarningCache = emptyFunction;
+  factoryWithThrowingShims = function() {
+    function shim2(props, propName, componentName, location2, propFullName, secret) {
+      if (secret === ReactPropTypesSecret) {
+        return;
+      }
+      var err = new Error(
+        "Calling PropTypes validators directly is not supported by the `prop-types` package. Use PropTypes.checkPropTypes() to call them. Read more at http://fb.me/use-check-prop-types"
+      );
+      err.name = "Invariant Violation";
+      throw err;
+    }
+    shim2.isRequired = shim2;
+    function getShim() {
+      return shim2;
+    }
+    var ReactPropTypes = {
+      array: shim2,
+      bigint: shim2,
+      bool: shim2,
+      func: shim2,
+      number: shim2,
+      object: shim2,
+      string: shim2,
+      symbol: shim2,
+      any: shim2,
+      arrayOf: getShim,
+      element: shim2,
+      elementType: shim2,
+      instanceOf: getShim,
+      node: shim2,
+      objectOf: getShim,
+      oneOf: getShim,
+      oneOfType: getShim,
+      shape: getShim,
+      exact: getShim,
+      checkPropTypes: emptyFunctionWithReset,
+      resetWarningCache: emptyFunction
+    };
+    ReactPropTypes.PropTypes = ReactPropTypes;
+    return ReactPropTypes;
+  };
+  return factoryWithThrowingShims;
+}
+var hasRequiredPropTypes;
+function requirePropTypes() {
+  if (hasRequiredPropTypes) return propTypes.exports;
+  hasRequiredPropTypes = 1;
+  {
+    propTypes.exports = /* @__PURE__ */ requireFactoryWithThrowingShims()();
+  }
+  return propTypes.exports;
+}
+var propTypesExports = /* @__PURE__ */ requirePropTypes();
+const PropTypes = /* @__PURE__ */ getDefaultExportFromCjs(propTypesExports);
+function LogtoProvider({ children }) {
+  const config2 = {
+    endpoint: "https://logto.fary.chat",
+    appId: "ro4uk4fd2czd7cyx3wcbm",
+    resources: ["http://localhost:8000/api"]
+  };
+  if (!config2.endpoint || !config2.appId) {
+    console.error(
+      "Logto configuration missing. Please set VITE_LOGTO_ENDPOINT and VITE_LOGTO_APP_ID in .env file"
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(LogtoProvider$1, { config: config2, children });
+}
+LogtoProvider.propTypes = {
+  children: PropTypes.node.isRequired
+};
+const rawLoginFlag = "false".toString().toLowerCase();
+const LOGIN_ENABLED = !["false", "0", "no", "off"].includes(rawLoginFlag);
+const ANONYMOUS_AUTH = {
+  loginEnabled: false,
+  isAuthenticated: true,
+  isLoading: false,
+  error: null,
+  signIn: () => {
+  },
+  signOut: () => {
+  },
+  getAccessToken: async () => null,
+  getIdTokenClaims: async () => ({})
+};
+function useAuth() {
+  if (!LOGIN_ENABLED) {
+    return ANONYMOUS_AUTH;
+  }
+  const logto = useLogto();
+  return {
+    ...logto,
+    loginEnabled: true
+  };
+}
+function PrivateRoute({ children }) {
+  const { isAuthenticated, loginEnabled } = useAuth();
+  if (!loginEnabled) {
+    return children;
+  }
+  if (!isAuthenticated) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
+  }
+  return children;
+}
+PrivateRoute.propTypes = {
+  children: PropTypes.node.isRequired
+};
 function Layout() {
   const { t, i18n } = useTranslation();
   const location2 = useLocation();
@@ -41343,7 +42221,7 @@ function Layout() {
     {
       key: "logout",
       label: t("auth.logout", "Logout"),
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$4, {}),
       onClick: handleLogout,
       danger: true
     }
@@ -41357,8 +42235,8 @@ function Layout() {
   ];
   const getNavClass = (path2) => {
     const current = location2.pathname;
-    if (path2 === "/") {
-      return current === "/" ? "nav-item active" : "nav-item";
+    if (path2 === "/strategy") {
+      return current === "/strategy" || current === "/" ? "nav-item active" : "nav-item";
     }
     return current.startsWith(path2) ? "nav-item active" : "nav-item";
   };
@@ -41366,8 +42244,8 @@ function Layout() {
     /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: `sidebar ${collapsed ? "collapsed" : ""}`, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-header", children: !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: t("app.title") }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "sidebar-nav", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(Link$1, { to: "/", className: getNavClass("/"), title: t("nav.run_strategy"), children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: "📈" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(Link$1, { to: "/strategy", className: getNavClass("/strategy"), title: t("nav.run_strategy"), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$7, {}) }),
           !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("nav.run_strategy") })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -41377,7 +42255,7 @@ function Layout() {
             className: getNavClass("/maintain"),
             title: t("nav.strategy_maintain"),
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: "📝" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$c, {}) }),
               !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("nav.strategy_maintain") })
             ]
           }
@@ -41389,7 +42267,7 @@ function Layout() {
             className: getNavClass("/datasource"),
             title: t("nav.datasource"),
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: "📊" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$a, {}) }),
               !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("nav.datasource") })
             ]
           }
@@ -41401,7 +42279,7 @@ function Layout() {
           className: "collapse-toggle",
           onClick: () => setCollapsed(!collapsed),
           title: collapsed ? t("common.expand_sidebar") : t("common.collapse_sidebar"),
-          children: collapsed ? "»" : "«"
+          children: collapsed ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$3, {})
         }
       ) })
     ] }),
@@ -41409,20 +42287,24 @@ function Layout() {
       /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "top-header", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "header-title", children: /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: t("app.pro_title") }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "header-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { size: "middle", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
             {
               className: "btn-ghost",
               onClick: toggleLanguage,
               title: "Switch Language",
-              children: i18n.language.startsWith("zh") ? "English" : "中文"
+              style: { display: "flex", alignItems: "center", gap: "0.5rem" },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, {}),
+                i18n.language.startsWith("zh") ? "English" : "中文"
+              ]
             }
           ),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Dropdown, { menu: { items: userMenuItems }, placement: "bottomRight", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             Avatar,
             {
               icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon, {}),
-              style: { cursor: "pointer", backgroundColor: "#1890ff" }
+              style: { cursor: "pointer", backgroundColor: "#0ea5e9" }
             }
           ) })
         ] }) })
@@ -43350,7 +44232,7 @@ function requireUtilities() {
   var skipCamelCase = function(property) {
     return !property || NO_HYPHEN_REGEX.test(property) || CUSTOM_PROPERTY_REGEX.test(property);
   };
-  var capitalize = function(match2, character2) {
+  var capitalize2 = function(match2, character2) {
     return character2.toUpperCase();
   };
   var trimHyphen = function(match2, prefix2) {
@@ -43369,7 +44251,7 @@ function requireUtilities() {
     } else {
       property = property.replace(VENDOR_PREFIX_REGEX, trimHyphen);
     }
-    return property.replace(HYPHEN_REGEX, capitalize);
+    return property.replace(HYPHEN_REGEX, capitalize2);
   };
   utilities.camelCase = camelCase2;
   return utilities;
@@ -59435,50 +60317,91 @@ function DataSource() {
     ] })
   ] });
 }
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
+const CustomLogo = () => /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "120", height: "120", viewBox: "0 0 120 120", fill: "none", xmlns: "http://www.w3.org/2000/svg", className: "brand-logo", children: [
+  /* @__PURE__ */ jsxRuntimeExports.jsxs("defs", { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("linearGradient", { id: "logoGradient", x1: "0", y1: "0", x2: "120", y2: "120", gradientUnits: "userSpaceOnUse", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("stop", { offset: "0%", stopColor: "#38bdf8" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("stop", { offset: "100%", stopColor: "#818cf8" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("filter", { id: "glow", x: "-20%", y: "-20%", width: "140%", height: "140%", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("feGaussianBlur", { stdDeviation: "5", result: "coloredBlur" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("feMerge", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("feMergeNode", { in: "coloredBlur" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("feMergeNode", { in: "SourceGraphic" })
+      ] })
+    ] })
+  ] }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "25", y: "60", width: "12", height: "30", rx: "2", fill: "url(#logoGradient)", opacity: "0.6" }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "45", y: "40", width: "12", height: "50", rx: "2", fill: "url(#logoGradient)", opacity: "0.8" }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "65", y: "25", width: "12", height: "65", rx: "2", fill: "url(#logoGradient)" }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("rect", { x: "85", y: "45", width: "12", height: "45", rx: "2", fill: "url(#logoGradient)", opacity: "0.7" }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M20 75 C 35 75, 40 45, 55 45 C 70 45, 75 20, 95 20", stroke: "#38bdf8", strokeWidth: "4", strokeLinecap: "round", filter: "url(#glow)" }),
+  /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "60", cy: "60", r: "56", stroke: "url(#logoGradient)", strokeWidth: "2", strokeDasharray: "10 5", opacity: "0.3" })
+] });
 function Home() {
   const { signIn, isAuthenticated, loginEnabled } = useAuth();
   const navigate2 = useNavigate();
   const { t } = useTranslation();
   reactExports.useEffect(() => {
-    if (!loginEnabled) {
-      navigate2("/", { replace: true });
-      return;
-    }
-    if (isAuthenticated) {
-      navigate2("/");
+    if (loginEnabled && isAuthenticated) {
+      navigate2("/strategy");
     }
   }, [isAuthenticated, loginEnabled, navigate2]);
   const handleSignIn = () => {
     if (!loginEnabled) {
-      navigate2("/", { replace: true });
+      navigate2("/strategy");
       return;
     }
     const redirectUri = "https://trade.fary.chat/callback";
     signIn(redirectUri);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-page", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-content", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { direction: "vertical", size: "large", align: "center", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$1, { className: "home-icon" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Title, { level: 1, className: "home-title", children: t("auth.appTitle", "Backtrader Platform") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { className: "home-description", children: t("auth.homeDescription", "Design and test algorithmic trading strategies with professional backtesting tools, AI-powered analysis, and interactive charts.") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { direction: "vertical", size: "middle", className: "home-features", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { children: "Strategy Editor with Monaco Code Editor" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { children: "Historical Backtesting on Financial Market Data" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { children: "AI-Powered Strategy Analysis" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { children: "Interactive Candlestick Charts" })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Button,
-      {
-        type: "primary",
-        size: "large",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$3, {}),
-        onClick: handleSignIn,
-        className: "signin-button",
-        children: t("auth.signIn", "Sign In")
-      }
-    )
-  ] }) }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "home-page", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-grid" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-gradient-orb orb-1" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-gradient-orb orb-2" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-content-wrapper", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-card glass-panel", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { direction: "vertical", size: "large", align: "center", style: { width: "100%" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "logo-container", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CustomLogo, {}) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "title-section", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(Title, { level: 1, className: "home-title", children: [
+          t("auth.appTitle", "Backtrader"),
+          " ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "highlight", children: "Pro" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Paragraph, { className: "home-subtitle", children: t("auth.homeDescription", "Next-generation algorithmic trading platform powered by AI analysis.") })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "features-grid", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "feature-item", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "feature-icon", children: "⚡" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, children: "Fast Backtesting" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "feature-item", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "feature-icon", children: "🧠" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, children: "AI Analysis" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "feature-item", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "feature-icon", children: "📊" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, children: "Interactive Charts" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Button,
+        {
+          type: "primary",
+          size: "large",
+          icon: loginEnabled ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$5, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$1, {}),
+          onClick: handleSignIn,
+          className: "signin-button glowing-btn",
+          children: loginEnabled ? t("auth.signIn", "Access Platform") : "Enter Platform"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tech-badges", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: "geekblue", children: "Python" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: "purple", children: "AI/LLM" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: "cyan", children: "React" })
+      ] })
+    ] }) }) })
+  ] });
 }
 function Callback() {
   const navigate2 = useNavigate();
@@ -59508,20 +60431,38 @@ function AppContent() {
       setTokenGetter(null);
     }
   }, [getAccessToken, loginEnabled]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
-    loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) }),
-    loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Callback, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Route, { element: loginEnabled ? /* @__PURE__ */ jsxRuntimeExports.jsx(PrivateRoute, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}), children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { index: true, element: /* @__PURE__ */ jsxRuntimeExports.jsx(RunStrategy, {}) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "maintain", element: /* @__PURE__ */ jsxRuntimeExports.jsx(StrategyMaintain, {}) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "datasource", element: /* @__PURE__ */ jsxRuntimeExports.jsx(DataSource, {}) })
-    ] }),
-    !loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "*", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
-  ] });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    ConfigProvider,
+    {
+      theme: {
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: "#0ea5e9",
+          colorBgBase: "#0b0e14",
+          colorBgContainer: "#161b22",
+          colorBorder: "#1e293b",
+          borderRadius: 8,
+          fontFamily: "Inter, system-ui, sans-serif"
+        }
+      },
+      children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/welcome", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) }),
+        loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) }),
+        loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Callback, {}) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(Route, { element: loginEnabled ? /* @__PURE__ */ jsxRuntimeExports.jsx(PrivateRoute, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "strategy", element: /* @__PURE__ */ jsxRuntimeExports.jsx(RunStrategy, {}) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "maintain", element: /* @__PURE__ */ jsxRuntimeExports.jsx(StrategyMaintain, {}) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "datasource", element: /* @__PURE__ */ jsxRuntimeExports.jsx(DataSource, {}) })
+        ] }),
+        !loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "*", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
+      ] })
+    }
+  );
 }
 function App() {
   if (!LOGIN_ENABLED) {
@@ -59532,4 +60473,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-DYQEwaoi.js.map
+//# sourceMappingURL=index-C7KqEZ1X.js.map

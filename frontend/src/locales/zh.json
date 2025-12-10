@@ -30,6 +30,14 @@
     "appTitle": "Backtrader 交易平台",
     "homeDescription": "使用专业的回测工具、AI驱动的分析和交互式图表，设计和测试算法交易策略。"
   },
+  "home": {
+    "fast_backtesting": "极速回测",
+    "ai_analysis": "AI 智能分析",
+    "interactive_charts": "交互式图表",
+    "access_platform": "登录平台",
+    "enter_platform": "进入平台",
+    "subtitle": "由 AI 驱动的下一代算法交易平台。"
+  },
   "ai_insight": {
     "thinking_process": "思考过程"
   },
@@ -104,14 +112,13 @@
     "strategy_name": "策略名称",
     "create": "创建",
     "saved": "策略已保存！",
-        "save_failed": "保存策略失败",
-        "analysis_coming_soon": "AI 分析功能即将推出！",
-        "rewrite_coming_soon": "AI 重写功能即将推出！",
-        "placeholder_name": "例如：breakout_v2"
-      },
-      "datasource": {
-        "title": "数据源浏览器",
-        "fetch_data": "获取数据"
-      }
-    }
-    
+    "save_failed": "保存策略失败",
+    "analysis_coming_soon": "AI 分析功能即将推出！",
+    "rewrite_coming_soon": "AI 重写功能即将推出！",
+    "placeholder_name": "例如：breakout_v2"
+  },
+  "datasource": {
+    "title": "数据源浏览器",
+    "fetch_data": "获取数据"
+  }
+}

@@ -1,18 +1,11 @@
-from pathlib import Path
-
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from backtest_engine import IMAGE_DIR, ensure_resource_files
-
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "resources" / "frontend"
-ASSETS_DIR = FRONTEND_DIR / "assets"
-INDEX_HTML = FRONTEND_DIR / "index.html"
+from src.config.settings import ASSETS_DIR, FRONTEND_DIR, IMAGES_DIR, ensure_resource_dirs
 
 frontend_router = APIRouter()
+INDEX_HTML = FRONTEND_DIR / "index.html"
 
 
 @frontend_router.get("/", response_class=FileResponse)
@@ -32,9 +25,9 @@ def serve_spa(full_path: str):
 
 
 def mount_frontend(app: FastAPI):
-    ensure_resource_files()
+    ensure_resource_dirs()
     FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
-    app.mount("/images", StaticFiles(directory=IMAGE_DIR), name="images")
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
     if ASSETS_DIR.is_dir():
         app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
     app.include_router(frontend_router)
