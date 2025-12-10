@@ -1,19 +1,18 @@
-import os
 import uuid
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from backtest_engine import (
+from src.config.settings import IMAGES_DIR
+from src.strategy.backtest_engine import (
     run_backtest,
     get_user_strategy_code,
     save_user_strategy_code,
     list_strategies,
     StrategyLoadError,
-    IMAGE_DIR,
 )
-from datasource import get_raw_data_json, DataLoadError
-from auth import get_current_user
+from src.db.datasource import get_raw_data_json, DataLoadError
+from src.utils.auth import get_current_user
 
 
 router = APIRouter()
@@ -59,14 +58,14 @@ def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_use
         data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
         return {"data": data}
     except Exception as exc:
-         raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/backtest")
 async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
     try:
         filename = f"{uuid.uuid4()}.png"
-        save_path = os.path.join(IMAGE_DIR, filename)
+        save_path = IMAGES_DIR / filename
 
         metrics = run_backtest(
             ticker=request.ticker,

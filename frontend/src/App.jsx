@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ConfigProvider, theme } from 'antd'
 import { LogtoProvider } from './providers/LogtoProvider'
 import { PrivateRoute } from './components/Auth/PrivateRoute'
 import Layout from './components/Layout/Layout'
@@ -32,28 +33,51 @@ function AppContent() {
     }, [getAccessToken, loginEnabled])
 
     return (
-        <Routes>
-            {loginEnabled && <Route path="/login" element={<Home />} />}
-            {loginEnabled && <Route path="/callback" element={<Callback />} />}
+        <ConfigProvider
+            theme={{
+                algorithm: theme.darkAlgorithm,
+                token: {
+                    colorPrimary: '#0ea5e9',
+                    colorBgBase: '#0b0e14',
+                    colorBgContainer: '#161b22',
+                    colorBorder: '#1e293b',
+                    borderRadius: 8,
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                },
+            }}
+        >
+            <Routes>
+                {/* Landing Page - Accessible to everyone */}
+                <Route path="/" element={<Home />} />
+                <Route path="/welcome" element={<Home />} />
 
-            <Route element={loginEnabled ? (
-                <PrivateRoute>
-                    <Layout />
-                </PrivateRoute>
-            ) : <Layout />}>
-                <Route index element={<RunStrategy />} />
-                <Route path="maintain" element={<StrategyMaintain />} />
-                <Route path="datasource" element={<DataSource />} />
-            </Route>
+                {/* Auth Routes */}
+                {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
+                {loginEnabled && <Route path="/callback" element={<Callback />} />}
 
-            {!loginEnabled && (
-                <>
-                    <Route path="/login" element={<Navigate to="/" replace />} />
-                    <Route path="/callback" element={<Navigate to="/" replace />} />
-                </>
-            )}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                {/* Protected Application Routes */}
+                <Route element={loginEnabled ? (
+                    <PrivateRoute>
+                        <Layout />
+                    </PrivateRoute>
+                ) : <Layout />}>
+                    <Route path="strategy" element={<RunStrategy />} />
+                    <Route path="maintain" element={<StrategyMaintain />} />
+                    <Route path="datasource" element={<DataSource />} />
+                </Route>
+
+                {/* Redirects for Auth Disabled */}
+                {!loginEnabled && (
+                    <>
+                        <Route path="/login" element={<Navigate to="/" replace />} />
+                        <Route path="/callback" element={<Navigate to="/" replace />} />
+                    </>
+                )}
+                
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </ConfigProvider>
     )
 }
 

@@ -1,27 +1,23 @@
-import os
-import re
 import logging
+import re
+from pathlib import Path
+from typing import Optional
+
 import backtrader as bt
-import pandas as pd
 import matplotlib
 
-# Use a non-interactive backend and silence any attempts to show figures
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import pandas as pd
 
-from datasource import get_bt_feed as get_data, get_raw_data_json, DataLoadError
-from strategy_sandbox import execute_strategy_code, StrategySandboxError
+from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
+from src.db.datasource import DataLoadError, get_bt_feed as get_data, get_raw_data_json
+from src.strategy.strategy_sandbox import StrategySandboxError, execute_strategy_code
 
 plt.ioff()
 plt.show = lambda *args, **kwargs: None  # Prevent local popups in API runs
 
 logger = logging.getLogger(__name__)
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RESOURCE_DIR = os.path.join(BASE_DIR, "resources")
-IMAGE_DIR = os.path.join(RESOURCE_DIR, "images")
-STRATEGY_DIR = os.path.join(BASE_DIR, "strategy")
 
 DEFAULT_STRATEGY_NAME = None
 
@@ -30,10 +26,9 @@ class StrategyLoadError(Exception):
     """Raised when the user strategy cannot be loaded."""
 
 
-def ensure_resource_files():
-    os.makedirs(RESOURCE_DIR, exist_ok=True)
-    os.makedirs(IMAGE_DIR, exist_ok=True)
-    os.makedirs(STRATEGY_DIR, exist_ok=True)
+def ensure_resource_files() -> None:
+    """Maintain backward compatibility for callers ensuring resources exist."""
+    ensure_resource_dirs()
 
 
 def _sanitize_strategy_name(name: str) -> str:
@@ -51,51 +46,44 @@ def _sanitize_strategy_name(name: str) -> str:
     return f"{clean}.py"
 
 
-def get_strategy_path(name: str) -> str:
+def get_strategy_path(name: str) -> Path:
     filename = _sanitize_strategy_name(name)
-    return os.path.join(STRATEGY_DIR, filename)
+    return STRATEGY_DIR / filename
 
 
 def list_strategies():
     ensure_resource_files()
-    entries = []
-    for fname in os.listdir(STRATEGY_DIR):
-        if fname.endswith(".py"):
-            entries.append(fname[:-3])
-    return sorted(set(entries))
+    return sorted({path.stem for path in STRATEGY_DIR.glob("*.py")})
 
 
 def get_user_strategy_code(name: str):
     ensure_resource_files()
     path = get_strategy_path(name)
-    if not os.path.exists(path):
+    if not path.exists():
         raise StrategyLoadError(f"Strategy '{name}' not found")
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+    return path.read_text(encoding="utf-8")
 
 
 def save_user_strategy_code(name: str, code: str):
     ensure_resource_files()
     path = get_strategy_path(name)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(code)
+    path.write_text(code, encoding="utf-8")
 
 
 def load_user_strategy(name: str):
     ensure_resource_files()
     path = get_strategy_path(name)
-    if not os.path.exists(path):
+    if not path.exists():
         raise StrategyLoadError(f"Strategy '{name}' not found")
     try:
-        with open(path, "r", encoding="utf-8") as handle:
-            source = handle.read()
+        source = path.read_text(encoding="utf-8")
         if source.startswith("\ufeff"):
             source = source.lstrip("\ufeff")
         # Execute strategy file inside sandboxed globals to limit user code access
         module_globals = execute_strategy_code(
             source,
             module_name=f"user_strategy_{name}",
-            filename=path,
+            filename=str(path),
         )
     except (OSError, StrategySandboxError) as exc:
         raise StrategyLoadError(f"Failed to load strategy '{name}': {exc}") from exc
@@ -197,12 +185,12 @@ def run_backtest(
     commission=0.0005,
     stake=100,
     strategy_name=None,
-    save_path=None,
+    save_path: Optional[Path] = None,
 ):
     if not strategy_name:
         available = list_strategies()
         if not available:
-            raise StrategyLoadError("No strategies available; please add one in /strategy")
+            raise StrategyLoadError("No strategies available; please add one in /resources/strategy")
         strategy_name = available[0]
 
     strategy_cls = load_user_strategy(strategy_name)
@@ -248,14 +236,16 @@ def run_backtest(
         "trade_details": trade_details,  # 添加详细的交易记录
     }
 
-    if save_path:
+    target_path: Optional[Path] = Path(save_path) if save_path else None
+    if target_path:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             plt.ioff()
             figures = cerebro.plot(style="candlestick", iplot=False)
             first_fig = figures[0][0] if figures and figures[0] else None
             if first_fig:
                 first_fig.set_size_inches(18, 10)  # enlarge output
-                first_fig.savefig(save_path, bbox_inches="tight", dpi=150)
+                first_fig.savefig(target_path, bbox_inches="tight", dpi=150)
                 plt.close(first_fig)
             plt.close("all")
         except Exception as exc:
@@ -276,6 +266,6 @@ __all__ = [
     "DEFAULT_STRATEGY_NAME",
     "STRATEGY_DIR",
     "get_strategy_path",
-    "IMAGE_DIR",
+    "IMAGES_DIR",
     "get_raw_data_json",
 ]

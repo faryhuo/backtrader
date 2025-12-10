@@ -2,7 +2,16 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Dropdown, Avatar, Space } from 'antd'
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import {
+    UserOutlined,
+    LogoutOutlined,
+    FundOutlined,
+    CodeOutlined,
+    DatabaseOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+    GlobalOutlined
+} from '@ant-design/icons'
 import { useAuth } from '../../hooks/useAuth'
 import '../../index.css'
 
@@ -81,8 +90,9 @@ function Layout() {
 
     const getNavClass = (path) => {
         const current = location.pathname
-        if (path === '/') {
-            return current === '/' ? 'nav-item active' : 'nav-item'
+        // Exact match for root strategy path
+        if (path === '/strategy') {
+            return current === '/strategy' || current === '/' ? 'nav-item active' : 'nav-item'
         }
         return current.startsWith(path) ? 'nav-item active' : 'nav-item'
     }
@@ -94,8 +104,8 @@ function Layout() {
                     {!collapsed && <h2>{t('app.title')}</h2>}
                 </div>
                 <nav className="sidebar-nav">
-                    <Link to="/" className={getNavClass('/')} title={t('nav.run_strategy')}>
-                        <span className="icon">📈</span>
+                    <Link to="/strategy" className={getNavClass('/strategy')} title={t('nav.run_strategy')}>
+                        <span className="icon"><FundOutlined /></span>
                         {!collapsed && <span>{t('nav.run_strategy')}</span>}
                     </Link>
                     <Link
@@ -103,7 +113,7 @@ function Layout() {
                         className={getNavClass('/maintain')}
                         title={t('nav.strategy_maintain')}
                     >
-                        <span className="icon">📝</span>
+                        <span className="icon"><CodeOutlined /></span>
                         {!collapsed && <span>{t('nav.strategy_maintain')}</span>}
                     </Link>
                     <Link
@@ -111,7 +121,7 @@ function Layout() {
                         className={getNavClass('/datasource')}
                         title={t('nav.datasource')}
                     >
-                        <span className="icon">📊</span>
+                        <span className="icon"><DatabaseOutlined /></span>
                         {!collapsed && <span>{t('nav.datasource')}</span>}
                     </Link>
                 </nav>
@@ -121,7 +131,7 @@ function Layout() {
                         onClick={() => setCollapsed(!collapsed)}
                         title={collapsed ? t('common.expand_sidebar') : t('common.collapse_sidebar')}
                     >
-                        {collapsed ? '»' : '«'}
+                        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                     </button>
                 </div>
             </aside>
@@ -137,14 +147,16 @@ function Layout() {
                                 className="btn-ghost"
                                 onClick={toggleLanguage}
                                 title="Switch Language"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                             >
+                                <GlobalOutlined />
                                 {i18n.language.startsWith('zh') ? 'English' : '中文'}
                             </button>
 
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                                 <Avatar
                                     icon={<UserOutlined />}
-                                    style={{ cursor: 'pointer', backgroundColor: '#1890ff' }}
+                                    style={{ cursor: 'pointer', backgroundColor: '#0ea5e9' }}
                                 />
                             </Dropdown>
                         </Space>

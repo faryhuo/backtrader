@@ -7,31 +7,22 @@ incoming Bearer tokens via Logto's JWKS endpoint using python-jose.
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import requests
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
-# Load environment variables from .env if present.
-load_dotenv()
-
-# Default Logto tenant endpoints. They can be overridden via environment variables.
-LOGTO_ISSUER = os.getenv("LOGTO_ISSUER")
-LOGTO_JWKS_URI = os.getenv("LOGTO_JWKS_URI")
-LOGTO_AUDIENCE = os.getenv("LOGTO_AUDIENCE")
-# Toggle authentication. Set ENABLE_LOGIN=false to allow anonymous access.
-ENABLE_LOGIN = os.getenv("ENABLE_LOGIN", "true").lower() not in {"false", "0", "no", "off"}
-LOGTO_REQUIRED_SCOPES: List[str] = [
-    scope.strip()
-    for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
-    if scope.strip()
-]
+from src.config.settings import (
+    ENABLE_LOGIN,
+    LOGTO_AUDIENCE,
+    LOGTO_ISSUER,
+    LOGTO_JWKS_URI,
+    LOGTO_REQUIRED_SCOPES,
+)
 
 security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
