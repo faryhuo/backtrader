@@ -15230,6 +15230,16 @@ function LogtoProvider({ children }) {
 LogtoProvider.propTypes = {
   children: PropTypes.node.isRequired
 };
+function PrivateRoute({ children }) {
+  const { isAuthenticated } = useLogto();
+  if (!isAuthenticated) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
+  }
+  return children;
+}
+PrivateRoute.propTypes = {
+  children: PropTypes.node.isRequired
+};
 function useEvent(callback) {
   const fnRef = reactExports.useRef(callback);
   fnRef.current = callback;
@@ -41255,16 +41265,6 @@ Typography.Text = Text$1;
 Typography.Link = Link;
 Typography.Title = Title$1;
 Typography.Paragraph = Paragraph$1;
-function PrivateRoute({ children }) {
-  const { isAuthenticated } = useLogto();
-  if (!isAuthenticated) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
-  }
-  return children;
-}
-PrivateRoute.propTypes = {
-  children: PropTypes.node.isRequired
-};
 function Layout() {
   const { t, i18n } = useTranslation();
   const location2 = useLocation();
@@ -59473,4 +59473,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-HovF301A.js.map
+//# sourceMappingURL=index-9qdfBfeo.js.map
