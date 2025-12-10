@@ -1,0 +1,15 @@
+.callback-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  gap: 20px;
+}
+
+.callback-error {
+  margin-top: 20px;
+  color: #ff4d4f;
+  font-size: 14px;
+}

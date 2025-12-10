@@ -1,23 +1,58 @@
-const API_BASE = '/api'
-export const HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8000'
-const API_URL = `${HOST}${API_BASE}`
 
-const buildRequest = (path, options = {}) => {
+export const API_URL = import.meta.env.VITE_API_RESOURCE
+
+// Token getter function (set by App component)
+let getTokenFn = null
+
+/**
+ * Set the token getter function
+ * This is called by the App component to provide access to Logto's getAccessToken
+ */
+export function setTokenGetter(fn) {
+    getTokenFn = fn
+}
+
+/**
+ * Build a request with authentication token
+ */
+const buildRequest = async (path, options = {}) => {
     const headers = new Headers(options.headers || {})
 
     if (options.body && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
     }
 
+    // Inject access token if available
+    if (getTokenFn) {
+        try {
+            const resource = import.meta.env.VITE_API_RESOURCE
+            const token = await getTokenFn(resource)
+            if (token) {
+                headers.set('Authorization', `Bearer ${token}`)
+            }
+        } catch (error) {
+            console.error('Failed to get access token:', error)
+            // Continue without token - API will return 401 if auth is required
+        }
+    }
+
     return fetch(`${API_URL}${path}`, { ...options, headers })
 }
 
 const parseResponse = async (response) => {
-    const contentType = response.headers.get('content-type') || ''
-    const isJson = contentType.includes('application/json')
-    const data = isJson ? await response.json() : null
 
-    if (!response.ok) {
+    const data = await response.json()
+
+    if (response.status !== 200) {
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+            console.error('Unauthorized - redirecting to login')
+            const loginPath = '/login'
+            if (window.location.pathname !== loginPath) {
+                window.location.href = loginPath
+            }
+        }
+
         const message = (data && (data.detail || data.message)) || `HTTP error! status: ${response.status}`
         throw new Error(message)
     }
@@ -78,35 +113,80 @@ export const api = {
             formData.append('file', file)
         }
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         })
         return await parseResponse(res)
     },
 
-    async analyzeCode(code, model = 'gpt-4o') {
+    async analyzeCode(code, model = 'gpt-5.1') {
         const prompt = `Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n${code}`;
         const formData = new FormData();
         formData.append('message', prompt);
         formData.append('model', model);
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         });
         const data = await parseResponse(res);
         return data.analysis;
     },
 
-    async rewriteCode(code, model = 'gpt-4o') {
+    async rewriteCode(code, model = 'gpt-5.1') {
         const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n${code}`;
         const formData = new FormData();
         formData.append('message', prompt);
         formData.append('model', model);
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         });
         const data = await parseResponse(res);

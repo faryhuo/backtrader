@@ -7,4 +7,11 @@ services:
       - "8020:8000"
     environment:
       - PORT=8000
+      - HOST=0.0.0.0
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/strategies')"]
+      interval: 300s
+      timeout: 100s
+      retries: 3
+      start_period: 40s
