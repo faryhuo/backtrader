@@ -1,10 +1,13 @@
 # Stage 1: Builder
-FROM python:3.12-slim AS builder
+# Lock to Debian Bookworm (stable) for consistent package availability
+FROM python:3.12-slim-bookworm AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN apt-get update \
+# Use aliyun mirror for faster download in China (change if outside China)
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
        libffi-dev \
@@ -19,27 +22,30 @@ RUN apt-get update \
 COPY backend/requirements.txt /tmp/requirements.txt
 # Limit parallel builds to prevent OOM on low-memory systems (Ubuntu 20)
 # MAX_JOBS=1 forces sequential compilation to reduce memory usage
-RUN pip install --upgrade pip \
+# Use Aliyun PyPI mirror for faster download in China
+RUN pip install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/ \
     && MAX_JOBS=1 pip wheel --no-cache-dir --wheel-dir /wheels \
        --default-timeout=10000 --retries 5 \
+       -i https://mirrors.aliyun.com/pypi/simple/ \
        -r /tmp/requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
 # Install only runtime libraries (no build tools)
-# Note: python:3.12-slim is based on Debian 12 (Bookworm)
-# For compatibility with host Ubuntu 20, use Debian 12 package names
-RUN apt-get update \
+# Use Debian Bookworm package names (no t64 suffix in Bookworm)
+# Use aliyun mirror for faster download
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-       libffi8t64 \
-       libssl3t64 \
+       libffi8 \
+       libssl3 \
        libjpeg62-turbo \
        zlib1g \
        libfreetype6 \
-       libpng16-16t64 \
+       libpng16-16 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy pre-built wheels from builder stage
