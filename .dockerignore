@@ -1,0 +1,58 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Frontend node_modules (not needed in backend)
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Docker files
+docker-compose.yml
+Dockerfile*
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files (should be configured at runtime)
+.env
+.env.local
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Build artifacts
+build/
+dist/
