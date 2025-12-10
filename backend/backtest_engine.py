@@ -1,6 +1,5 @@
 import os
 import re
-import importlib.util
 import logging
 import backtrader as bt
 import pandas as pd
@@ -11,6 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from datasource import get_bt_feed as get_data, get_raw_data_json, DataLoadError
+from strategy_sandbox import execute_strategy_code, StrategySandboxError
 
 plt.ioff()
 plt.show = lambda *args, **kwargs: None  # Prevent local popups in API runs
@@ -87,20 +87,24 @@ def load_user_strategy(name: str):
     if not os.path.exists(path):
         raise StrategyLoadError(f"Strategy '{name}' not found")
     try:
-        module_name = f"user_strategy_{name}"
-        spec = importlib.util.spec_from_file_location(module_name, path)
-        module = importlib.util.module_from_spec(spec)
-        # Register the module so Backtrader can resolve cls.__module__
-        import sys
-
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-    except Exception as exc:
+        with open(path, "r", encoding="utf-8") as handle:
+            source = handle.read()
+        if source.startswith("\ufeff"):
+            source = source.lstrip("\ufeff")
+        # Execute strategy file inside sandboxed globals to limit user code access
+        module_globals = execute_strategy_code(
+            source,
+            module_name=f"user_strategy_{name}",
+            filename=path,
+        )
+    except (OSError, StrategySandboxError) as exc:
         raise StrategyLoadError(f"Failed to load strategy '{name}': {exc}") from exc
 
-    strategy_cls = getattr(module, "UserStrategy", None)
-    if strategy_cls is None or not issubclass(strategy_cls, bt.Strategy):
-        raise StrategyLoadError("UserStrategy class not found or not a valid Backtrader Strategy")
+    strategy_cls = module_globals.get("UserStrategy")
+    if strategy_cls is None:
+        raise StrategyLoadError("UserStrategy class not found in strategy file")
+    if not issubclass(strategy_cls, bt.Strategy):
+        raise StrategyLoadError("UserStrategy must inherit from backtrader.Strategy")
     return strategy_cls
 
 
