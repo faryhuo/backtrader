@@ -1,27 +1,42 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useLogto } from '@logto/react'
+import { LogtoProvider } from './providers/LogtoProvider'
+import { PrivateRoute } from './components/Auth/PrivateRoute'
 import Layout from './components/Layout/Layout'
 import RunStrategy from './pages/RunStrategy'
 import StrategyMaintain from './pages/StrategyMaintain'
 import DataSource from './pages/DataSource'
+import { Home } from './pages/Home'
+import { Callback } from './pages/Callback'
+import { setTokenGetter } from './services/api'
 import './index.css'
 
 /**
- * Root App Component
+ * App Content Component
  *
- * Simple routing without authentication.
- * All routes are public since backend uses M2M authentication.
+ * Inner component that has access to Logto hooks.
+ * Sets up token getter for API calls.
  */
-function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                {/* Redirect root to /app */}
-                <Route path="/" element={<Navigate to="/app" replace />} />
+function AppContent() {
+    const { getAccessToken } = useLogto()
 
-                {/* Main application routes */}
-                <Route
-                    path="/app/*"
-                    element={
+    // Initialize token getter for API calls
+    useEffect(() => {
+        setTokenGetter(getAccessToken)
+    }, [getAccessToken])
+
+    return (
+        <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/callback" element={<Callback />} />
+
+            {/* Protected routes - nested under /app */}
+            <Route
+                path="/app/*"
+                element={
+                    <PrivateRoute>
                         <Layout>
                             <Routes>
                                 <Route index element={<RunStrategy />} />
@@ -29,10 +44,25 @@ function App() {
                                 <Route path="datasource" element={<DataSource />} />
                             </Routes>
                         </Layout>
-                    }
-                />
-            </Routes>
-        </BrowserRouter>
+                    </PrivateRoute>
+                }
+            />
+        </Routes>
+    )
+}
+
+/**
+ * Root App Component
+ *
+ * Wraps the application with authentication provider.
+ */
+function App() {
+    return (
+        <LogtoProvider>
+            <BrowserRouter>
+                <AppContent />
+            </BrowserRouter>
+        </LogtoProvider>
     )
 }
 

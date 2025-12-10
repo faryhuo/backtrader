@@ -1,17 +1,63 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useLogto } from '@logto/react'
+import { Dropdown, Avatar, Space } from 'antd'
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons'
 import '../../index.css'
 
 function Layout({ children }) {
     const { t, i18n } = useTranslation();
     const location = useLocation()
     const [collapsed, setCollapsed] = useState(false)
+    const { signOut, getIdTokenClaims, isAuthenticated } = useLogto()
+    const [userInfo, setUserInfo] = useState(null)
 
     const toggleLanguage = () => {
         const newLang = i18n.language.startsWith('zh') ? 'en' : 'zh';
         i18n.changeLanguage(newLang);
     };
+
+    // Fetch user information when authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            getIdTokenClaims().then((claims) => {
+                setUserInfo({
+                    email: claims?.email || 'User',
+                    name: claims?.name || claims?.email || 'User',
+                    username: claims?.username,
+                })
+            }).catch((error) => {
+                console.error('Failed to get user claims:', error)
+            })
+        }
+    }, [isAuthenticated, getIdTokenClaims])
+
+    // Handle logout
+    const handleLogout = () => {
+        const postLogoutRedirectUri = import.meta.env.VITE_LOGTO_POST_LOGOUT_REDIRECT_URI
+        signOut(postLogoutRedirectUri)
+    }
+
+    // User menu items
+    const userMenuItems = [
+        {
+            key: 'profile',
+            label: userInfo?.email || 'User',
+            icon: <UserOutlined />,
+            disabled: true,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            label: t('auth.logout', 'Logout'),
+            icon: <LogoutOutlined />,
+            onClick: handleLogout,
+            danger: true,
+        },
+    ]
 
     return (
         <div className={`layout-container ${collapsed ? 'collapsed' : ''}`}>
@@ -62,13 +108,22 @@ function Layout({ children }) {
                         <h1>{t('app.pro_title')}</h1>
                     </div>
                     <div className="header-actions">
-                        <button
-                            className="btn-ghost"
-                            onClick={toggleLanguage}
-                            title="Switch Language"
-                        >
-                            {i18n.language.startsWith('zh') ? 'English' : '中文'}
-                        </button>
+                        <Space size="middle">
+                            <button
+                                className="btn-ghost"
+                                onClick={toggleLanguage}
+                                title="Switch Language"
+                            >
+                                {i18n.language.startsWith('zh') ? 'English' : '中文'}
+                            </button>
+
+                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                                <Avatar
+                                    icon={<UserOutlined />}
+                                    style={{ cursor: 'pointer', backgroundColor: '#1890ff' }}
+                                />
+                            </Dropdown>
+                        </Space>
                     </div>
                 </header>
 

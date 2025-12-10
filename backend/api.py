@@ -11,18 +11,26 @@ ensure_resource_files()
 
 app = FastAPI()
 
-# Initialize Logto M2M configuration on startup
+# Initialize Logto configuration on startup
 @app.on_event("startup")
 async def startup_event():
-    """Initialize M2M authentication configuration"""
+    """Initialize authentication configuration"""
     try:
         config = get_logto_config()
-        print(f"Logto M2M authentication initialized: {config.endpoint}")
-        print(f"API Resource: {config.resource}")
-        print("M2M authentication is ready for backend-to-backend API calls")
+        print(f"Logto authentication initialized: {config.endpoint}")
+        print(f"  - SPA App ID: {config.spa_app_id}")
+        print(f"  - API Resource: {config.api_resource}")
+
+        if config.has_m2m_config():
+            print(f"  - M2M App ID: {config.m2m_app_id}")
+            print("  - M2M authentication enabled for backend-to-backend calls")
+        else:
+            print("  - M2M authentication not configured (optional)")
+
+        print("User authentication is ready!")
     except ValueError as e:
-        print(f"Warning: Logto M2M configuration not set - {e}")
-        print("M2M authentication is disabled. Please configure LOGTO_M2M_* environment variables.")
+        print(f"Warning: Logto configuration error - {e}")
+        print("Authentication is disabled. Please configure LOGTO_* environment variables.")
 
 # Enable CORS for frontend
 app.add_middleware(
