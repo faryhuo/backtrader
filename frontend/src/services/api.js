@@ -135,7 +135,7 @@ export const api = {
         return await parseResponse(res)
     },
 
-    async analyzeCode(code, model = 'gpt-4o') {
+    async analyzeCode(code, model = 'gpt-5.1') {
         const prompt = `Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n${code}`;
         const formData = new FormData();
         formData.append('message', prompt);
@@ -164,7 +164,7 @@ export const api = {
         return data.analysis;
     },
 
-    async rewriteCode(code, model = 'gpt-4o') {
+    async rewriteCode(code, model = 'gpt-5.1') {
         const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n${code}`;
         const formData = new FormData();
         formData.append('message', prompt);
