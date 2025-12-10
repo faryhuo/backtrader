@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backtest_engine import (
@@ -13,7 +13,6 @@ from backtest_engine import (
     IMAGE_DIR,
 )
 from datasource import get_raw_data_json, DataLoadError
-from auth import get_current_user
 
 
 router = APIRouter()
@@ -45,7 +44,7 @@ class AnalysisRequest(BaseModel):
 
 
 @router.get("/strategies")
-def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
+def get_strategy_list() -> dict:
     try:
         names = list_strategies()
         return {"strategies": names}
@@ -54,7 +53,7 @@ def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.post("/data")
-def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_user)) -> dict:
+def fetch_market_data(request: DataRequest) -> dict:
     try:
         data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
         return {"data": data}
@@ -63,7 +62,7 @@ def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_use
 
 
 @router.post("/backtest")
-async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
+async def backtest(request: BacktestRequest) -> dict:
     try:
         filename = f"{uuid.uuid4()}.png"
         save_path = os.path.join(IMAGE_DIR, filename)
@@ -98,7 +97,7 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
 
 
 @router.get("/strategy")
-def get_strategy(name: str | None = None, user: dict = Depends(get_current_user)) -> dict:
+def get_strategy(name: str | None = None) -> dict:
     try:
         if not name:
             names = list_strategies()
@@ -114,7 +113,7 @@ def get_strategy(name: str | None = None, user: dict = Depends(get_current_user)
 
 
 @router.post("/strategy")
-def save_strategy(request: StrategyCode, user: dict = Depends(get_current_user)) -> dict:
+def save_strategy(request: StrategyCode) -> dict:
     try:
         save_user_strategy_code(request.name, request.code)
         return {"status": "ok", "message": "Strategy saved", "name": request.name}
@@ -125,7 +124,7 @@ def save_strategy(request: StrategyCode, user: dict = Depends(get_current_user))
 
 
 @router.post("/analyze")
-def analyze_results(request: AnalysisRequest, user: dict = Depends(get_current_user)) -> dict:
+def analyze_results(request: AnalysisRequest) -> dict:
     sharpe = request.metrics.get("sharpe")
     returns = request.metrics.get("returns")
     drawdown = request.metrics.get("drawdown")
