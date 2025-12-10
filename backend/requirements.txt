@@ -7,3 +7,6 @@ matplotlib>=3.8.0
 python-dotenv>=1.0.1
 openai>=1.0.0
 python-multipart>=0.0.6
+logto>=1.0.0
+python-jose[cryptography]>=3.3.0
+requests>=2.31.0

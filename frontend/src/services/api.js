@@ -2,11 +2,39 @@ const API_BASE = '/api'
 export const HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8000'
 const API_URL = `${HOST}${API_BASE}`
 
-const buildRequest = (path, options = {}) => {
+// Token getter function (set by App component)
+let getTokenFn = null
+
+/**
+ * Set the token getter function
+ * This is called by the App component to provide access to Logto's getAccessToken
+ */
+export function setTokenGetter(fn) {
+    getTokenFn = fn
+}
+
+/**
+ * Build a request with authentication token
+ */
+const buildRequest = async (path, options = {}) => {
     const headers = new Headers(options.headers || {})
 
     if (options.body && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
+    }
+
+    // Inject access token if available
+    if (getTokenFn) {
+        try {
+            const resource = import.meta.env.VITE_API_RESOURCE
+            const token = await getTokenFn(resource)
+            if (token) {
+                headers.set('Authorization', `Bearer ${token}`)
+            }
+        } catch (error) {
+            console.error('Failed to get access token:', error)
+            // Continue without token - API will return 401 if auth is required
+        }
     }
 
     return fetch(`${API_URL}${path}`, { ...options, headers })
@@ -18,6 +46,14 @@ const parseResponse = async (response) => {
     const data = isJson ? await response.json() : null
 
     if (!response.ok) {
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+            console.error('Unauthorized - redirecting to login')
+            if (window.location.pathname !== '/') {
+                window.location.href = '/'
+            }
+        }
+
         const message = (data && (data.detail || data.message)) || `HTTP error! status: ${response.status}`
         throw new Error(message)
     }
@@ -78,8 +114,23 @@ export const api = {
             formData.append('file', file)
         }
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         })
         return await parseResponse(res)
@@ -91,8 +142,23 @@ export const api = {
         formData.append('message', prompt);
         formData.append('model', model);
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         });
         const data = await parseResponse(res);
@@ -105,8 +171,23 @@ export const api = {
         formData.append('message', prompt);
         formData.append('model', model);
 
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
         const res = await fetch(`${API_URL}/ai_analyze`, {
             method: 'POST',
+            headers,
             body: formData
         });
         const data = await parseResponse(res);
