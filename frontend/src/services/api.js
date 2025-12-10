@@ -1,7 +1,5 @@
-const API_BASE = '/api'
-// Backend serves both UI and API at http://localhost:8000
-export const HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8000'
-const API_URL = `${HOST}${API_BASE}`
+
+export const API_URL = import.meta.env.VITE_API_RESOURCE
 
 // Token getter function (set by App component)
 let getTokenFn = null
@@ -42,16 +40,16 @@ const buildRequest = async (path, options = {}) => {
 }
 
 const parseResponse = async (response) => {
-    const contentType = response.headers.get('content-type') || ''
-    const isJson = contentType.includes('application/json')
-    const data = isJson ? await response.json() : null
+
+    const data = await response.json()
 
     if (!response.ok) {
         // Handle 401 Unauthorized - redirect to login
         if (response.status === 401) {
             console.error('Unauthorized - redirecting to login')
-            if (window.location.pathname !== '/') {
-                window.location.href = '/'
+            const loginPath = '/login'
+            if (window.location.pathname !== loginPath) {
+                window.location.href = loginPath
             }
         }
 
