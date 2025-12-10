@@ -43,7 +43,7 @@ const parseResponse = async (response) => {
 
     const data = await response.json()
 
-    if (!response.ok) {
+    if (response.status !== 200) {
         // Handle 401 Unauthorized - redirect to login
         if (response.status === 401) {
             console.error('Unauthorized - redirecting to login')
