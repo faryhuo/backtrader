@@ -94,7 +94,7 @@ pip install -r requirements.txt
 ```
 
 This installs:
-- `logto>=1.0.0` - Logto Python SDK
+- `logto>=0.2.1` - Logto Python SDK
 - `python-jose[cryptography]>=3.3.0` - JWT verification
 - `requests>=2.31.0` - HTTP client
 

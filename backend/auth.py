@@ -21,8 +21,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Security scheme for Bearer token
+# Security schemes for Bearer token
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
 
 
 class LogtoConfig:
@@ -241,7 +242,7 @@ async def get_current_user(
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(security, auto_error=False)
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(optional_security)
 ) -> Optional[Dict[str, Any]]:
     """
     FastAPI dependency to get current user if authenticated, None otherwise.
