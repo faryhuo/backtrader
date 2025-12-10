@@ -1,6 +1,5 @@
 import { useLogto } from '@logto/react';
 import { Navigate } from 'react-router-dom';
-import { Spin } from 'antd';
 import PropTypes from 'prop-types';
 import './PrivateRoute.css';
 
@@ -9,20 +8,9 @@ import './PrivateRoute.css';
  *
  * Wraps routes that require authentication.
  * Redirects unauthenticated users to the login page.
- * Shows loading spinner while checking authentication status.
  */
 export function PrivateRoute({ children }) {
-  const { isAuthenticated, isLoading } = useLogto();
-
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="private-route-loading">
-        <Spin size="large" tip="Loading..." />
-      </div>
-    );
-  }
-
+  const { isAuthenticated } = useLogto();
   // Redirect to login page if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

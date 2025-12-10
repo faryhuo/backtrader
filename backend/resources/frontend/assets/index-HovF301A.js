@@ -41256,10 +41256,7 @@ Typography.Link = Link;
 Typography.Title = Title$1;
 Typography.Paragraph = Paragraph$1;
 function PrivateRoute({ children }) {
-  const { isAuthenticated, isLoading } = useLogto();
-  if (isLoading) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "private-route-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Spin, { size: "large", tip: "Loading..." }) });
-  }
+  const { isAuthenticated } = useLogto();
   if (!isAuthenticated) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
   }
@@ -41492,7 +41489,7 @@ const api$1 = {
     });
     return await parseResponse(res);
   },
-  async analyzeCode(code2, model = "gpt-4o") {
+  async analyzeCode(code2, model = "gpt-5.1") {
     const prompt = `Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:
 
 ${code2}`;
@@ -41519,7 +41516,7 @@ ${code2}`;
     const data = await parseResponse(res);
     return data.analysis;
   },
-  async rewriteCode(code2, model = "gpt-4o") {
+  async rewriteCode(code2, model = "gpt-5.1") {
     const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:
 
 ${code2}`;
@@ -59476,4 +59473,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-B24XvJoR.js.map
+//# sourceMappingURL=index-HovF301A.js.map

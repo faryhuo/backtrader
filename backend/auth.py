@@ -26,6 +26,8 @@ LOGTO_REQUIRED_SCOPES: List[str] = [
     for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
     if scope.strip()
 ]
+ENABLE_LOGIN = os.getenv("ENABLE_LOGIN", "true").strip().lower() not in {"false", "0", "no", "off"}
+ANONYMOUS_USER: Dict[str, Any] = {"sub": "anonymous", "scope": "public"}
 
 security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
@@ -152,6 +154,9 @@ async def get_current_user(
     """
     FastAPI dependency to require authentication on an endpoint.
     """
+    if not ENABLE_LOGIN:
+        return dict(ANONYMOUS_USER)
+
     token = get_auth_token(credentials)
     return verify_token(token)
 
@@ -162,6 +167,9 @@ async def get_optional_user(
     """
     Optional authentication dependency.
     """
+    if not ENABLE_LOGIN:
+        return dict(ANONYMOUS_USER)
+
     if not credentials:
         return None
 
