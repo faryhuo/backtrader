@@ -1,4 +1,4 @@
-import { LogtoProvider as LogtoReactProvider, LogtoConfig } from '@logto/react';
+import { LogtoProvider as LogtoReactProvider } from '@logto/react';
 import PropTypes from 'prop-types';
 
 /**
