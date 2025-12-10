@@ -15218,7 +15218,7 @@ function LogtoProvider({ children }) {
   const config2 = {
     endpoint: "https://logto.fary.chat",
     appId: "ro4uk4fd2czd7cyx3wcbm",
-    resources: ["http://localhost:8000/api"]
+    resources: ["https://trade.fary.chat/api"]
   };
   if (!config2.endpoint || !config2.appId) {
     console.error(
@@ -41289,7 +41289,7 @@ function Layout() {
     }
   }, [isAuthenticated, getIdTokenClaims]);
   const handleLogout = () => {
-    const postLogoutRedirectUri = "http://localhost:8000/login";
+    const postLogoutRedirectUri = "https://trade.fary.chat/login";
     signOut(postLogoutRedirectUri);
   };
   const userMenuItems = [
@@ -41386,7 +41386,7 @@ function Layout() {
     ] })
   ] });
 }
-const API_URL = "http://localhost:8000/api";
+const API_URL = "https://trade.fary.chat/api";
 let getTokenFn = null;
 function setTokenGetter(fn2) {
   getTokenFn = fn2;
@@ -41398,7 +41398,7 @@ const buildRequest = async (path2, options = {}) => {
   }
   if (getTokenFn) {
     try {
-      const resource = "http://localhost:8000/api";
+      const resource = "https://trade.fary.chat/api";
       const token2 = await getTokenFn(resource);
       if (token2) {
         headers.set("Authorization", `Bearer ${token2}`);
@@ -41473,7 +41473,7 @@ const api$1 = {
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "http://localhost:8000/api";
+        const resource = "https://trade.fary.chat/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -41499,7 +41499,7 @@ ${code2}`;
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "http://localhost:8000/api";
+        const resource = "https://trade.fary.chat/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -41526,7 +41526,7 @@ ${code2}`;
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "http://localhost:8000/api";
+        const resource = "https://trade.fary.chat/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -59401,7 +59401,7 @@ function Home() {
     }
   }, [isAuthenticated, navigate2]);
   const handleSignIn = () => {
-    const redirectUri = "http://localhost:8000/callback";
+    const redirectUri = "https://trade.fary.chat/callback";
     signIn(redirectUri);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-page", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "home-content", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { direction: "vertical", size: "large", align: "center", children: [
@@ -59473,4 +59473,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-9qdfBfeo.js.map
+//# sourceMappingURL=index-Dzb2SN7i.js.map
