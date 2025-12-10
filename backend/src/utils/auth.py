@@ -18,6 +18,8 @@ from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
 from src.config.settings import (
     ENABLE_LOGIN,
+    HTTP_PROXY,
+    HTTPS_PROXY,
     LOGTO_AUDIENCE,
     LOGTO_ISSUER,
     LOGTO_JWKS_URI,
@@ -60,8 +62,13 @@ def fetch_jwks() -> Dict[str, Any]:
     """
     Download JWKS metadata from Logto. Cached for efficiency.
     """
+    proxies = {
+        key: value
+        for key, value in {"http": HTTP_PROXY, "https": HTTPS_PROXY}.items()
+        if value
+    }
     try:
-        response = requests.get(LOGTO_JWKS_URI, timeout=10)
+        response = requests.get(LOGTO_JWKS_URI, timeout=10, proxies=proxies or None)
         response.raise_for_status()
     except requests.RequestException as exc:
         raise HTTPException(status_code=500, detail=f"Unable to fetch JWKS: {exc}") from exc

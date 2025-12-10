@@ -1,37 +1,13 @@
-# Feature Plan
+你现在的栈是 FastAPI + Backtrader 后端（/api/data、/api/backtest、/api/strategy、/api/ai_analyze）、前端多语言控制台（运行/维护策略、数据源、AI 分析）。在此基础上可无缝接入的功能建议（按实施性排序）：
 
-## Context
-- Stack: FastAPI + Backtrader backend; React (Ant Design) frontend with i18n; auth via Logto (optional) and JWT guard; assets served from `backend/resources/frontend`.
-- Current APIs: `/api/data`, `/api/backtest`, `/api/strategy` (CRUD), `/api/ai_analyze` (OpenAI image/text), static frontend + images.
-
-## Ready-to-Ship (1-3 days)
-- Data layer: add db caching toggle in `datasource.get_data`; add resample/replay options in backtest payload; surface synthetic-data warning to UI.
-- Strategy UX: seed example strategies in `resources/strategy`; add duplicate/rename endpoints; 1-click reset-to-sample.
-- Results clarity: expose trade log table (from `trade_recorder`) in UI; CSV export; consistent timezone display.
-- Auth polish: optional `ENABLE_LOGIN=false` already; add 401 toast + re-login button on token expiry.
-
-## Next (1-2 weeks)
-- Parameter optimization: new `/api/optimize` to wrap `cerebro.optstrategy`; parallel pool; return top-N configs + metrics heatmap ready data.
-- Multi-ticker/portfolio: allow multiple tickers + weights; aggregate NAV & drawdown; correlation matrix + contribution chart.
-- Walk-forward / validation split: train window + test window runs; overfit warnings (sharpe drop, drawdown spike).
-- AI assist v2: send strategy code + trade log to `/api/ai_analyze`; model suggests risk notes and parameter tweaks.
-- Notifications & scheduling: APScheduler/Celery to run daily backtest; deliver PDF/PNG to email/Slack/WeCom.
-
-## Later (2-4 weeks)
-- Live/ֽ�潻���Ž�: Backtrader Store/Broker for CCXT (spot/futures) or IBKR; account state displayed alongside backtests.
-- Risk engine: per-strategy risk budget, volatility targeting, trading window filters, slippage models (fixed/percentage/volume-based).
-- Metrics warehouse: persist analyzers/trade logs to DB; dashboards via Metabase/Grafana; API for historical runs.
-- Collaboration: role-based strategy sharing, version history, comment threads on strategies.
-
-## Suggested API Sketches
-- `POST /api/optimize`: {ticker(s), date range, param grid, cash, commission, stake} �� {top_configs, leaderboard, heatmap_data, log_id}.
-- `POST /api/portfolio/backtest`: {tickers:[{symbol,weight}], rebalance, cost_model} �� portfolio metrics + per-leg results.
-- `POST /api/schedule`: create/update scheduled jobs; `POST /api/notify/test` for webhook/email test.
-
-## Frontend Hooks
-- Run Strategy page: add resample selector, synthetic-data warning, trade-log export; charts for annual returns and drawdown duration already present.
-- Maintain page: strategy templates gallery, rename/duplicate actions, AI critique button (code + recent trades).
-- DataSource page: source indicator (DB/YF/synthetic), latency badge, cache refresh control.
-
-## Dependencies / Config
-- Add optional `REDIS_URL` or DB table for cache; `OPTIMIZE_MAX_PROCS` for pools; `OPENAI_*` already present; broker creds for CCXT/IBKR gated by env.
+数据层强化：接入行情缓存/数据库读写（backend/src/db/datasource.py 里已有 DATABASE_URL 钩子），加历史数据预热、K 线重采样、分时/日线多周期合成。
+参数优化/网格搜索：为 run_backtest 增加 optstrategy 接口 + 任务队列，前端展示最佳参数、效率图（年化收益 vs 参数），支持并行。
+多标的/组合回测：允许一次选择多 ticker，组合权重、相关性和资金分配管理，输出组合净值曲线与回撤。
+风控与持仓管理：加入统一的风控模块（滑点模型、交易时间窗、风险预算、仓位分级），前端提示风险警戒线。
+实盘/纸盘桥接：按 Backtrader 标准 Store/Broker 接 CCXT 现货/期货或 IBKR，沿用同一策略代码切换模拟/实盘。
+Walk-forward & 回测集/验证集：拆分训练/验证时间段，自动滚动重训练参数，输出过拟合检测指标。
+事件通知与任务调度：Celery/APScheduler 定时跑回测、每日收盘报告，结果通过邮件/Slack/企业微信推送。
+AI 辅助增强：在现有 /api/ai_analyze 基础上支持上传策略代码/交易日志，让模型生成风险点评、改进建议或自动调整参数。
+监控与审计：持久化 analyzer 输出和交易明细，Grafana/Metabase 仪表板 + API 访问日志/鉴权审计。
+用户与团队协作：基于现有 Logto JWT，增加角色/空间、多用户策略版本管理与分享。
+如果你想先做其中某一块（如“先把参数优化 + 多标的组合回测做起来”），告诉我优先级，我可以给出具体的接口设计和前端改动点。
