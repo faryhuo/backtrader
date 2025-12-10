@@ -5,8 +5,11 @@ import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm'
 import PerformanceOverview from '../components/RunStrategy/PerformanceOverview'
 import TradeLog from '../components/RunStrategy/TradeLog'
 import StrategyPlot from '../components/RunStrategy/StrategyPlot'
+import { RobotOutlined } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 
 function RunStrategy() {
+    const { t } = useTranslation();
     // Backtest State
     const [ticker, setTicker] = useState('AAPL')
     const [startDate, setStartDate] = useState('2022-01-01')
@@ -99,8 +102,8 @@ function RunStrategy() {
                 error={error}
             />
 
-            {result && (
-                <>
+            {result ? (
+                <div className="results-animate-in">
                     <PerformanceOverview result={result} />
 
                     <TradeLog trades={tradeList} />
@@ -112,7 +115,15 @@ function RunStrategy() {
                         endDate={endDate}
                         strategyName={selectedStrategy}
                     />
-                </>
+                </div>
+            ) : (
+                <div className="empty-state-container">
+                    <div className="empty-state-icon">
+                        <RobotOutlined />
+                    </div>
+                    <h3>{t('config_form.ready_to_run', 'Ready to Backtest')}</h3>
+                    <p>{t('config_form.select_strategy_hint', 'Configure your parameters above and hit "Run Backtest" to see AI-powered analysis.')}</p>
+                </div>
             )}
         </div>
     )
