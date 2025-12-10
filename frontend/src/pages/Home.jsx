@@ -9,9 +9,9 @@ import './Home.css';
 const { Title, Paragraph } = Typography;
 
 /**
- * Home/Login Page
+ * Login Page
  *
- * Landing page for unauthenticated users.
+ * Login page for unauthenticated users.
  * Provides login button to initiate Logto authentication flow.
  * Automatically redirects authenticated users to the app.
  */
@@ -20,10 +20,10 @@ export function Home() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Redirect to app if already authenticated
+  // Redirect to main app if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/app');
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 

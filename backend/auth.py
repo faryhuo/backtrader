@@ -1,281 +1,179 @@
 """
-Logto Authentication Module
+Token-based authentication helpers.
 
-This module provides JWT token verification for user authentication
-from the frontend SPA using Logto as the identity provider.
+The backend no longer relies on the Logto SDK config; instead it validates
+incoming Bearer tokens via Logto's JWKS endpoint using python-jose.
 """
 
+from __future__ import annotations
+
 import os
-import json
-from typing import Optional, Dict, Any
 from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
 import requests
-from jose import jwt, JWTError
-from jose.exceptions import ExpiredSignatureError, JWTClaimsError
-from fastapi import HTTPException, Security, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from dotenv import load_dotenv
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
-# Load environment variables
-load_dotenv()
+# Default Logto tenant endpoints. They can be overridden via environment variables.
+LOGTO_ISSUER = os.getenv("LOGTO_ISSUER", "https://logto.fary.chat/oidc")
+LOGTO_JWKS_URI = os.getenv("LOGTO_JWKS_URI", "https://logto.fary.chat/oidc/jwks")
+LOGTO_AUDIENCE = os.getenv("LOGTO_AUDIENCE", "http://localhost:8000/api")
+LOGTO_REQUIRED_SCOPES: List[str] = [
+    scope.strip()
+    for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
+    if scope.strip()
+]
 
-# Security schemes for Bearer token
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
 
 
-class LogtoConfig:
-    """Logto configuration loaded from environment variables"""
+class AuthError(HTTPException):
+    """Standardized authentication error compatible with FastAPI."""
 
-    def __init__(self):
-        self.endpoint = os.getenv("LOGTO_ENDPOINT")
-        self.app_id = os.getenv("LOGTO_APP_ID")
-        self.audience = os.getenv("LOGTO_AUDIENCE", "http://localhost:8000")
-
-        # Validate required configuration
-        if not all([self.endpoint, self.app_id]):
-            raise ValueError(
-                "Missing required Logto configuration. "
-                "Please set LOGTO_ENDPOINT and LOGTO_APP_ID in .env file"
-            )
-
-    @property
-    def jwks_uri(self) -> str:
-        """Get JWKS URI for token verification"""
-        return f"{self.endpoint}/oidc/jwks"
-
-    @property
-    def issuer(self) -> str:
-        """Get issuer URI"""
-        return f"{self.endpoint}/oidc"
+    def __init__(self, code: str, status_code: int = 401, message: Optional[str] = None):
+        detail: Dict[str, Any] = {"code": code}
+        if message:
+            detail["message"] = message
+        super().__init__(status_code=status_code, detail=detail)
 
 
-# Global config instance
-_config: Optional[LogtoConfig] = None
+def get_auth_token(credentials: Optional[HTTPAuthorizationCredentials]) -> str:
+    """
+    Extract and validate the Authorization header.
+    """
+    if not credentials:
+        raise AuthError("auth.authorization_header_missing")
 
+    if credentials.scheme.lower() != "bearer":
+        raise AuthError("auth.authorization_token_type_not_supported")
 
-def get_logto_config() -> LogtoConfig:
-    """Get or initialize Logto configuration"""
-    global _config
-    if _config is None:
-        _config = LogtoConfig()
-    return _config
+    token = credentials.credentials
+    if not token:
+        raise AuthError("auth.authorization_token_invalid_format")
+
+    return token
 
 
 @lru_cache(maxsize=1)
-def get_jwks(jwks_uri: str) -> Dict[str, Any]:
+def fetch_jwks() -> Dict[str, Any]:
     """
-    Fetch JSON Web Key Set (JWKS) from Logto endpoint.
-    Cached to avoid repeated requests.
-
-    Args:
-        jwks_uri: The JWKS endpoint URL
-
-    Returns:
-        Dictionary containing JWKS data
-
-    Raises:
-        HTTPException: If JWKS cannot be fetched
+    Download JWKS metadata from Logto. Cached for efficiency.
     """
     try:
-        response = requests.get(jwks_uri, timeout=10)
+        response = requests.get(LOGTO_JWKS_URI, timeout=10)
         response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch JWKS from Logto: {str(e)}"
-        )
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=500, detail=f"Unable to fetch JWKS: {exc}") from exc
+
+    return response.json()
 
 
-def get_signing_key(token: str, jwks_uri: str) -> str:
+def get_signing_key(token: str) -> Dict[str, Any]:
     """
-    Get the signing key from JWKS for the given token.
-
-    Args:
-        token: JWT token to verify
-        jwks_uri: JWKS endpoint URL
-
-    Returns:
-        The signing key as a string
-
-    Raises:
-        HTTPException: If signing key cannot be found
+    Find the signing key in the JWKS that matches the JWT header.
     """
     try:
-        # Get unverified header to find the key ID
-        unverified_header = jwt.get_unverified_header(token)
-        kid = unverified_header.get("kid")
+        header = jwt.get_unverified_header(token)
+    except JWTError as exc:
+        raise AuthError("auth.invalid_token_header", message=str(exc)) from exc
 
-        if not kid:
-            raise HTTPException(
-                status_code=401,
-                detail="Token missing key ID (kid)"
-            )
+    kid = header.get("kid")
+    if not kid:
+        raise AuthError("auth.invalid_token", message="Missing key identifier (kid)")
 
-        # Fetch JWKS
-        jwks = get_jwks(jwks_uri)
+    jwks = fetch_jwks()
+    for key in jwks.get("keys", []):
+        if key.get("kid") == kid:
+            return key
 
-        # Find the matching key
-        for key in jwks.get("keys", []):
-            if key.get("kid") == kid:
-                return json.dumps(key)
+    # JWKS may have rotated; invalidate the cache and retry once.
+    fetch_jwks.cache_clear()
+    jwks = fetch_jwks()
+    for key in jwks.get("keys", []):
+        if key.get("kid") == kid:
+            return key
 
-        raise HTTPException(
-            status_code=401,
-            detail="Unable to find matching signing key"
+    raise AuthError("auth.invalid_token", message="Signing key not found")
+
+
+def validate_scopes(claims: Dict[str, Any]) -> None:
+    """
+    Ensure the JWT contains the required scopes if configured.
+    """
+    if not LOGTO_REQUIRED_SCOPES:
+        return
+
+    token_scopes = set(str(claims.get("scope", "")).split())
+    missing = [scope for scope in LOGTO_REQUIRED_SCOPES if scope not in token_scopes]
+    if missing:
+        raise AuthError(
+            "auth.insufficient_scope",
+            status_code=403,
+            message=f"Missing scopes: {', '.join(missing)}",
         )
 
-    except JWTError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Invalid token header: {str(e)}"
-        )
 
-
-def verify_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
+def verify_token(token: str) -> Dict[str, Any]:
     """
-    Verify and decode JWT token from Logto.
-
-    Args:
-        token: The JWT token to verify
-        config: Logto configuration
-
-    Returns:
-        Decoded token claims as dictionary
-
-    Raises:
-        HTTPException: If token is invalid, expired, or verification fails
+    Decode and validate the JWT using python-jose.
     """
+    key = get_signing_key(token)
+    header = jwt.get_unverified_header(token)
+    algorithm = header.get("alg")
+    if not algorithm:
+        raise AuthError("auth.invalid_token", message="Missing signing algorithm")
+
     try:
-        # Get signing key
-        signing_key = get_signing_key(token, config.jwks_uri)
-
-        # Verify and decode token
-        payload = jwt.decode(
+        claims = jwt.decode(
             token,
-            signing_key,
-            algorithms=["RS256"],
-            audience=config.audience,
-            issuer=config.issuer,
-            options={
-                "verify_signature": True,
-                "verify_aud": True,
-                "verify_iss": True,
-                "verify_exp": True,
-            }
+            key,
+            algorithms=[algorithm],
+            audience=LOGTO_AUDIENCE,
+            issuer=LOGTO_ISSUER,
+            options={"verify_at_hash": False},
         )
-
-        return payload
-
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired"
-        )
-    except JWTClaimsError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Invalid token claims: {str(e)}"
-        )
-    except JWTError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Token verification failed: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Authentication error: {str(e)}"
-        )
+        validate_scopes(claims)
+        return claims
+    except ExpiredSignatureError as exc:
+        raise AuthError("auth.token_expired", message="Token has expired") from exc
+    except JWTClaimsError as exc:
+        raise AuthError("auth.invalid_claims", message=str(exc)) from exc
+    except JWTError as exc:
+        raise AuthError("auth.invalid_token", message=str(exc)) from exc
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """
-    FastAPI dependency to get current authenticated user.
-
-    This dependency can be used in route handlers to enforce authentication:
-
-    @router.get("/protected")
-    async def protected_route(user: dict = Depends(get_current_user)):
-        return {"user_id": user["sub"]}
-
-    Args:
-        credentials: HTTP Authorization credentials (Bearer token)
-
-    Returns:
-        User information from token claims containing:
-        - sub: User ID (subject)
-        - aud: Audience
-        - iss: Issuer
-        - exp: Expiration timestamp
-        - iat: Issued at timestamp
-        - Other custom claims
-
-    Raises:
-        HTTPException 401: If token is missing or invalid
+    FastAPI dependency to require authentication on an endpoint.
     """
-    if not credentials:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing authorization credentials"
-        )
-
-    token = credentials.credentials
-
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing access token"
-        )
-
-    # Get config and verify token
-    config = get_logto_config()
-    user_claims = verify_token(token, config)
-
-    return user_claims
+    token = get_auth_token(credentials)
+    return verify_token(token)
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(optional_security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
 ) -> Optional[Dict[str, Any]]:
     """
-    FastAPI dependency to get current user if authenticated, None otherwise.
-
-    Useful for endpoints that have optional authentication.
-
-    Args:
-        credentials: HTTP Authorization credentials (Bearer token)
-
-    Returns:
-        User claims if authenticated, None otherwise
+    Optional authentication dependency.
     """
     if not credentials:
         return None
 
     try:
-        config = get_logto_config()
-        return verify_token(credentials.credentials, config)
+        token = get_auth_token(credentials)
+        return verify_token(token)
     except HTTPException:
         return None
 
 
 def require_user(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
-    Simplified dependency that just requires authentication.
-
-    Usage:
-    @router.get("/protected", dependencies=[Depends(require_user)])
-    async def protected_route():
-        return {"message": "authenticated"}
-
-    Args:
-        user: User claims from get_current_user
-
-    Returns:
-        User claims
+    Dependency helper mirroring the previous interface.
     """
     return user

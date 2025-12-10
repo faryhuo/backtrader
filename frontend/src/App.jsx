@@ -28,25 +28,20 @@ function AppContent() {
 
     return (
         <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Home />} />
             <Route path="/callback" element={<Callback />} />
 
-            {/* Protected routes - nested under /app */}
             <Route
-                path="/app/*"
                 element={
                     <PrivateRoute>
-                        <Layout>
-                            <Routes>
-                                <Route index element={<RunStrategy />} />
-                                <Route path="maintain" element={<StrategyMaintain />} />
-                                <Route path="datasource" element={<DataSource />} />
-                            </Routes>
-                        </Layout>
+                        <Layout />
                     </PrivateRoute>
                 }
-            />
+            >
+                <Route index element={<RunStrategy />} />
+                <Route path="maintain" element={<StrategyMaintain />} />
+                <Route path="datasource" element={<DataSource />} />
+            </Route>
         </Routes>
     )
 }
