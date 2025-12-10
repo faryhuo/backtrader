@@ -1,17 +1,14 @@
 """
 Logto Authentication Module
 
-This module provides both user authentication and M2M authentication:
-- User authentication: Validates JWT tokens from frontend users
-- M2M authentication: Obtains tokens for backend-to-backend API calls
+This module provides JWT token verification for user authentication
+from the frontend SPA using Logto as the identity provider.
 """
 
 import os
 import json
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
 from functools import lru_cache
-import time
 
 import requests
 from jose import jwt, JWTError
@@ -29,26 +26,18 @@ optional_security = HTTPBearer(auto_error=False)
 
 
 class LogtoConfig:
-    """Unified Logto configuration for both user auth and M2M"""
+    """Logto configuration loaded from environment variables"""
 
     def __init__(self):
         self.endpoint = os.getenv("LOGTO_ENDPOINT")
+        self.app_id = os.getenv("LOGTO_APP_ID")
+        self.audience = os.getenv("LOGTO_AUDIENCE", "http://localhost:8000")
 
-        # User authentication (SPA)
-        self.spa_app_id = os.getenv("LOGTO_SPA_APP_ID")
-
-        # M2M authentication
-        self.m2m_app_id = os.getenv("LOGTO_M2M_APP_ID")
-        self.m2m_app_secret = os.getenv("LOGTO_M2M_APP_SECRET")
-
-        # API resource
-        self.api_resource = os.getenv("LOGTO_API_RESOURCE", "http://localhost:8000")
-
-        # Validate required configuration for user auth
-        if not all([self.endpoint, self.spa_app_id]):
+        # Validate required configuration
+        if not all([self.endpoint, self.app_id]):
             raise ValueError(
                 "Missing required Logto configuration. "
-                "Please set LOGTO_ENDPOINT and LOGTO_SPA_APP_ID in .env file"
+                "Please set LOGTO_ENDPOINT and LOGTO_APP_ID in .env file"
             )
 
     @property
@@ -61,24 +50,9 @@ class LogtoConfig:
         """Get issuer URI"""
         return f"{self.endpoint}/oidc"
 
-    @property
-    def token_endpoint(self) -> str:
-        """Get token endpoint for M2M authentication"""
-        return f"{self.endpoint}/oidc/token"
-
-    def has_m2m_config(self) -> bool:
-        """Check if M2M configuration is available"""
-        return bool(self.m2m_app_id and self.m2m_app_secret)
-
 
 # Global config instance
 _config: Optional[LogtoConfig] = None
-
-# M2M token cache
-_m2m_token_cache: Dict[str, Any] = {
-    "access_token": None,
-    "expires_at": 0
-}
 
 
 def get_logto_config() -> LogtoConfig:
@@ -160,9 +134,9 @@ def get_signing_key(token: str, jwks_uri: str) -> str:
         )
 
 
-def verify_user_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
+def verify_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
     """
-    Verify and decode user JWT token from Logto (from frontend).
+    Verify and decode JWT token from Logto.
 
     Args:
         token: The JWT token to verify
@@ -183,7 +157,7 @@ def verify_user_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
             token,
             signing_key,
             algorithms=["RS256"],
-            audience=config.api_resource,
+            audience=config.audience,
             issuer=config.issuer,
             options={
                 "verify_signature": True,
@@ -217,92 +191,29 @@ def verify_user_token(token: str, config: LogtoConfig) -> Dict[str, Any]:
         )
 
 
-def obtain_m2m_token(config: LogtoConfig) -> str:
-    """
-    Obtain M2M access token using client credentials flow.
-
-    This is used for backend-to-backend API calls, not for user authentication.
-
-    Args:
-        config: Logto configuration
-
-    Returns:
-        Access token string
-
-    Raises:
-        HTTPException: If token request fails or M2M is not configured
-    """
-    if not config.has_m2m_config():
-        raise HTTPException(
-            status_code=500,
-            detail="M2M authentication not configured. Set LOGTO_M2M_APP_ID and LOGTO_M2M_APP_SECRET"
-        )
-
-    global _m2m_token_cache
-
-    # Check if we have a valid cached token
-    current_time = time.time()
-    if _m2m_token_cache["access_token"] and current_time < _m2m_token_cache["expires_at"]:
-        return _m2m_token_cache["access_token"]
-
-    # Request new token using client credentials
-    try:
-        response = requests.post(
-            config.token_endpoint,
-            data={
-                "grant_type": "client_credentials",
-                "resource": config.api_resource,
-                "scope": ""
-            },
-            auth=(config.m2m_app_id, config.m2m_app_secret),
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            timeout=10
-        )
-        response.raise_for_status()
-
-        token_data = response.json()
-        access_token = token_data.get("access_token")
-        expires_in = token_data.get("expires_in", 3600)
-
-        if not access_token:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to obtain access token from Logto"
-            )
-
-        # Cache token with 5-minute buffer before expiration
-        _m2m_token_cache["access_token"] = access_token
-        _m2m_token_cache["expires_at"] = current_time + expires_in - 300
-
-        return access_token
-
-    except requests.RequestException as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to obtain M2M token: {str(e)}"
-        )
-
-
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(security)
 ) -> Dict[str, Any]:
     """
     FastAPI dependency to get current authenticated user.
 
-    This validates the JWT token from the frontend user.
+    This dependency can be used in route handlers to enforce authentication:
 
-    Usage:
-        @router.get("/protected")
-        async def protected_route(user: dict = Depends(get_current_user)):
-            return {"user_id": user["sub"]}
+    @router.get("/protected")
+    async def protected_route(user: dict = Depends(get_current_user)):
+        return {"user_id": user["sub"]}
 
     Args:
         credentials: HTTP Authorization credentials (Bearer token)
 
     Returns:
-        User information from token claims
+        User information from token claims containing:
+        - sub: User ID (subject)
+        - aud: Audience
+        - iss: Issuer
+        - exp: Expiration timestamp
+        - iat: Issued at timestamp
+        - Other custom claims
 
     Raises:
         HTTPException 401: If token is missing or invalid
@@ -323,7 +234,7 @@ async def get_current_user(
 
     # Get config and verify token
     config = get_logto_config()
-    user_claims = verify_user_token(token, config)
+    user_claims = verify_token(token, config)
 
     return user_claims
 
@@ -333,6 +244,8 @@ async def get_optional_user(
 ) -> Optional[Dict[str, Any]]:
     """
     FastAPI dependency to get current user if authenticated, None otherwise.
+
+    Useful for endpoints that have optional authentication.
 
     Args:
         credentials: HTTP Authorization credentials (Bearer token)
@@ -345,38 +258,9 @@ async def get_optional_user(
 
     try:
         config = get_logto_config()
-        return verify_user_token(credentials.credentials, config)
+        return verify_token(credentials.credentials, config)
     except HTTPException:
         return None
-
-
-async def get_m2m_token() -> str:
-    """
-    FastAPI dependency to get M2M access token.
-
-    This is for backend services that need to call external protected APIs.
-
-    Usage:
-        @router.get("/external-api")
-        async def call_external_api(token: str = Depends(get_m2m_token)):
-            headers = {"Authorization": f"Bearer {token}"}
-            # Make API call with token
-
-    Returns:
-        Valid M2M access token
-
-    Raises:
-        HTTPException: If token cannot be obtained
-    """
-    config = get_logto_config()
-    return obtain_m2m_token(config)
-
-
-def clear_m2m_token_cache():
-    """Clear the cached M2M token (for testing or forced refresh)"""
-    global _m2m_token_cache
-    _m2m_token_cache["access_token"] = None
-    _m2m_token_cache["expires_at"] = 0
 
 
 def require_user(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
@@ -384,9 +268,9 @@ def require_user(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, 
     Simplified dependency that just requires authentication.
 
     Usage:
-        @router.get("/protected", dependencies=[Depends(require_user)])
-        async def protected_route():
-            return {"message": "authenticated"}
+    @router.get("/protected", dependencies=[Depends(require_user)])
+    async def protected_route():
+        return {"message": "authenticated"}
 
     Args:
         user: User claims from get_current_user
