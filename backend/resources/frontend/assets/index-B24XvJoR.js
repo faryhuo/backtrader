@@ -7172,8 +7172,8 @@ const getPath = (object4, path2) => {
   if (!Object.prototype.hasOwnProperty.call(obj, k2)) return void 0;
   return obj[k2];
 };
-const getPathWithDefaults = (data2, defaultData, key) => {
-  const value = getPath(data2, key);
+const getPathWithDefaults = (data, defaultData, key) => {
+  const value = getPath(data, key);
   if (value !== void 0) {
     return value;
   }
@@ -7204,11 +7204,11 @@ var _entityMap = {
   "'": "&#39;",
   "/": "&#x2F;"
 };
-const escape$1 = (data2) => {
-  if (isString$2(data2)) {
-    return data2.replace(/[&<>"'\/]/g, (s) => _entityMap[s]);
+const escape$1 = (data) => {
+  if (isString$2(data)) {
+    return data.replace(/[&<>"'\/]/g, (s) => _entityMap[s]);
   }
-  return data2;
+  return data;
 };
 class RegExpCache {
   constructor(capacity) {
@@ -7378,12 +7378,12 @@ class EventEmitter {
   }
 }
 class ResourceStore extends EventEmitter {
-  constructor(data2, options = {
+  constructor(data, options = {
     ns: ["translation"],
     defaultNS: "translation"
   }) {
     super();
-    this.data = data2 || {};
+    this.data = data || {};
     this.options = options;
     if (this.options.keySeparator === void 0) {
       this.options.keySeparator = ".";
@@ -7499,9 +7499,9 @@ class ResourceStore extends EventEmitter {
     return this.data[lng];
   }
   hasLanguageSomeTranslations(lng) {
-    const data2 = this.getDataByLanguage(lng);
-    const n = data2 && Object.keys(data2) || [];
-    return !!n.find((v2) => data2[v2] && Object.keys(data2[v2]).length > 0);
+    const data = this.getDataByLanguage(lng);
+    const n = data && Object.keys(data) || [];
+    return !!n.find((v2) => data[v2] && Object.keys(data[v2]).length > 0);
   }
   toJSON() {
     return this.data;
@@ -7819,12 +7819,12 @@ class Translator extends EventEmitter {
         const nb = res.match(this.interpolator.nestingRegexp);
         nestBef = nb && nb.length;
       }
-      let data2 = opt.replace && !isString$2(opt.replace) ? opt.replace : opt;
-      if (this.options.interpolation.defaultVariables) data2 = {
+      let data = opt.replace && !isString$2(opt.replace) ? opt.replace : opt;
+      if (this.options.interpolation.defaultVariables) data = {
         ...this.options.interpolation.defaultVariables,
-        ...data2
+        ...data
       };
-      res = this.interpolator.interpolate(res, data2, opt.lng || this.language || resolved.usedLng, opt);
+      res = this.interpolator.interpolate(res, data, opt.lng || this.language || resolved.usedLng, opt);
       if (skipOnVariables) {
         const na = res.match(this.interpolator.nestingRegexp);
         const nestAft = na && na.length;
@@ -7943,25 +7943,25 @@ class Translator extends EventEmitter {
   getUsedParamsDetails(options = {}) {
     const optionsKeys = ["defaultValue", "ordinal", "context", "replace", "lng", "lngs", "fallbackLng", "ns", "keySeparator", "nsSeparator", "returnObjects", "returnDetails", "joinArrays", "postProcess", "interpolation"];
     const useOptionsReplaceForData = options.replace && !isString$2(options.replace);
-    let data2 = useOptionsReplaceForData ? options.replace : options;
+    let data = useOptionsReplaceForData ? options.replace : options;
     if (useOptionsReplaceForData && typeof options.count !== "undefined") {
-      data2.count = options.count;
+      data.count = options.count;
     }
     if (this.options.interpolation.defaultVariables) {
-      data2 = {
+      data = {
         ...this.options.interpolation.defaultVariables,
-        ...data2
+        ...data
       };
     }
     if (!useOptionsReplaceForData) {
-      data2 = {
-        ...data2
+      data = {
+        ...data
       };
       for (const key of optionsKeys) {
-        delete data2[key];
+        delete data[key];
       }
     }
-    return data2;
+    return data;
   }
   static hasDefaultValue(options) {
     const prefix2 = "defaultValue";
@@ -8158,10 +8158,10 @@ class PluralResolver {
     return this.getSuffix("dev", count, options);
   }
 }
-const deepFindWithDefaults = (data2, defaultData, key, keySeparator = ".", ignoreJSONStructure = true) => {
-  let path2 = getPathWithDefaults(data2, defaultData, key);
+const deepFindWithDefaults = (data, defaultData, key, keySeparator = ".", ignoreJSONStructure = true) => {
+  let path2 = getPathWithDefaults(data, defaultData, key);
   if (!path2 && ignoreJSONStructure && isString$2(key)) {
-    path2 = deepFind(data2, key, keySeparator);
+    path2 = deepFind(data, key, keySeparator);
     if (path2 === void 0) path2 = deepFind(defaultData, key, keySeparator);
   }
   return path2;
@@ -8228,7 +8228,7 @@ class Interpolator {
     this.regexpUnescape = getOrResetRegExp(this.regexpUnescape, `${this.prefix}${this.unescapePrefix}(.+?)${this.unescapeSuffix}${this.suffix}`);
     this.nestingRegexp = getOrResetRegExp(this.nestingRegexp, `${this.nestingPrefix}((?:[^()"']+|"[^"]*"|'[^']*'|\\((?:[^()]|"[^"]*"|'[^']*')*\\))*?)${this.nestingSuffix}`);
   }
-  interpolate(str, data2, lng, options) {
+  interpolate(str, data, lng, options) {
     var _a2;
     let match2;
     let value;
@@ -8236,19 +8236,19 @@ class Interpolator {
     const defaultData = this.options && this.options.interpolation && this.options.interpolation.defaultVariables || {};
     const handleFormat = (key) => {
       if (key.indexOf(this.formatSeparator) < 0) {
-        const path2 = deepFindWithDefaults(data2, defaultData, key, this.options.keySeparator, this.options.ignoreJSONStructure);
+        const path2 = deepFindWithDefaults(data, defaultData, key, this.options.keySeparator, this.options.ignoreJSONStructure);
         return this.alwaysFormat ? this.format(path2, void 0, lng, {
           ...options,
-          ...data2,
+          ...data,
           interpolationkey: key
         }) : path2;
       }
       const p2 = key.split(this.formatSeparator);
       const k2 = p2.shift().trim();
       const f2 = p2.join(this.formatSeparator).trim();
-      return this.format(deepFindWithDefaults(data2, defaultData, k2, this.options.keySeparator, this.options.ignoreJSONStructure), f2, lng, {
+      return this.format(deepFindWithDefaults(data, defaultData, k2, this.options.keySeparator, this.options.ignoreJSONStructure), f2, lng, {
         ...options,
-        ...data2,
+        ...data,
         interpolationkey: k2
       });
     };
@@ -8561,18 +8561,18 @@ class Connector extends EventEmitter {
       toLoadNamespaces: Object.keys(toLoadNamespaces)
     };
   }
-  loaded(name2, err, data2) {
+  loaded(name2, err, data) {
     const s = name2.split("|");
     const lng = s[0];
     const ns2 = s[1];
     if (err) this.emit("failedLoading", lng, ns2, err);
-    if (!err && data2) {
-      this.store.addResourceBundle(lng, ns2, data2, void 0, void 0, {
+    if (!err && data) {
+      this.store.addResourceBundle(lng, ns2, data, void 0, void 0, {
         skipCopy: true
       });
     }
     this.state[name2] = err ? -1 : 2;
-    if (err && data2) this.state[name2] = 0;
+    if (err && data) this.state[name2] = 0;
     const loaded = {};
     this.queue.forEach((q2) => {
       pushPath(q2.loaded, [lng], ns2);
@@ -8613,26 +8613,26 @@ class Connector extends EventEmitter {
       return;
     }
     this.readingCalls++;
-    const resolver2 = (err, data2) => {
+    const resolver2 = (err, data) => {
       this.readingCalls--;
       if (this.waitingReads.length > 0) {
         const next2 = this.waitingReads.shift();
         this.read(next2.lng, next2.ns, next2.fcName, next2.tried, next2.wait, next2.callback);
       }
-      if (err && data2 && tried < this.maxRetries) {
+      if (err && data && tried < this.maxRetries) {
         setTimeout(() => {
           this.read.call(this, lng, ns2, fcName, tried + 1, wait * 2, callback);
         }, wait);
         return;
       }
-      callback(err, data2);
+      callback(err, data);
     };
     const fc = this.backend[fcName].bind(this.backend);
     if (fc.length === 2) {
       try {
         const r2 = fc(lng, ns2);
         if (r2 && typeof r2.then === "function") {
-          r2.then((data2) => resolver2(null, data2)).catch(resolver2);
+          r2.then((data) => resolver2(null, data)).catch(resolver2);
         } else {
           resolver2(null, r2);
         }
@@ -8671,10 +8671,10 @@ class Connector extends EventEmitter {
     const s = name2.split("|");
     const lng = s[0];
     const ns2 = s[1];
-    this.read(lng, ns2, "read", void 0, void 0, (err, data2) => {
+    this.read(lng, ns2, "read", void 0, void 0, (err, data) => {
       if (err) this.logger.warn(`${prefix2}loading namespace ${ns2} for language ${lng} failed`, err);
-      if (!err && data2) this.logger.log(`${prefix2}loaded namespace ${ns2} for language ${lng}`, data2);
-      this.loaded(name2, err, data2);
+      if (!err && data) this.logger.log(`${prefix2}loaded namespace ${ns2} for language ${lng}`, data);
+      this.loaded(name2, err, data);
     });
   }
   saveMissing(languages, namespace, key, fallbackValue, isUpdate, options = {}, clb = () => {
@@ -8700,7 +8700,7 @@ class Connector extends EventEmitter {
             r2 = fc(languages, namespace, key, fallbackValue);
           }
           if (r2 && typeof r2.then === "function") {
-            r2.then((data2) => clb(null, data2)).catch(clb);
+            r2.then((data) => clb(null, data)).catch(clb);
           } else {
             clb(null, r2);
           }
@@ -12981,7 +12981,7 @@ const urlSafeBase64 = {
   replaceNonUrlSafeCharacters,
   restoreNonUrlSafeCharacters
 };
-const isArbitraryObject = (data2) => typeof data2 === "object" && data2 !== null;
+const isArbitraryObject = (data) => typeof data === "object" && data !== null;
 const logtoErrorCodes = Object.freeze({
   "id_token.invalid_iat": "Invalid issued at time in the ID token",
   "id_token.invalid_token": "Invalid ID token",
@@ -12994,18 +12994,18 @@ const logtoErrorCodes = Object.freeze({
   unexpected_response_error: "Unexpected response error from the server."
 });
 class LogtoError extends Error {
-  constructor(code2, data2) {
+  constructor(code2, data) {
     super(logtoErrorCodes[code2]);
     this.code = code2;
-    this.data = data2;
+    this.data = data;
     this.name = "LogtoError";
   }
 }
-const isLogtoRequestErrorJson = (data2) => {
-  if (!isArbitraryObject(data2)) {
+const isLogtoRequestErrorJson = (data) => {
+  if (!isArbitraryObject(data)) {
     return false;
   }
-  return typeof data2.code === "string" && typeof data2.message === "string";
+  return typeof data.code === "string" && typeof data.message === "string";
 };
 class LogtoRequestError extends Error {
   constructor(code2, message2, cause) {
@@ -13049,33 +13049,33 @@ const verifyAndParseCodeFromCallbackUri = (callbackUri, redirectUri, state) => {
   }
   return code2;
 };
-function assertIdTokenClaims(data2) {
-  if (!isArbitraryObject(data2)) {
+function assertIdTokenClaims(data) {
+  if (!isArbitraryObject(data)) {
     throw new TypeError("IdToken is expected to be an object");
   }
   for (const key of ["iss", "sub", "aud"]) {
-    if (typeof data2[key] !== "string") {
+    if (typeof data[key] !== "string") {
       throw new TypeError(`At path: IdToken.${key}: expected a string`);
     }
   }
   for (const key of ["exp", "iat"]) {
-    if (typeof data2[key] !== "number") {
+    if (typeof data[key] !== "number") {
       throw new TypeError(`At path: IdToken.${key}: expected a number`);
     }
   }
   for (const key of ["at_hash", "name", "username", "picture", "email", "phone_number"]) {
-    if (data2[key] === void 0) {
+    if (data[key] === void 0) {
       continue;
     }
-    if (typeof data2[key] !== "string" && data2[key] !== null) {
+    if (typeof data[key] !== "string" && data[key] !== null) {
       throw new TypeError(`At path: IdToken.${key}: expected null or a string`);
     }
   }
   for (const key of ["email_verified", "phone_number_verified"]) {
-    if (data2[key] === void 0) {
+    if (data[key] === void 0) {
       continue;
     }
-    if (typeof data2[key] !== "boolean") {
+    if (typeof data[key] !== "boolean") {
       throw new TypeError(`At path: IdToken.${key}: expected a boolean`);
     }
   }
@@ -13090,23 +13090,23 @@ const decodeIdToken = (token2) => {
   assertIdTokenClaims(idTokenClaims2);
   return idTokenClaims2;
 };
-function assertAccessTokenClaims(data2) {
-  if (!isArbitraryObject(data2)) {
+function assertAccessTokenClaims(data) {
+  if (!isArbitraryObject(data)) {
     throw new TypeError("AccessToken is expected to be an object");
   }
   for (const key of ["jti", "iss", "sub", "aud", "client_id", "scope"]) {
-    if (data2[key] === void 0) {
+    if (data[key] === void 0) {
       continue;
     }
-    if (typeof data2[key] !== "string" && data2[key] !== null) {
+    if (typeof data[key] !== "string" && data[key] !== null) {
       throw new TypeError(`At path: AccessToken.${key}: expected null or a string`);
     }
   }
   for (const key of ["exp", "iat"]) {
-    if (data2[key] === void 0) {
+    if (data[key] === void 0) {
       continue;
     }
-    if (typeof data2[key] !== "number" && data2[key] !== null) {
+    if (typeof data[key] !== "number" && data[key] !== null) {
       throw new TypeError(`At path: AccessToken.${key}: expected null or a number`);
     }
   }
@@ -13797,12 +13797,12 @@ async function getCryptoKey(alg, key, usage) {
   }
   throw new TypeError(invalidKeyInput(key, ...types$2, "Uint8Array", "JSON Web Key"));
 }
-const verify = async (alg, key, signature, data2) => {
+const verify = async (alg, key, signature, data) => {
   const cryptoKey = await getCryptoKey(alg, key, "verify");
   checkKeyLength(alg, cryptoKey);
   const algorithm = subtleDsa(alg, cryptoKey.algorithm);
   try {
-    return await crypto$1.subtle.verify(algorithm, cryptoKey, signature, data2);
+    return await crypto$1.subtle.verify(algorithm, cryptoKey, signature, data);
   } catch {
     return false;
   }
@@ -13876,14 +13876,14 @@ async function flattenedVerify(jws, key, options) {
   } else {
     checkKeyTypeWithJwk(alg, key, "verify");
   }
-  const data2 = concat(encoder.encode(jws.protected ?? ""), encoder.encode("."), typeof jws.payload === "string" ? encoder.encode(jws.payload) : jws.payload);
+  const data = concat(encoder.encode(jws.protected ?? ""), encoder.encode("."), typeof jws.payload === "string" ? encoder.encode(jws.payload) : jws.payload);
   let signature;
   try {
     signature = decode$1(jws.signature);
   } catch {
     throw new JWSInvalid("Failed to base64url decode the signature");
   }
-  const verified = await verify(alg, key, signature, data2);
+  const verified = await verify(alg, key, signature, data);
   if (!verified) {
     throw new JWSSignatureVerificationFailed();
   }
@@ -14416,8 +14416,8 @@ class ClientAdapterInstance {
   async getCachedObject(key) {
     const cached = await trySafe(async () => {
       var _a2;
-      const data2 = await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.getItem(key));
-      return conditional(data2 && JSON.parse(data2));
+      const data = await ((_a2 = this.unstable_cache) == null ? void 0 : _a2.getItem(key));
+      return conditional(data && JSON.parse(data));
     });
     if (cached && typeof cached === "object") {
       return cached;
@@ -14449,11 +14449,11 @@ const logtoClientErrorCodes = Object.freeze({
   missing_scope_organizations: `The \`${UserScope.Organizations}\` scope is required`
 });
 class LogtoClientError extends Error {
-  constructor(code2, data2) {
+  constructor(code2, data) {
     super(logtoClientErrorCodes[code2]);
     this.name = "LogtoClientError";
     this.code = code2;
-    this.data = data2;
+    this.data = data;
   }
 }
 const normalizeLogtoConfig = (config2) => {
@@ -14466,17 +14466,17 @@ const normalizeLogtoConfig = (config2) => {
     resources: scopes.includes(UserScope.Organizations) ? deduplicate([...resources ?? [], ReservedResource.Organization]) : resources
   };
 };
-const isLogtoSignInSessionItem = (data2) => {
-  if (!isArbitraryObject(data2)) {
+const isLogtoSignInSessionItem = (data) => {
+  if (!isArbitraryObject(data)) {
     return false;
   }
-  return ["redirectUri", "codeVerifier", "state"].every((key) => typeof data2[key] === "string");
+  return ["redirectUri", "codeVerifier", "state"].every((key) => typeof data[key] === "string");
 };
-const isLogtoAccessTokenMap = (data2) => {
-  if (!isArbitraryObject(data2)) {
+const isLogtoAccessTokenMap = (data) => {
+  if (!isArbitraryObject(data)) {
     return false;
   }
-  return Object.values(data2).every((value) => {
+  return Object.values(data).every((value) => {
     if (!isArbitraryObject(value)) {
       return false;
     }
@@ -14753,11 +14753,11 @@ class StandardLogtoClient {
     return accessToken;
   }
   async saveAccessTokenMap() {
-    const data2 = {};
+    const data = {};
     for (const [key, accessToken] of this.accessTokenMap.entries()) {
-      data2[key] = accessToken;
+      data[key] = accessToken;
     }
-    await this.adapter.storage.setItem("accessToken", JSON.stringify(data2));
+    await this.adapter.storage.setItem("accessToken", JSON.stringify(data));
   }
   async loadAccessTokenMap() {
     const raw = await this.adapter.storage.getItem("accessToken");
@@ -15631,13 +15631,13 @@ function Collection({
   const resizeIdRef = reactExports.useRef(0);
   const resizeInfosRef = reactExports.useRef([]);
   const onCollectionResize = reactExports.useContext(CollectionContext);
-  const onResize2 = reactExports.useCallback((size2, element2, data2) => {
+  const onResize2 = reactExports.useCallback((size2, element2, data) => {
     resizeIdRef.current += 1;
     const currentId = resizeIdRef.current;
     resizeInfosRef.current.push({
       size: size2,
       element: element2,
-      data: data2
+      data
     });
     Promise.resolve().then(() => {
       if (currentId === resizeIdRef.current) {
@@ -15645,7 +15645,7 @@ function Collection({
         resizeInfosRef.current = [];
       }
     });
-    onCollectionResize == null ? void 0 : onCollectionResize(size2, element2, data2);
+    onCollectionResize == null ? void 0 : onCollectionResize(size2, element2, data);
   }, [onBatchResize, onCollectionResize]);
   return /* @__PURE__ */ reactExports.createElement(CollectionContext.Provider, {
     value: onResize2
@@ -15711,7 +15711,7 @@ function SingleObserver(props, ref) {
   const onInternalResize = reactExports.useCallback((target) => {
     const {
       onResize: onResize2,
-      data: data2
+      data
     } = propsRef.current;
     const {
       width,
@@ -15738,7 +15738,7 @@ function SingleObserver(props, ref) {
         offsetWidth: mergedOffsetWidth,
         offsetHeight: mergedOffsetHeight
       };
-      onCollectionResize == null ? void 0 : onCollectionResize(sizeInfo, target, data2);
+      onCollectionResize == null ? void 0 : onCollectionResize(sizeInfo, target, data);
       if (onResize2) {
         Promise.resolve().then(() => {
           onResize2(sizeInfo, target);
@@ -16418,8 +16418,8 @@ function useGlobalCache(prefix2, keyPath, cacheFn, onCacheRemove, onCacheEffect)
       const [times = 0, cache2] = prevCache || [void 0, void 0];
       let tmpCache = cache2;
       const mergedCache = tmpCache || cacheFn();
-      const data2 = [times, mergedCache];
-      return updater ? updater(data2) : data2;
+      const data = [times, mergedCache];
+      return updater ? updater(data) : data;
     });
   };
   reactExports.useMemo(
@@ -28250,11 +28250,11 @@ var Schema$1 = /* @__PURE__ */ (function() {
         });
       });
       var errorFields = {};
-      return asyncMap(series, options, function(data2, doIt) {
-        var rule = data2.rule;
+      return asyncMap(series, options, function(data, doIt) {
+        var rule = data.rule;
         var deep = (rule.type === "object" || rule.type === "array") && (_typeof$1(rule.fields) === "object" || _typeof$1(rule.defaultField) === "object");
-        deep = deep && (rule.required || !rule.required && data2.value);
-        rule.field = data2.field;
+        deep = deep && (rule.required || !rule.required && data.value);
+        rule.field = data.field;
         function addFullField(key, schema) {
           return _objectSpread2$2(_objectSpread2$2({}, schema), {}, {
             fullField: "".concat(rule.fullField, ".").concat(key),
@@ -28278,7 +28278,7 @@ var Schema$1 = /* @__PURE__ */ (function() {
           if (!deep) {
             doIt(filledErrors);
           } else {
-            if (rule.required && !data2.value) {
+            if (rule.required && !data.value) {
               if (rule.message !== void 0) {
                 filledErrors = [].concat(rule.message).map(complementError(rule, source));
               } else if (options.error) {
@@ -28288,11 +28288,11 @@ var Schema$1 = /* @__PURE__ */ (function() {
             }
             var fieldsSchema = {};
             if (rule.defaultField) {
-              Object.keys(data2.value).map(function(key) {
+              Object.keys(data.value).map(function(key) {
                 fieldsSchema[key] = rule.defaultField;
               });
             }
-            fieldsSchema = _objectSpread2$2(_objectSpread2$2({}, fieldsSchema), data2.rule.fields);
+            fieldsSchema = _objectSpread2$2(_objectSpread2$2({}, fieldsSchema), data.rule.fields);
             var paredFieldsSchema = {};
             Object.keys(fieldsSchema).forEach(function(field) {
               var fieldSchema = fieldsSchema[field];
@@ -28301,11 +28301,11 @@ var Schema$1 = /* @__PURE__ */ (function() {
             });
             var schema = new Schema2(paredFieldsSchema);
             schema.messages(options.messages);
-            if (data2.rule.options) {
-              data2.rule.options.messages = options.messages;
-              data2.rule.options.error = options.error;
+            if (data.rule.options) {
+              data.rule.options.messages = options.messages;
+              data.rule.options.error = options.error;
             }
-            schema.validate(data2.value, data2.rule.options || options, function(errs) {
+            schema.validate(data.value, data.rule.options || options, function(errs) {
               var finalErrors = [];
               if (filledErrors && filledErrors.length) {
                 finalErrors.push.apply(finalErrors, _toConsumableArray(filledErrors));
@@ -28319,10 +28319,10 @@ var Schema$1 = /* @__PURE__ */ (function() {
         }
         var res;
         if (rule.asyncValidator) {
-          res = rule.asyncValidator(rule, data2.value, cb, data2.source, options);
+          res = rule.asyncValidator(rule, data.value, cb, data.source, options);
         } else if (rule.validator) {
           try {
-            res = rule.validator(rule, data2.value, cb, data2.source, options);
+            res = rule.validator(rule, data.value, cb, data.source, options);
           } catch (error) {
             var _console$error, _console;
             (_console$error = (_console = console).error) === null || _console$error === void 0 || _console$error.call(_console, error);
@@ -28846,26 +28846,26 @@ class Field extends reactExports.Component {
         }
         case "setField": {
           const {
-            data: data2
+            data
           } = info;
           if (namePathMatch) {
-            if ("touched" in data2) {
-              this.touched = data2.touched;
+            if ("touched" in data) {
+              this.touched = data.touched;
             }
-            if ("validating" in data2 && !("originRCField" in data2)) {
-              this.validatePromise = data2.validating ? Promise.resolve([]) : null;
+            if ("validating" in data && !("originRCField" in data)) {
+              this.validatePromise = data.validating ? Promise.resolve([]) : null;
             }
-            if ("errors" in data2) {
-              this.errors = data2.errors || EMPTY_ERRORS;
+            if ("errors" in data) {
+              this.errors = data.errors || EMPTY_ERRORS;
             }
-            if ("warnings" in data2) {
-              this.warnings = data2.warnings || EMPTY_WARNINGS;
+            if ("warnings" in data) {
+              this.warnings = data.warnings || EMPTY_WARNINGS;
             }
             this.dirty = true;
             this.triggerMetaEvent();
             this.reRender();
             return;
-          } else if ("value" in data2 && containsNamePath(namePathList, namePath, true)) {
+          } else if ("value" in data && containsNamePath(namePathList, namePath, true)) {
             this.reRender();
             return;
           }
@@ -29795,12 +29795,12 @@ class FormStore {
       fields.forEach((fieldData) => {
         const {
           name: name2,
-          ...data2
+          ...data
         } = fieldData;
         const namePath = getNamePath(name2);
         namePathList.push(namePath);
-        if ("value" in data2) {
-          this.updateStore(set(this.store, namePath, data2.value));
+        if ("value" in data) {
+          this.updateStore(set(this.store, namePath, data.value));
         }
         this.notifyObservers(prevStore, [namePath], {
           type: "setField",
@@ -30767,7 +30767,7 @@ function defaultRenderRest(omittedItems) {
 function Overflow(props, ref) {
   const {
     prefixCls = "rc-overflow",
-    data: data2 = [],
+    data = [],
     renderItem,
     renderRawItem,
     itemKey,
@@ -30806,28 +30806,28 @@ function Overflow(props, ref) {
   const itemPrefixCls = `${prefixCls}-item`;
   const mergedRestWidth = Math.max(prevRestWidth, restWidth);
   const isResponsive = maxCount === RESPONSIVE;
-  const shouldResponsive = data2.length && isResponsive;
+  const shouldResponsive = data.length && isResponsive;
   const invalidate = maxCount === INVALIDATE;
-  const showRest = shouldResponsive || typeof maxCount === "number" && data2.length > maxCount;
+  const showRest = shouldResponsive || typeof maxCount === "number" && data.length > maxCount;
   const mergedData = reactExports.useMemo(() => {
-    let items = data2;
+    let items = data;
     if (shouldResponsive) {
       if (containerWidth === null && fullySSR) {
-        items = data2;
+        items = data;
       } else {
-        items = data2.slice(0, Math.min(data2.length, mergedContainerWidth / itemWidth));
+        items = data.slice(0, Math.min(data.length, mergedContainerWidth / itemWidth));
       }
     } else if (typeof maxCount === "number") {
-      items = data2.slice(0, maxCount);
+      items = data.slice(0, maxCount);
     }
     return items;
-  }, [data2, itemWidth, containerWidth, maxCount, shouldResponsive]);
+  }, [data, itemWidth, containerWidth, maxCount, shouldResponsive]);
   const omittedItems = reactExports.useMemo(() => {
     if (shouldResponsive) {
-      return data2.slice(mergedDisplayCount + 1);
+      return data.slice(mergedDisplayCount + 1);
     }
-    return data2.slice(mergedData.length);
-  }, [data2, mergedData, shouldResponsive, mergedDisplayCount]);
+    return data.slice(mergedData.length);
+  }, [data, mergedData, shouldResponsive, mergedDisplayCount]);
   const getKey = reactExports.useCallback((item, index2) => {
     if (typeof itemKey === "function") {
       return itemKey(item);
@@ -30841,7 +30841,7 @@ function Overflow(props, ref) {
     }
     setDisplayCount(count);
     if (!notReady) {
-      setRestReady(count < data2.length - 1);
+      setRestReady(count < data.length - 1);
       onVisibleChange == null ? void 0 : onVisibleChange(count);
     }
     if (suffixFixedStartVal !== void 0) {
@@ -41413,7 +41413,8 @@ const buildRequest = async (path2, options = {}) => {
   return fetch(`${API_URL}${path2}`, { ...options, headers });
 };
 const parseResponse = async (response) => {
-  if (!response.ok) {
+  const data = await response.json();
+  if (response.status !== 200) {
     if (response.status === 401) {
       console.error("Unauthorized - redirecting to login");
       const loginPath = "/login";
@@ -41429,8 +41430,8 @@ const parseResponse = async (response) => {
 const api$1 = {
   async getStrategies() {
     const res = await buildRequest("/strategies");
-    const data2 = await parseResponse(res);
-    return (data2 == null ? void 0 : data2.strategies) || [];
+    const data = await parseResponse(res);
+    return (data == null ? void 0 : data.strategies) || [];
   },
   async getStrategy(name2) {
     if (!name2) return null;
@@ -41515,8 +41516,8 @@ ${code2}`;
       headers,
       body: formData
     });
-    const data2 = await parseResponse(res);
-    return data2.analysis;
+    const data = await parseResponse(res);
+    return data.analysis;
   },
   async rewriteCode(code2, model = "gpt-4o") {
     const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:
@@ -41542,8 +41543,8 @@ ${code2}`;
       headers,
       body: formData
     });
-    const data2 = await parseResponse(res);
-    let cleanCode = data2.analysis;
+    const data = await parseResponse(res);
+    let cleanCode = data.analysis;
     if (cleanCode.startsWith("```python")) {
       cleanCode = cleanCode.replace(/^```python\n/, "").replace(/\n```$/, "");
     } else if (cleanCode.startsWith("```")) {
@@ -44192,9 +44193,9 @@ function initializeContent(effects) {
       previous2.next = token2;
     }
     previous2 = token2;
-    return data2(code2);
+    return data(code2);
   }
-  function data2(code2) {
+  function data(code2) {
     if (code2 === null) {
       effects.exit("chunkText");
       effects.exit("paragraph");
@@ -44207,7 +44208,7 @@ function initializeContent(effects) {
       return lineStart;
     }
     effects.consume(code2);
-    return data2;
+    return data;
   }
 }
 const document$2 = {
@@ -45124,15 +45125,15 @@ function tokenizeCodeText(effects, ok2, nok) {
       return between;
     }
     effects.enter("codeTextData");
-    return data2(code2);
+    return data(code2);
   }
-  function data2(code2) {
+  function data(code2) {
     if (code2 === null || code2 === 32 || code2 === 96 || markdownLineEnding(code2)) {
       effects.exit("codeTextData");
       return between(code2);
     }
     effects.consume(code2);
-    return data2;
+    return data;
   }
   function sequenceClose(code2) {
     if (code2 === 96) {
@@ -45146,7 +45147,7 @@ function tokenizeCodeText(effects, ok2, nok) {
       return ok2(code2);
     }
     token2.type = "codeTextData";
-    return data2(code2);
+    return data(code2);
   }
 }
 class SpliceBuffer {
@@ -45959,7 +45960,7 @@ function tokenizeHeadingAtx(effects, ok2, nok) {
       return factorySpace(effects, atBreak, "whitespace")(code2);
     }
     effects.enter("atxHeadingText");
-    return data2(code2);
+    return data(code2);
   }
   function sequenceFurther(code2) {
     if (code2 === 35) {
@@ -45969,13 +45970,13 @@ function tokenizeHeadingAtx(effects, ok2, nok) {
     effects.exit("atxHeadingSequence");
     return atBreak(code2);
   }
-  function data2(code2) {
+  function data(code2) {
     if (code2 === null || code2 === 35 || markdownLineEndingOrSpace(code2)) {
       effects.exit("atxHeadingText");
       return atBreak(code2);
     }
     effects.consume(code2);
-    return data2;
+    return data;
   }
 }
 const htmlBlockNames = [
@@ -47326,15 +47327,15 @@ function initializeFactory(field) {
       }
       effects.enter("data");
       effects.consume(code2);
-      return data2;
+      return data;
     }
-    function data2(code2) {
+    function data(code2) {
       if (atBreak(code2)) {
         effects.exit("data");
         return text2(code2);
       }
       effects.consume(code2);
-      return data2;
+      return data;
     }
     function atBreak(code2) {
       if (code2 === null) {
@@ -47381,8 +47382,8 @@ function resolveAllLineSuffixes(events, context) {
   let eventIndex = 0;
   while (++eventIndex <= events.length) {
     if ((eventIndex === events.length || events[eventIndex][1].type === "lineEnding") && events[eventIndex - 1][1].type === "data") {
-      const data2 = events[eventIndex - 1][1];
-      const chunks = context.sliceStream(data2);
+      const data = events[eventIndex - 1][1];
+      const chunks = context.sliceStream(data);
       let index2 = chunks.length;
       let bufferIndex = -1;
       let size2 = 0;
@@ -47413,21 +47414,21 @@ function resolveAllLineSuffixes(events, context) {
         const token2 = {
           type: eventIndex === events.length || tabs || size2 < 2 ? "lineSuffix" : "hardBreakTrailing",
           start: {
-            _bufferIndex: index2 ? bufferIndex : data2.start._bufferIndex + bufferIndex,
-            _index: data2.start._index + index2,
-            line: data2.end.line,
-            column: data2.end.column - size2,
-            offset: data2.end.offset - size2
+            _bufferIndex: index2 ? bufferIndex : data.start._bufferIndex + bufferIndex,
+            _index: data.start._index + index2,
+            line: data.end.line,
+            column: data.end.column - size2,
+            offset: data.end.offset - size2
           },
           end: {
-            ...data2.end
+            ...data.end
           }
         };
-        data2.end = {
+        data.end = {
           ...token2.start
         };
-        if (data2.start.offset === data2.end.offset) {
-          Object.assign(data2, token2);
+        if (data.start.offset === data.end.offset) {
+          Object.assign(data, token2);
         } else {
           events.splice(eventIndex, 0, ["enter", token2, context], ["exit", token2, context]);
           eventIndex += 2;
@@ -48055,7 +48056,7 @@ function compiler(options) {
     }
   };
   configure(config2, (options || {}).mdastExtensions || []);
-  const data2 = {};
+  const data = {};
   return compile2;
   function compile2(events) {
     let tree = {
@@ -48070,7 +48071,7 @@ function compiler(options) {
       exit: exit2,
       buffer,
       resume,
-      data: data2
+      data
     };
     const listStack = [];
     let index2 = -1;
@@ -48269,14 +48270,14 @@ function compiler(options) {
     }
   }
   function onexitcodefencedfenceinfo() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.lang = data3;
+    node2.lang = data2;
   }
   function onexitcodefencedfencemeta() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.meta = data3;
+    node2.meta = data2;
   }
   function onexitcodefencedfence() {
     if (this.data.flowCodeInside) return;
@@ -48284,15 +48285,15 @@ function compiler(options) {
     this.data.flowCodeInside = true;
   }
   function onexitcodefenced() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.value = data3.replace(/^(\r?\n|\r)|(\r?\n|\r)$/g, "");
+    node2.value = data2.replace(/^(\r?\n|\r)|(\r?\n|\r)$/g, "");
     this.data.flowCodeInside = void 0;
   }
   function onexitcodeindented() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.value = data3.replace(/(\r?\n|\r)$/g, "");
+    node2.value = data2.replace(/(\r?\n|\r)$/g, "");
   }
   function onexitdefinitionlabelstring(token2) {
     const label = this.resume();
@@ -48301,14 +48302,14 @@ function compiler(options) {
     node2.identifier = normalizeIdentifier(this.sliceSerialize(token2)).toLowerCase();
   }
   function onexitdefinitiontitlestring() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.title = data3;
+    node2.title = data2;
   }
   function onexitdefinitiondestinationstring() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.url = data3;
+    node2.url = data2;
   }
   function onexitatxheadingsequence(token2) {
     const node2 = this.stack[this.stack.length - 1];
@@ -48364,19 +48365,19 @@ function compiler(options) {
     this.data.atHardBreak = true;
   }
   function onexithtmlflow() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.value = data3;
+    node2.value = data2;
   }
   function onexithtmltext() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.value = data3;
+    node2.value = data2;
   }
   function onexitcodetext() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.value = data3;
+    node2.value = data2;
   }
   function onexitlink() {
     const node2 = this.stack[this.stack.length - 1];
@@ -48425,14 +48426,14 @@ function compiler(options) {
     }
   }
   function onexitresourcedestinationstring() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.url = data3;
+    node2.url = data2;
   }
   function onexitresourcetitlestring() {
-    const data3 = this.resume();
+    const data2 = this.resume();
     const node2 = this.stack[this.stack.length - 1];
-    node2.title = data3;
+    node2.title = data2;
   }
   function onexitresource() {
     this.data.inReference = void 0;
@@ -48451,14 +48452,14 @@ function compiler(options) {
     this.data.characterReferenceType = token2.type;
   }
   function onexitcharacterreferencevalue(token2) {
-    const data3 = this.sliceSerialize(token2);
+    const data2 = this.sliceSerialize(token2);
     const type4 = this.data.characterReferenceType;
     let value;
     if (type4) {
-      value = decodeNumericCharacterReference(data3, type4 === "characterReferenceMarkerNumeric" ? 10 : 16);
+      value = decodeNumericCharacterReference(data2, type4 === "characterReferenceMarkerNumeric" ? 10 : 16);
       this.data.characterReferenceType = void 0;
     } else {
-      const result = decodeNamedCharacterReference(data3);
+      const result = decodeNamedCharacterReference(data2);
       value = result;
     }
     const tail = this.stack[this.stack.length - 1];
@@ -49769,8 +49770,8 @@ function applyData(from2, to) {
   return result;
 }
 function defaultUnknownHandler(state, node2) {
-  const data2 = node2.data || {};
-  const result = "value" in node2 && !(own$1.call(data2, "hProperties") || own$1.call(data2, "hChildren")) ? { type: "text", value: node2.value } : {
+  const data = node2.data || {};
+  const result = "value" in node2 && !(own$1.call(data, "hProperties") || own$1.call(data, "hChildren")) ? { type: "text", value: node2.value } : {
     type: "element",
     tagName: "div",
     properties: {},
@@ -51662,7 +51663,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
     }
     setAiLoading(true);
     try {
-      const data2 = await performFullStrategyAnalysis({
+      const data = await performFullStrategyAnalysis({
         result,
         strategyName,
         ticker,
@@ -51671,7 +51672,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
         model: selectedModel
       });
       setAnalyses((prev2) => {
-        const newState = { ...prev2, [selectedModel]: data2.analysis };
+        const newState = { ...prev2, [selectedModel]: data.analysis };
         return newState;
       });
       setActiveTab(selectedModel);
@@ -51837,7 +51838,7 @@ function RunStrategy() {
     setError(null);
     setResult(null);
     try {
-      const data2 = await api$1.runBacktest({
+      const data = await api$1.runBacktest({
         ticker,
         start_date: startDate,
         end_date: endDate,
@@ -51846,7 +51847,7 @@ function RunStrategy() {
         stake: parseInt(stake, 10),
         strategy_name: selectedStrategy
       });
-      setResult(data2);
+      setResult(data);
     } catch (err) {
       console.error(err);
       setError(err.message || "An error occurred");
@@ -52716,9 +52717,9 @@ class UserStrategy(bt.Strategy):
     if (!name2) return;
     try {
       setCodeLoading(true);
-      const data2 = await api$1.getStrategy(name2);
-      if (data2.code) {
-        setCode(data2.code);
+      const data = await api$1.getStrategy(name2);
+      if (data.code) {
+        setCode(data.code);
       }
     } catch (err) {
       console.error("Failed to fetch strategy", err);
@@ -59226,7 +59227,7 @@ function Ve(t, i) {
   return De(t, new is(), is.Ad(i));
 }
 Object.assign(Object.assign({}, u), _);
-function CandleStickChart({ data: data2 }) {
+function CandleStickChart({ data }) {
   const chartContainerRef = reactExports.useRef();
   const chartRef = reactExports.useRef(null);
   const seriesRef = reactExports.useRef(null);
@@ -59273,15 +59274,15 @@ function CandleStickChart({ data: data2 }) {
     };
   }, []);
   reactExports.useEffect(() => {
-    if (seriesRef.current && data2 && data2.length > 0) {
-      const uniqueData = [...new Map(data2.map((item) => [item.time, item])).values()];
+    if (seriesRef.current && data && data.length > 0) {
+      const uniqueData = [...new Map(data.map((item) => [item.time, item])).values()];
       uniqueData.sort((a2, b2) => new Date(a2.time) - new Date(b2.time));
       seriesRef.current.setData(uniqueData);
       if (chartRef.current) {
         chartRef.current.timeScale().fitContent();
       }
     }
-  }, [data2]);
+  }, [data]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
@@ -59475,4 +59476,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-DqsxMFqM.js.map
+//# sourceMappingURL=index-B24XvJoR.js.map
