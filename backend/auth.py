@@ -12,15 +12,21 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import requests
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
+# Load environment variables from .env if present.
+load_dotenv()
+
 # Default Logto tenant endpoints. They can be overridden via environment variables.
-LOGTO_ISSUER = os.getenv("LOGTO_ISSUER", "https://logto.fary.chat/oidc")
-LOGTO_JWKS_URI = os.getenv("LOGTO_JWKS_URI", "https://logto.fary.chat/oidc/jwks")
-LOGTO_AUDIENCE = os.getenv("LOGTO_AUDIENCE", "http://localhost:8000/api")
+LOGTO_ISSUER = os.getenv("LOGTO_ISSUER")
+LOGTO_JWKS_URI = os.getenv("LOGTO_JWKS_URI")
+LOGTO_AUDIENCE = os.getenv("LOGTO_AUDIENCE")
+# Toggle authentication. Set ENABLE_LOGIN=false to allow anonymous access.
+ENABLE_LOGIN = os.getenv("ENABLE_LOGIN", "true").lower() not in {"false", "0", "no", "off"}
 LOGTO_REQUIRED_SCOPES: List[str] = [
     scope.strip()
     for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
@@ -152,6 +158,10 @@ async def get_current_user(
     """
     FastAPI dependency to require authentication on an endpoint.
     """
+    if not ENABLE_LOGIN:
+        # Authentication disabled; allow anonymous access.
+        return {"sub": "anonymous"}
+
     token = get_auth_token(credentials)
     return verify_token(token)
 
@@ -162,6 +172,9 @@ async def get_optional_user(
     """
     Optional authentication dependency.
     """
+    if not ENABLE_LOGIN:
+        return {"sub": "anonymous"}
+
     if not credentials:
         return None
 

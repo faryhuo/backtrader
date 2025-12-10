@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useLogto } from '@logto/react'
 import { Dropdown, Avatar, Space } from 'antd'
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import { useAuth } from '../../hooks/useAuth'
 import '../../index.css'
 
 function Layout() {
     const { t, i18n } = useTranslation();
     const location = useLocation()
     const [collapsed, setCollapsed] = useState(false)
-    const { signOut, getIdTokenClaims, isAuthenticated } = useLogto()
-    const [userInfo, setUserInfo] = useState(null)
+    const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
+    const [userInfo, setUserInfo] = useState({
+        email: 'Guest',
+        name: 'Guest',
+    })
 
     const toggleLanguage = () => {
         const newLang = i18n.language.startsWith('zh') ? 'en' : 'zh';
@@ -20,7 +23,7 @@ function Layout() {
 
     // Fetch user information when authenticated
     useEffect(() => {
-        if (isAuthenticated) {
+        if (loginEnabled && isAuthenticated) {
             getIdTokenClaims().then((claims) => {
                 setUserInfo({
                     email: claims?.email || 'User',
@@ -30,34 +33,51 @@ function Layout() {
             }).catch((error) => {
                 console.error('Failed to get user claims:', error)
             })
+        } else {
+            setUserInfo({
+                email: 'Guest',
+                name: 'Guest',
+            })
         }
-    }, [isAuthenticated, getIdTokenClaims])
+    }, [isAuthenticated, getIdTokenClaims, loginEnabled])
 
     // Handle logout
     const handleLogout = () => {
+        if (!loginEnabled) {
+            return
+        }
         const postLogoutRedirectUri = import.meta.env.VITE_LOGTO_POST_LOGOUT_REDIRECT_URI
         signOut(postLogoutRedirectUri)
     }
 
     // User menu items
-    const userMenuItems = [
-        {
-            key: 'profile',
-            label: userInfo?.email || 'User',
-            icon: <UserOutlined />,
-            disabled: true,
-        },
-        {
-            type: 'divider',
-        },
-        {
-            key: 'logout',
-            label: t('auth.logout', 'Logout'),
-            icon: <LogoutOutlined />,
-            onClick: handleLogout,
-            danger: true,
-        },
-    ]
+    const userMenuItems = loginEnabled
+        ? [
+            {
+                key: 'profile',
+                label: userInfo?.email || 'User',
+                icon: <UserOutlined />,
+                disabled: true,
+            },
+            {
+                type: 'divider',
+            },
+            {
+                key: 'logout',
+                label: t('auth.logout', 'Logout'),
+                icon: <LogoutOutlined />,
+                onClick: handleLogout,
+                danger: true,
+            },
+        ]
+        : [
+            {
+                key: 'profile',
+                label: userInfo?.email || 'Guest',
+                icon: <UserOutlined />,
+                disabled: true,
+            },
+        ]
 
     const getNavClass = (path) => {
         const current = location.pathname

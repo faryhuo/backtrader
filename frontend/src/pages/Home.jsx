@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useLogto } from '@logto/react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Typography, Space } from 'antd';
 import { LoginOutlined, RocketOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuth';
 import './Home.css';
 
 const { Title, Paragraph } = Typography;
@@ -16,19 +16,27 @@ const { Title, Paragraph } = Typography;
  * Automatically redirects authenticated users to the app.
  */
 export function Home() {
-  const { signIn, isAuthenticated } = useLogto();
+  const { signIn, isAuthenticated, loginEnabled } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   // Redirect to main app if already authenticated
   useEffect(() => {
+    if (!loginEnabled) {
+      navigate('/', { replace: true });
+      return;
+    }
     if (isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loginEnabled, navigate]);
 
   // Handle sign-in click
   const handleSignIn = () => {
+    if (!loginEnabled) {
+      navigate('/', { replace: true });
+      return;
+    }
     const redirectUri = import.meta.env.VITE_LOGTO_REDIRECT_URI;
     signIn(redirectUri);
   };
