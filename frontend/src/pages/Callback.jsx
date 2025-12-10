@@ -16,7 +16,7 @@ export function Callback() {
   const { t } = useTranslation();
   const { isLoading, error } = useHandleSignInCallback(() => {
     // Redirect to main app after successful sign-in
-    navigate('/app', { replace: true });
+    navigate('/', { replace: true });
   });
 
   // Handle errors
@@ -25,7 +25,7 @@ export function Callback() {
       console.error('Sign-in callback error:', error);
       // Redirect to home page on error
       setTimeout(() => {
-        navigate('/', { replace: true });
+        navigate('/login', { replace: true });
       }, 3000);
     }
   }, [error, navigate]);

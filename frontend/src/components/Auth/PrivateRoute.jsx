@@ -8,7 +8,7 @@ import './PrivateRoute.css';
  * Protected Route Component
  *
  * Wraps routes that require authentication.
- * Redirects unauthenticated users to the home page.
+ * Redirects unauthenticated users to the login page.
  * Shows loading spinner while checking authentication status.
  */
 export function PrivateRoute({ children }) {
@@ -23,9 +23,9 @@ export function PrivateRoute({ children }) {
     );
   }
 
-  // Redirect to home page if not authenticated
+  // Redirect to login page if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Render protected content if authenticated
