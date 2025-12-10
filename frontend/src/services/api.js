@@ -1,3 +1,4 @@
+import { LOGIN_ENABLED } from '../config/auth'
 
 export const API_URL = import.meta.env.VITE_API_RESOURCE
 
@@ -45,7 +46,7 @@ const parseResponse = async (response) => {
 
     if (response.status !== 200) {
         // Handle 401 Unauthorized - redirect to login
-        if (response.status === 401) {
+        if (response.status === 401 && LOGIN_ENABLED) {
             console.error('Unauthorized - redirecting to login')
             const loginPath = '/login'
             if (window.location.pathname !== loginPath) {

@@ -1,6 +1,6 @@
-import { useLogto } from '@logto/react';
 import { Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { useAuth } from '../../hooks/useAuth';
 import './PrivateRoute.css';
 
 /**
@@ -10,7 +10,13 @@ import './PrivateRoute.css';
  * Redirects unauthenticated users to the login page.
  */
 export function PrivateRoute({ children }) {
-  const { isAuthenticated } = useLogto();
+  const { isAuthenticated, loginEnabled } = useAuth();
+
+  // Authentication disabled - allow direct access.
+  if (!loginEnabled) {
+    return children;
+  }
+
   // Redirect to login page if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

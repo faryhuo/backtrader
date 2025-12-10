@@ -15218,7 +15218,7 @@ function LogtoProvider({ children }) {
   const config2 = {
     endpoint: "https://logto.fary.chat",
     appId: "ro4uk4fd2czd7cyx3wcbm",
-    resources: ["https://trade.fary.chat/api"]
+    resources: ["http://localhost:8000/api"]
   };
   if (!config2.endpoint || !config2.appId) {
     console.error(
@@ -15230,8 +15230,35 @@ function LogtoProvider({ children }) {
 LogtoProvider.propTypes = {
   children: PropTypes.node.isRequired
 };
+const rawLoginFlag = "false".toString().toLowerCase();
+const LOGIN_ENABLED = !["false", "0", "no", "off"].includes(rawLoginFlag);
+const ANONYMOUS_AUTH = {
+  loginEnabled: false,
+  isAuthenticated: true,
+  isLoading: false,
+  error: null,
+  signIn: () => {
+  },
+  signOut: () => {
+  },
+  getAccessToken: async () => null,
+  getIdTokenClaims: async () => ({})
+};
+function useAuth() {
+  if (!LOGIN_ENABLED) {
+    return ANONYMOUS_AUTH;
+  }
+  const logto = useLogto();
+  return {
+    ...logto,
+    loginEnabled: true
+  };
+}
 function PrivateRoute({ children }) {
-  const { isAuthenticated } = useLogto();
+  const { isAuthenticated, loginEnabled } = useAuth();
+  if (!loginEnabled) {
+    return children;
+  }
   if (!isAuthenticated) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/login", replace: true });
   }
@@ -41269,14 +41296,17 @@ function Layout() {
   const { t, i18n } = useTranslation();
   const location2 = useLocation();
   const [collapsed, setCollapsed] = reactExports.useState(false);
-  const { signOut, getIdTokenClaims, isAuthenticated } = useLogto();
-  const [userInfo, setUserInfo] = reactExports.useState(null);
+  const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth();
+  const [userInfo, setUserInfo] = reactExports.useState({
+    email: "Guest",
+    name: "Guest"
+  });
   const toggleLanguage = () => {
     const newLang = i18n.language.startsWith("zh") ? "en" : "zh";
     i18n.changeLanguage(newLang);
   };
   reactExports.useEffect(() => {
-    if (isAuthenticated) {
+    if (loginEnabled && isAuthenticated) {
       getIdTokenClaims().then((claims) => {
         setUserInfo({
           email: (claims == null ? void 0 : claims.email) || "User",
@@ -41286,13 +41316,21 @@ function Layout() {
       }).catch((error) => {
         console.error("Failed to get user claims:", error);
       });
+    } else {
+      setUserInfo({
+        email: "Guest",
+        name: "Guest"
+      });
     }
-  }, [isAuthenticated, getIdTokenClaims]);
+  }, [isAuthenticated, getIdTokenClaims, loginEnabled]);
   const handleLogout = () => {
+    if (!loginEnabled) {
+      return;
+    }
     const postLogoutRedirectUri = "https://trade.fary.chat/login";
     signOut(postLogoutRedirectUri);
   };
-  const userMenuItems = [
+  const userMenuItems = loginEnabled ? [
     {
       key: "profile",
       label: (userInfo == null ? void 0 : userInfo.email) || "User",
@@ -41308,6 +41346,13 @@ function Layout() {
       icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, {}),
       onClick: handleLogout,
       danger: true
+    }
+  ] : [
+    {
+      key: "profile",
+      label: (userInfo == null ? void 0 : userInfo.email) || "Guest",
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon, {}),
+      disabled: true
     }
   ];
   const getNavClass = (path2) => {
@@ -41386,7 +41431,7 @@ function Layout() {
     ] })
   ] });
 }
-const API_URL = "https://trade.fary.chat/api";
+const API_URL = "http://localhost:8000/api";
 let getTokenFn = null;
 function setTokenGetter(fn2) {
   getTokenFn = fn2;
@@ -41398,7 +41443,7 @@ const buildRequest = async (path2, options = {}) => {
   }
   if (getTokenFn) {
     try {
-      const resource = "https://trade.fary.chat/api";
+      const resource = "http://localhost:8000/api";
       const token2 = await getTokenFn(resource);
       if (token2) {
         headers.set("Authorization", `Bearer ${token2}`);
@@ -41412,7 +41457,7 @@ const buildRequest = async (path2, options = {}) => {
 const parseResponse = async (response) => {
   const data = await response.json();
   if (response.status !== 200) {
-    if (response.status === 401) {
+    if (response.status === 401 && LOGIN_ENABLED) {
       console.error("Unauthorized - redirecting to login");
       const loginPath = "/login";
       if (window.location.pathname !== loginPath) {
@@ -41473,7 +41518,7 @@ const api$1 = {
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "https://trade.fary.chat/api";
+        const resource = "http://localhost:8000/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -41499,7 +41544,7 @@ ${code2}`;
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "https://trade.fary.chat/api";
+        const resource = "http://localhost:8000/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -41526,7 +41571,7 @@ ${code2}`;
     const headers = new Headers();
     if (getTokenFn) {
       try {
-        const resource = "https://trade.fary.chat/api";
+        const resource = "http://localhost:8000/api";
         const token2 = await getTokenFn(resource);
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
@@ -59392,15 +59437,23 @@ function DataSource() {
 }
 const { Title, Paragraph } = Typography;
 function Home() {
-  const { signIn, isAuthenticated } = useLogto();
+  const { signIn, isAuthenticated, loginEnabled } = useAuth();
   const navigate2 = useNavigate();
   const { t } = useTranslation();
   reactExports.useEffect(() => {
+    if (!loginEnabled) {
+      navigate2("/", { replace: true });
+      return;
+    }
     if (isAuthenticated) {
       navigate2("/");
     }
-  }, [isAuthenticated, navigate2]);
+  }, [isAuthenticated, loginEnabled, navigate2]);
   const handleSignIn = () => {
+    if (!loginEnabled) {
+      navigate2("/", { replace: true });
+      return;
+    }
     const redirectUri = "https://trade.fary.chat/callback";
     signIn(redirectUri);
   };
@@ -59447,30 +59500,36 @@ function Callback() {
   ] });
 }
 function AppContent() {
-  const { getAccessToken } = useLogto();
+  const { getAccessToken, loginEnabled } = useAuth();
   reactExports.useEffect(() => {
-    setTokenGetter(getAccessToken);
-  }, [getAccessToken]);
+    if (loginEnabled) {
+      setTokenGetter(getAccessToken);
+    } else {
+      setTokenGetter(null);
+    }
+  }, [getAccessToken, loginEnabled]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Callback, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      Route,
-      {
-        element: /* @__PURE__ */ jsxRuntimeExports.jsx(PrivateRoute, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}) }),
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { index: true, element: /* @__PURE__ */ jsxRuntimeExports.jsx(RunStrategy, {}) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "maintain", element: /* @__PURE__ */ jsxRuntimeExports.jsx(StrategyMaintain, {}) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "datasource", element: /* @__PURE__ */ jsxRuntimeExports.jsx(DataSource, {}) })
-        ]
-      }
-    )
+    loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) }),
+    loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Callback, {}) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(Route, { element: loginEnabled ? /* @__PURE__ */ jsxRuntimeExports.jsx(PrivateRoute, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Layout, {}), children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { index: true, element: /* @__PURE__ */ jsxRuntimeExports.jsx(RunStrategy, {}) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "maintain", element: /* @__PURE__ */ jsxRuntimeExports.jsx(StrategyMaintain, {}) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "datasource", element: /* @__PURE__ */ jsxRuntimeExports.jsx(DataSource, {}) })
+    ] }),
+    !loginEnabled && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/login", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/callback", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "*", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Navigate, { to: "/", replace: true }) })
   ] });
 }
 function App() {
+  if (!LOGIN_ENABLED) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(BrowserRouter, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppContent, {}) });
+  }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(LogtoProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(BrowserRouter, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppContent, {}) }) });
 }
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-Dzb2SN7i.js.map
+//# sourceMappingURL=index-DYQEwaoi.js.map
