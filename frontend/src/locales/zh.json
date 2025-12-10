@@ -51,7 +51,9 @@
     "initial_capital": "初始资金 ($)",
     "commission": "佣金 (费率)",
     "order_size": "下单数量 (股/手)",
-    "run_backtest": "运行回测"
+    "run_backtest": "运行回测",
+    "ready_to_run": "准备回测",
+    "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。"
   },
   "performance": {
     "title": "绩效概览",

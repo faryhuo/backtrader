@@ -99,6 +99,7 @@ function Layout() {
 
     return (
         <div className={`layout-container ${collapsed ? 'collapsed' : ''}`}>
+            <div className="functional-bg-grid"></div>
             <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
                 <div className="sidebar-header">
                     {!collapsed && <h2>{t('app.title')}</h2>}

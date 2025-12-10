@@ -1,4 +1,4 @@
-import { API_URL } from './api';
+import { API_URL, api } from './api';
 import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
 
 export const performFullStrategyAnalysis = async ({
