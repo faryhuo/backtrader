@@ -17,6 +17,19 @@
     "collapse_sidebar": "Collapse Sidebar",
     "na": "N/A"
   },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "welcome": "Welcome",
+    "profile": "Profile",
+    "unauthorized": "Unauthorized",
+    "sessionExpired": "Session expired, please login again",
+    "signInError": "Authentication failed. Redirecting...",
+    "appTitle": "Backtrader Platform",
+    "homeDescription": "Design and test algorithmic trading strategies with professional backtesting tools, AI-powered analysis, and interactive charts."
+  },
   "ai_insight": {
     "thinking_process": "Thinking Process"
   },
