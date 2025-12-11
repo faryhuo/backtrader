@@ -12870,8 +12870,8 @@ function SingleObserver(props, ref) {
   }) : mergedChildren;
 }
 const RefSingleObserver = /* @__PURE__ */ reactExports.forwardRef(SingleObserver);
-function _extends$Q() {
-  _extends$Q = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$R() {
+  _extends$R = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -12882,7 +12882,7 @@ function _extends$Q() {
     }
     return target;
   };
-  return _extends$Q.apply(this, arguments);
+  return _extends$R.apply(this, arguments);
 }
 const INTERNAL_PREFIX_KEY = "rc-observer-key";
 function ResizeObserver$1(props, ref) {
@@ -12892,7 +12892,7 @@ function ResizeObserver$1(props, ref) {
   const childNodes = typeof children === "function" ? [children] : toArray$2(children);
   return childNodes.map((child, index2) => {
     const key = (child == null ? void 0 : child.key) || `${INTERNAL_PREFIX_KEY}-${index2}`;
-    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$Q({}, props, {
+    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$R({}, props, {
       key,
       ref: index2 === 0 ? ref : void 0
     }), child);
@@ -17265,8 +17265,8 @@ function getTwoToneColor() {
   }
   return [colors.primaryColor, colors.secondaryColor];
 }
-function _extends$P() {
-  _extends$P = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$Q() {
+  _extends$Q = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -17277,7 +17277,7 @@ function _extends$P() {
     }
     return target;
   };
-  return _extends$P.apply(this, arguments);
+  return _extends$Q.apply(this, arguments);
 }
 setTwoToneColor(blue.primary);
 const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -17311,7 +17311,7 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     transform: `rotate(${rotate}deg)`
   } : void 0;
   const [primaryColor, secondaryColor] = normalizeTwoToneColors(twoToneColor);
-  return /* @__PURE__ */ reactExports.createElement("span", _extends$P({
+  return /* @__PURE__ */ reactExports.createElement("span", _extends$Q({
     role: "img",
     "aria-label": icon.name
   }, restProps, {
@@ -17328,6 +17328,26 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
 });
 Icon$1.getTwoToneColor = getTwoToneColor;
 Icon$1.setTwoToneColor = setTwoToneColor;
+function _extends$P() {
+  _extends$P = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$P.apply(this, arguments);
+}
+const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$P({}, props, {
+  ref,
+  icon: CheckCircleFilled$1
+}));
+const RefIcon$u = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
+var CloseCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z" } }] }, "name": "close-circle", "theme": "filled" };
 function _extends$O() {
   _extends$O = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -17342,12 +17362,12 @@ function _extends$O() {
   };
   return _extends$O.apply(this, arguments);
 }
-const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$O({}, props, {
+const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$O({}, props, {
   ref,
-  icon: CheckCircleFilled$1
+  icon: CloseCircleFilled$1
 }));
-const RefIcon$t = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
-var CloseCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z" } }] }, "name": "close-circle", "theme": "filled" };
+const RefIcon$t = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
+var CloseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z" } }] }, "name": "close", "theme": "outlined" };
 function _extends$N() {
   _extends$N = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -17362,12 +17382,12 @@ function _extends$N() {
   };
   return _extends$N.apply(this, arguments);
 }
-const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$N({}, props, {
+const CloseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$N({}, props, {
   ref,
-  icon: CloseCircleFilled$1
+  icon: CloseOutlined$1
 }));
-const RefIcon$s = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
-var CloseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z" } }] }, "name": "close", "theme": "outlined" };
+const RefIcon$s = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
 function _extends$M() {
   _extends$M = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -17382,12 +17402,12 @@ function _extends$M() {
   };
   return _extends$M.apply(this, arguments);
 }
-const CloseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$M({}, props, {
+const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$M({}, props, {
   ref,
-  icon: CloseOutlined$1
+  icon: ExclamationCircleFilled$1
 }));
-const RefIcon$r = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
-var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
+const RefIcon$r = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
+var InfoCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272zm-32-344a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "info-circle", "theme": "filled" };
 function _extends$L() {
   _extends$L = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -17402,31 +17422,11 @@ function _extends$L() {
   };
   return _extends$L.apply(this, arguments);
 }
-const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$L({}, props, {
-  ref,
-  icon: ExclamationCircleFilled$1
-}));
-const RefIcon$q = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
-var InfoCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272zm-32-344a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "info-circle", "theme": "filled" };
-function _extends$K() {
-  _extends$K = Object.assign ? Object.assign.bind() : function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-  return _extends$K.apply(this, arguments);
-}
-const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$K({}, props, {
+const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$L({}, props, {
   ref,
   icon: InfoCircleFilled$1
 }));
-const RefIcon$p = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
+const RefIcon$q = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
 const Context$1 = /* @__PURE__ */ reactExports.createContext({});
 function MotionProvider({
   children,
@@ -17979,8 +17979,8 @@ function diffKeys(prevKeys = [], currentKeys = []) {
   });
   return list2;
 }
-function _extends$J() {
-  _extends$J = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$K() {
+  _extends$K = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -17991,7 +17991,7 @@ function _extends$J() {
     }
     return target;
   };
-  return _extends$J.apply(this, arguments);
+  return _extends$K.apply(this, arguments);
 }
 const MOTION_PROP_NAMES = ["eventProps", "visible", "children", "motionName", "motionAppear", "motionEnter", "motionLeave", "motionLeaveImmediately", "motionDeadline", "removeOnLeave", "leavedClassName", "onAppearPrepare", "onAppearStart", "onAppearActive", "onAppearEnd", "onEnterStart", "onEnterActive", "onEnterEnd", "onLeaveStart", "onLeaveActive", "onLeaveEnd"];
 function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
@@ -18069,7 +18069,7 @@ function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
         ...eventProps
       }, index2) => {
         const visible = status === STATUS_ADD || status === STATUS_KEEP;
-        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$J({}, motionProps, {
+        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$K({}, motionProps, {
           key: eventProps.key,
           visible,
           eventProps,
@@ -18564,7 +18564,7 @@ const computeClosable = (propCloseCollection, contextCloseCollection, fallbackCl
   const propConfig = computeClosableConfig(propCloseCollection == null ? void 0 : propCloseCollection.closable, propCloseCollection == null ? void 0 : propCloseCollection.closeIcon);
   const contextConfig = computeClosableConfig(contextCloseCollection == null ? void 0 : contextCloseCollection.closable, contextCloseCollection == null ? void 0 : contextCloseCollection.closeIcon);
   const mergedFallback = {
-    closeIcon: /* @__PURE__ */ We.createElement(RefIcon$r, null),
+    closeIcon: /* @__PURE__ */ We.createElement(RefIcon$s, null),
     ...fallbackCloseCollection
   };
   const mergedConfig = mergeClosableConfigs(propConfig, contextConfig, mergedFallback);
@@ -18579,7 +18579,7 @@ const useClosable = (propCloseCollection, contextCloseCollection, fallbackCloseC
   const [contextLocale] = useLocale("global", localeValues.global);
   return We.useMemo(() => {
     return computeClosable(propCloseCollection, contextCloseCollection, {
-      closeIcon: /* @__PURE__ */ We.createElement(RefIcon$r, null),
+      closeIcon: /* @__PURE__ */ We.createElement(RefIcon$s, null),
       ...fallbackCloseCollection
     }, contextLocale.close);
   }, [propCloseCollection, contextCloseCollection, fallbackCloseCollection, contextLocale.close]);
@@ -19011,8 +19011,8 @@ function Arrow(props) {
     }
   }, content2);
 }
-function _extends$I() {
-  _extends$I = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$J() {
+  _extends$J = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -19023,7 +19023,7 @@ function _extends$I() {
     }
     return target;
   };
-  return _extends$I.apply(this, arguments);
+  return _extends$J.apply(this, arguments);
 }
 function Mask(props) {
   const {
@@ -19037,7 +19037,7 @@ function Mask(props) {
   if (!mask) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$I({}, motion, {
+  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$J({}, motion, {
     motionAppear: true,
     visible: open2,
     removeOnLeave: true
@@ -19086,8 +19086,8 @@ function useOffsetStyle(isMobile, ready, open2, align, offsetR, offsetB, offsetX
   }
   return offsetStyle;
 }
-function _extends$H() {
-  _extends$H = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$I() {
+  _extends$I = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -19098,7 +19098,7 @@ function _extends$H() {
     }
     return target;
   };
-  return _extends$H.apply(this, arguments);
+  return _extends$I.apply(this, arguments);
 }
 const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -19204,7 +19204,7 @@ const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onResize: onInternalResize,
     disabled: !open2
   }, (resizeObserverRef) => {
-    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$H({
+    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$I({
       motionAppear: true,
       motionEnter: true,
       motionLeave: true,
@@ -19973,8 +19973,8 @@ function useTargetState() {
   });
   return [trigger, open2, options, onVisibleChanged];
 }
-function _extends$G() {
-  _extends$G = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$H() {
+  _extends$H = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -19985,7 +19985,7 @@ function _extends$G() {
     }
     return target;
   };
-  return _extends$G.apply(this, arguments);
+  return _extends$H.apply(this, arguments);
 }
 const UniqueContainer = (props) => {
   const {
@@ -20016,7 +20016,7 @@ const UniqueContainer = (props) => {
     sizeStyle.width = popupSize.width;
     sizeStyle.height = popupSize.height;
   }
-  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$G({
+  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$H({
     motionAppear: true,
     motionEnter: true,
     motionLeave: true,
@@ -21205,8 +21205,8 @@ const KeyCode = {
    */
   DOWN: 40
 };
-function _extends$F() {
-  _extends$F = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$G() {
+  _extends$G = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21217,7 +21217,7 @@ function _extends$F() {
     }
     return target;
   };
-  return _extends$F.apply(this, arguments);
+  return _extends$G.apply(this, arguments);
 }
 const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -21296,7 +21296,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const ariaProps = pickAttrs(closableObj, true);
   const validPercent = 100 - (!percent || percent < 0 ? 0 : percent > 100 ? 100 : percent);
   const noticePrefixCls = `${prefixCls}-notice`;
-  return /* @__PURE__ */ reactExports.createElement("div", _extends$F({}, divProps, {
+  return /* @__PURE__ */ reactExports.createElement("div", _extends$G({}, divProps, {
     ref,
     className: clsx(noticePrefixCls, className, {
       [`${noticePrefixCls}-closable`]: closable
@@ -21315,7 +21315,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onClick
   }), /* @__PURE__ */ reactExports.createElement("div", {
     className: `${noticePrefixCls}-content`
-  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$F({
+  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$G({
     className: `${noticePrefixCls}-close`,
     onKeyDown: onCloseKeyDown,
     "aria-label": "Close"
@@ -21358,8 +21358,8 @@ const useStack = (config2) => {
   }
   return [!!config2, result];
 };
-function _extends$E() {
-  _extends$E = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$F() {
+  _extends$F = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21370,7 +21370,7 @@ function _extends$E() {
     }
     return target;
   };
-  return _extends$E.apply(this, arguments);
+  return _extends$F.apply(this, arguments);
 }
 const NoticeList = (props) => {
   const {
@@ -21414,7 +21414,7 @@ const NoticeList = (props) => {
       setLatestNotice(dictRef.current[(_b2 = keys2[keys2.length - 1]) == null ? void 0 : _b2.key]);
     }
   }, [keys2, stack]);
-  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$E({
+  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$F({
     key: placement,
     className: clsx(prefixCls, `${prefixCls}-${placement}`, ctxCls == null ? void 0 : ctxCls.list, className, {
       [`${prefixCls}-stack`]: !!stack,
@@ -21474,7 +21474,7 @@ const NoticeList = (props) => {
       },
       onMouseEnter: () => setHoverKeys((prev2) => prev2.includes(strKey) ? prev2 : [...prev2, strKey]),
       onMouseLeave: () => setHoverKeys((prev2) => prev2.filter((k2) => k2 !== strKey))
-    }, /* @__PURE__ */ We.createElement(Notify, _extends$E({}, restConfig, {
+    }, /* @__PURE__ */ We.createElement(Notify, _extends$F({}, restConfig, {
       ref: (node2) => {
         if (dataIndex > -1) {
           dictRef.current[strKey] = node2;
@@ -21712,8 +21712,8 @@ function useNotification(rootConfig = {}) {
   return [api2, contextHolder];
 }
 var LoadingOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z" } }] }, "name": "loading", "theme": "outlined" };
-function _extends$D() {
-  _extends$D = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$E() {
+  _extends$E = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21724,13 +21724,13 @@ function _extends$D() {
     }
     return target;
   };
-  return _extends$D.apply(this, arguments);
+  return _extends$E.apply(this, arguments);
 }
-const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$D({}, props, {
+const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$E({}, props, {
   ref,
   icon: LoadingOutlined$1
 }));
-const RefIcon$o = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
+const RefIcon$p = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
 const genMessageStyle = (token2) => {
   const {
     componentCls,
@@ -21887,11 +21887,11 @@ const useStyle$e = genStyleHooks("Message", (token2) => {
   return genMessageStyle(combinedToken);
 }, prepareComponentToken$9);
 const TypeIcon = {
-  info: /* @__PURE__ */ reactExports.createElement(RefIcon$p, null),
-  success: /* @__PURE__ */ reactExports.createElement(RefIcon$t, null),
-  error: /* @__PURE__ */ reactExports.createElement(RefIcon$s, null),
-  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$q, null),
-  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$o, null)
+  info: /* @__PURE__ */ reactExports.createElement(RefIcon$q, null),
+  success: /* @__PURE__ */ reactExports.createElement(RefIcon$u, null),
+  error: /* @__PURE__ */ reactExports.createElement(RefIcon$t, null),
+  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$r, null),
+  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$p, null)
 };
 const PureContent = (props) => {
   const {
@@ -22738,7 +22738,7 @@ const InnerLoadingIcon = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
     className: mergedIconCls,
     style: style2,
     ref
-  }, /* @__PURE__ */ We.createElement(RefIcon$o, {
+  }, /* @__PURE__ */ We.createElement(RefIcon$p, {
     className: iconClassName
   }));
 });
@@ -23026,8 +23026,8 @@ let AggregationColor = /* @__PURE__ */ (function() {
   }]);
 })();
 var RightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z" } }] }, "name": "right", "theme": "outlined" };
-function _extends$C() {
-  _extends$C = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$D() {
+  _extends$D = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -23038,21 +23038,21 @@ function _extends$C() {
     }
     return target;
   };
-  return _extends$C.apply(this, arguments);
+  return _extends$D.apply(this, arguments);
 }
-const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$C({}, props, {
+const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$D({}, props, {
   ref,
   icon: RightOutlined$1
 }));
-const RefIcon$n = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
-function _extends$B() {
-  return _extends$B = Object.assign ? Object.assign.bind() : function(n) {
+const RefIcon$o = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+function _extends$C() {
+  return _extends$C = Object.assign ? Object.assign.bind() : function(n) {
     for (var e2 = 1; e2 < arguments.length; e2++) {
       var t = arguments[e2];
       for (var r2 in t) ({}).hasOwnProperty.call(t, r2) && (n[r2] = t[r2]);
     }
     return n;
-  }, _extends$B.apply(null, arguments);
+  }, _extends$C.apply(null, arguments);
 }
 const genCollapseMotion = (token2) => ({
   [token2.componentCls]: {
@@ -25926,8 +25926,8 @@ function move(array4, moveIndex, toIndex) {
   }
   return array4;
 }
-function _extends$A() {
-  _extends$A = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$B() {
+  _extends$B = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -25938,7 +25938,7 @@ function _extends$A() {
     }
     return target;
   };
-  return _extends$A.apply(this, arguments);
+  return _extends$B.apply(this, arguments);
 }
 const EMPTY_ERRORS = [];
 const EMPTY_WARNINGS = [];
@@ -26425,7 +26425,7 @@ function WrapperField({
   if (!isMergedListField) {
     key = `_${(namePath || []).join("_")}`;
   }
-  return /* @__PURE__ */ reactExports.createElement(Field, _extends$A({
+  return /* @__PURE__ */ reactExports.createElement(Field, _extends$B({
     key,
     name: namePath,
     isListField: isMergedListField
@@ -27520,8 +27520,8 @@ const BatchUpdate = /* @__PURE__ */ reactExports.forwardRef((_2, ref) => {
   }));
   return null;
 });
-function _extends$z() {
-  _extends$z = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$A() {
+  _extends$A = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -27532,7 +27532,7 @@ function _extends$z() {
     }
     return target;
   };
-  return _extends$z.apply(this, arguments);
+  return _extends$A.apply(this, arguments);
 }
 const Form = ({
   name: name2,
@@ -27653,7 +27653,7 @@ const Form = ({
   if (Component === false) {
     return wrapperNode;
   }
-  return /* @__PURE__ */ reactExports.createElement(Component, _extends$z({}, restProps, {
+  return /* @__PURE__ */ reactExports.createElement(Component, _extends$A({}, restProps, {
     ref: nativeElementRef,
     onSubmit: (event) => {
       event.preventDefault();
@@ -27914,7 +27914,7 @@ function InternalItem(props, ref) {
   if (mergedHidden) {
     overflowProps["aria-hidden"] = true;
   }
-  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$B({
+  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$C({
     className: clsx(!invalidate && prefixCls, className),
     style: {
       ...overflowStyle,
@@ -27980,7 +27980,7 @@ const InternalRawItem = (props, ref) => {
       component: Component = "div",
       ...restProps2
     } = props;
-    return /* @__PURE__ */ reactExports.createElement(Component, _extends$B({}, restProps2, {
+    return /* @__PURE__ */ reactExports.createElement(Component, _extends$C({}, restProps2, {
       ref
     }));
   }
@@ -27994,7 +27994,7 @@ const InternalRawItem = (props, ref) => {
   } = props;
   return /* @__PURE__ */ reactExports.createElement(OverflowContext.Provider, {
     value: null
-  }, /* @__PURE__ */ reactExports.createElement(Item$1, _extends$B({
+  }, /* @__PURE__ */ reactExports.createElement(Item$1, _extends$C({
     ref,
     className: clsx(contextClassName, className)
   }, restContext, restProps)));
@@ -28182,7 +28182,7 @@ function Overflow(props, ref) {
     }, renderRawItem(item, index2));
   } : (item, index2) => {
     const key = getKey(item, index2);
-    return /* @__PURE__ */ reactExports.createElement(Item$1, _extends$B({}, itemSharedProps, {
+    return /* @__PURE__ */ reactExports.createElement(Item$1, _extends$C({}, itemSharedProps, {
       order: index2,
       key,
       item,
@@ -28204,19 +28204,19 @@ function Overflow(props, ref) {
       ...itemSharedProps,
       ...restContextProps
     }
-  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$1, _extends$B({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
-  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$B({
+  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$1, _extends$C({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
+  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$C({
     className: clsx(!invalidate && prefixCls, className),
     style: style2,
     ref
-  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$B({}, itemSharedProps, {
+  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$C({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: -1,
     className: `${itemPrefixCls}-prefix`,
     registerSize: registerPrefixSize,
     display: true
-  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$B({}, itemSharedProps, {
+  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$1, _extends$C({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: mergedDisplayCount,
@@ -28263,8 +28263,8 @@ const useVariant = (component, variant, legacyBordered) => {
   return [mergedVariant, enableVariantCls];
 };
 var CheckOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z" } }] }, "name": "check", "theme": "outlined" };
-function _extends$y() {
-  _extends$y = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$z() {
+  _extends$z = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -28275,13 +28275,13 @@ function _extends$y() {
     }
     return target;
   };
-  return _extends$y.apply(this, arguments);
+  return _extends$z.apply(this, arguments);
 }
-const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$y({}, props, {
+const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$z({}, props, {
   ref,
   icon: CheckOutlined$1
 }));
-const RefIcon$m = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
+const RefIcon$n = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
 const responsiveArray = ["xxl", "xl", "lg", "md", "sm", "xs"];
 const getResponsiveMap = (token2) => ({
   xs: `(max-width: ${token2.screenXSMax}px)`,
@@ -28779,8 +28779,8 @@ const placements$2 = {
     targetOffset: targetOffset$1
   }
 };
-function _extends$x() {
-  _extends$x = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$y() {
+  _extends$y = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -28791,7 +28791,7 @@ function _extends$x() {
     }
     return target;
   };
-  return _extends$x.apply(this, arguments);
+  return _extends$y.apply(this, arguments);
 }
 const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -28849,7 +28849,7 @@ const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     };
     return /* @__PURE__ */ reactExports.cloneElement(child, ariaProps);
   };
-  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$x({
+  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$y({
     popupClassName: classNames == null ? void 0 : classNames.root,
     prefixCls,
     popup: /* @__PURE__ */ reactExports.createElement(Popup, {
@@ -30145,8 +30145,8 @@ const AvatarGroup = (props) => {
 const Avatar = Avatar$1;
 Avatar.Group = AvatarGroup;
 var LeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" } }] }, "name": "left", "theme": "outlined" };
-function _extends$w() {
-  _extends$w = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$x() {
+  _extends$x = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -30157,13 +30157,13 @@ function _extends$w() {
     }
     return target;
   };
-  return _extends$w.apply(this, arguments);
+  return _extends$x.apply(this, arguments);
 }
-const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$w({}, props, {
+const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$x({}, props, {
   ref,
   icon: LeftOutlined$1
 }));
-const RefIcon$l = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
+const RefIcon$m = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
 const {
   ESC: ESC$1,
   TAB
@@ -30292,8 +30292,8 @@ const placements$1 = {
     targetOffset
   }
 };
-function _extends$v() {
-  _extends$v = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$w() {
+  _extends$w = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -30304,7 +30304,7 @@ function _extends$v() {
     }
     return target;
   };
-  return _extends$v.apply(this, arguments);
+  return _extends$w.apply(this, arguments);
 }
 const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   var _a2;
@@ -30395,7 +30395,7 @@ const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   if (!triggerHideAction && trigger.indexOf("contextMenu") !== -1) {
     triggerHideAction = ["click"];
   }
-  return /* @__PURE__ */ We.createElement(Trigger, _extends$v({
+  return /* @__PURE__ */ We.createElement(Trigger, _extends$w({
     builtinPlacements: placements2
   }, otherProps, {
     prefixCls,
@@ -30908,8 +30908,8 @@ function warnItemProp({
   });
   return restInfo;
 }
-function _extends$u() {
-  _extends$u = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$v() {
+  _extends$v = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -30920,7 +30920,7 @@ function _extends$u() {
     }
     return target;
   };
-  return _extends$u.apply(this, arguments);
+  return _extends$v.apply(this, arguments);
 }
 class LegacyMenuItem extends reactExports.Component {
   render() {
@@ -30932,7 +30932,7 @@ class LegacyMenuItem extends reactExports.Component {
     } = this.props;
     const passedProps = omit(restProps, ["eventKey", "popupClassName", "popupOffset", "onTitleClick"]);
     warningOnce(!attribute, "`attribute` of Menu.Item is deprecated. Please pass attribute directly.");
-    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$u({}, attribute, {
+    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$v({}, attribute, {
       title: typeof title === "string" ? title : void 0
     }, passedProps, {
       ref: elementRef
@@ -31020,7 +31020,7 @@ const InternalMenuItem = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
   if (props.role === "option") {
     optionRoleProps["aria-selected"] = selected;
   }
-  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$u({
+  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$v({
     ref: legacyMenuItemRef,
     elementRef: mergedEleRef,
     role: role === null ? "none" : role || "menuitem",
@@ -31072,13 +31072,13 @@ function MenuItem$1(props, ref) {
   if (measure) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$u({}, props, {
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$v({}, props, {
     ref
   }));
 }
 const MenuItem$2 = /* @__PURE__ */ reactExports.forwardRef(MenuItem$1);
-function _extends$t() {
-  _extends$t = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$u() {
+  _extends$u = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31089,7 +31089,7 @@ function _extends$t() {
     }
     return target;
   };
-  return _extends$t.apply(this, arguments);
+  return _extends$u.apply(this, arguments);
 }
 const InternalSubMenuList = ({
   className,
@@ -31101,7 +31101,7 @@ const InternalSubMenuList = ({
     mode,
     rtl
   } = reactExports.useContext(MenuContext$1);
-  return /* @__PURE__ */ reactExports.createElement("ul", _extends$t({
+  return /* @__PURE__ */ reactExports.createElement("ul", _extends$u({
     className: clsx(prefixCls, rtl && `${prefixCls}-rtl`, `${prefixCls}-sub`, `${prefixCls}-${mode === "inline" ? "inline" : "vertical"}`, className),
     role: "menu"
   }, restProps, {
@@ -31296,8 +31296,8 @@ function PopupTrigger({
     fresh: true
   }, children);
 }
-function _extends$s() {
-  _extends$s = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$t() {
+  _extends$t = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31308,7 +31308,7 @@ function _extends$s() {
     }
     return target;
   };
-  return _extends$s.apply(this, arguments);
+  return _extends$t.apply(this, arguments);
 }
 function InlineSubMenuList({
   id,
@@ -31352,7 +31352,7 @@ function InlineSubMenuList({
   return /* @__PURE__ */ reactExports.createElement(InheritableContextProvider, {
     mode: fixedMode,
     locked: !sameModeRef.current
-  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$s({
+  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$t({
     visible: mergedOpen
   }, mergedMotion, {
     forceRender: forceSubMenuRender,
@@ -31369,8 +31369,8 @@ function InlineSubMenuList({
     }, children);
   }));
 }
-function _extends$r() {
-  _extends$r = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$s() {
+  _extends$s = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31381,7 +31381,7 @@ function _extends$r() {
     }
     return target;
   };
-  return _extends$r.apply(this, arguments);
+  return _extends$s.apply(this, arguments);
 }
 const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -31519,7 +31519,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   }, /* @__PURE__ */ reactExports.createElement("i", {
     className: `${subMenuPrefixCls}-arrow`
   })), [mode, mergedExpandIcon, props, open2, subMenuPrefixCls]);
-  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$r({
+  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$s({
     role: "menuitem",
     style: directionStyle,
     className: `${subMenuPrefixCls}-title`,
@@ -31574,7 +31574,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
       onVisibleChange: onPopupVisibleChange
     }, titleNode);
   }
-  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$r({
+  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$s({
     ref,
     role: "none"
   }, restProps, {
@@ -31630,7 +31630,7 @@ const SubMenu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     renderNode = childList;
   } else {
-    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$r({
+    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$s({
       ref
     }, props), childList);
   }
@@ -31655,8 +31655,8 @@ function Divider({
     style: style2
   });
 }
-function _extends$q() {
-  _extends$q = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$r() {
+  _extends$r = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31667,7 +31667,7 @@ function _extends$q() {
     }
     return target;
   };
-  return _extends$q.apply(this, arguments);
+  return _extends$r.apply(this, arguments);
 }
 const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -31683,7 +31683,7 @@ const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, re
     styles
   } = reactExports.useContext(MenuContext$1);
   const groupPrefixCls = `${prefixCls}-item-group`;
-  return /* @__PURE__ */ reactExports.createElement("li", _extends$q({
+  return /* @__PURE__ */ reactExports.createElement("li", _extends$r({
     ref,
     role: "presentation"
   }, restProps, {
@@ -31711,12 +31711,12 @@ const MenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     return childList;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$q({
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$r({
     ref
   }, omit(props, ["warnKey"])), childList);
 });
-function _extends$p() {
-  _extends$p = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$q() {
+  _extends$q = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31727,7 +31727,7 @@ function _extends$p() {
     }
     return target;
   };
-  return _extends$p.apply(this, arguments);
+  return _extends$q.apply(this, arguments);
 }
 function convertItemsToNodes(list2, components, prefixCls) {
   const {
@@ -31749,24 +31749,24 @@ function convertItemsToNodes(list2, components, prefixCls) {
       const mergedKey = key ?? `tmp-${index2}`;
       if (children || type4 === "group") {
         if (type4 === "group") {
-          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$p({
+          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$q({
             key: mergedKey
           }, restProps, {
             title: label
           }), convertItemsToNodes(children, components, prefixCls));
         }
-        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$p({
+        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$q({
           key: mergedKey
         }, restProps, {
           title: label
         }), convertItemsToNodes(children, components, prefixCls));
       }
       if (type4 === "divider") {
-        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$p({
+        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$q({
           key: mergedKey
         }, restProps));
       }
-      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$p({
+      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$q({
         key: mergedKey
       }, restProps, {
         extra
@@ -31791,8 +31791,8 @@ function parseItems(children, items, keyPath, components, prefixCls) {
   }
   return parseChildren(childNodes, keyPath);
 }
-function _extends$o() {
-  _extends$o = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$p() {
+  _extends$p = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31803,7 +31803,7 @@ function _extends$o() {
     }
     return target;
   };
-  return _extends$o.apply(this, arguments);
+  return _extends$p.apply(this, arguments);
 }
 const EMPTY_LIST = [];
 const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -32066,7 +32066,7 @@ const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }, child)
     ))
   );
-  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$o({
+  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$p({
     id,
     ref: containerRef,
     prefixCls: `${prefixCls}-overflow`,
@@ -32150,8 +32150,8 @@ ExportMenu.ItemGroup = MenuItemGroup;
 ExportMenu.Divider = Divider;
 const SiderContext = /* @__PURE__ */ reactExports.createContext({});
 var EllipsisOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, "name": "ellipsis", "theme": "outlined" };
-function _extends$n() {
-  _extends$n = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$o() {
+  _extends$o = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -32162,13 +32162,13 @@ function _extends$n() {
     }
     return target;
   };
-  return _extends$n.apply(this, arguments);
+  return _extends$o.apply(this, arguments);
 }
-const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$n({}, props, {
+const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$o({}, props, {
   ref,
   icon: EllipsisOutlined$1
 }));
-const RefIcon$k = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
+const RefIcon$l = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
 const MenuContext = /* @__PURE__ */ reactExports.createContext({
   prefixCls: "",
   firstLevel: true,
@@ -33513,7 +33513,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     value: contextValue
   }, /* @__PURE__ */ reactExports.createElement(ExportMenu, {
     getPopupContainer,
-    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$k, null),
+    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$l, null),
     overflowedIndicatorPopupClassName: clsx(prefixCls, `${prefixCls}-${theme2}`, overflowedIndicatorPopupClassName),
     classNames: {
       list: mergedClassNames.list,
@@ -34018,9 +34018,9 @@ const Dropdown$1 = (props) => {
       rootClassName: clsx(cssVarCls, rootCls),
       expandIcon: /* @__PURE__ */ reactExports.createElement("span", {
         className: `${prefixCls}-menu-submenu-arrow`
-      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$l, {
+      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$m, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
-      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$n, {
+      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$o, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
       })),
       mode: "vertical",
@@ -35045,6 +35045,26 @@ function debounce(delay, callback, options) {
   });
 }
 var CalendarOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z" } }] }, "name": "calendar", "theme": "outlined" };
+function _extends$n() {
+  _extends$n = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$n.apply(this, arguments);
+}
+const CalendarOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$n({}, props, {
+  ref,
+  icon: CalendarOutlined$1
+}));
+const RefIcon$k = /* @__PURE__ */ reactExports.forwardRef(CalendarOutlined);
+var CloudDownloadOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M624 706.3h-74.1V464c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v242.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.7a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9z" } }, { "tag": "path", "attrs": { "d": "M811.4 366.7C765.6 245.9 648.9 160 512.2 160S258.8 245.8 213 366.6C127.3 389.1 64 467.2 64 560c0 110.5 89.5 200 199.9 200H304c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8h-40.1c-33.7 0-65.4-13.4-89-37.7-23.5-24.2-36-56.8-34.9-90.6.9-26.4 9.9-51.2 26.2-72.1 16.7-21.3 40.1-36.8 66.1-43.7l37.9-9.9 13.9-36.6c8.6-22.8 20.6-44.1 35.7-63.4a245.6 245.6 0 0152.4-49.9c41.1-28.9 89.5-44.2 140-44.2s98.9 15.3 140 44.2c19.9 14 37.5 30.8 52.4 49.9 15.1 19.3 27.1 40.7 35.7 63.4l13.8 36.5 37.8 10C846.1 454.5 884 503.8 884 560c0 33.1-12.9 64.3-36.3 87.7a123.07 123.07 0 01-87.6 36.3H720c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h40.1C870.5 760 960 670.5 960 560c0-92.7-63.1-170.7-148.6-193.3z" } }] }, "name": "cloud-download", "theme": "outlined" };
 function _extends$m() {
   _extends$m = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -35059,11 +35079,11 @@ function _extends$m() {
   };
   return _extends$m.apply(this, arguments);
 }
-const CalendarOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$m({}, props, {
+const CloudDownloadOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$m({}, props, {
   ref,
-  icon: CalendarOutlined$1
+  icon: CloudDownloadOutlined$1
 }));
-const RefIcon$j = /* @__PURE__ */ reactExports.forwardRef(CalendarOutlined);
+const RefIcon$j = /* @__PURE__ */ reactExports.forwardRef(CloudDownloadOutlined);
 var CodeOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M516 673c0 4.4 3.4 8 7.5 8h185c4.1 0 7.5-3.6 7.5-8v-48c0-4.4-3.4-8-7.5-8h-185c-4.1 0-7.5 3.6-7.5 8v48zm-194.9 6.1l192-161c3.8-3.2 3.8-9.1 0-12.3l-192-160.9A7.95 7.95 0 00308 351v62.7c0 2.4 1 4.6 2.9 6.1L420.7 512l-109.8 92.2a8.1 8.1 0 00-2.9 6.1V673c0 6.8 7.9 10.5 13.1 6.1zM880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z" } }] }, "name": "code", "theme": "outlined" };
 function _extends$l() {
   _extends$l = Object.assign ? Object.assign.bind() : function(target) {
@@ -35801,7 +35821,7 @@ const getAllowClear = (allowClear) => {
     mergedAllowClear = allowClear;
   } else if (allowClear) {
     mergedAllowClear = {
-      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$s, null)
+      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$t, null)
     };
   }
   return mergedAllowClear;
@@ -36054,7 +36074,7 @@ const DropdownButton = (props) => {
     placement,
     getPopupContainer,
     href,
-    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$k, null),
+    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$l, null),
     title,
     buttonsRender = (buttons) => buttons,
     mouseEnterDelay,
@@ -38817,7 +38837,7 @@ const CopyBtn = ({
     onClick: onCopy,
     "aria-label": ariaLabel,
     tabIndex
-  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$m, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$o, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$h, null), true)));
+  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$n, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$p, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$h, null), true)));
 };
 const MeasureText = /* @__PURE__ */ reactExports.forwardRef(({
   style: style2,
@@ -42696,7 +42716,7 @@ function StrategyConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "start-date", children: t("config_form.start_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -42712,7 +42732,7 @@ function StrategyConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "end-date", children: t("config_form.end_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -52999,6 +53019,60 @@ function RunStrategy() {
     ] })
   ] });
 }
+const NewStrategyModal = ({ isOpen, onClose, onCreate, t }) => {
+  const [name2, setName] = reactExports.useState("");
+  if (!isOpen) return null;
+  const handleCreate = () => {
+    if (name2.trim()) {
+      onCreate(name2.trim());
+      setName("");
+    }
+  };
+  const handleClose = () => {
+    setName("");
+    onClose();
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-overlay", onClick: handleClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-content", onClick: (e2) => e2.stopPropagation(), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-header", children: /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: t("maintain.create_new_strategy") }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-new-strategy-name", children: t("maintain.strategy_name") }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-new-strategy-name",
+          type: "text",
+          value: name2,
+          onChange: (e2) => setName(e2.target.value),
+          placeholder: t("maintain.placeholder_name"),
+          autoFocus: true,
+          onKeyDown: (e2) => {
+            if (e2.key === "Enter") handleCreate();
+            if (e2.key === "Escape") handleClose();
+          }
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-actions", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          className: "btn-ghost",
+          onClick: handleClose,
+          children: t("common.cancel")
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          className: "btn-primary",
+          onClick: handleCreate,
+          disabled: !name2.trim(),
+          children: t("maintain.create")
+        }
+      )
+    ] })
+  ] }) });
+};
 function _arrayLikeToArray(r2, a2) {
   (null == a2 || a2 > r2.length) && (a2 = r2.length);
   for (var e2 = 0, n = Array(a2); e2 < a2; e2++) n[e2] = r2[e2];
@@ -53622,60 +53696,6 @@ function Ve$1({ defaultValue: e2, defaultLanguage: r2, defaultPath: n, value: t,
 var fe$1 = Ve$1;
 var de$1 = reactExports.memo(fe$1);
 var Ft$1 = de$1;
-const NewStrategyModal = ({ isOpen, onClose, onCreate, t }) => {
-  const [name2, setName] = reactExports.useState("");
-  if (!isOpen) return null;
-  const handleCreate = () => {
-    if (name2.trim()) {
-      onCreate(name2.trim());
-      setName("");
-    }
-  };
-  const handleClose = () => {
-    setName("");
-    onClose();
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-overlay", onClick: handleClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-content", onClick: (e2) => e2.stopPropagation(), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-header", children: /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: t("maintain.create_new_strategy") }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-new-strategy-name", children: t("maintain.strategy_name") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "input",
-        {
-          id: "modal-new-strategy-name",
-          type: "text",
-          value: name2,
-          onChange: (e2) => setName(e2.target.value),
-          placeholder: t("maintain.placeholder_name"),
-          autoFocus: true,
-          onKeyDown: (e2) => {
-            if (e2.key === "Enter") handleCreate();
-            if (e2.key === "Escape") handleClose();
-          }
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-actions", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          className: "btn-ghost",
-          onClick: handleClose,
-          children: t("common.cancel")
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          className: "btn-primary",
-          onClick: handleCreate,
-          disabled: !name2.trim(),
-          children: t("maintain.create")
-        }
-      )
-    ] })
-  ] }) });
-};
 const StrategySelector = ({
   strategies,
   selectedStrategy,
@@ -53750,6 +53770,95 @@ const EditorActions = ({
   t
 }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "btn-primary", onClick: onSave, disabled: loading, style: { marginLeft: "auto" }, children: loading ? t("maintain.saving") : t("maintain.save_strategy") }) });
+};
+function StrategyEditorPanel({
+  strategies,
+  selectedStrategy,
+  setSelectedStrategy,
+  fetchStrategy,
+  fetchStrategies,
+  handleAIAnalysis,
+  handleAIRewrite,
+  codeLoading,
+  code: code2,
+  setCode,
+  saveStrategy,
+  openNewStrategyModal,
+  t
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card editor-card", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { style: { margin: 0, border: "none", padding: 0 }, children: t("maintain.editor_title") }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          type: "button",
+          className: "btn-primary",
+          onClick: openNewStrategyModal,
+          disabled: codeLoading,
+          style: { minWidth: "100px", padding: "0.5rem 1rem" },
+          children: t("maintain.new")
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "subtitle", children: t("maintain.subtitle") }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      StrategySelector,
+      {
+        strategies,
+        selectedStrategy,
+        onSelectStrategy: setSelectedStrategy,
+        onReload: () => fetchStrategy(selectedStrategy),
+        onRefreshList: fetchStrategies,
+        onAIAnalysis: handleAIAnalysis,
+        onAIRewrite: handleAIRewrite,
+        loading: codeLoading,
+        t
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "code-editor", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Ft$1,
+      {
+        height: "60vh",
+        defaultLanguage: "python",
+        language: "python",
+        theme: "vs-dark",
+        value: code2,
+        onChange: (value) => setCode(value ?? ""),
+        options: {
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          wordWrap: "on",
+          roundedSelection: false,
+          automaticLayout: true
+        }
+      }
+    ) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      EditorActions,
+      {
+        onSave: saveStrategy,
+        loading: codeLoading,
+        t
+      }
+    )
+  ] });
+}
+StrategyEditorPanel.propTypes = {
+  strategies: PropTypes.array.isRequired,
+  selectedStrategy: PropTypes.string.isRequired,
+  setSelectedStrategy: PropTypes.func.isRequired,
+  fetchStrategy: PropTypes.func.isRequired,
+  fetchStrategies: PropTypes.func.isRequired,
+  handleAIAnalysis: PropTypes.func.isRequired,
+  handleAIRewrite: PropTypes.func.isRequired,
+  codeLoading: PropTypes.bool.isRequired,
+  code: PropTypes.string.isRequired,
+  setCode: PropTypes.func.isRequired,
+  saveStrategy: PropTypes.func.isRequired,
+  openNewStrategyModal: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 };
 const AnalysisModal = ({ isOpen, onClose, content: content2, title, t }) => {
   if (!isOpen) return null;
@@ -53881,64 +53990,24 @@ class UserStrategy(bt.Strategy):
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "page-container", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card editor-card", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { style: { margin: 0, border: "none", padding: 0 }, children: t("maintain.editor_title") }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            type: "button",
-            className: "btn-primary",
-            onClick: openNewStrategyModal,
-            disabled: codeLoading,
-            style: { minWidth: "100px", padding: "0.5rem 1rem" },
-            children: t("maintain.new")
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "subtitle", children: t("maintain.subtitle") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        StrategySelector,
-        {
-          strategies,
-          selectedStrategy,
-          onSelectStrategy: setSelectedStrategy,
-          onReload: () => fetchStrategy(selectedStrategy),
-          onRefreshList: fetchStrategies,
-          onAIAnalysis: handleAIAnalysis,
-          onAIRewrite: handleAIRewrite,
-          loading: codeLoading,
-          t
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "code-editor", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Ft$1,
-        {
-          height: "60vh",
-          defaultLanguage: "python",
-          language: "python",
-          theme: "vs-dark",
-          value: code2,
-          onChange: (value) => setCode(value ?? ""),
-          options: {
-            fontSize: 14,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            roundedSelection: false,
-            automaticLayout: true
-          }
-        }
-      ) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        EditorActions,
-        {
-          onSave: saveStrategy,
-          loading: codeLoading,
-          t
-        }
-      )
-    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      StrategyEditorPanel,
+      {
+        strategies,
+        selectedStrategy,
+        setSelectedStrategy,
+        fetchStrategy,
+        fetchStrategies,
+        handleAIAnalysis,
+        handleAIRewrite,
+        codeLoading,
+        code: code2,
+        setCode,
+        saveStrategy,
+        openNewStrategyModal,
+        t
+      }
+    ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       NewStrategyModal,
       {
@@ -60402,6 +60471,94 @@ CandleStickChart.propTypes = {
     close: PropTypes.number.isRequired
   })).isRequired
 };
+function DataSourceConfigForm({
+  ticker,
+  setTicker,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  loading,
+  onSubmit,
+  error
+}) {
+  const { t } = useTranslation();
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card form-card-enhanced", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("h2", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, {}),
+      " ",
+      t("datasource.title")
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-grid", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "ticker", children: t("config_form.asset_ticker") }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                id: "ticker",
+                type: "text",
+                value: ticker,
+                onChange: (e2) => setTicker(e2.target.value),
+                required: true
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "start-date", children: t("config_form.start_date") }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                id: "start-date",
+                type: "date",
+                value: startDate,
+                onChange: (e2) => setStartDate(e2.target.value),
+                required: true
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "end-date", children: t("config_form.end_date") }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                id: "end-date",
+                type: "date",
+                value: endDate,
+                onChange: (e2) => setEndDate(e2.target.value),
+                required: true
+              }
+            )
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary glow-effect", disabled: loading, children: loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner-sm" }) : t("datasource.fetch_data") }) })
+    ] }),
+    error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+      "⚠️ ",
+      error
+    ] }) })
+  ] });
+}
+DataSourceConfigForm.propTypes = {
+  ticker: PropTypes.string.isRequired,
+  setTicker: PropTypes.func.isRequired,
+  startDate: PropTypes.string.isRequired,
+  setStartDate: PropTypes.func.isRequired,
+  endDate: PropTypes.string.isRequired,
+  setEndDate: PropTypes.func.isRequired,
+  loading: PropTypes.bool.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  error: PropTypes.string
+};
 function DataSource() {
   const { t } = useTranslation();
   const [ticker, setTicker] = reactExports.useState("AAPL");
@@ -60434,53 +60591,21 @@ function DataSource() {
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "page-container", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: t("datasource.title") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleFetchData, className: "form-grid", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "ticker", children: t("config_form.asset_ticker") }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "input",
-            {
-              id: "ticker",
-              type: "text",
-              value: ticker,
-              onChange: (e2) => setTicker(e2.target.value),
-              required: true
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "start-date", children: t("config_form.start_date") }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "input",
-            {
-              id: "start-date",
-              type: "date",
-              value: startDate,
-              onChange: (e2) => setStartDate(e2.target.value),
-              required: true
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "end-date", children: t("config_form.end_date") }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "input",
-            {
-              id: "end-date",
-              type: "date",
-              value: endDate,
-              onChange: (e2) => setEndDate(e2.target.value),
-              required: true
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary", disabled: loading, children: loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner" }) : t("datasource.fetch_data") }) })
-      ] }),
-      error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message", style: { marginTop: "1rem" }, children: error })
-    ] }),
-    chartData.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      DataSourceConfigForm,
+      {
+        ticker,
+        setTicker,
+        startDate,
+        setStartDate,
+        endDate,
+        setEndDate,
+        loading,
+        onSubmit: handleFetchData,
+        error
+      }
+    ),
+    chartData.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card results-animate-in", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { children: [
           ticker,
@@ -60665,4 +60790,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-9VGHP02w.js.map
+//# sourceMappingURL=index-CXxBSFyl.js.map

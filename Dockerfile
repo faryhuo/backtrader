@@ -32,6 +32,8 @@ RUN pip install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/ \
 # Stage 2: Runtime
 FROM python:3.12-slim-bookworm
 
+ARG ENV_FILE=.env.prod
+
 WORKDIR /app
 
 # Install only runtime libraries (no build tools)
@@ -58,6 +60,14 @@ RUN pip install --upgrade pip \
 
 # Copy application code
 COPY backend /app
+
+# Copy the desired environment file inside the image (default: .env.prod)
+RUN if [ -f "/app/${ENV_FILE}" ]; then \
+        cp "/app/${ENV_FILE}" /app/.env; \
+    else \
+        echo "Environment file ${ENV_FILE} not found inside backend/" >&2; \
+        exit 1; \
+    fi
 
 ENV PYTHONPATH=/app
 ENV PORT=8000

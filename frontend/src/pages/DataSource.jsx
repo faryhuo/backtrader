@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import CandleStickChart from '../components/DataSource/CandleStickChart';
+import DataSourceConfigForm from '../components/DataSource/DataSourceConfigForm';
 
 function DataSource() {
     const { t } = useTranslation();
@@ -39,51 +40,20 @@ function DataSource() {
 
     return (
         <div className="page-container">
-            <section className="card">
-                <h2>{t('datasource.title')}</h2>
-                <form onSubmit={handleFetchData} className="form-grid">
-                    <div className="form-group">
-                        <label htmlFor="ticker">{t('config_form.asset_ticker')}</label>
-                        <input
-                            id="ticker"
-                            type="text"
-                            value={ticker}
-                            onChange={(e) => setTicker(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="start-date">{t('config_form.start_date')}</label>
-                        <input
-                            id="start-date"
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="end-date">{t('config_form.end_date')}</label>
-                        <input
-                            id="end-date"
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-actions">
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? <span className="spinner"></span> : t('datasource.fetch_data')}
-                        </button>
-                    </div>
-                </form>
-
-                {error && <div className="error-message" style={{ marginTop: '1rem' }}>{error}</div>}
-            </section>
+            <DataSourceConfigForm
+                ticker={ticker}
+                setTicker={setTicker}
+                startDate={startDate}
+                setStartDate={setStartDate}
+                endDate={endDate}
+                setEndDate={setEndDate}
+                loading={loading}
+                onSubmit={handleFetchData}
+                error={error}
+            />
 
             {chartData.length > 0 && (
-                <section className="card">
+                <section className="card results-animate-in">
                      <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3>{ticker} Price History</h3>
                         <span className="muted">{chartData.length} candles</span>
