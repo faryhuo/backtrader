@@ -1,0 +1,77 @@
+.notification-popover .ant-popover-inner {
+    padding: 0;
+    width: 350px;
+    border-radius: 8px;
+    background-color: var(--color-bg-container, #1f2937);
+    border: 1px solid var(--color-border, #374151);
+}
+
+.notification-popover-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+}
+
+.notification-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border, #374151);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-list-container {
+    overflow-y: auto;
+    max-height: 350px;
+}
+
+.notification-item {
+    padding: 12px 16px !important;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notification-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.notification-item.unread {
+    background-color: rgba(14, 165, 233, 0.1); /* Primary color with opacity */
+}
+
+.notification-item-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notification-message {
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.notification-time {
+    font-size: 11px;
+}
+
+/* Custom scrollbar for webkit */
+.notification-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notification-list-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.notification-trigger {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}

@@ -83,6 +83,8 @@ class CCXTBroker(bt.BrokerBase):
         # Initialize cash
         self._cash = self.params.cash
         self._value = self.params.cash
+        # Track starting cash for Backtrader writer/analyzers
+        self.startingcash = self.params.cash
 
         # Track positions: {data -> position object}
         self._positions: Dict[bt.DataBase, bt.Position] = defaultdict(bt.Position)

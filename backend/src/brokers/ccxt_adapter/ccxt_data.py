@@ -32,7 +32,8 @@ class CCXTData(bt.DataBase):
     """
 
     params = (
-        ('timeframe', '1m'),  # CCXT timeframe (string)
+        ('timeframe', None),  # Backtrader timeframe (override if needed)
+        ('ccxt_timeframe', '1m'),  # CCXT timeframe string
         ('compression', 1),  # Backtrader bar compression (minutes multiplier)
         ('backfill_start', None),  # Optional: fetch historical data from this date
         ('backfill', False),  # Whether to backfill historical data
@@ -62,8 +63,9 @@ class CCXTData(bt.DataBase):
         self.exchange = store.get_exchange()
         self.symbol = symbol
 
-        # Keep the CCXT timeframe string separate from Backtrader timeframe
-        self.ccxt_timeframe = kwargs.get('timeframe', self.params.timeframe)
+        # Extract CCXT timeframe (string) separate from Backtrader timeframe
+        ccxt_tf = kwargs.pop('timeframe', None) or kwargs.pop('ccxt_timeframe', None)
+        self.ccxt_timeframe = ccxt_tf or self.params.ccxt_timeframe
 
         # Store symbol for broker access
         self._symbol = symbol
@@ -77,15 +79,16 @@ class CCXTData(bt.DataBase):
         # Forward caller kwargs so Backtrader params (timeframe/backfill/etc.) are honored
         super().__init__(**kwargs)
 
-        # Validate timeframe
+        # Validate timeframe and map to Backtrader units for analyzers
         if self.ccxt_timeframe not in self._TIMEFRAME_MAP:
             raise ValueError(
                 f"Unsupported timeframe: {self.ccxt_timeframe}. "
                 f"Supported: {list(self._TIMEFRAME_MAP.keys())}"
             )
-
-        # Map CCXT timeframe to Backtrader timeframe/compression to satisfy analyzers
         self._timeframe, self._compression = self._map_to_bt_timeframe(self.ccxt_timeframe)
+        # Ensure Backtrader params reflect numeric timeframe/compression to avoid analyzer type errors
+        self.params.timeframe = self._timeframe
+        self.params.compression = self._compression
 
         logger.info(
             f"Initialized CCXTData for {symbol} with timeframe {self.ccxt_timeframe}"
