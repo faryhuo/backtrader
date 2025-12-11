@@ -165,6 +165,35 @@ export const api = {
         return data.analysis;
     },
 
+    async analyzeBacktest(metrics, model = 'gpt-5.1') {
+        const prompt = `Please analyze the following backtest results and provide insights on the strategy's performance, risk, and potential improvements:\n\n${JSON.stringify(metrics, null, 2)}`;
+        const formData = new FormData();
+        formData.append('message', prompt);
+        formData.append('model', model);
+
+        // Build headers with auth token
+        const headers = new Headers()
+        if (getTokenFn) {
+            try {
+                const resource = import.meta.env.VITE_API_RESOURCE
+                const token = await getTokenFn(resource)
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`)
+                }
+            } catch (error) {
+                console.error('Failed to get access token:', error)
+            }
+        }
+
+        const res = await fetch(`${API_URL}/ai_analyze`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        const data = await parseResponse(res);
+        return data.analysis;
+    },
+
     async rewriteCode(code, model = 'gpt-5.1') {
         const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n${code}`;
         const formData = new FormData();

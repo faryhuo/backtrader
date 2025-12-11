@@ -13645,8 +13645,8 @@ function SingleObserver(props, ref) {
   }) : mergedChildren;
 }
 const RefSingleObserver = /* @__PURE__ */ reactExports.forwardRef(SingleObserver);
-function _extends$1Y() {
-  _extends$1Y = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1_() {
+  _extends$1_ = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -13657,7 +13657,7 @@ function _extends$1Y() {
     }
     return target;
   };
-  return _extends$1Y.apply(this, arguments);
+  return _extends$1_.apply(this, arguments);
 }
 const INTERNAL_PREFIX_KEY = "rc-observer-key";
 function ResizeObserver$1(props, ref) {
@@ -13667,7 +13667,7 @@ function ResizeObserver$1(props, ref) {
   const childNodes = typeof children === "function" ? [children] : toArray$5(children);
   return childNodes.map((child, index2) => {
     const key = (child == null ? void 0 : child.key) || `${INTERNAL_PREFIX_KEY}-${index2}`;
-    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$1Y({}, props, {
+    return /* @__PURE__ */ reactExports.createElement(RefSingleObserver, _extends$1_({}, props, {
       key,
       ref: index2 === 0 ? ref : void 0
     }), child);
@@ -18040,8 +18040,8 @@ function getTwoToneColor() {
   }
   return [colors.primaryColor, colors.secondaryColor];
 }
-function _extends$1X() {
-  _extends$1X = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1Z() {
+  _extends$1Z = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -18052,7 +18052,7 @@ function _extends$1X() {
     }
     return target;
   };
-  return _extends$1X.apply(this, arguments);
+  return _extends$1Z.apply(this, arguments);
 }
 setTwoToneColor(blue.primary);
 const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -18086,7 +18086,7 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     transform: `rotate(${rotate}deg)`
   } : void 0;
   const [primaryColor, secondaryColor] = normalizeTwoToneColors(twoToneColor);
-  return /* @__PURE__ */ reactExports.createElement("span", _extends$1X({
+  return /* @__PURE__ */ reactExports.createElement("span", _extends$1Z({
     role: "img",
     "aria-label": icon.name
   }, restProps, {
@@ -18103,6 +18103,46 @@ const Icon$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
 });
 Icon$1.getTwoToneColor = getTwoToneColor;
 Icon$1.setTwoToneColor = setTwoToneColor;
+function _extends$1Y() {
+  _extends$1Y = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1Y.apply(this, arguments);
+}
+const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1Y({}, props, {
+  ref,
+  icon: CheckCircleFilled$1
+}));
+const RefIcon$1a = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
+var CloseCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z" } }] }, "name": "close-circle", "theme": "filled" };
+function _extends$1X() {
+  _extends$1X = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1X.apply(this, arguments);
+}
+const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1X({}, props, {
+  ref,
+  icon: CloseCircleFilled$1
+}));
+const RefIcon$19 = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
+var CloseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z" } }] }, "name": "close", "theme": "outlined" };
 function _extends$1W() {
   _extends$1W = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -18117,12 +18157,12 @@ function _extends$1W() {
   };
   return _extends$1W.apply(this, arguments);
 }
-const CheckCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1W({}, props, {
+const CloseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1W({}, props, {
   ref,
-  icon: CheckCircleFilled$1
+  icon: CloseOutlined$1
 }));
-const RefIcon$18 = /* @__PURE__ */ reactExports.forwardRef(CheckCircleFilled);
-var CloseCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z" } }] }, "name": "close-circle", "theme": "filled" };
+const RefIcon$18 = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
 function _extends$1V() {
   _extends$1V = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -18137,12 +18177,12 @@ function _extends$1V() {
   };
   return _extends$1V.apply(this, arguments);
 }
-const CloseCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1V({}, props, {
+const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1V({}, props, {
   ref,
-  icon: CloseCircleFilled$1
+  icon: ExclamationCircleFilled$1
 }));
-const RefIcon$17 = /* @__PURE__ */ reactExports.forwardRef(CloseCircleFilled);
-var CloseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z" } }] }, "name": "close", "theme": "outlined" };
+const RefIcon$17 = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
+var InfoCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272zm-32-344a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "info-circle", "theme": "filled" };
 function _extends$1U() {
   _extends$1U = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -18157,51 +18197,11 @@ function _extends$1U() {
   };
   return _extends$1U.apply(this, arguments);
 }
-const CloseOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1U({}, props, {
-  ref,
-  icon: CloseOutlined$1
-}));
-const RefIcon$16 = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
-var ExclamationCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm-32 232c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V296zm32 440a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "exclamation-circle", "theme": "filled" };
-function _extends$1T() {
-  _extends$1T = Object.assign ? Object.assign.bind() : function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-  return _extends$1T.apply(this, arguments);
-}
-const ExclamationCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1T({}, props, {
-  ref,
-  icon: ExclamationCircleFilled$1
-}));
-const RefIcon$15 = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleFilled);
-var InfoCircleFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V456c0-4.4 3.6-8 8-8h48c4.4 0 8 3.6 8 8v272zm-32-344a48.01 48.01 0 010-96 48.01 48.01 0 010 96z" } }] }, "name": "info-circle", "theme": "filled" };
-function _extends$1S() {
-  _extends$1S = Object.assign ? Object.assign.bind() : function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-  return _extends$1S.apply(this, arguments);
-}
-const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1S({}, props, {
+const InfoCircleFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1U({}, props, {
   ref,
   icon: InfoCircleFilled$1
 }));
-const RefIcon$14 = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
+const RefIcon$16 = /* @__PURE__ */ reactExports.forwardRef(InfoCircleFilled);
 const Context$1 = /* @__PURE__ */ reactExports.createContext({});
 function MotionProvider({
   children,
@@ -18754,8 +18754,8 @@ function diffKeys(prevKeys = [], currentKeys = []) {
   });
   return list2;
 }
-function _extends$1R() {
-  _extends$1R = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1T() {
+  _extends$1T = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -18766,7 +18766,7 @@ function _extends$1R() {
     }
     return target;
   };
-  return _extends$1R.apply(this, arguments);
+  return _extends$1T.apply(this, arguments);
 }
 const MOTION_PROP_NAMES = ["eventProps", "visible", "children", "motionName", "motionAppear", "motionEnter", "motionLeave", "motionLeaveImmediately", "motionDeadline", "removeOnLeave", "leavedClassName", "onAppearPrepare", "onAppearStart", "onAppearActive", "onAppearEnd", "onEnterStart", "onEnterActive", "onEnterEnd", "onLeaveStart", "onLeaveActive", "onLeaveEnd"];
 function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
@@ -18844,7 +18844,7 @@ function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
         ...eventProps
       }, index2) => {
         const visible = status2 === STATUS_ADD || status2 === STATUS_KEEP;
-        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$1R({}, motionProps, {
+        return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$1T({}, motionProps, {
           key: eventProps.key,
           visible,
           eventProps,
@@ -19339,7 +19339,7 @@ const computeClosable = (propCloseCollection, contextCloseCollection, fallbackCl
   const propConfig = computeClosableConfig(propCloseCollection == null ? void 0 : propCloseCollection.closable, propCloseCollection == null ? void 0 : propCloseCollection.closeIcon);
   const contextConfig = computeClosableConfig(contextCloseCollection == null ? void 0 : contextCloseCollection.closable, contextCloseCollection == null ? void 0 : contextCloseCollection.closeIcon);
   const mergedFallback = {
-    closeIcon: /* @__PURE__ */ We.createElement(RefIcon$16, null),
+    closeIcon: /* @__PURE__ */ We.createElement(RefIcon$18, null),
     ...fallbackCloseCollection
   };
   const mergedConfig = mergeClosableConfigs(propConfig, contextConfig, mergedFallback);
@@ -19354,7 +19354,7 @@ const useClosable = (propCloseCollection, contextCloseCollection, fallbackCloseC
   const [contextLocale] = useLocale("global", localeValues.global);
   return We.useMemo(() => {
     return computeClosable(propCloseCollection, contextCloseCollection, {
-      closeIcon: /* @__PURE__ */ We.createElement(RefIcon$16, null),
+      closeIcon: /* @__PURE__ */ We.createElement(RefIcon$18, null),
       ...fallbackCloseCollection
     }, contextLocale.close);
   }, [propCloseCollection, contextCloseCollection, fallbackCloseCollection, contextLocale.close]);
@@ -19745,10 +19745,10 @@ const prepareComponentToken$q = (token2) => {
 };
 const useStyle$B = genStyleHooks("Alert", (token2) => [genBaseStyle$9(token2), genTypeStyle(token2), genActionStyle(token2)], prepareComponentToken$q);
 const iconMapFilled = {
-  success: RefIcon$18,
-  info: RefIcon$14,
-  error: RefIcon$17,
-  warning: RefIcon$15
+  success: RefIcon$1a,
+  info: RefIcon$16,
+  error: RefIcon$19,
+  warning: RefIcon$17
 };
 const IconNode = (props) => {
   const {
@@ -19782,7 +19782,7 @@ const CloseIconNode = (props) => {
     className,
     style: style2
   } = props;
-  const mergedCloseIcon = closeIcon === true || closeIcon === void 0 ? /* @__PURE__ */ reactExports.createElement(RefIcon$16, null) : closeIcon;
+  const mergedCloseIcon = closeIcon === true || closeIcon === void 0 ? /* @__PURE__ */ reactExports.createElement(RefIcon$18, null) : closeIcon;
   return isClosable ? /* @__PURE__ */ reactExports.createElement("button", {
     type: "button",
     onClick: handleClose,
@@ -20459,8 +20459,8 @@ function Arrow(props) {
     }
   }, content2);
 }
-function _extends$1Q() {
-  _extends$1Q = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1S() {
+  _extends$1S = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20471,7 +20471,7 @@ function _extends$1Q() {
     }
     return target;
   };
-  return _extends$1Q.apply(this, arguments);
+  return _extends$1S.apply(this, arguments);
 }
 function Mask(props) {
   const {
@@ -20485,7 +20485,7 @@ function Mask(props) {
   if (!mask) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1Q({}, motion2, {
+  return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1S({}, motion2, {
     motionAppear: true,
     visible: open2,
     removeOnLeave: true
@@ -20534,8 +20534,8 @@ function useOffsetStyle(isMobile2, ready, open2, align, offsetR, offsetB, offset
   }
   return offsetStyle;
 }
-function _extends$1P() {
-  _extends$1P = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1R() {
+  _extends$1R = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -20546,7 +20546,7 @@ function _extends$1P() {
     }
     return target;
   };
-  return _extends$1P.apply(this, arguments);
+  return _extends$1R.apply(this, arguments);
 }
 const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -20652,7 +20652,7 @@ const Popup$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onResize: onInternalResize,
     disabled: !open2
   }, (resizeObserverRef) => {
-    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1P({
+    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1R({
       motionAppear: true,
       motionEnter: true,
       motionLeave: true,
@@ -21421,8 +21421,8 @@ function useTargetState() {
   });
   return [trigger, open2, options, onVisibleChanged];
 }
-function _extends$1O() {
-  _extends$1O = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1Q() {
+  _extends$1Q = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -21433,7 +21433,7 @@ function _extends$1O() {
     }
     return target;
   };
-  return _extends$1O.apply(this, arguments);
+  return _extends$1Q.apply(this, arguments);
 }
 const UniqueContainer = (props) => {
   const {
@@ -21464,7 +21464,7 @@ const UniqueContainer = (props) => {
     sizeStyle.width = popupSize.width;
     sizeStyle.height = popupSize.height;
   }
-  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$1O({
+  return /* @__PURE__ */ We.createElement(CSSMotion, _extends$1Q({
     motionAppear: true,
     motionEnter: true,
     motionLeave: true,
@@ -22761,8 +22761,8 @@ const KeyCode = {
    */
   WIN_KEY: 224
 };
-function _extends$1N() {
-  _extends$1N = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1P() {
+  _extends$1P = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -22773,7 +22773,7 @@ function _extends$1N() {
     }
     return target;
   };
-  return _extends$1N.apply(this, arguments);
+  return _extends$1P.apply(this, arguments);
 }
 const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -22852,7 +22852,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const ariaProps = pickAttrs(closableObj, true);
   const validPercent = 100 - (!percent || percent < 0 ? 0 : percent > 100 ? 100 : percent);
   const noticePrefixCls = `${prefixCls}-notice`;
-  return /* @__PURE__ */ reactExports.createElement("div", _extends$1N({}, divProps, {
+  return /* @__PURE__ */ reactExports.createElement("div", _extends$1P({}, divProps, {
     ref,
     className: clsx(noticePrefixCls, className, {
       [`${noticePrefixCls}-closable`]: closable
@@ -22871,7 +22871,7 @@ const Notify = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onClick
   }), /* @__PURE__ */ reactExports.createElement("div", {
     className: `${noticePrefixCls}-content`
-  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$1N({
+  }, content2), closable && /* @__PURE__ */ reactExports.createElement("button", _extends$1P({
     className: `${noticePrefixCls}-close`,
     onKeyDown: onCloseKeyDown,
     "aria-label": "Close"
@@ -22914,8 +22914,8 @@ const useStack = (config2) => {
   }
   return [!!config2, result];
 };
-function _extends$1M() {
-  _extends$1M = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1O() {
+  _extends$1O = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -22926,7 +22926,7 @@ function _extends$1M() {
     }
     return target;
   };
-  return _extends$1M.apply(this, arguments);
+  return _extends$1O.apply(this, arguments);
 }
 const NoticeList = (props) => {
   const {
@@ -22970,7 +22970,7 @@ const NoticeList = (props) => {
       setLatestNotice(dictRef.current[(_b2 = keys2[keys2.length - 1]) == null ? void 0 : _b2.key]);
     }
   }, [keys2, stack]);
-  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$1M({
+  return /* @__PURE__ */ We.createElement(CSSMotionList, _extends$1O({
     key: placement,
     className: clsx(prefixCls, `${prefixCls}-${placement}`, ctxCls == null ? void 0 : ctxCls.list, className, {
       [`${prefixCls}-stack`]: !!stack,
@@ -23030,7 +23030,7 @@ const NoticeList = (props) => {
       },
       onMouseEnter: () => setHoverKeys((prev2) => prev2.includes(strKey) ? prev2 : [...prev2, strKey]),
       onMouseLeave: () => setHoverKeys((prev2) => prev2.filter((k2) => k2 !== strKey))
-    }, /* @__PURE__ */ We.createElement(Notify, _extends$1M({}, restConfig, {
+    }, /* @__PURE__ */ We.createElement(Notify, _extends$1O({}, restConfig, {
       ref: (node2) => {
         if (dataIndex > -1) {
           dictRef.current[strKey] = node2;
@@ -23268,8 +23268,8 @@ function useNotification(rootConfig = {}) {
   return [api2, contextHolder];
 }
 var LoadingOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z" } }] }, "name": "loading", "theme": "outlined" };
-function _extends$1L() {
-  _extends$1L = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1N() {
+  _extends$1N = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -23280,13 +23280,13 @@ function _extends$1L() {
     }
     return target;
   };
-  return _extends$1L.apply(this, arguments);
+  return _extends$1N.apply(this, arguments);
 }
-const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1L({}, props, {
+const LoadingOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1N({}, props, {
   ref,
   icon: LoadingOutlined$1
 }));
-const RefIcon$13 = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
+const RefIcon$15 = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
 const genMessageStyle = (token2) => {
   const {
     componentCls,
@@ -23443,11 +23443,11 @@ const useStyle$A = genStyleHooks("Message", (token2) => {
   return genMessageStyle(combinedToken);
 }, prepareComponentToken$p);
 const TypeIcon = {
-  info: /* @__PURE__ */ reactExports.createElement(RefIcon$14, null),
-  success: /* @__PURE__ */ reactExports.createElement(RefIcon$18, null),
-  error: /* @__PURE__ */ reactExports.createElement(RefIcon$17, null),
-  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$15, null),
-  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$13, null)
+  info: /* @__PURE__ */ reactExports.createElement(RefIcon$16, null),
+  success: /* @__PURE__ */ reactExports.createElement(RefIcon$1a, null),
+  error: /* @__PURE__ */ reactExports.createElement(RefIcon$19, null),
+  warning: /* @__PURE__ */ reactExports.createElement(RefIcon$17, null),
+  loading: /* @__PURE__ */ reactExports.createElement(RefIcon$15, null)
 };
 const PureContent = (props) => {
   const {
@@ -24305,7 +24305,7 @@ const InnerLoadingIcon = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
     className: mergedIconCls,
     style: style2,
     ref
-  }, /* @__PURE__ */ We.createElement(RefIcon$13, {
+  }, /* @__PURE__ */ We.createElement(RefIcon$15, {
     className: iconClassName
   }));
 });
@@ -24593,8 +24593,8 @@ let AggregationColor = /* @__PURE__ */ (function() {
   }]);
 })();
 var RightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z" } }] }, "name": "right", "theme": "outlined" };
-function _extends$1K() {
-  _extends$1K = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1M() {
+  _extends$1M = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -24605,21 +24605,21 @@ function _extends$1K() {
     }
     return target;
   };
-  return _extends$1K.apply(this, arguments);
+  return _extends$1M.apply(this, arguments);
 }
-const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1K({}, props, {
+const RightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1M({}, props, {
   ref,
   icon: RightOutlined$1
 }));
-const RefIcon$12 = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
-function _extends$1J() {
-  return _extends$1J = Object.assign ? Object.assign.bind() : function(n2) {
+const RefIcon$14 = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+function _extends$1L() {
+  return _extends$1L = Object.assign ? Object.assign.bind() : function(n2) {
     for (var e2 = 1; e2 < arguments.length; e2++) {
       var t2 = arguments[e2];
       for (var r2 in t2) ({}).hasOwnProperty.call(t2, r2) && (n2[r2] = t2[r2]);
     }
     return n2;
-  }, _extends$1J.apply(null, arguments);
+  }, _extends$1L.apply(null, arguments);
 }
 const genCollapseMotion = (token2) => ({
   [token2.componentCls]: {
@@ -27587,8 +27587,8 @@ function move(array4, moveIndex, toIndex) {
   }
   return array4;
 }
-function _extends$1I() {
-  _extends$1I = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1K() {
+  _extends$1K = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -27599,7 +27599,7 @@ function _extends$1I() {
     }
     return target;
   };
-  return _extends$1I.apply(this, arguments);
+  return _extends$1K.apply(this, arguments);
 }
 const EMPTY_ERRORS = [];
 const EMPTY_WARNINGS = [];
@@ -28086,7 +28086,7 @@ function WrapperField({
   if (!isMergedListField) {
     key = `_${(namePath || []).join("_")}`;
   }
-  return /* @__PURE__ */ reactExports.createElement(Field, _extends$1I({
+  return /* @__PURE__ */ reactExports.createElement(Field, _extends$1K({
     key,
     name: namePath,
     isListField: isMergedListField
@@ -29181,8 +29181,8 @@ const BatchUpdate = /* @__PURE__ */ reactExports.forwardRef((_2, ref) => {
   }));
   return null;
 });
-function _extends$1H() {
-  _extends$1H = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1J() {
+  _extends$1J = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -29193,7 +29193,7 @@ function _extends$1H() {
     }
     return target;
   };
-  return _extends$1H.apply(this, arguments);
+  return _extends$1J.apply(this, arguments);
 }
 const Form$2 = ({
   name: name2,
@@ -29314,7 +29314,7 @@ const Form$2 = ({
   if (Component === false) {
     return wrapperNode;
   }
-  return /* @__PURE__ */ reactExports.createElement(Component, _extends$1H({}, restProps, {
+  return /* @__PURE__ */ reactExports.createElement(Component, _extends$1J({}, restProps, {
     ref: nativeElementRef,
     onSubmit: (event) => {
       event.preventDefault();
@@ -30522,8 +30522,8 @@ function useSelectTriggerControl(elements, open2, triggerOpen, customizedTrigger
     return () => window.removeEventListener("mousedown", onGlobalMouseDown);
   }, [onGlobalMouseDown]);
 }
-function _extends$1G() {
-  _extends$1G = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1I() {
+  _extends$1I = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -30534,7 +30534,7 @@ function _extends$1G() {
     }
     return target;
   };
-  return _extends$1G.apply(this, arguments);
+  return _extends$1I.apply(this, arguments);
 }
 const getBuiltInPlacements$1 = (popupMatchSelectWidth) => {
   const adjustX = popupMatchSelectWidth === true ? 0 : 1;
@@ -30630,7 +30630,7 @@ const SelectTrigger = (props, ref) => {
       return (_a2 = triggerPopupRef.current) == null ? void 0 : _a2.popupElement;
     }
   }));
-  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$1G({}, restProps, {
+  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$1I({}, restProps, {
     showAction: onPopupVisibleChange ? ["click"] : [],
     hideAction: onPopupVisibleChange ? ["click"] : [],
     popupPlacement: placement || (direction === "rtl" ? "bottomRight" : "bottomLeft"),
@@ -31064,8 +31064,8 @@ function getTitle(item) {
   }
   return title2;
 }
-function _extends$1F() {
-  _extends$1F = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1H() {
+  _extends$1H = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31076,7 +31076,7 @@ function _extends$1F() {
     }
     return target;
   };
-  return _extends$1F.apply(this, arguments);
+  return _extends$1H.apply(this, arguments);
 }
 const SingleContent = /* @__PURE__ */ reactExports.forwardRef(({
   inputProps
@@ -31154,7 +31154,7 @@ const SingleContent = /* @__PURE__ */ reactExports.forwardRef(({
     style: styles == null ? void 0 : styles.content
   }, displayValue ? /* @__PURE__ */ reactExports.createElement("div", optionProps, displayValue.label) : /* @__PURE__ */ reactExports.createElement(Placeholder, {
     show: !mergedSearchValue
-  }), /* @__PURE__ */ reactExports.createElement(Input$3, _extends$1F({
+  }), /* @__PURE__ */ reactExports.createElement(Input$3, _extends$1H({
     ref
   }, inputProps, {
     value: mergedSearchValue,
@@ -31210,7 +31210,7 @@ function InternalItem$1(props, ref) {
   if (mergedHidden) {
     overflowProps["aria-hidden"] = true;
   }
-  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$1J({
+  let itemNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$1L({
     className: clsx(!invalidate && prefixCls, className),
     style: {
       ...overflowStyle,
@@ -31276,7 +31276,7 @@ const InternalRawItem = (props, ref) => {
       component: Component = "div",
       ...restProps2
     } = props;
-    return /* @__PURE__ */ reactExports.createElement(Component, _extends$1J({}, restProps2, {
+    return /* @__PURE__ */ reactExports.createElement(Component, _extends$1L({}, restProps2, {
       ref
     }));
   }
@@ -31290,7 +31290,7 @@ const InternalRawItem = (props, ref) => {
   } = props;
   return /* @__PURE__ */ reactExports.createElement(OverflowContext.Provider, {
     value: null
-  }, /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1J({
+  }, /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1L({
     ref,
     className: clsx(contextClassName, className)
   }, restContext, restProps)));
@@ -31478,7 +31478,7 @@ function Overflow(props, ref) {
     }, renderRawItem(item, index2));
   } : (item, index2) => {
     const key = getKey2(item, index2);
-    return /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1J({}, itemSharedProps, {
+    return /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1L({}, itemSharedProps, {
       order: index2,
       key,
       item,
@@ -31500,19 +31500,19 @@ function Overflow(props, ref) {
       ...itemSharedProps,
       ...restContextProps
     }
-  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1J({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
-  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$1J({
+  }, renderRawRest(omittedItems)) : /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1L({}, itemSharedProps, restContextProps), typeof mergedRenderRest === "function" ? mergedRenderRest(omittedItems) : mergedRenderRest);
+  const overflowNode = /* @__PURE__ */ reactExports.createElement(Component, _extends$1L({
     className: clsx(!invalidate && prefixCls, className),
     style: style2,
     ref
-  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1J({}, itemSharedProps, {
+  }, restProps), prefix2 && /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1L({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: -1,
     className: `${itemPrefixCls}-prefix`,
     registerSize: registerPrefixSize,
     display: true
-  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1J({}, itemSharedProps, {
+  }), prefix2), mergedData.map(internalRenderItemNode), showRest ? restNode : null, suffix && /* @__PURE__ */ reactExports.createElement(Item$3, _extends$1L({}, itemSharedProps, {
     responsive: isResponsive,
     responsiveDisabled: !shouldResponsive,
     order: mergedDisplayCount,
@@ -31559,8 +31559,8 @@ const TransBtn = (props) => {
     className: clsx(className.split(/\s+/).map((cls) => `${cls}-icon`))
   }, children));
 };
-function _extends$1E() {
-  _extends$1E = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1G() {
+  _extends$1G = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31571,7 +31571,7 @@ function _extends$1E() {
     }
     return target;
   };
-  return _extends$1E.apply(this, arguments);
+  return _extends$1G.apply(this, arguments);
 }
 function itemKey$1(value) {
   return value.key ?? value.value;
@@ -31694,7 +31694,7 @@ const MultipleContent = /* @__PURE__ */ reactExports.forwardRef(function Multipl
     data: displayValues,
     renderItem,
     renderRest,
-    suffix: /* @__PURE__ */ reactExports.createElement(Input$3, _extends$1E({
+    suffix: /* @__PURE__ */ reactExports.createElement(Input$3, _extends$1G({
       ref,
       disabled,
       readOnly: !inputEditable
@@ -31777,8 +31777,8 @@ function isValidateOpenKey(currentKeyCode) {
     ].includes(currentKeyCode)
   );
 }
-function _extends$1D() {
-  _extends$1D = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1F() {
+  _extends$1F = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31789,7 +31789,7 @@ function _extends$1D() {
     }
     return target;
   };
-  return _extends$1D.apply(this, arguments);
+  return _extends$1F.apply(this, arguments);
 }
 const DEFAULT_OMIT_PROPS = ["value", "onChange", "removeIcon", "placeholder", "maxTagCount", "maxTagTextLength", "maxTagPlaceholder", "choiceTransitionName", "onInputKeyDown", "onPopupScroll", "tabIndex", "activeValue", "onSelectorRemove", "focused"];
 const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput2(props, ref) {
@@ -31904,13 +31904,13 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
         ref: composeRef(RootComponent.ref, rootRef)
       });
     }
-    return /* @__PURE__ */ reactExports.createElement(RootComponent, _extends$1D({}, domProps, {
+    return /* @__PURE__ */ reactExports.createElement(RootComponent, _extends$1F({}, domProps, {
       ref: rootRef
     }));
   }
   return /* @__PURE__ */ reactExports.createElement(SelectInputContext.Provider, {
     value: contextValue
-  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1D({}, domProps, {
+  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1F({}, domProps, {
     // Style
     ref: rootRef,
     className,
@@ -31953,8 +31953,8 @@ function useComponents(components, getInputElement, getRawInputElement) {
     };
   }, [components, getInputElement, getRawInputElement]);
 }
-function _extends$1C() {
-  _extends$1C = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1E() {
+  _extends$1E = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -31965,7 +31965,7 @@ function _extends$1C() {
     }
     return target;
   };
-  return _extends$1C.apply(this, arguments);
+  return _extends$1E.apply(this, arguments);
 }
 const isMultiple = (mode2) => mode2 === "tags" || mode2 === "multiple";
 const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -32299,7 +32299,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     [`${prefixCls}-customize-input`]: customizeInputElement,
     [`${prefixCls}-show-search`]: showSearch
   });
-  let renderNode = /* @__PURE__ */ reactExports.createElement(SelectInput, _extends$1C({}, restProps, {
+  let renderNode = /* @__PURE__ */ reactExports.createElement(SelectInput, _extends$1E({}, restProps, {
     // Ref
     ref: containerRef,
     prefixCls,
@@ -32403,7 +32403,7 @@ const Filler = /* @__PURE__ */ reactExports.forwardRef(({
         onInnerResize();
       }
     }
-  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1J({
+  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1L({
     style: innerStyle,
     className: clsx({
       [`${prefixCls}-holder-inner`]: prefixCls
@@ -33578,7 +33578,7 @@ function RawList(props, ref) {
   if (isRTL) {
     containerProps.dir = "rtl";
   }
-  return /* @__PURE__ */ reactExports.createElement("div", _extends$1J({
+  return /* @__PURE__ */ reactExports.createElement("div", _extends$1L({
     ref: containerRef,
     style: {
       ...style2,
@@ -33640,8 +33640,8 @@ List$1.displayName = "List";
 function isPlatformMac() {
   return /(mac\sos|macintosh)/i.test(navigator.appVersion);
 }
-function _extends$1B() {
-  _extends$1B = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1D() {
+  _extends$1D = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -33652,7 +33652,7 @@ function _extends$1B() {
     }
     return target;
   };
-  return _extends$1B.apply(this, arguments);
+  return _extends$1D.apply(this, arguments);
 }
 function isTitleType(content2) {
   return typeof content2 === "string" || typeof content2 === "number";
@@ -33869,7 +33869,7 @@ const OptionList = (_2, ref) => {
     } = item;
     const attrs = pickAttrs(itemData, true);
     const mergedLabel = getLabel(item);
-    return item ? /* @__PURE__ */ reactExports.createElement("div", _extends$1B({
+    return item ? /* @__PURE__ */ reactExports.createElement("div", _extends$1D({
       "aria-label": typeof mergedLabel === "string" && !group ? mergedLabel : null
     }, attrs, {
       key: index2
@@ -33881,7 +33881,7 @@ const OptionList = (_2, ref) => {
     role: "listbox",
     id: `${id}_list`
   };
-  return /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, virtual && /* @__PURE__ */ reactExports.createElement("div", _extends$1B({}, a11yProps, {
+  return /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, virtual && /* @__PURE__ */ reactExports.createElement("div", _extends$1D({}, a11yProps, {
     style: {
       height: 0,
       width: 0,
@@ -33946,7 +33946,7 @@ const OptionList = (_2, ref) => {
     if (title2 !== void 0) {
       optionTitle = title2;
     }
-    return /* @__PURE__ */ reactExports.createElement("div", _extends$1B({}, pickAttrs(passedProps), !virtual ? getItemAriaProps(item, itemIndex) : {}, {
+    return /* @__PURE__ */ reactExports.createElement("div", _extends$1D({}, pickAttrs(passedProps), !virtual ? getItemAriaProps(item, itemIndex) : {}, {
       "aria-selected": virtual ? void 0 : isAriaSelected(value),
       className: optionClassName,
       title: optionTitle,
@@ -34173,8 +34173,8 @@ function useSearchConfig(showSearch, props, mode2) {
     return [isObject2 || mode2 === "combobox" || mode2 === "tags" || mode2 === "multiple" && showSearch === void 0 ? true : showSearch, searchConfig];
   }, [mode2, showSearch, filterOption, searchValue, optionFilterProp, filterSort, onSearch, autoClearSearchValue]);
 }
-function _extends$1A() {
-  _extends$1A = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1C() {
+  _extends$1C = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -34185,7 +34185,7 @@ function _extends$1A() {
     }
     return target;
   };
-  return _extends$1A.apply(this, arguments);
+  return _extends$1C.apply(this, arguments);
 }
 const OMIT_DOM_PROPS = ["inputValue"];
 function isRawValue(value) {
@@ -34545,7 +34545,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, [maxCount, parsedOptions, displayOptions, onActiveValue, mergedDefaultActiveFirstOption, onInternalSelect, menuItemSelectedIcon, rawValues, mergedFieldNames, virtual, popupMatchSelectWidth, direction, listHeight, listItemHeight, childrenAsData, optionRender, classNames, styles]);
   return /* @__PURE__ */ reactExports.createElement(SelectContext.Provider, {
     value: selectContext
-  }, /* @__PURE__ */ reactExports.createElement(BaseSelect, _extends$1A({}, restProps, {
+  }, /* @__PURE__ */ reactExports.createElement(BaseSelect, _extends$1C({}, restProps, {
     // >>> MISC
     id: mergedId,
     prefixCls,
@@ -35724,6 +35724,46 @@ const useSelectStyle = genStyleHooks("Select", (token2, {
   }
 });
 var CheckOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z" } }] }, "name": "check", "theme": "outlined" };
+function _extends$1B() {
+  _extends$1B = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1B.apply(this, arguments);
+}
+const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1B({}, props, {
+  ref,
+  icon: CheckOutlined$1
+}));
+const RefIcon$13 = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
+var DownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" } }] }, "name": "down", "theme": "outlined" };
+function _extends$1A() {
+  _extends$1A = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1A.apply(this, arguments);
+}
+const DownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1A({}, props, {
+  ref,
+  icon: DownOutlined$1
+}));
+const RefIcon$12 = /* @__PURE__ */ reactExports.forwardRef(DownOutlined);
+var SearchOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z" } }] }, "name": "search", "theme": "outlined" };
 function _extends$1z() {
   _extends$1z = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -35738,51 +35778,11 @@ function _extends$1z() {
   };
   return _extends$1z.apply(this, arguments);
 }
-const CheckOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1z({}, props, {
-  ref,
-  icon: CheckOutlined$1
-}));
-const RefIcon$11 = /* @__PURE__ */ reactExports.forwardRef(CheckOutlined);
-var DownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" } }] }, "name": "down", "theme": "outlined" };
-function _extends$1y() {
-  _extends$1y = Object.assign ? Object.assign.bind() : function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-  return _extends$1y.apply(this, arguments);
-}
-const DownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1y({}, props, {
-  ref,
-  icon: DownOutlined$1
-}));
-const RefIcon$10 = /* @__PURE__ */ reactExports.forwardRef(DownOutlined);
-var SearchOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z" } }] }, "name": "search", "theme": "outlined" };
-function _extends$1x() {
-  _extends$1x = Object.assign ? Object.assign.bind() : function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-  return _extends$1x.apply(this, arguments);
-}
-const SearchOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1x({}, props, {
+const SearchOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1z({}, props, {
   ref,
   icon: SearchOutlined$1
 }));
-const RefIcon$$ = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
+const RefIcon$11 = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
 function useIcons({
   suffixIcon,
   clearIcon,
@@ -35796,7 +35796,7 @@ function useIcons({
   showArrow,
   componentName
 }) {
-  const mergedClearIcon = clearIcon ?? /* @__PURE__ */ reactExports.createElement(RefIcon$17, null);
+  const mergedClearIcon = clearIcon ?? /* @__PURE__ */ reactExports.createElement(RefIcon$19, null);
   const getSuffixIconNode = (arrowIcon) => {
     if (suffixIcon === null && !hasFeedback && !showArrow) {
       return null;
@@ -35807,7 +35807,7 @@ function useIcons({
   if (suffixIcon !== void 0) {
     mergedSuffixIcon = getSuffixIconNode(suffixIcon);
   } else if (loading2) {
-    mergedSuffixIcon = getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$13, {
+    mergedSuffixIcon = getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$15, {
       spin: true
     }));
   } else {
@@ -35816,16 +35816,16 @@ function useIcons({
       showSearch
     }) => {
       if (open2 && showSearch) {
-        return getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$$, null));
+        return getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$11, null));
       }
-      return getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$10, null));
+      return getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$12, null));
     };
   }
   let mergedItemIcon = null;
   if (menuItemSelectedIcon !== void 0) {
     mergedItemIcon = menuItemSelectedIcon;
   } else if (multiple) {
-    mergedItemIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$11, null);
+    mergedItemIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$13, null);
   } else {
     mergedItemIcon = null;
   }
@@ -35833,7 +35833,7 @@ function useIcons({
   if (removeIcon !== void 0) {
     mergedRemoveIcon = removeIcon;
   } else {
-    mergedRemoveIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$16, null);
+    mergedRemoveIcon = /* @__PURE__ */ reactExports.createElement(RefIcon$18, null);
   }
   return {
     // TODO: remove as when all the deps bumped
@@ -36560,8 +36560,8 @@ const placements$2 = {
     targetOffset: targetOffset$1
   }
 };
-function _extends$1w() {
-  _extends$1w = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1y() {
+  _extends$1y = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -36572,7 +36572,7 @@ function _extends$1w() {
     }
     return target;
   };
-  return _extends$1w.apply(this, arguments);
+  return _extends$1y.apply(this, arguments);
 }
 const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -36630,7 +36630,7 @@ const Tooltip$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     };
     return /* @__PURE__ */ reactExports.cloneElement(child, ariaProps);
   };
-  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$1w({
+  return /* @__PURE__ */ reactExports.createElement(Trigger, _extends$1y({
     popupClassName: classNames == null ? void 0 : classNames.root,
     prefixCls,
     popup: /* @__PURE__ */ reactExports.createElement(Popup, {
@@ -38707,8 +38707,8 @@ const Ribbon = (props) => {
 const Badge = Badge$1;
 Badge.Ribbon = Ribbon;
 var LeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" } }] }, "name": "left", "theme": "outlined" };
-function _extends$1v() {
-  _extends$1v = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1x() {
+  _extends$1x = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -38719,13 +38719,13 @@ function _extends$1v() {
     }
     return target;
   };
-  return _extends$1v.apply(this, arguments);
+  return _extends$1x.apply(this, arguments);
 }
-const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1v({}, props, {
+const LeftOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1x({}, props, {
   ref,
   icon: LeftOutlined$1
 }));
-const RefIcon$_ = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
+const RefIcon$10 = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
 const {
   ESC: ESC$1,
   TAB
@@ -38854,8 +38854,8 @@ const placements$1 = {
     targetOffset
   }
 };
-function _extends$1u() {
-  _extends$1u = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1w() {
+  _extends$1w = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -38866,7 +38866,7 @@ function _extends$1u() {
     }
     return target;
   };
-  return _extends$1u.apply(this, arguments);
+  return _extends$1w.apply(this, arguments);
 }
 const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   var _a2;
@@ -38957,7 +38957,7 @@ const Dropdown$2 = /* @__PURE__ */ We.forwardRef((props, ref) => {
   if (!triggerHideAction && trigger.indexOf("contextMenu") !== -1) {
     triggerHideAction = ["click"];
   }
-  return /* @__PURE__ */ We.createElement(Trigger, _extends$1u({
+  return /* @__PURE__ */ We.createElement(Trigger, _extends$1w({
     builtinPlacements: placements2
   }, otherProps, {
     prefixCls,
@@ -39470,8 +39470,8 @@ function warnItemProp({
   });
   return restInfo;
 }
-function _extends$1t() {
-  _extends$1t = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1v() {
+  _extends$1v = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -39482,7 +39482,7 @@ function _extends$1t() {
     }
     return target;
   };
-  return _extends$1t.apply(this, arguments);
+  return _extends$1v.apply(this, arguments);
 }
 class LegacyMenuItem extends reactExports.Component {
   render() {
@@ -39494,7 +39494,7 @@ class LegacyMenuItem extends reactExports.Component {
     } = this.props;
     const passedProps = omit(restProps, ["eventKey", "popupClassName", "popupOffset", "onTitleClick"]);
     warningOnce(!attribute, "`attribute` of Menu.Item is deprecated. Please pass attribute directly.");
-    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$1t({}, attribute, {
+    return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$1v({}, attribute, {
       title: typeof title2 === "string" ? title2 : void 0
     }, passedProps, {
       ref: elementRef
@@ -39582,7 +39582,7 @@ const InternalMenuItem = /* @__PURE__ */ reactExports.forwardRef((props, ref) =>
   if (props.role === "option") {
     optionRoleProps["aria-selected"] = selected;
   }
-  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$1t({
+  let renderNode = /* @__PURE__ */ reactExports.createElement(LegacyMenuItem, _extends$1v({
     ref: legacyMenuItemRef,
     elementRef: mergedEleRef,
     role: role === null ? "none" : role || "menuitem",
@@ -39634,13 +39634,13 @@ function MenuItem$1(props, ref) {
   if (measure) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$1t({}, props, {
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItem, _extends$1v({}, props, {
     ref
   }));
 }
 const MenuItem$2 = /* @__PURE__ */ reactExports.forwardRef(MenuItem$1);
-function _extends$1s() {
-  _extends$1s = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1u() {
+  _extends$1u = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -39651,7 +39651,7 @@ function _extends$1s() {
     }
     return target;
   };
-  return _extends$1s.apply(this, arguments);
+  return _extends$1u.apply(this, arguments);
 }
 const InternalSubMenuList = ({
   className,
@@ -39663,7 +39663,7 @@ const InternalSubMenuList = ({
     mode: mode2,
     rtl
   } = reactExports.useContext(MenuContext$1);
-  return /* @__PURE__ */ reactExports.createElement("ul", _extends$1s({
+  return /* @__PURE__ */ reactExports.createElement("ul", _extends$1u({
     className: clsx(prefixCls, rtl && `${prefixCls}-rtl`, `${prefixCls}-sub`, `${prefixCls}-${mode2 === "inline" ? "inline" : "vertical"}`, className),
     role: "menu"
   }, restProps, {
@@ -39858,8 +39858,8 @@ function PopupTrigger({
     fresh: true
   }, children);
 }
-function _extends$1r() {
-  _extends$1r = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1t() {
+  _extends$1t = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -39870,7 +39870,7 @@ function _extends$1r() {
     }
     return target;
   };
-  return _extends$1r.apply(this, arguments);
+  return _extends$1t.apply(this, arguments);
 }
 function InlineSubMenuList({
   id,
@@ -39914,7 +39914,7 @@ function InlineSubMenuList({
   return /* @__PURE__ */ reactExports.createElement(InheritableContextProvider, {
     mode: fixedMode,
     locked: !sameModeRef.current
-  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1r({
+  }, /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1t({
     visible: mergedOpen
   }, mergedMotion, {
     forceRender: forceSubMenuRender,
@@ -39931,8 +39931,8 @@ function InlineSubMenuList({
     }, children);
   }));
 }
-function _extends$1q() {
-  _extends$1q = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1s() {
+  _extends$1s = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -39943,7 +39943,7 @@ function _extends$1q() {
     }
     return target;
   };
-  return _extends$1q.apply(this, arguments);
+  return _extends$1s.apply(this, arguments);
 }
 const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -40081,7 +40081,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   }, /* @__PURE__ */ reactExports.createElement("i", {
     className: `${subMenuPrefixCls}-arrow`
   })), [mode2, mergedExpandIcon, props, open2, subMenuPrefixCls]);
-  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$1q({
+  let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$1s({
     role: "menuitem",
     style: directionStyle,
     className: `${subMenuPrefixCls}-title`,
@@ -40136,7 +40136,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
       onVisibleChange: onPopupVisibleChange
     }, titleNode);
   }
-  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$1q({
+  let listNode = /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$1s({
     ref,
     role: "none"
   }, restProps, {
@@ -40192,7 +40192,7 @@ const SubMenu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     renderNode = childList;
   } else {
-    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$1q({
+    renderNode = /* @__PURE__ */ reactExports.createElement(InternalSubMenu, _extends$1s({
       ref
     }, props), childList);
   }
@@ -40217,8 +40217,8 @@ function Divider$1({
     style: style2
   });
 }
-function _extends$1p() {
-  _extends$1p = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1r() {
+  _extends$1r = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -40229,7 +40229,7 @@ function _extends$1p() {
     }
     return target;
   };
-  return _extends$1p.apply(this, arguments);
+  return _extends$1r.apply(this, arguments);
 }
 const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -40245,7 +40245,7 @@ const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, re
     styles
   } = reactExports.useContext(MenuContext$1);
   const groupPrefixCls = `${prefixCls}-item-group`;
-  return /* @__PURE__ */ reactExports.createElement("li", _extends$1p({
+  return /* @__PURE__ */ reactExports.createElement("li", _extends$1r({
     ref,
     role: "presentation"
   }, restProps, {
@@ -40273,12 +40273,12 @@ const MenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   if (measure) {
     return childList;
   }
-  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$1p({
+  return /* @__PURE__ */ reactExports.createElement(InternalMenuItemGroup, _extends$1r({
     ref
   }, omit(props, ["warnKey"])), childList);
 });
-function _extends$1o() {
-  _extends$1o = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1q() {
+  _extends$1q = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -40289,7 +40289,7 @@ function _extends$1o() {
     }
     return target;
   };
-  return _extends$1o.apply(this, arguments);
+  return _extends$1q.apply(this, arguments);
 }
 function convertItemsToNodes(list2, components, prefixCls) {
   const {
@@ -40311,24 +40311,24 @@ function convertItemsToNodes(list2, components, prefixCls) {
       const mergedKey = key ?? `tmp-${index2}`;
       if (children || type4 === "group") {
         if (type4 === "group") {
-          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$1o({
+          return /* @__PURE__ */ reactExports.createElement(MergedMenuItemGroup, _extends$1q({
             key: mergedKey
           }, restProps, {
             title: label
           }), convertItemsToNodes(children, components, prefixCls));
         }
-        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$1o({
+        return /* @__PURE__ */ reactExports.createElement(MergedSubMenu, _extends$1q({
           key: mergedKey
         }, restProps, {
           title: label
         }), convertItemsToNodes(children, components, prefixCls));
       }
       if (type4 === "divider") {
-        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$1o({
+        return /* @__PURE__ */ reactExports.createElement(MergedDivider, _extends$1q({
           key: mergedKey
         }, restProps));
       }
-      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$1o({
+      return /* @__PURE__ */ reactExports.createElement(MergedMenuItem, _extends$1q({
         key: mergedKey
       }, restProps, {
         extra
@@ -40353,8 +40353,8 @@ function parseItems(children, items, keyPath, components, prefixCls) {
   }
   return parseChildren(childNodes, keyPath);
 }
-function _extends$1n() {
-  _extends$1n = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1p() {
+  _extends$1p = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -40365,7 +40365,7 @@ function _extends$1n() {
     }
     return target;
   };
-  return _extends$1n.apply(this, arguments);
+  return _extends$1p.apply(this, arguments);
 }
 const EMPTY_LIST$3 = [];
 const Menu$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -40628,7 +40628,7 @@ const Menu$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }, child)
     ))
   );
-  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$1n({
+  const container = /* @__PURE__ */ reactExports.createElement(ForwardOverflow, _extends$1p({
     id,
     ref: containerRef,
     prefixCls: `${prefixCls}-overflow`,
@@ -40711,8 +40711,8 @@ ExportMenu.SubMenu = SubMenu$1;
 ExportMenu.ItemGroup = MenuItemGroup;
 ExportMenu.Divider = Divider$1;
 var BarsOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M912 192H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM104 228a56 56 0 10112 0 56 56 0 10-112 0zm0 284a56 56 0 10112 0 56 56 0 10-112 0zm0 284a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, "name": "bars", "theme": "outlined" };
-function _extends$1m() {
-  _extends$1m = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1o() {
+  _extends$1o = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -40723,13 +40723,13 @@ function _extends$1m() {
     }
     return target;
   };
-  return _extends$1m.apply(this, arguments);
+  return _extends$1o.apply(this, arguments);
 }
-const BarsOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1m({}, props, {
+const BarsOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1o({}, props, {
   ref,
   icon: BarsOutlined$1
 }));
-const RefIcon$Z = /* @__PURE__ */ reactExports.forwardRef(BarsOutlined);
+const RefIcon$$ = /* @__PURE__ */ reactExports.forwardRef(BarsOutlined);
 const LayoutContext = /* @__PURE__ */ reactExports.createContext({
   siderHook: {
     addSider: () => null,
@@ -41056,11 +41056,11 @@ const Sider = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onClick: toggle,
     className: clsx(`${prefixCls}-zero-width-trigger`, `${prefixCls}-zero-width-trigger-${reverseArrow ? "right" : "left"}`),
     style: zeroWidthTriggerStyle
-  }, trigger || /* @__PURE__ */ reactExports.createElement(RefIcon$Z, null)) : null;
+  }, trigger || /* @__PURE__ */ reactExports.createElement(RefIcon$$, null)) : null;
   const reverseIcon = direction === "rtl" === !reverseArrow;
   const iconObj = {
-    expanded: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$12, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$_, null),
-    collapsed: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$_, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$12, null)
+    expanded: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$14, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$10, null),
+    collapsed: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$10, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$14, null)
   };
   const status2 = collapsed ? "collapsed" : "expanded";
   const defaultTrigger = iconObj[status2];
@@ -41101,8 +41101,8 @@ const Sider = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, children), collapsible || below && zeroWidthTrigger ? triggerDom : null));
 });
 var EllipsisOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, "name": "ellipsis", "theme": "outlined" };
-function _extends$1l() {
-  _extends$1l = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1n() {
+  _extends$1n = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -41113,13 +41113,13 @@ function _extends$1l() {
     }
     return target;
   };
-  return _extends$1l.apply(this, arguments);
+  return _extends$1n.apply(this, arguments);
 }
-const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1l({}, props, {
+const EllipsisOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1n({}, props, {
   ref,
   icon: EllipsisOutlined$1
 }));
-const RefIcon$Y = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
+const RefIcon$_ = /* @__PURE__ */ reactExports.forwardRef(EllipsisOutlined);
 const MenuContext = /* @__PURE__ */ reactExports.createContext({
   prefixCls: "",
   firstLevel: true,
@@ -42464,7 +42464,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     value: contextValue
   }, /* @__PURE__ */ reactExports.createElement(ExportMenu, {
     getPopupContainer,
-    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$Y, null),
+    overflowedIndicator: /* @__PURE__ */ reactExports.createElement(RefIcon$_, null),
     overflowedIndicatorPopupClassName: clsx(prefixCls, `${prefixCls}-${theme2}`, overflowedIndicatorPopupClassName),
     classNames: {
       list: mergedClassNames.list,
@@ -42970,9 +42970,9 @@ const Dropdown$1 = (props) => {
       rootClassName: clsx(cssVarCls, rootCls),
       expandIcon: /* @__PURE__ */ reactExports.createElement("span", {
         className: `${prefixCls}-menu-submenu-arrow`
-      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$_, {
+      }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$10, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
-      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$12, {
+      }) : /* @__PURE__ */ reactExports.createElement(RefIcon$14, {
         className: `${prefixCls}-menu-submenu-arrow-icon`
       })),
       mode: "vertical",
@@ -43405,8 +43405,8 @@ const RadioGroupContext = /* @__PURE__ */ reactExports.createContext(null);
 const RadioGroupContextProvider = RadioGroupContext.Provider;
 const RadioOptionTypeContext = /* @__PURE__ */ reactExports.createContext(null);
 const RadioOptionTypeContextProvider = RadioOptionTypeContext.Provider;
-function _extends$1k() {
-  _extends$1k = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1m() {
+  _extends$1m = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -43417,7 +43417,7 @@ function _extends$1k() {
     }
     return target;
   };
-  return _extends$1k.apply(this, arguments);
+  return _extends$1m.apply(this, arguments);
 }
 const Checkbox$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -43478,7 +43478,7 @@ const Checkbox$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     title: title2,
     style: style2,
     ref: holderRef
-  }, /* @__PURE__ */ reactExports.createElement("input", _extends$1k({}, inputProps, {
+  }, /* @__PURE__ */ reactExports.createElement("input", _extends$1m({}, inputProps, {
     className: `${prefixCls}-input`,
     ref: inputRef,
     onChange: handleChange,
@@ -45104,8 +45104,8 @@ const useStyle$k = genStyleHooks(["Input", "Component"], (token2) => {
   resetFont: false
 });
 var PlusOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z" } }, { "tag": "path", "attrs": { "d": "M192 474h672q8 0 8 8v60q0 8-8 8H160q-8 0-8-8v-60q0-8 8-8z" } }] }, "name": "plus", "theme": "outlined" };
-function _extends$1j() {
-  _extends$1j = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1l() {
+  _extends$1l = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -45116,13 +45116,13 @@ function _extends$1j() {
     }
     return target;
   };
-  return _extends$1j.apply(this, arguments);
+  return _extends$1l.apply(this, arguments);
 }
-const PlusOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1j({}, props, {
+const PlusOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1l({}, props, {
   ref,
   icon: PlusOutlined$1
 }));
-const RefIcon$X = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
+const RefIcon$Z = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
 var isMobile$2 = { exports: {} };
 var hasRequiredIsMobile;
 function requireIsMobile() {
@@ -45563,8 +45563,8 @@ const ExtraContent = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ref
   }, content2) : null;
 });
-function _extends$1i() {
-  _extends$1i = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1k() {
+  _extends$1k = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -45575,7 +45575,7 @@ function _extends$1i() {
     }
     return target;
   };
-  return _extends$1i.apply(this, arguments);
+  return _extends$1k.apply(this, arguments);
 }
 const OperationNode = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -45719,7 +45719,7 @@ const OperationNode = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const overlayClassName = clsx(popupClassName, {
     [`${dropdownPrefix}-rtl`]: rtl
   });
-  const moreNode = mobile ? null : /* @__PURE__ */ reactExports.createElement(Dropdown$2, _extends$1i({
+  const moreNode = mobile ? null : /* @__PURE__ */ reactExports.createElement(Dropdown$2, _extends$1k({
     prefixCls: dropdownPrefix,
     overlay: menu,
     visible: tabs.length ? open2 : false,
@@ -45857,8 +45857,8 @@ const TabNode = (props) => {
   }, closeIcon || editable.removeIcon || "×"));
   return renderWrapper ? renderWrapper(node2) : node2;
 };
-function _extends$1h() {
-  _extends$1h = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1j() {
+  _extends$1j = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -45869,7 +45869,7 @@ function _extends$1h() {
     }
     return target;
   };
-  return _extends$1h.apply(this, arguments);
+  return _extends$1j.apply(this, arguments);
 }
 const getTabSize = (tab2, containerRect) => {
   const {
@@ -46359,7 +46359,7 @@ const TabNavList = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       ...indicatorStyle,
       ...styles == null ? void 0 : styles.indicator
     }
-  }))))), /* @__PURE__ */ reactExports.createElement(OperationNode$1, _extends$1h({}, props, {
+  }))))), /* @__PURE__ */ reactExports.createElement(OperationNode$1, _extends$1j({}, props, {
     removeAriaLabel: locale2 == null ? void 0 : locale2.removeAriaLabel,
     ref: operationsRef,
     prefixCls,
@@ -46405,8 +46405,8 @@ const TabPane$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ref
   }, children);
 });
-function _extends$1g() {
-  _extends$1g = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1i() {
+  _extends$1i = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -46417,7 +46417,7 @@ function _extends$1g() {
     }
     return target;
   };
-  return _extends$1g.apply(this, arguments);
+  return _extends$1i.apply(this, arguments);
 }
 const TabPanelList = (props) => {
   const {
@@ -46451,7 +46451,7 @@ const TabPanelList = (props) => {
       ...restTabProps
     } = item;
     const active = key === activeKey;
-    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1g({
+    return /* @__PURE__ */ reactExports.createElement(CSSMotion, _extends$1i({
       key,
       visible: active,
       forceRender,
@@ -46460,7 +46460,7 @@ const TabPanelList = (props) => {
     }, animated.tabPaneMotion), ({
       style: motionStyle,
       className: motionClassName
-    }, ref) => /* @__PURE__ */ reactExports.createElement(TabPane$1, _extends$1g({}, restTabProps, {
+    }, ref) => /* @__PURE__ */ reactExports.createElement(TabPane$1, _extends$1i({}, restTabProps, {
       prefixCls: tabPanePrefixCls,
       id,
       tabKey: key,
@@ -46505,8 +46505,8 @@ function useAnimateConfig$1(animated = {
   }
   return mergedAnimated;
 }
-function _extends$1f() {
-  _extends$1f = Object.assign ? Object.assign.bind() : function(target) {
+function _extends$1h() {
+  _extends$1h = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
       for (var key in source) {
@@ -46517,7 +46517,7 @@ function _extends$1f() {
     }
     return target;
   };
-  return _extends$1f.apply(this, arguments);
+  return _extends$1h.apply(this, arguments);
 }
 let uuid = 0;
 const Tabs$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
@@ -46615,7 +46615,7 @@ const Tabs$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, [tabs, prefixCls]);
   return /* @__PURE__ */ reactExports.createElement(TabContext.Provider, {
     value: memoizedValue
-  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1f({
+  }, /* @__PURE__ */ reactExports.createElement("div", _extends$1h({
     ref,
     id,
     className: clsx(prefixCls, `${prefixCls}-${tabPosition}`, {
@@ -46623,9 +46623,9 @@ const Tabs$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       [`${prefixCls}-editable`]: editable,
       [`${prefixCls}-rtl`]: rtl
     }, className)
-  }, restProps), /* @__PURE__ */ reactExports.createElement(TabNavListWrapper, _extends$1f({}, tabNavBarProps, {
+  }, restProps), /* @__PURE__ */ reactExports.createElement(TabNavListWrapper, _extends$1h({}, tabNavBarProps, {
     renderTabBar
-  })), /* @__PURE__ */ reactExports.createElement(TabPanelList, _extends$1f({
+  })), /* @__PURE__ */ reactExports.createElement(TabPanelList, _extends$1h({
     destroyOnHidden
   }, sharedProps, {
     contentStyle: styles == null ? void 0 : styles.content,
@@ -47660,8 +47660,8 @@ const InternalTabs = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }) => {
         onEdit == null ? void 0 : onEdit(editType === "add" ? event : key, editType);
       },
-      removeIcon: removeIcon ?? (tabs == null ? void 0 : tabs.removeIcon) ?? /* @__PURE__ */ reactExports.createElement(RefIcon$16, null),
-      addIcon: (addIcon ?? (tabs == null ? void 0 : tabs.addIcon)) || /* @__PURE__ */ reactExports.createElement(RefIcon$X, null),
+      removeIcon: removeIcon ?? (tabs == null ? void 0 : tabs.removeIcon) ?? /* @__PURE__ */ reactExports.createElement(RefIcon$18, null),
+      addIcon: (addIcon ?? (tabs == null ? void 0 : tabs.addIcon)) || /* @__PURE__ */ reactExports.createElement(RefIcon$Z, null),
       showAdd: hideAdd !== true
     };
   }
@@ -47722,7 +47722,7 @@ const InternalTabs = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     },
     editable,
     more: {
-      icon: ((_d = tabs == null ? void 0 : tabs.more) == null ? void 0 : _d.icon) ?? (tabs == null ? void 0 : tabs.moreIcon) ?? moreIcon ?? /* @__PURE__ */ reactExports.createElement(RefIcon$Y, null),
+      icon: ((_d = tabs == null ? void 0 : tabs.more) == null ? void 0 : _d.icon) ?? (tabs == null ? void 0 : tabs.moreIcon) ?? moreIcon ?? /* @__PURE__ */ reactExports.createElement(RefIcon$_, null),
       transitionName: `${rootPrefixCls}-slide-up`,
       ...more
     },
@@ -49774,6 +49774,46 @@ const Divider = (props) => {
   })));
 };
 var ArrowDownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M862 465.3h-81c-4.6 0-9 2-12.1 5.5L550 723.1V160c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v563.1L255.1 470.8c-3-3.5-7.4-5.5-12.1-5.5h-81c-6.8 0-10.5 8.1-6 13.2L487.9 861a31.96 31.96 0 0048.3 0L868 478.5c4.5-5.2.8-13.2-6-13.2z" } }] }, "name": "arrow-down", "theme": "outlined" };
+function _extends$1g() {
+  _extends$1g = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1g.apply(this, arguments);
+}
+const ArrowDownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1g({}, props, {
+  ref,
+  icon: ArrowDownOutlined$1
+}));
+const RefIcon$Y = /* @__PURE__ */ reactExports.forwardRef(ArrowDownOutlined);
+var ArrowUpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z" } }] }, "name": "arrow-up", "theme": "outlined" };
+function _extends$1f() {
+  _extends$1f = Object.assign ? Object.assign.bind() : function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends$1f.apply(this, arguments);
+}
+const ArrowUpOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1f({}, props, {
+  ref,
+  icon: ArrowUpOutlined$1
+}));
+const RefIcon$X = /* @__PURE__ */ reactExports.forwardRef(ArrowUpOutlined);
+var BellOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M816 768h-24V428c0-141.1-104.3-257.7-240-277.1V112c0-22.1-17.9-40-40-40s-40 17.9-40 40v38.9c-135.7 19.4-240 136-240 277.1v340h-24c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h216c0 61.8 50.2 112 112 112s112-50.2 112-112h216c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM512 888c-26.5 0-48-21.5-48-48h96c0 26.5-21.5 48-48 48zM304 768V428c0-55.6 21.6-107.8 60.9-147.1S456.4 220 512 220c55.6 0 107.8 21.6 147.1 60.9S720 372.4 720 428v340H304z" } }] }, "name": "bell", "theme": "outlined" };
 function _extends$1e() {
   _extends$1e = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49788,12 +49828,12 @@ function _extends$1e() {
   };
   return _extends$1e.apply(this, arguments);
 }
-const ArrowDownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1e({}, props, {
+const BellOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1e({}, props, {
   ref,
-  icon: ArrowDownOutlined$1
+  icon: BellOutlined$1
 }));
-const RefIcon$W = /* @__PURE__ */ reactExports.forwardRef(ArrowDownOutlined);
-var ArrowUpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z" } }] }, "name": "arrow-up", "theme": "outlined" };
+const RefIcon$W = /* @__PURE__ */ reactExports.forwardRef(BellOutlined);
+var BulbOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M632 888H392c-4.4 0-8 3.6-8 8v32c0 17.7 14.3 32 32 32h192c17.7 0 32-14.3 32-32v-32c0-4.4-3.6-8-8-8zM512 64c-181.1 0-328 146.9-328 328 0 121.4 66 227.4 164 284.1V792c0 17.7 14.3 32 32 32h264c17.7 0 32-14.3 32-32V676.1c98-56.7 164-162.7 164-284.1 0-181.1-146.9-328-328-328zm127.9 549.8L604 634.6V752H420V634.6l-35.9-20.8C305.4 568.3 256 484.5 256 392c0-141.4 114.6-256 256-256s256 114.6 256 256c0 92.5-49.4 176.3-128.1 221.8z" } }] }, "name": "bulb", "theme": "outlined" };
 function _extends$1d() {
   _extends$1d = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49808,12 +49848,12 @@ function _extends$1d() {
   };
   return _extends$1d.apply(this, arguments);
 }
-const ArrowUpOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1d({}, props, {
+const BulbOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1d({}, props, {
   ref,
-  icon: ArrowUpOutlined$1
+  icon: BulbOutlined$1
 }));
-const RefIcon$V = /* @__PURE__ */ reactExports.forwardRef(ArrowUpOutlined);
-var BellOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M816 768h-24V428c0-141.1-104.3-257.7-240-277.1V112c0-22.1-17.9-40-40-40s-40 17.9-40 40v38.9c-135.7 19.4-240 136-240 277.1v340h-24c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h216c0 61.8 50.2 112 112 112s112-50.2 112-112h216c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM512 888c-26.5 0-48-21.5-48-48h96c0 26.5-21.5 48-48 48zM304 768V428c0-55.6 21.6-107.8 60.9-147.1S456.4 220 512 220c55.6 0 107.8 21.6 147.1 60.9S720 372.4 720 428v340H304z" } }] }, "name": "bell", "theme": "outlined" };
+const RefIcon$V = /* @__PURE__ */ reactExports.forwardRef(BulbOutlined);
+var CalendarOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z" } }] }, "name": "calendar", "theme": "outlined" };
 function _extends$1c() {
   _extends$1c = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49828,12 +49868,12 @@ function _extends$1c() {
   };
   return _extends$1c.apply(this, arguments);
 }
-const BellOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1c({}, props, {
+const CalendarOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1c({}, props, {
   ref,
-  icon: BellOutlined$1
+  icon: CalendarOutlined$1
 }));
-const RefIcon$U = /* @__PURE__ */ reactExports.forwardRef(BellOutlined);
-var CalendarOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z" } }] }, "name": "calendar", "theme": "outlined" };
+const RefIcon$U = /* @__PURE__ */ reactExports.forwardRef(CalendarOutlined);
+var CaretDownFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z" } }] }, "name": "caret-down", "theme": "filled" };
 function _extends$1b() {
   _extends$1b = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49848,12 +49888,12 @@ function _extends$1b() {
   };
   return _extends$1b.apply(this, arguments);
 }
-const CalendarOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1b({}, props, {
+const CaretDownFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1b({}, props, {
   ref,
-  icon: CalendarOutlined$1
+  icon: CaretDownFilled$1
 }));
-const RefIcon$T = /* @__PURE__ */ reactExports.forwardRef(CalendarOutlined);
-var CaretDownFilled$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z" } }] }, "name": "caret-down", "theme": "filled" };
+const RefIcon$T = /* @__PURE__ */ reactExports.forwardRef(CaretDownFilled);
+var CaretDownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z" } }] }, "name": "caret-down", "theme": "outlined" };
 function _extends$1a() {
   _extends$1a = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49868,12 +49908,12 @@ function _extends$1a() {
   };
   return _extends$1a.apply(this, arguments);
 }
-const CaretDownFilled = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1a({}, props, {
+const CaretDownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$1a({}, props, {
   ref,
-  icon: CaretDownFilled$1
+  icon: CaretDownOutlined$1
 }));
-const RefIcon$S = /* @__PURE__ */ reactExports.forwardRef(CaretDownFilled);
-var CaretDownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z" } }] }, "name": "caret-down", "theme": "outlined" };
+const RefIcon$S = /* @__PURE__ */ reactExports.forwardRef(CaretDownOutlined);
+var CaretRightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M715.8 493.5L335 165.1c-14.2-12.2-35-1.2-35 18.5v656.8c0 19.7 20.8 30.7 35 18.5l380.8-328.4c10.9-9.4 10.9-27.6 0-37z" } }] }, "name": "caret-right", "theme": "outlined" };
 function _extends$19() {
   _extends$19 = Object.assign ? Object.assign.bind() : function(target) {
     for (var i = 1; i < arguments.length; i++) {
@@ -49888,11 +49928,11 @@ function _extends$19() {
   };
   return _extends$19.apply(this, arguments);
 }
-const CaretDownOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$19({}, props, {
+const CaretRightOutlined = (props, ref) => /* @__PURE__ */ reactExports.createElement(Icon$1, _extends$19({}, props, {
   ref,
-  icon: CaretDownOutlined$1
+  icon: CaretRightOutlined$1
 }));
-const RefIcon$R = /* @__PURE__ */ reactExports.forwardRef(CaretDownOutlined);
+const RefIcon$R = /* @__PURE__ */ reactExports.forwardRef(CaretRightOutlined);
 var CaretUpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z" } }] }, "name": "caret-up", "theme": "outlined" };
 function _extends$18() {
   _extends$18 = Object.assign ? Object.assign.bind() : function(target) {
@@ -52373,8 +52413,8 @@ const InternalInputNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref)
     compactSize,
     compactItemClassnames
   } = useCompactItemContext(prefixCls, direction);
-  let upIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$X, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$2, null);
-  let downIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$l, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$10, null);
+  let upIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$Z, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$2, null);
+  let downIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$l, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$12, null);
   const controlsTemp = typeof mergedControls === "boolean" ? mergedControls : void 0;
   if (typeof mergedControls === "object") {
     upIcon = mergedControls.upIcon || upIcon;
@@ -52924,7 +52964,7 @@ const getAllowClear = (allowClear) => {
     mergedAllowClear = allowClear;
   } else if (allowClear) {
     mergedAllowClear = {
-      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$17, null)
+      clearIcon: /* @__PURE__ */ We.createElement(RefIcon$19, null)
     };
   }
   return mergedAllowClear;
@@ -53331,7 +53371,7 @@ const DropdownButton = (props) => {
     placement,
     getPopupContainer,
     href,
-    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$Y, null),
+    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$_, null),
     title: title2,
     buttonsRender = (buttons) => buttons,
     mouseEnterDelay,
@@ -54478,10 +54518,10 @@ const FormItemLabel = ({
   }, labelChildren));
 };
 const iconMap = {
-  success: RefIcon$18,
-  warning: RefIcon$15,
-  error: RefIcon$17,
-  validating: RefIcon$13
+  success: RefIcon$1a,
+  warning: RefIcon$17,
+  error: RefIcon$19,
+  validating: RefIcon$15
 };
 function StatusProvider({
   children,
@@ -55510,7 +55550,7 @@ const Search = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     customOnPressEnter == null ? void 0 : customOnPressEnter(e2);
     onSearch(e2);
   };
-  const searchIcon = typeof enterButton === "boolean" ? /* @__PURE__ */ reactExports.createElement(RefIcon$$, null) : null;
+  const searchIcon = typeof enterButton === "boolean" ? /* @__PURE__ */ reactExports.createElement(RefIcon$11, null) : null;
   const btnPrefixCls = `${prefixCls}-btn`;
   const btnClassName = clsx(btnPrefixCls, {
     [`${btnPrefixCls}-${variant}`]: variant
@@ -57686,12 +57726,12 @@ const Pagination = (props) => {
       className: `${prefixCls}-item-link`,
       type: "button",
       tabIndex: -1
-    }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$12, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$_, null));
+    }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$14, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$10, null));
     const nextIcon = /* @__PURE__ */ reactExports.createElement("button", {
       className: `${prefixCls}-item-link`,
       type: "button",
       tabIndex: -1
-    }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$_, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$12, null));
+    }, direction === "rtl" ? /* @__PURE__ */ reactExports.createElement(RefIcon$10, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$14, null));
     const jumpPrevIcon = (
       // biome-ignore lint/a11y/useValidAnchor: it is hard to refactor
       /* @__PURE__ */ reactExports.createElement("a", {
@@ -59217,7 +59257,7 @@ const Overlay = (props) => {
     cancelText,
     okText,
     okType = "primary",
-    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$15, null),
+    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$17, null),
     showCancel = true,
     close: close2,
     onConfirm,
@@ -59295,7 +59335,7 @@ const InternalPopconfirm = /* @__PURE__ */ reactExports.forwardRef((props, ref) 
     placement = "top",
     trigger,
     okType = "primary",
-    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$15, null),
+    icon = /* @__PURE__ */ reactExports.createElement(RefIcon$17, null),
     children,
     overlayClassName,
     onOpenChange,
@@ -63675,7 +63715,7 @@ const useSelection = (config2, rowSelection) => {
         }, /* @__PURE__ */ reactExports.createElement(Dropdown, {
           menu,
           getPopupContainer
-        }, /* @__PURE__ */ reactExports.createElement("span", null, /* @__PURE__ */ reactExports.createElement(RefIcon$10, null))));
+        }, /* @__PURE__ */ reactExports.createElement("span", null, /* @__PURE__ */ reactExports.createElement(RefIcon$12, null))));
       }
       const allDisabledData = flattedData.map((record, index2) => {
         const key = getRowKey(record, index2);
@@ -65995,7 +66035,7 @@ const SwitcherIconCom = (props) => {
     if (/* @__PURE__ */ reactExports.isValidElement(switcherLoadingIcon)) {
       return switcherLoadingIcon;
     }
-    return /* @__PURE__ */ reactExports.createElement(RefIcon$13, {
+    return /* @__PURE__ */ reactExports.createElement(RefIcon$15, {
       className: `${prefixCls}-switcher-loading-icon`
     });
   }
@@ -66040,7 +66080,7 @@ const SwitcherIconCom = (props) => {
       className: `${prefixCls}-switcher-line-icon`
     });
   }
-  return /* @__PURE__ */ reactExports.createElement(RefIcon$S, {
+  return /* @__PURE__ */ reactExports.createElement(RefIcon$T, {
     className: switcherCls
   });
 };
@@ -66392,7 +66432,7 @@ const FilterSearch = (props) => {
   return /* @__PURE__ */ reactExports.createElement("div", {
     className: `${tablePrefixCls}-filter-dropdown-search`
   }, /* @__PURE__ */ reactExports.createElement(Input$1, {
-    prefix: /* @__PURE__ */ reactExports.createElement(RefIcon$$, null),
+    prefix: /* @__PURE__ */ reactExports.createElement(RefIcon$11, null),
     placeholder: locale2.filterSearchPlaceholder,
     onChange,
     value,
@@ -67187,7 +67227,7 @@ const injectSorter = (prefixCls, columns, sorterStates, triggerSorter, defaultSo
             active: sortOrder === ASCEND
           })
         });
-        const downNode = sortDirections.includes(DESCEND) && /* @__PURE__ */ reactExports.createElement(RefIcon$R, {
+        const downNode = sortDirections.includes(DESCEND) && /* @__PURE__ */ reactExports.createElement(RefIcon$S, {
           className: clsx(`${prefixCls}-column-sorter-down`, {
             active: sortOrder === DESCEND
           })
@@ -70526,7 +70566,7 @@ const CopyBtn = ({
     onClick: onCopy,
     "aria-label": ariaLabel,
     tabIndex
-  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$11, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$13, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$K, null), true)));
+  }, copied ? getNode(iconNodes[1], /* @__PURE__ */ reactExports.createElement(RefIcon$13, null), true) : getNode(iconNodes[0], btnLoading ? /* @__PURE__ */ reactExports.createElement(RefIcon$15, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$K, null), true)));
 };
 const MeasureText = /* @__PURE__ */ reactExports.forwardRef(({
   style: style2,
@@ -74167,7 +74207,7 @@ const NotificationCenter = () => {
           {
             type: "text",
             size: "small",
-            icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$11, {}),
+            icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$13, {}),
             onClick: markAllAsRead,
             children: "Mark all read"
           }
@@ -74189,6 +74229,7 @@ const NotificationCenter = () => {
       List,
       {
         itemLayout: "horizontal",
+        style: { width: 350 },
         dataSource: notifications,
         locale: { emptyText: /* @__PURE__ */ jsxRuntimeExports.jsx(Empty, { image: Empty.PRESENTED_IMAGE_SIMPLE, description: "No notifications" }) },
         renderItem: (item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -74225,7 +74266,7 @@ const NotificationCenter = () => {
         {
           type: "text",
           shape: "circle",
-          icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$U, { style: { fontSize: "18px" } }),
+          icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$W, { style: { fontSize: "18px" } }),
           className: "btn-ghost"
         }
       ) }) })
@@ -74458,6 +74499,33 @@ ${code2}`;
     const data = await parseResponse(res);
     return data.analysis;
   },
+  async analyzeBacktest(metrics, model = "gpt-5.1") {
+    const prompt = `Please analyze the following backtest results and provide insights on the strategy's performance, risk, and potential improvements:
+
+${JSON.stringify(metrics, null, 2)}`;
+    const formData = new FormData();
+    formData.append("message", prompt);
+    formData.append("model", model);
+    const headers = new Headers();
+    if (getTokenFn) {
+      try {
+        const resource = "http://localhost:8000/api";
+        const token2 = await getTokenFn(resource);
+        if (token2) {
+          headers.set("Authorization", `Bearer ${token2}`);
+        }
+      } catch (error2) {
+        console.error("Failed to get access token:", error2);
+      }
+    }
+    const res = await fetch(`${API_URL}/ai_analyze`, {
+      method: "POST",
+      headers,
+      body: formData
+    });
+    const data = await parseResponse(res);
+    return data.analysis;
+  },
   async rewriteCode(code2, model = "gpt-5.1") {
     const prompt = `Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:
 
@@ -74607,7 +74675,7 @@ function StrategyConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "start-date", children: t2("config_form.start_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$U, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -74623,7 +74691,7 @@ function StrategyConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "end-date", children: t2("config_form.end_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$U, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -84616,36 +84684,59 @@ Provide a comprehensive assessment including:
 };
 function AIInsight({ analyses, activeTab, onTabChange }) {
   const { t: t2 } = useTranslation();
+  const [isThinkingOpen, setIsThinkingOpen] = reactExports.useState(false);
   if (!analyses || Object.keys(analyses).length === 0) {
     return null;
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-insight-section", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tabs", children: Object.keys(analyses).map((modelKey) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "button",
-      {
-        className: `tab ${activeTab === modelKey ? "active" : ""}`,
-        onClick: () => onTabChange(modelKey),
-        children: modelKey
-      },
-      modelKey
-    )) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "ai-markdown-content", children: (() => {
-      const content2 = analyses[activeTab];
-      if (!content2) return null;
-      const thinkMatch = content2.match(/<think>([\s\S]*?)<\/think>/);
-      if (thinkMatch) {
-        const thoughtProcess = thinkMatch[1];
-        const mainContent = content2.replace(/<think>[\s\S]*?<\/think>/, "").trim();
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "thought-process-details", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("summary", { children: t2("ai_insight.thinking_process") }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "thought-content", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: thoughtProcess }) })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: mainContent })
-        ] });
-      }
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: content2 });
-    })() })
+  const currentContent = analyses[activeTab];
+  const renderContent = () => {
+    if (!currentContent) return null;
+    const thinkMatch = currentContent.match(/<think>([\s\S]*?)<\/think>/);
+    let thoughtProcess = null;
+    let mainContent = currentContent;
+    if (thinkMatch) {
+      thoughtProcess = thinkMatch[1].trim();
+      mainContent = currentContent.replace(/<think>[\s\S]*?<\/think>/, "").trim();
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-content-body animate-fade-in", children: [
+      thoughtProcess && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "thought-process-container", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "thought-toggle-btn",
+            onClick: () => setIsThinkingOpen(!isThinkingOpen),
+            children: [
+              isThinkingOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$S, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$R, {}),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("ai_insight.thinking_process", "Thinking Process") })
+            ]
+          }
+        ),
+        isThinkingOpen && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "thought-content custom-scrollbar", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: thoughtProcess }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "main-analysis-content markdown-body", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: mainContent }) })
+    ] });
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-insight-card", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-insight-header", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-title-group", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "ai-icon-wrapper", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$b, {}) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: t2("ai_insight.title", "AI Strategy Insight") })
+      ] }),
+      Object.keys(analyses).length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "model-tabs", children: Object.keys(analyses).map((modelKey) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          className: `model-tab ${activeTab === modelKey ? "active" : ""}`,
+          onClick: () => onTabChange(modelKey),
+          children: modelKey
+        },
+        modelKey
+      )) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "ai-insight-body", children: renderContent() }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "ai-insight-footer", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$V, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("ai_insight.disclaimer", "AI-generated insights may vary. Verify with quantitative data.") })
+    ] })
   ] });
 }
 AIInsight.propTypes = {
@@ -92401,7 +92492,7 @@ function DataSourceConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "start-date", children: t2("config_form.start_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$U, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -92417,7 +92508,7 @@ function DataSourceConfigForm({
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "form-group", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "end-date", children: t2("config_form.end_date") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "input-with-icon", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { className: "input-icon" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$U, { className: "input-icon" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -92820,7 +92911,7 @@ const PositionTable = ({ positions, loading: loading2 }) => {
       title: t2("live.side"),
       dataIndex: "size",
       key: "side",
-      render: (size2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: size2 > 0 ? "green" : "red", icon: size2 > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$V, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$W, {}), children: size2 > 0 ? "LONG" : "SHORT" })
+      render: (size2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: size2 > 0 ? "green" : "red", icon: size2 > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$X, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$Y, {}), children: size2 > 0 ? "LONG" : "SHORT" })
     },
     {
       title: t2("live.size"),
@@ -93672,21 +93763,21 @@ function Home() {
           /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { className: "benefits-title", children: t2("home.benefits_title") }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefits-list", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-item", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$18, { className: "benefit-icon" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$1a, { className: "benefit-icon" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-text", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, className: "benefit-head", children: t2("home.benefit_privacy") }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { className: "benefit-desc", children: t2("home.benefit_privacy_desc") })
               ] })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-item", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$18, { className: "benefit-icon" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$1a, { className: "benefit-icon" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-text", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, className: "benefit-head", children: t2("home.benefit_engine") }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { className: "benefit-desc", children: t2("home.benefit_engine_desc") })
               ] })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-item", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$18, { className: "benefit-icon" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$1a, { className: "benefit-icon" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "benefit-text", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { strong: true, className: "benefit-head", children: t2("home.benefit_ai") }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Text, { className: "benefit-desc", children: t2("home.benefit_ai_desc") })
@@ -93794,4 +93885,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-D5pyZRyW.js.map
+//# sourceMappingURL=index-Doc5rsIo.js.map

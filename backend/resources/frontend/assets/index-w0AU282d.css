@@ -560,7 +560,7 @@ body {
 }
 .notification-popover .ant-popover-inner {
     padding: 0;
-    width: 350px;
+    min-width: 350px;
     border-radius: 8px;
     background-color: var(--color-bg-container, #1f2937);
     border: 1px solid var(--color-border, #374151);
@@ -570,6 +570,7 @@ body {
     display: flex;
     flex-direction: column;
     max-height: 400px;
+    min-width: 350px;
 }
 
 .notification-header {
@@ -933,41 +934,222 @@ body {
     animation: fadeIn 0.5s ease-out;
 }
 
-.ai-markdown-content {
-    background-color: rgba(17, 20, 28, 0.6);
-    padding: 2rem;
-    border-radius: 16px;
+/* AI Insight Card Redesign */
+.ai-insight-card {
+    background: rgba(17, 20, 28, 0.7);
     border: 1px solid var(--border-highlight);
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+    border-radius: 16px;
+    margin-top: 2.5rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.ai-markdown-content h1, .ai-markdown-content h2, .ai-markdown-content h3 {
+.ai-insight-card:hover {
+    box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.6);
+    border-color: var(--primary-color, #3b82f6);
+}
+
+.ai-insight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ai-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ai-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.ai-insight-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+/* Tabs */
+.model-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+}
+
+.model-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.model-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.model-tab.active {
+    background: var(--primary-color, #3b82f6);
+    color: white;
+    font-weight: 500;
+}
+
+/* Body Content */
+.ai-insight-body {
+    padding: 2rem;
+}
+
+/* Thinking Process */
+.thought-process-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.thought-toggle-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.thought-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.thought-content {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+    font-family: 'Fira Code', monospace; /* Assuming a monospaced font is available */
+    font-size: 0.85rem;
+    color: #94a3b8;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Markdown Typography */
+.markdown-body {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
     color: var(--text-primary);
     margin-top: 1.5em;
     margin-bottom: 0.75em;
+    font-weight: 600;
 }
 
-.ai-markdown-content p {
-    color: var(--text-secondary);
-    line-height: 1.8;
-}
+.markdown-body h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
 
-.ai-markdown-content code {
-    background: rgba(0,0,0,0.3);
+.markdown-body p { margin-bottom: 1.2em; }
+
+.markdown-body strong { color: var(--text-primary); font-weight: 700; }
+
+.markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin-bottom: 1.2em; }
+.markdown-body li { margin-bottom: 0.5em; }
+
+.markdown-body code {
+    background: rgba(255, 255, 255, 0.1);
     color: #e2e8f0;
     padding: 0.2em 0.4em;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
+    font-family: 'Fira Code', Consolas, monospace;
+    font-size: 0.9em;
 }
 
-.ai-markdown-content pre {
+.markdown-body pre {
     background: #0d1117;
-    padding: 1rem;
+    padding: 1.25rem;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     overflow-x: auto;
+    margin-bottom: 1.5em;
 }
+
+.markdown-body pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    border: none;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid var(--primary-color, #3b82f6);
+    background: rgba(59, 130, 246, 0.05);
+    padding: 1rem 1.5rem;
+    margin: 1.5em 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Footer */
+.ai-insight-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Utilities */
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* Plots & Charts */
 .plot-container {
