@@ -49,6 +49,7 @@ class CCXTData(bt.DataBase):
         '4h': 14400,
         '1d': 86400,
     }
+    _MAX_EMPTY_FETCHES = 5  # consecutive fetch failures before we abort
 
     def __init__(self, store: CCXTStore, symbol: str, **kwargs):
         """
@@ -75,6 +76,8 @@ class CCXTData(bt.DataBase):
 
         # Historical data buffer (for backfill)
         self._hist_buffer = []
+        self._empty_fetches = 0  # track consecutive empty/error fetches
+        self._last_fetch_error: Optional[str] = None
 
         # Forward caller kwargs so Backtrader params (timeframe/backfill/etc.) are honored
         super().__init__(**kwargs)
@@ -120,7 +123,18 @@ class CCXTData(bt.DataBase):
             )
 
             if not ohlcv:
+                self._empty_fetches += 1
+                self._last_fetch_error = "empty OHLCV response"
+                if self._empty_fetches >= self._MAX_EMPTY_FETCHES:
+                    raise RuntimeError(
+                        f"Failed to fetch OHLCV for {self.symbol} after "
+                        f"{self._empty_fetches} attempts: {self._last_fetch_error}"
+                    )
                 return False
+
+            # Reset empty/error counter on success
+            self._empty_fetches = 0
+            self._last_fetch_error = None
 
             # Get the latest complete bar (exclude current incomplete bar)
             # OHLCV format: [timestamp, open, high, low, close, volume]
@@ -154,7 +168,17 @@ class CCXTData(bt.DataBase):
             return True
 
         except Exception as e:
+            self._empty_fetches += 1
+            self._last_fetch_error = str(e)
+
             logger.error(f"Failed to fetch OHLCV for {self.symbol}: {e}")
+
+            if self._empty_fetches >= self._MAX_EMPTY_FETCHES:
+                raise RuntimeError(
+                    f"Failed to fetch OHLCV for {self.symbol} after "
+                    f"{self._empty_fetches} attempts: {e}"
+                ) from e
+
             return False
 
     def _load_from_buffer(self) -> bool:

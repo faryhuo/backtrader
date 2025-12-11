@@ -1,6 +1,6 @@
 .notification-popover .ant-popover-inner {
     padding: 0;
-    width: 350px;
+    min-width: 350px;
     border-radius: 8px;
     background-color: var(--color-bg-container, #1f2937);
     border: 1px solid var(--color-border, #374151);

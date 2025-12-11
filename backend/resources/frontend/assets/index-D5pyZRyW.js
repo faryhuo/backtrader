@@ -93383,14 +93383,14 @@ const useLiveTrading = () => {
         winRate: 0
       });
       staticMethods.success("Trading session started successfully");
-      setNotification("Trading session started successfully", "success");
+      addNotification("Trading session started successfully", "success");
       setTimeout(() => {
         wsConnect();
       }, 1e3);
     } catch (error2) {
       console.error("Failed to start trading session:", error2);
       staticMethods.error(`Failed to start session: ${error2.message}`);
-      setNotification(`Failed to start session: ${error2.message}`, "error");
+      addNotification(`Failed to start session: ${error2.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -93401,7 +93401,7 @@ const useLiveTrading = () => {
       setLoading(true);
       await api.stopLiveTrading(session.session_id);
       staticMethods.success("Trading session stopped");
-      setNotification("Trading session stopped", "info");
+      addNotification("Trading session stopped", "info");
       wsDisconnect();
       setTimeout(() => {
         setSession(null);
@@ -93409,7 +93409,7 @@ const useLiveTrading = () => {
     } catch (error2) {
       console.error("Failed to stop trading session:", error2);
       staticMethods.error(`Failed to stop session: ${error2.message}`);
-      setNotification(`Failed to stop session: ${error2.message}`, "error");
+      addNotification(`Failed to stop session: ${error2.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -93425,7 +93425,7 @@ const useLiveTrading = () => {
     } catch (error2) {
       console.error("Failed to refresh session:", error2);
       staticMethods.error("Failed to refresh session status");
-      setNotification("Failed to refresh session status", "error");
+      addNotification("Failed to refresh session status", "error");
     } finally {
       setLoading(false);
     }
@@ -93794,4 +93794,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-lMgEwBWO.js.map
+//# sourceMappingURL=index-D5pyZRyW.js.map
