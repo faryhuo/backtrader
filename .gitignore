@@ -2,4 +2,9 @@
 **/resources/images/*
 frontend/node_modules
 frontend/dist
-
+.codex
+backend/.env
+backend/.envprod
+backend/trading_sessions.db
+frontend/.env
+frontend/.envprod

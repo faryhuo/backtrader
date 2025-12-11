@@ -1,0 +1,65 @@
+.dashboard-container {
+    padding: 24px;
+    min-height: 100vh;
+    background-color: #0f172a; /* Slate 900 */
+    color: #e2e8f0;
+}
+
+.dashboard-header {
+    margin-bottom: 24px;
+}
+
+.dashboard-title {
+    color: #f8fafc !important; /* Slate 50 */
+    margin-bottom: 8px !important;
+}
+
+.dashboard-subtitle {
+    color: #94a3b8 !important; /* Slate 400 */
+}
+
+.dashboard-card {
+    background: rgba(30, 41, 59, 0.7); /* Slate 800 with opacity */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.dashboard-card .ant-card-head {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+}
+
+.dashboard-card .ant-card-body {
+    padding: 20px;
+}
+
+.dashboard-card .ant-statistic-title {
+    color: #94a3b8;
+}
+
+.dashboard-card .ant-statistic-content {
+    color: #f1f5f9;
+}
+
+/* Override Ant Design Tabs */
+.dashboard-tabs .ant-tabs-nav::before {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-tabs .ant-tabs-tab {
+    color: #94a3b8;
+}
+
+.dashboard-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #38bdf8; /* Sky 400 */
+}
+
+.ws-status-connected {
+    color: #4ade80; /* Green 400 */
+}
+
+.ws-status-disconnected {
+    color: #f87171; /* Red 400 */
+}

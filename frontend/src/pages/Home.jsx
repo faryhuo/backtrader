@@ -1,9 +1,21 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Typography, Space, Tag } from 'antd';
-import { LoginOutlined, RocketOutlined, GlobalOutlined } from '@ant-design/icons';
+import { Button, Typography, Space, Tag, Divider, Dropdown } from 'antd';
+import { 
+    LoginOutlined, 
+    RocketOutlined, 
+    GlobalOutlined,
+    SwapOutlined,
+    DashboardOutlined,
+    PieChartOutlined,
+    SafetyCertificateOutlined,
+    TeamOutlined,
+    FieldTimeOutlined,
+    CheckCircleFilled
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
+import TradingDashboardImg from '../assets/illustrations/trading-dashboard.svg';
 import './Home.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -67,10 +79,23 @@ export function Home() {
         signIn(redirectUri);
     };
 
-    const toggleLanguage = () => {
-        const newLang = i18n.language.startsWith('zh') ? 'en' : 'zh';
-        i18n.changeLanguage(newLang);
+    const handleLanguageChange = ({ key }) => {
+        i18n.changeLanguage(key);
     };
+
+    const languageItems = [
+        { key: 'en', label: 'English' },
+        { key: 'zh', label: '中文' }
+    ];
+
+    const roadmapItems = [
+        { icon: <SwapOutlined />, title: t('home.live_trading'), desc: t('home.live_trading_desc') },
+        { icon: <DashboardOutlined />, title: t('home.monitoring'), desc: t('home.monitoring_desc') },
+        { icon: <PieChartOutlined />, title: t('home.multi_asset'), desc: t('home.multi_asset_desc') },
+        { icon: <SafetyCertificateOutlined />, title: t('home.risk_control'), desc: t('home.risk_control_desc') },
+        { icon: <TeamOutlined />, title: t('home.team_collab'), desc: t('home.team_collab_desc') },
+        { icon: <FieldTimeOutlined />, title: t('home.walk_forward'), desc: t('home.walk_forward_desc') },
+    ];
 
     return (
         <div className="home-page">
@@ -80,19 +105,20 @@ export function Home() {
             <div className="bg-gradient-orb orb-2"></div>
             
             <div className="lang-switch-container">
-                <Button 
-                    type="text" 
-                    icon={<GlobalOutlined />} 
-                    onClick={toggleLanguage}
-                    className="lang-switch-btn"
-                >
-                    {i18n.language.startsWith('zh') ? 'English' : '中文'}
-                </Button>
+                <Dropdown menu={{ items: languageItems, onClick: handleLanguageChange }} placement="bottomRight" arrow>
+                    <Button 
+                        type="text" 
+                        icon={<GlobalOutlined />} 
+                        className="lang-switch-btn"
+                    />
+                </Dropdown>
             </div>
 
             <div className="home-content-wrapper">
                 <div className="home-card glass-panel">
-                    <Space direction="vertical" size="large" align="center" style={{ width: '100%' }}>
+                    
+                    {/* Left Column: Hero Section */}
+                    <div className="hero-section">
                         <div className="logo-container">
                             <CustomLogo />
                         </div>
@@ -105,6 +131,50 @@ export function Home() {
                             <Paragraph className="home-subtitle">
                                 {t('home.subtitle', 'Next-generation algorithmic trading platform powered by AI analysis.')}
                             </Paragraph>
+                        </div>
+
+                        <Button
+                            type="primary"
+                            size="large"
+                            icon={loginEnabled ? <LoginOutlined /> : <RocketOutlined />}
+                            onClick={handleSignIn}
+                            className="signin-button glowing-btn"
+                        >
+                            {loginEnabled ? t('home.access_platform', 'Access Platform') : t('home.enter_platform', 'Enter Platform')}
+                        </Button>
+
+                        <div className="hero-benefits">
+                            <Text className="benefits-title">{t('home.benefits_title')}</Text>
+                            <div className="benefits-list">
+                                <div className="benefit-item">
+                                    <CheckCircleFilled className="benefit-icon" />
+                                    <div className="benefit-text">
+                                        <Text strong className="benefit-head">{t('home.benefit_privacy')}</Text>
+                                        <Text className="benefit-desc">{t('home.benefit_privacy_desc')}</Text>
+                                    </div>
+                                </div>
+                                <div className="benefit-item">
+                                    <CheckCircleFilled className="benefit-icon" />
+                                    <div className="benefit-text">
+                                        <Text strong className="benefit-head">{t('home.benefit_engine')}</Text>
+                                        <Text className="benefit-desc">{t('home.benefit_engine_desc')}</Text>
+                                    </div>
+                                </div>
+                                <div className="benefit-item">
+                                    <CheckCircleFilled className="benefit-icon" />
+                                    <div className="benefit-text">
+                                        <Text strong className="benefit-head">{t('home.benefit_ai')}</Text>
+                                        <Text className="benefit-desc">{t('home.benefit_ai_desc')}</Text>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Content Section */}
+                    <div className="content-section">
+                        <div className="hero-image-container">
+                            <img src={TradingDashboardImg} alt="Trading Dashboard" className="hero-dashboard-img" />
                         </div>
 
                         <div className="features-grid">
@@ -122,22 +192,23 @@ export function Home() {
                             </div>
                         </div>
 
-                        <Button
-                            type="primary"
-                            size="large"
-                            icon={loginEnabled ? <LoginOutlined /> : <RocketOutlined />}
-                            onClick={handleSignIn}
-                            className="signin-button glowing-btn"
-                        >
-                            {loginEnabled ? t('home.access_platform', 'Access Platform') : t('home.enter_platform', 'Enter Platform')}
-                        </Button>
+                        <Divider orientation="left" style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0' }}>
+                            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{t('home.future_features')}</span>
+                        </Divider>
 
-                        <div className="tech-badges">
-                            <Tag color="geekblue">Python</Tag>
-                            <Tag color="purple">AI/LLM</Tag>
-                            <Tag color="cyan">React</Tag>
+                        <div className="roadmap-grid">
+                            {roadmapItems.map((item, index) => (
+                                <div key={index} className="roadmap-item">
+                                    <div className="roadmap-icon">{item.icon}</div>
+                                    <div className="roadmap-content">
+                                        <Text strong className="roadmap-title">{item.title}</Text>
+                                        <Text type="secondary" className="roadmap-desc">{item.desc}</Text>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </Space>
+                    </div>
+
                 </div>
             </div>
         </div>
