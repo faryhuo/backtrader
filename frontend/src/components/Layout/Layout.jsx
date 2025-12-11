@@ -8,6 +8,7 @@ import {
     FundOutlined,
     CodeOutlined,
     DatabaseOutlined,
+    ThunderboltOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     GlobalOutlined
@@ -124,6 +125,14 @@ function Layout() {
                     >
                         <span className="icon"><DatabaseOutlined /></span>
                         {!collapsed && <span>{t('nav.datasource')}</span>}
+                    </Link>
+                    <Link
+                        to="/live"
+                        className={getNavClass('/live')}
+                        title={t('nav.live_trading', 'Live Trading')}
+                    >
+                        <span className="icon"><ThunderboltOutlined /></span>
+                        {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
                     </Link>
                 </nav>
                 <div className="sidebar-footer">

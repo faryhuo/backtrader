@@ -12,7 +12,7 @@ import pandas as pd
 
 from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
 from src.db.datasource import DataLoadError, get_bt_feed as get_data, get_raw_data_json
-from src.strategy.strategy_sandbox import StrategySandboxError, execute_strategy_code
+from src.service.strategy_sandbox import StrategySandboxError, execute_strategy_code
 
 plt.ioff()
 plt.show = lambda *args, **kwargs: None  # Prevent local popups in API runs

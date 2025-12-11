@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
-from src.strategy.backtest_engine import (
+from src.service.backtest_engine import (
     run_backtest,
     get_user_strategy_code,
     save_user_strategy_code,
