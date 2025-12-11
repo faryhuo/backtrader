@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Badge, Popover, List, Button, Typography, Empty, Space } from 'antd';
-import { 
-    BellOutlined, 
-    CheckCircleOutlined, 
-    InfoCircleOutlined, 
-    CloseCircleOutlined, 
+import {
+    BellOutlined,
+    CheckCircleOutlined,
+    InfoCircleOutlined,
+    CloseCircleOutlined,
     WarningOutlined,
     DeleteOutlined,
     CheckOutlined
@@ -15,14 +15,14 @@ import './NotificationCenter.css';
 const { Text } = Typography;
 
 const NotificationCenter = () => {
-    const { 
-        notifications, 
-        unreadCount, 
-        markAllAsRead, 
+    const {
+        notifications,
+        unreadCount,
+        markAllAsRead,
         clearAll,
-        markAsRead 
+        markAsRead
     } = useHeaderNotification();
-    
+
     const [open, setOpen] = useState(false);
 
     const handleOpenChange = (newOpen) => {
@@ -44,20 +44,20 @@ const NotificationCenter = () => {
                 <Text strong>Notifications</Text>
                 <Space>
                     {unreadCount > 0 && (
-                        <Button 
-                            type="text" 
-                            size="small" 
-                            icon={<CheckOutlined />} 
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<CheckOutlined />}
                             onClick={markAllAsRead}
                         >
                             Mark all read
                         </Button>
                     )}
                     {notifications.length > 0 && (
-                        <Button 
-                            type="text" 
-                            size="small" 
-                            icon={<DeleteOutlined />} 
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<DeleteOutlined />}
                             onClick={clearAll}
                             danger
                         >
@@ -66,14 +66,15 @@ const NotificationCenter = () => {
                     )}
                 </Space>
             </div>
-            
+
             <div className="notification-list-container">
                 <List
                     itemLayout="horizontal"
+                    style={{ width: 350 }}
                     dataSource={notifications}
                     locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No notifications" /> }}
                     renderItem={(item) => (
-                        <List.Item 
+                        <List.Item
                             className={`notification-item ${!item.read ? 'unread' : ''}`}
                             onClick={() => !item.read && markAsRead(item.id)}
                         >
@@ -98,20 +99,20 @@ const NotificationCenter = () => {
     );
 
     return (
-        <Popover 
-            content={content} 
-            trigger="click" 
-            open={open} 
+        <Popover
+            content={content}
+            trigger="click"
+            open={open}
             onOpenChange={handleOpenChange}
             placement="bottomRight"
             overlayClassName="notification-popover"
         >
             <div className="notification-trigger">
                 <Badge count={unreadCount} size="small" offset={[-2, 2]}>
-                    <Button 
-                        type="text" 
-                        shape="circle" 
-                        icon={<BellOutlined style={{ fontSize: '18px' }} />} 
+                    <Button
+                        type="text"
+                        shape="circle"
+                        icon={<BellOutlined style={{ fontSize: '18px' }} />}
                         className="btn-ghost"
                     />
                 </Badge>
