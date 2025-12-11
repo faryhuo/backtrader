@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
+import { useHeaderNotification } from '../providers/NotificationProvider';
 import { api } from '../services/api';
 import { useWebSocket, WS_MESSAGE_TYPES } from '../services/websocket';
 
 export const useLiveTrading = () => {
+    const { addNotification } = useHeaderNotification();
     // Session state
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -31,6 +33,7 @@ export const useLiveTrading = () => {
         switch (msg.type) {
             case WS_MESSAGE_TYPES.CONNECTED:
                 message.success('Connected to live trading session');
+                addNotification('Connected to live trading session', 'success');
                 break;
 
             case WS_MESSAGE_TYPES.POSITION:
@@ -89,7 +92,9 @@ export const useLiveTrading = () => {
             case WS_MESSAGE_TYPES.TRADE:
                 const trade = msg.data;
                 const side = trade.side === 'buy' ? 'Bought' : 'Sold';
-                message.success(`${side} ${trade.size} ${trade.symbol} @ $${trade.price.toFixed(2)}`, 3);
+                const tradeMsg = `${side} ${trade.size} ${trade.symbol} @ $${trade.price.toFixed(2)}`;
+                message.success(tradeMsg, 3);
+                addNotification(tradeMsg, 'success');
                 setStats((prev) => ({
                     ...prev,
                     totalTrades: prev.totalTrades + 1
@@ -102,6 +107,7 @@ export const useLiveTrading = () => {
 
             case WS_MESSAGE_TYPES.ERROR:
                 message.error(`Trading error: ${msg.data.message}`);
+                addNotification(`Trading error: ${msg.data.message}`, 'error');
                 break;
 
             case WS_MESSAGE_TYPES.STATUS:
@@ -113,7 +119,7 @@ export const useLiveTrading = () => {
             default:
                 console.log('Unknown WebSocket message type:', msg.type);
         }
-    }, []);
+    }, [addNotification]);
 
     // WebSocket connection
     const {
@@ -153,6 +159,7 @@ export const useLiveTrading = () => {
             });
 
             message.success('Trading session started successfully');
+            addNotification('Trading session started successfully', 'success');
 
             setTimeout(() => {
                 wsConnect();
@@ -161,6 +168,7 @@ export const useLiveTrading = () => {
         } catch (error) {
             console.error('Failed to start trading session:', error);
             message.error(`Failed to start session: ${error.message}`);
+            addNotification(`Failed to start session: ${error.message}`, 'error');
         } finally {
             setLoading(false);
         }
@@ -175,6 +183,7 @@ export const useLiveTrading = () => {
             await api.stopLiveTrading(session.session_id);
 
             message.success('Trading session stopped');
+            addNotification('Trading session stopped', 'info');
             wsDisconnect();
 
             setTimeout(() => {
@@ -184,6 +193,7 @@ export const useLiveTrading = () => {
         } catch (error) {
             console.error('Failed to stop trading session:', error);
             message.error(`Failed to stop session: ${error.message}`);
+            addNotification(`Failed to stop session: ${error.message}`, 'error');
         } finally {
             setLoading(false);
         }
@@ -204,6 +214,7 @@ export const useLiveTrading = () => {
         } catch (error) {
             console.error('Failed to refresh session:', error);
             message.error('Failed to refresh session status');
+            addNotification('Failed to refresh session status', 'error');
         } finally {
             setLoading(false);
         }

@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useAuth } from '../../hooks/useAuth'
 import Menu from './Menu'
+import NotificationCenter from './NotificationCenter'
 import '../../index.css'
 import './Layout.css'
 
@@ -95,8 +96,11 @@ function Layout() {
                     <div className="header-title">
                         <h1>{t('app.pro_title')}</h1>
                     </div>
+                    
                     <div className="header-actions">
-                        <Space size="middle">
+                        <Space size="small">
+                            <NotificationCenter />
+                            
                             <button
                                 className="btn-ghost"
                                 onClick={toggleLanguage}

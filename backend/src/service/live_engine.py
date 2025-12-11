@@ -8,6 +8,7 @@ backtest_engine.py but using real-time data feeds and CCXT broker.
 import logging
 import threading
 import uuid
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
@@ -22,12 +23,35 @@ from src.utils.config_loader import load_broker_config
 
 logger = logging.getLogger(__name__)
 
+# Suppress noisy protobuf warnings
+warnings.filterwarnings(
+    "once",
+    message=r"Protobuf gencode version .*runtime version .*",
+    category=UserWarning,
+    module=r"google\.protobuf\.runtime_version"
+)
+
 # Initialize session storage
 _session_storage = SessionStorage()
 
 
 class LiveTradingError(Exception):
     """Raised when live trading encounters an error."""
+
+
+class SafeReturns(bt.analyzers.Returns):
+    """Returns analyzer that tolerates zero bars (avoids ZeroDivisionError)."""
+
+    def stop(self):
+        try:
+            super().stop()
+        except ZeroDivisionError:
+            # No periods processed; provide neutral values instead of crashing
+            logger.warning("Returns analyzer saw no bars; emitting neutral return metrics")
+            self.rets['rtot'] = 0.0
+            self.rets['ravg'] = 0.0
+            self.rets['rnorm'] = 0.0
+            self.rets['rnorm100'] = 0.0
 
 
 def run_live(
@@ -126,7 +150,7 @@ def run_live(
         # 6. Add analyzers
         cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
         cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-        cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
+        cerebro.addanalyzer(SafeReturns, _name='returns')
         cerebro.addanalyzer(TradeRecorder, _name='trade_recorder')
         logger.info("Added analyzers to Cerebro")
 
