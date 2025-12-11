@@ -1,0 +1,10 @@
+{
+  "title": "交易日志",
+  "open_date": "开仓日期",
+  "open_price": "开仓价格",
+  "close_date": "平仓日期",
+  "close_price": "平仓价格",
+  "size": "数量",
+  "net_pnl": "净盈亏",
+  "return": "收益率"
+}

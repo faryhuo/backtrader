@@ -1,0 +1,14 @@
+{
+  "title": "策略配置",
+  "strategy": "策略",
+  "refresh": "刷新",
+  "asset_ticker": "资产代码",
+  "start_date": "开始日期",
+  "end_date": "结束日期",
+  "initial_capital": "初始资金 ($)",
+  "commission": "佣金 (费率)",
+  "order_size": "下单数量 (股/手)",
+  "run_backtest": "运行回测",
+  "ready_to_run": "准备回测",
+  "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。"
+}

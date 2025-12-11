@@ -30,13 +30,12 @@ This installs:
 - `ccxt>=4.2.0` - Exchange connectivity
 - `websockets>=12.0` - Real-time updates (Phase 3)
 - `aiohttp>=3.9.0` - Async HTTP support
-- `aiodns>=3.0,<4.0` - Async DNS resolver (pinned for pycares compatibility)
-- `pycares>=4.3,<5.0` - Required by aiodns; pycares 5.x removes ares_query_a_result
+- `aiodns>=3.6.0` + `pycares>=5.0.0` - Async DNS resolver stack (with in-repo compat shim for aiodns 3.x)
 - `pydantic>=2.5.0` - Configuration validation
 
-> If you hit `AttributeError: module 'pycares' has no attribute 'ares_query_a_result'` during ccxt import, reinstall the resolver stack to pull the pinned versions:
+> We ship a small compatibility shim (`src/utils/dns_compat.py`) that restores the API aiodns 3.x expects when running on `pycares>=5`. If you previously pinned older versions, upgrade with:
 > ```bash
-> pip install "aiodns>=3.0,<4.0" "pycares>=4.3,<5.0" --force-reinstall
+> pip install "aiodns>=3.6.0" "pycares>=5.0.0" --upgrade --force-reinstall
 > ```
 
 ### 2. Get Exchange API Keys

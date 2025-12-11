@@ -1,0 +1,20 @@
+{
+  "editor_title": "策略编辑器 (UserStrategy)",
+  "new": "新建",
+  "subtitle": "仅编辑下方的策略类；回测引擎是固定的。",
+  "active_strategy": "当前策略",
+  "reload": "重新加载",
+  "refresh_list": "刷新列表",
+  "ai_analysis": "AI 分析",
+  "ai_rewrite": "AI 重写",
+  "save_strategy": "保存策略",
+  "saving": "保存中...",
+  "create_new_strategy": "创建新策略",
+  "strategy_name": "策略名称",
+  "create": "创建",
+  "saved": "策略已保存！",
+  "save_failed": "保存策略失败",
+  "analysis_coming_soon": "AI 分析功能即将推出！",
+  "rewrite_coming_soon": "AI 重写功能即将推出！",
+  "placeholder_name": "例如：breakout_v2"
+}

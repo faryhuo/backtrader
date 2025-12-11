@@ -28,12 +28,12 @@ class CCXTData(bt.DataBase):
     Attributes:
         store: CCXTStore instance
         symbol: Trading pair (e.g., 'BTC/USDT')
-        timeframe: Bar timeframe ('1m', '5m', '15m', '1h', etc.)
+        timeframe: CCXT timeframe string ('1m', '5m', '15m', '1h', etc.)
     """
 
     params = (
-        ('timeframe', '1m'),  # CCXT timeframe
-        ('compression', 1),  # Bar compression
+        ('timeframe', '1m'),  # CCXT timeframe (string)
+        ('compression', 1),  # Backtrader bar compression (minutes multiplier)
         ('backfill_start', None),  # Optional: fetch historical data from this date
         ('backfill', False),  # Whether to backfill historical data
     )
@@ -62,6 +62,9 @@ class CCXTData(bt.DataBase):
         self.exchange = store.get_exchange()
         self.symbol = symbol
 
+        # Keep the CCXT timeframe string separate from Backtrader timeframe
+        self.ccxt_timeframe = kwargs.get('timeframe', self.params.timeframe)
+
         # Store symbol for broker access
         self._symbol = symbol
 
@@ -75,14 +78,17 @@ class CCXTData(bt.DataBase):
         super().__init__(**kwargs)
 
         # Validate timeframe
-        if self.params.timeframe not in self._TIMEFRAME_MAP:
+        if self.ccxt_timeframe not in self._TIMEFRAME_MAP:
             raise ValueError(
-                f"Unsupported timeframe: {self.params.timeframe}. "
+                f"Unsupported timeframe: {self.ccxt_timeframe}. "
                 f"Supported: {list(self._TIMEFRAME_MAP.keys())}"
             )
 
+        # Map CCXT timeframe to Backtrader timeframe/compression to satisfy analyzers
+        self._timeframe, self._compression = self._map_to_bt_timeframe(self.ccxt_timeframe)
+
         logger.info(
-            f"Initialized CCXTData for {symbol} with timeframe {self.params.timeframe}"
+            f"Initialized CCXTData for {symbol} with timeframe {self.ccxt_timeframe}"
         )
 
     def _load(self) -> bool:
@@ -104,7 +110,7 @@ class CCXTData(bt.DataBase):
             ohlcv = self.store.run_coroutine(
                 self.exchange.fetch_ohlcv(
                     symbol=self.symbol,
-                    timeframe=self.params.timeframe,
+                    timeframe=self.ccxt_timeframe,
                     since=since,
                     limit=limit
                 )
@@ -233,7 +239,7 @@ class CCXTData(bt.DataBase):
                 ohlcv = self.store.run_coroutine(
                     self.exchange.fetch_ohlcv(
                         symbol=self.symbol,
-                        timeframe=self.params.timeframe,
+                        timeframe=self.ccxt_timeframe,
                         since=since,
                         limit=chunk_size
                     )
@@ -272,3 +278,28 @@ class CCXTData(bt.DataBase):
             return True
         except:
             return False
+
+    @staticmethod
+    def _map_to_bt_timeframe(timeframe: str):
+        """
+        Convert CCXT timeframe string to Backtrader timeframe/compression.
+
+        Returns:
+            tuple: (bt.TimeFrame, compression)
+        """
+        import backtrader as bt  # Local import to avoid circulars at module import
+
+        mapping = {
+            '1m': (bt.TimeFrame.Minutes, 1),
+            '5m': (bt.TimeFrame.Minutes, 5),
+            '15m': (bt.TimeFrame.Minutes, 15),
+            '30m': (bt.TimeFrame.Minutes, 30),
+            '1h': (bt.TimeFrame.Minutes, 60),
+            '4h': (bt.TimeFrame.Minutes, 240),
+            '1d': (bt.TimeFrame.Days, 1),
+        }
+
+        if timeframe not in mapping:
+            raise ValueError(f"Unsupported timeframe for Backtrader mapping: {timeframe}")
+
+        return mapping[timeframe]

@@ -2518,15 +2518,15 @@ function requireReactDom_production_min() {
         a: {
           h3 = d3 ? ue2(d3) : window;
           k3 = h3.nodeName && h3.nodeName.toLowerCase();
-          if ("select" === k3 || "input" === k3 && "file" === h3.type) var na = ve2;
-          else if (me2(h3)) if (we2) na = Fe;
+          if ("select" === k3 || "input" === k3 && "file" === h3.type) var na2 = ve2;
+          else if (me2(h3)) if (we2) na2 = Fe;
           else {
-            na = De2;
+            na2 = De2;
             var xa = Ce2;
           }
-          else (k3 = h3.nodeName) && "input" === k3.toLowerCase() && ("checkbox" === h3.type || "radio" === h3.type) && (na = Ee2);
-          if (na && (na = na(a2, d3))) {
-            ne2(g3, na, c2, e3);
+          else (k3 = h3.nodeName) && "input" === k3.toLowerCase() && ("checkbox" === h3.type || "radio" === h3.type) && (na2 = Ee2);
+          if (na2 && (na2 = na2(a2, d3))) {
+            ne2(g3, na2, c2, e3);
             break a;
           }
           xa && xa(a2, h3, d3);
@@ -6055,8 +6055,8 @@ function requireReactDom_production_min() {
           } while (null !== f2);
         }
         Sk(c2);
-      } catch (na) {
-        b2 = na;
+      } catch (na2) {
+        b2 = na2;
         Y2 === c2 && null !== c2 && (Y2 = c2 = c2.return);
         continue;
       }
@@ -6296,8 +6296,8 @@ function requireReactDom_production_min() {
                   case 15:
                     Qj(9, h2);
                 }
-              } catch (na) {
-                W2(h2, h2.return, na);
+              } catch (na2) {
+                W2(h2, h2.return, na2);
               }
               if (h2 === g2) {
                 V2 = null;
@@ -6316,7 +6316,7 @@ function requireReactDom_production_min() {
           jg();
           if (lc && "function" === typeof lc.onPostCommitFiberRoot) try {
             lc.onPostCommitFiberRoot(kc, a2);
-          } catch (na) {
+          } catch (na2) {
           }
           d2 = true;
         }
@@ -7826,8 +7826,8 @@ class Translator extends EventEmitter {
       };
       res = this.interpolator.interpolate(res, data, opt.lng || this.language || resolved.usedLng, opt);
       if (skipOnVariables) {
-        const na = res.match(this.interpolator.nestingRegexp);
-        const nestAft = na && na.length;
+        const na2 = res.match(this.interpolator.nestingRegexp);
+        const nestAft = na2 && na2.length;
         if (nestBef < nestAft) opt.nest = false;
       }
       if (!opt.lng && resolved && resolved.res) opt.lng = this.language || resolved.usedLng;
@@ -8484,8 +8484,8 @@ class Formatter {
             ...options,
             ...valOptions
           });
-        } catch (error) {
-          this.logger.warn(error);
+        } catch (error2) {
+          this.logger.warn(error2);
         }
         return formatted;
       } else {
@@ -9485,7 +9485,7 @@ function requireUseSyncExternalStoreShim_production() {
     try {
       var nextValue = latestGetSnapshot();
       return !objectIs(inst, nextValue);
-    } catch (error) {
+    } catch (error2) {
       return true;
     }
   }
@@ -10078,61 +10078,817 @@ class Browser {
   }
 }
 Browser.type = "languageDetector";
-const app$1 = { "title": "Backtrader", "pro_title": "Backtrader Pro" };
-const nav$1 = { "run_strategy": "Run Strategy", "strategy_maintain": "Strategy Maintain", "datasource": "Data Source", "live_trading": "Live Trading" };
-const common$1 = { "loading": "Loading...", "error": "Error", "save": "Save", "cancel": "Cancel", "expand_sidebar": "Expand Sidebar", "collapse_sidebar": "Collapse Sidebar", "na": "N/A" };
-const auth$1 = { "login": "Login", "logout": "Logout", "signIn": "Sign In", "signingIn": "Signing in...", "welcome": "Welcome", "profile": "Profile", "unauthorized": "Unauthorized", "sessionExpired": "Session expired, please login again", "signInError": "Authentication failed. Redirecting...", "appTitle": "Backtrader Platform", "homeDescription": "Design and test algorithmic trading strategies with professional backtesting tools, AI-powered analysis, and interactive charts." };
-const home$1 = { "fast_backtesting": "Fast Backtesting", "ai_analysis": "AI Analysis", "interactive_charts": "Interactive Charts", "access_platform": "Access Platform", "enter_platform": "Enter Platform", "subtitle": "Next-generation algorithmic trading platform powered by AI analysis.", "future_features": "Future Roadmap", "live_trading": "Live/Paper Trading", "live_trading_desc": "Seamless switch between sim/live via CCXT/IBKR.", "monitoring": "Monitoring & Audit", "monitoring_desc": "Persistent analyzer output, dashboards & API logs.", "multi_asset": "Multi-Asset/Portfolio", "multi_asset_desc": "Portfolio backtest with correlation & weight mgmt.", "risk_control": "Risk & Position Mgmt", "risk_control_desc": "Unified risk module, slippage models & alerts.", "team_collab": "Team Collaboration", "team_collab_desc": "Role/Space management & strategy sharing.", "walk_forward": "Walk-Forward Validation", "walk_forward_desc": "Rolling retraining & overfitting detection.", "benefits_title": "Why Backtrader Pro?", "benefit_privacy": "Privacy First", "benefit_privacy_desc": "Local execution, zero data leak.", "benefit_engine": "Pro Engine", "benefit_engine_desc": "Built on Backtrader, validated globally.", "benefit_ai": "AI Native", "benefit_ai_desc": "Deep integration with LLMs." };
-const ai_insight$1 = { "thinking_process": "Thinking Process" };
-const config_form$1 = { "title": "Strategy Configuration", "strategy": "Strategy", "refresh": "Refresh", "asset_ticker": "Asset Ticker", "start_date": "Start Date", "end_date": "End Date", "initial_capital": "Initial Capital ($)", "commission": "Commission (rate)", "order_size": "Order Size (shares/contracts)", "run_backtest": "Run Backtest", "ready_to_run": "Ready to Backtest", "select_strategy_hint": 'Configure your parameters above and hit "Run Backtest" to see AI-powered analysis.' };
-const performance$2 = { "title": "Performance Overview", "final_value": "Final Value", "return": "Return", "sharpe_ratio": "Sharpe Ratio", "max_drawdown": "Max Drawdown", "sqn": "SQN", "win_rate": "Win Rate", "closed_trades": "Closed Trades", "dd_duration": "DD Duration", "annual_returns": "Annual Returns", "per_calendar_year": "per calendar year", "trades": "Trades", "from_trade_analyzer": "from TradeAnalyzer", "closed_total": "Closed / Total", "open_positions": "Open Positions", "avg_net_pnl": "Average Net PnL", "best_trade": "Best Trade", "worst_trade": "Worst Trade", "avg_duration": "Avg Duration (bars)", "time_drawdown": "Time Drawdown", "depth_duration": "depth and duration", "longest_duration": "Longest Duration", "net_pnl": "Net PnL", "bars": "bars" };
-const trade_log$1 = { "title": "Trade Log", "open_date": "Open Date", "open_price": "Open Price", "close_date": "Close Date", "close_price": "Close Price", "size": "Size", "net_pnl": "Net PnL", "return": "Return" };
-const strategy_plot$1 = { "title": "Strategy Visualization", "maximize": "Maximize", "ai_interpretation": "AI Interpretation", "interpreting": "Interpreting...", "reset": "Reset", "close": "Close" };
-const maintain$1 = { "editor_title": "Strategy Editor (UserStrategy)", "new": "New", "subtitle": "Edit only the strategy class below; backtest engine is fixed.", "active_strategy": "Active Strategy", "reload": "Reload", "refresh_list": "Refresh List", "ai_analysis": "AI Analysis", "ai_rewrite": "AI - Rewrite", "save_strategy": "Save Strategy", "saving": "Saving...", "create_new_strategy": "Create New Strategy", "strategy_name": "Strategy Name", "create": "Create", "saved": "Strategy Saved!", "save_failed": "Failed to save strategy", "analysis_coming_soon": "AI Analysis feature coming soon!", "rewrite_coming_soon": "AI Rewrite feature coming soon!", "placeholder_name": "e.g., breakout_v2" };
-const datasource$1 = { "title": "Data Source Explorer", "fetch_data": "Fetch Data" };
-const live$1 = { "dashboard_title": "Live Trading Dashboard", "dashboard_subtitle": "Real-time paper and live trading with WebSocket updates", "connected": "Connected", "disconnected": "Disconnected", "portfolio_value": "Portfolio Value", "cash_balance": "Cash Balance", "unrealized_pnl": "Unrealized P&L", "total_trades": "Total Trades", "win_rate": "% win", "start_new_session": "Start New Session", "performance": "Performance", "open_positions": "Open Positions", "order_history": "Order History", "trading_session_config": "Trading Session Configuration", "live_trading_alert": "Live Trading Mode", "live_trading_alert_desc": "You are about to start REAL trading with REAL money. Please ensure your strategy is thoroughly tested in paper trading mode first.", "asset_class": "Asset Class", "asset_crypto": "Crypto (Spot/Futures)", "asset_stock": "Stock (US/HK/A-Share)", "strategy": "Strategy", "select_strategy": "Select a strategy", "symbol": "Symbol", "symbol_placeholder": "BTC/USDT or AAPL", "symbol_tooltip": "Trading pair or Ticker (e.g. BTC/USDT, AAPL)", "exchange": "Exchange", "select_exchange": "Please select an exchange", "mode": "Mode", "mode_paper": "Paper (Testnet)", "mode_live": "Live (Real Money)", "mode_tooltip": "Paper: testnet with simulated money. Live: real trading with real money.", "timeframe": "Timeframe", "initial_cash": "Initial Cash (USD)", "commission": "Commission", "commission_tooltip": "Trading fee rate (e.g., 0.001 = 0.1%)", "start_session": "Start Trading Session", "session_status": "Session Status", "session_id": "Session ID", "start_trading": "Start Trading", "stop_trading": "Stop Trading", "stop_confirm_title": "Stop Trading Session", "stop_confirm_desc": "Are you sure you want to stop this trading session?", "yes_stop": "Yes, Stop", "no_cancel": "Cancel", "status_starting": "Starting", "status_running": "Running", "status_stopping": "Stopping", "status_stopped": "Stopped", "status_error": "Error", "side": "Side", "size": "Size", "avg_price": "Avg Price", "current_price": "Current Price", "pnl_percent": "P&L %", "no_open_positions": "No open positions", "time": "Time", "type": "Type", "filled": "Filled", "avg_fill_price": "Avg Fill Price", "status": "Status", "no_orders": "No orders yet", "pnl_chart": "P&L Chart", "break_even": "Break Even", "no_pnl_data": "No P&L data yet. Start trading to see real-time performance." };
-const en$1 = {
-  app: app$1,
-  nav: nav$1,
-  common: common$1,
-  auth: auth$1,
-  home: home$1,
-  ai_insight: ai_insight$1,
-  config_form: config_form$1,
-  performance: performance$2,
-  trade_log: trade_log$1,
-  strategy_plot: strategy_plot$1,
-  maintain: maintain$1,
-  datasource: datasource$1,
-  live: live$1
+const title$b = "Backtrader";
+const pro_title$1 = "Backtrader Pro";
+const appEn = {
+  title: title$b,
+  pro_title: pro_title$1
 };
-const app = { "title": "Backtrader", "pro_title": "Backtrader Pro" };
-const nav = { "run_strategy": "运行策略", "strategy_maintain": "策略维护", "datasource": "数据源", "live_trading": "实盘交易" };
-const common = { "loading": "加载中...", "error": "错误", "save": "保存", "cancel": "取消", "expand_sidebar": "展开侧边栏", "collapse_sidebar": "收起侧边栏", "na": "N/A" };
-const auth = { "login": "登录", "logout": "登出", "signIn": "登录", "signingIn": "登录中...", "welcome": "欢迎", "profile": "个人资料", "unauthorized": "未授权", "sessionExpired": "会话已过期，请重新登录", "signInError": "认证失败，正在重定向...", "appTitle": "Backtrader 交易平台", "homeDescription": "使用专业的回测工具、AI驱动的分析和交互式图表，设计和测试算法交易策略。" };
-const home = { "fast_backtesting": "极速回测", "ai_analysis": "AI 智能分析", "interactive_charts": "交互式图表", "access_platform": "登录平台", "enter_platform": "进入平台", "subtitle": "由 AI 驱动的下一代算法交易平台。", "future_features": "未来规划", "live_trading": "实盘/纸盘桥接", "live_trading_desc": "CCXT/IBKR 无缝切换模拟与实盘。", "monitoring": "监控与审计", "monitoring_desc": "持久化分析输出，仪表板与 API 审计。", "multi_asset": "多标的/组合回测", "multi_asset_desc": "多Ticker组合，权重与相关性管理。", "risk_control": "风控与持仓管理", "risk_control_desc": "统一风控模块，滑点模型与风险预警。", "team_collab": "用户与团队协作", "team_collab_desc": "角色/空间管理，策略版本分享。", "walk_forward": "Walk-forward 验证", "walk_forward_desc": "滚动训练验证，过拟合检测。", "benefits_title": "核心优势", "benefit_privacy": "隐私优先", "benefit_privacy_desc": "本地运行，策略零泄露。", "benefit_engine": "专业引擎", "benefit_engine_desc": "基于 Backtrader，久经考验。", "benefit_ai": "AI 原生", "benefit_ai_desc": "深度集成 LLM 智能分析。" };
-const ai_insight = { "thinking_process": "思考过程" };
-const config_form = { "title": "策略配置", "strategy": "策略", "refresh": "刷新", "asset_ticker": "资产代码", "start_date": "开始日期", "end_date": "结束日期", "initial_capital": "初始资金 ($)", "commission": "佣金 (费率)", "order_size": "下单数量 (股/手)", "run_backtest": "运行回测", "ready_to_run": "准备回测", "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。" };
-const performance$1 = { "title": "绩效概览", "final_value": "最终价值", "return": "收益率", "sharpe_ratio": "夏普比率", "max_drawdown": "最大回撤", "sqn": "SQN", "win_rate": "胜率", "closed_trades": "已平仓交易", "dd_duration": "回撤持续时间", "annual_returns": "年度回报", "per_calendar_year": "按日历年", "trades": "交易详情", "from_trade_analyzer": "来自 TradeAnalyzer", "closed_total": "已平仓 / 总计", "open_positions": "持仓中", "avg_net_pnl": "平均净盈亏", "best_trade": "最佳交易", "worst_trade": "最差交易", "avg_duration": "平均持仓 (K线数)", "time_drawdown": "时间回撤", "depth_duration": "深度与持续时间", "longest_duration": "最长持续时间", "net_pnl": "净盈亏", "bars": "根K线" };
-const trade_log = { "title": "交易日志", "open_date": "开仓日期", "open_price": "开仓价格", "close_date": "平仓日期", "close_price": "平仓价格", "size": "数量", "net_pnl": "净盈亏", "return": "收益率" };
-const strategy_plot = { "title": "策略可视化", "maximize": "最大化", "ai_interpretation": "AI 解读", "interpreting": "解读中...", "reset": "重置", "close": "关闭" };
-const maintain = { "editor_title": "策略编辑器 (UserStrategy)", "new": "新建", "subtitle": "仅编辑下方的策略类；回测引擎是固定的。", "active_strategy": "当前策略", "reload": "重新加载", "refresh_list": "刷新列表", "ai_analysis": "AI 分析", "ai_rewrite": "AI 重写", "save_strategy": "保存策略", "saving": "保存中...", "create_new_strategy": "创建新策略", "strategy_name": "策略名称", "create": "创建", "saved": "策略已保存！", "save_failed": "保存策略失败", "analysis_coming_soon": "AI 分析功能即将推出！", "rewrite_coming_soon": "AI 重写功能即将推出！", "placeholder_name": "例如：breakout_v2" };
-const datasource = { "title": "数据源浏览器", "fetch_data": "获取数据" };
-const live = { "dashboard_title": "实盘交易仪表板", "dashboard_subtitle": "支持 WebSocket 实时更新的模拟与实盘交易", "connected": "已连接", "disconnected": "未连接", "portfolio_value": "投资组合价值", "cash_balance": "现金余额", "unrealized_pnl": "未实现盈亏", "total_trades": "总交易数", "win_rate": "% 胜率", "start_new_session": "开始新会话", "performance": "绩效表现", "open_positions": "当前持仓", "order_history": "订单历史", "trading_session_config": "交易会话配置", "live_trading_alert": "实盘交易模式", "live_trading_alert_desc": "您即将开始使用真实资金进行实盘交易。请确保您的策略已在模拟模式下经过充分测试。", "asset_class": "资产类别", "asset_crypto": "加密货币 (现货/合约)", "asset_stock": "股票 (美股/港股/A股)", "strategy": "策略", "select_strategy": "选择策略", "symbol": "交易对/代码", "symbol_placeholder": "BTC/USDT 或 AAPL", "symbol_tooltip": "交易对或股票代码 (例如 BTC/USDT, AAPL)", "exchange": "交易所", "select_exchange": "请选择交易所", "mode": "模式", "mode_paper": "模拟 (测试网)", "mode_live": "实盘 (真金白银)", "mode_tooltip": "模拟：使用虚拟资金测试。实盘：使用真实资金交易。", "timeframe": "时间周期", "initial_cash": "初始资金 (USD)", "commission": "佣金费率", "commission_tooltip": "交易费率 (例如 0.001 = 0.1%)", "start_session": "开始交易会话", "session_status": "会话状态", "session_id": "会话 ID", "start_trading": "开始交易", "stop_trading": "停止交易", "stop_confirm_title": "停止交易会话", "stop_confirm_desc": "确定要停止当前的交易会话吗？", "yes_stop": "确认停止", "no_cancel": "取消", "status_starting": "启动中", "status_running": "运行中", "status_stopping": "停止中", "status_stopped": "已停止", "status_error": "错误", "side": "方向", "size": "数量", "avg_price": "均价", "current_price": "现价", "pnl_percent": "盈亏 %", "no_open_positions": "无持仓", "time": "时间", "type": "类型", "filled": "已成交", "avg_fill_price": "成交均价", "status": "状态", "no_orders": "暂无订单", "pnl_chart": "盈亏曲线", "break_even": "盈亏平衡线", "no_pnl_data": "暂无盈亏数据。开始交易以查看实时表现。" };
-const zh = {
-  app,
-  nav,
-  common,
-  auth,
-  home,
-  ai_insight,
-  config_form,
-  performance: performance$1,
-  trade_log,
-  strategy_plot,
-  maintain,
+const run_strategy$1 = "Run Strategy";
+const strategy_maintain$1 = "Strategy Maintain";
+const datasource$1 = "Data Source";
+const live_trading$3 = "Live Trading";
+const navEn = {
+  run_strategy: run_strategy$1,
+  strategy_maintain: strategy_maintain$1,
+  datasource: datasource$1,
+  live_trading: live_trading$3
+};
+const loading$1 = "Loading...";
+const error$1 = "Error";
+const save$1 = "Save";
+const cancel$1 = "Cancel";
+const expand_sidebar$1 = "Expand Sidebar";
+const collapse_sidebar$1 = "Collapse Sidebar";
+const na$1 = "N/A";
+const commonEn = {
+  loading: loading$1,
+  error: error$1,
+  save: save$1,
+  cancel: cancel$1,
+  expand_sidebar: expand_sidebar$1,
+  collapse_sidebar: collapse_sidebar$1,
+  na: na$1
+};
+const login$1 = "Login";
+const logout$1 = "Logout";
+const signIn$1 = "Sign In";
+const signingIn$1 = "Signing in...";
+const welcome$1 = "Welcome";
+const profile$1 = "Profile";
+const unauthorized$1 = "Unauthorized";
+const sessionExpired$1 = "Session expired, please login again";
+const signInError$1 = "Authentication failed. Redirecting...";
+const appTitle$1 = "Backtrader Platform";
+const homeDescription$1 = "Design and test algorithmic trading strategies with professional backtesting tools, AI-powered analysis, and interactive charts.";
+const authEn = {
+  login: login$1,
+  logout: logout$1,
+  signIn: signIn$1,
+  signingIn: signingIn$1,
+  welcome: welcome$1,
+  profile: profile$1,
+  unauthorized: unauthorized$1,
+  sessionExpired: sessionExpired$1,
+  signInError: signInError$1,
+  appTitle: appTitle$1,
+  homeDescription: homeDescription$1
+};
+const fast_backtesting$1 = "Fast Backtesting";
+const ai_analysis$3 = "AI Analysis";
+const interactive_charts$1 = "Interactive Charts";
+const access_platform$1 = "Access Platform";
+const enter_platform$1 = "Enter Platform";
+const subtitle$3 = "Next-generation algorithmic trading platform powered by AI analysis.";
+const future_features$1 = "Future Roadmap";
+const live_trading$2 = "Live/Paper Trading";
+const live_trading_desc$1 = "Seamless switch between sim/live via CCXT/IBKR.";
+const monitoring$1 = "Monitoring & Audit";
+const monitoring_desc$1 = "Persistent analyzer output, dashboards & API logs.";
+const multi_asset$1 = "Multi-Asset/Portfolio";
+const multi_asset_desc$1 = "Portfolio backtest with correlation & weight mgmt.";
+const risk_control$1 = "Risk & Position Mgmt";
+const risk_control_desc$1 = "Unified risk module, slippage models & alerts.";
+const team_collab$1 = "Team Collaboration";
+const team_collab_desc$1 = "Role/Space management & strategy sharing.";
+const walk_forward$1 = "Walk-Forward Validation";
+const walk_forward_desc$1 = "Rolling retraining & overfitting detection.";
+const benefits_title$1 = "Why Backtrader Pro?";
+const benefit_privacy$1 = "Privacy First";
+const benefit_privacy_desc$1 = "Local execution, zero data leak.";
+const benefit_engine$1 = "Pro Engine";
+const benefit_engine_desc$1 = "Built on Backtrader, validated globally.";
+const benefit_ai$1 = "AI Native";
+const benefit_ai_desc$1 = "Deep integration with LLMs.";
+const homeEn = {
+  fast_backtesting: fast_backtesting$1,
+  ai_analysis: ai_analysis$3,
+  interactive_charts: interactive_charts$1,
+  access_platform: access_platform$1,
+  enter_platform: enter_platform$1,
+  subtitle: subtitle$3,
+  future_features: future_features$1,
+  live_trading: live_trading$2,
+  live_trading_desc: live_trading_desc$1,
+  monitoring: monitoring$1,
+  monitoring_desc: monitoring_desc$1,
+  multi_asset: multi_asset$1,
+  multi_asset_desc: multi_asset_desc$1,
+  risk_control: risk_control$1,
+  risk_control_desc: risk_control_desc$1,
+  team_collab: team_collab$1,
+  team_collab_desc: team_collab_desc$1,
+  walk_forward: walk_forward$1,
+  walk_forward_desc: walk_forward_desc$1,
+  benefits_title: benefits_title$1,
+  benefit_privacy: benefit_privacy$1,
+  benefit_privacy_desc: benefit_privacy_desc$1,
+  benefit_engine: benefit_engine$1,
+  benefit_engine_desc: benefit_engine_desc$1,
+  benefit_ai: benefit_ai$1,
+  benefit_ai_desc: benefit_ai_desc$1
+};
+const thinking_process$1 = "Thinking Process";
+const aiInsightEn = {
+  thinking_process: thinking_process$1
+};
+const title$a = "Strategy Configuration";
+const strategy$3 = "Strategy";
+const refresh$1 = "Refresh";
+const asset_ticker$1 = "Asset Ticker";
+const start_date$1 = "Start Date";
+const end_date$1 = "End Date";
+const initial_capital$1 = "Initial Capital ($)";
+const commission$3 = "Commission (rate)";
+const order_size$1 = "Order Size (shares/contracts)";
+const run_backtest$1 = "Run Backtest";
+const ready_to_run$1 = "Ready to Backtest";
+const select_strategy_hint$1 = 'Configure your parameters above and hit "Run Backtest" to see AI-powered analysis.';
+const configFormEn = {
+  title: title$a,
+  strategy: strategy$3,
+  refresh: refresh$1,
+  asset_ticker: asset_ticker$1,
+  start_date: start_date$1,
+  end_date: end_date$1,
+  initial_capital: initial_capital$1,
+  commission: commission$3,
+  order_size: order_size$1,
+  run_backtest: run_backtest$1,
+  ready_to_run: ready_to_run$1,
+  select_strategy_hint: select_strategy_hint$1
+};
+const title$9 = "Performance Overview";
+const final_value$1 = "Final Value";
+const sharpe_ratio$1 = "Sharpe Ratio";
+const max_drawdown$1 = "Max Drawdown";
+const sqn$1 = "SQN";
+const win_rate$3 = "Win Rate";
+const closed_trades$1 = "Closed Trades";
+const dd_duration$1 = "DD Duration";
+const annual_returns$1 = "Annual Returns";
+const per_calendar_year$1 = "per calendar year";
+const trades$1 = "Trades";
+const from_trade_analyzer$1 = "from TradeAnalyzer";
+const closed_total$1 = "Closed / Total";
+const open_positions$3 = "Open Positions";
+const avg_net_pnl$1 = "Average Net PnL";
+const best_trade$1 = "Best Trade";
+const worst_trade$1 = "Worst Trade";
+const avg_duration$1 = "Avg Duration (bars)";
+const time_drawdown$1 = "Time Drawdown";
+const depth_duration$1 = "depth and duration";
+const longest_duration$1 = "Longest Duration";
+const net_pnl$3 = "Net PnL";
+const bars$1 = "bars";
+const performanceEn = {
+  title: title$9,
+  final_value: final_value$1,
+  "return": "Return",
+  sharpe_ratio: sharpe_ratio$1,
+  max_drawdown: max_drawdown$1,
+  sqn: sqn$1,
+  win_rate: win_rate$3,
+  closed_trades: closed_trades$1,
+  dd_duration: dd_duration$1,
+  annual_returns: annual_returns$1,
+  per_calendar_year: per_calendar_year$1,
+  trades: trades$1,
+  from_trade_analyzer: from_trade_analyzer$1,
+  closed_total: closed_total$1,
+  open_positions: open_positions$3,
+  avg_net_pnl: avg_net_pnl$1,
+  best_trade: best_trade$1,
+  worst_trade: worst_trade$1,
+  avg_duration: avg_duration$1,
+  time_drawdown: time_drawdown$1,
+  depth_duration: depth_duration$1,
+  longest_duration: longest_duration$1,
+  net_pnl: net_pnl$3,
+  bars: bars$1
+};
+const title$8 = "Trade Log";
+const open_date$1 = "Open Date";
+const open_price$1 = "Open Price";
+const close_date$1 = "Close Date";
+const close_price$1 = "Close Price";
+const size$4 = "Size";
+const net_pnl$2 = "Net PnL";
+const tradeLogEn = {
+  title: title$8,
+  open_date: open_date$1,
+  open_price: open_price$1,
+  close_date: close_date$1,
+  close_price: close_price$1,
+  size: size$4,
+  net_pnl: net_pnl$2,
+  "return": "Return"
+};
+const title$7 = "Strategy Visualization";
+const maximize$1 = "Maximize";
+const ai_interpretation$1 = "AI Interpretation";
+const interpreting$1 = "Interpreting...";
+const reset$1 = "Reset";
+const close$1 = "Close";
+const strategyPlotEn = {
+  title: title$7,
+  maximize: maximize$1,
+  ai_interpretation: ai_interpretation$1,
+  interpreting: interpreting$1,
+  reset: reset$1,
+  close: close$1
+};
+const editor_title$1 = "Strategy Editor (UserStrategy)";
+const subtitle$2 = "Edit only the strategy class below; backtest engine is fixed.";
+const active_strategy$1 = "Active Strategy";
+const reload$1 = "Reload";
+const refresh_list$1 = "Refresh List";
+const ai_analysis$2 = "AI Analysis";
+const ai_rewrite$1 = "AI - Rewrite";
+const save_strategy$1 = "Save Strategy";
+const saving$1 = "Saving...";
+const create_new_strategy$1 = "Create New Strategy";
+const strategy_name$1 = "Strategy Name";
+const create$3 = "Create";
+const saved$1 = "Strategy Saved!";
+const save_failed$1 = "Failed to save strategy";
+const analysis_coming_soon$1 = "AI Analysis feature coming soon!";
+const rewrite_coming_soon$1 = "AI Rewrite feature coming soon!";
+const placeholder_name$1 = "e.g., breakout_v2";
+const maintainEn = {
+  editor_title: editor_title$1,
+  "new": "New",
+  subtitle: subtitle$2,
+  active_strategy: active_strategy$1,
+  reload: reload$1,
+  refresh_list: refresh_list$1,
+  ai_analysis: ai_analysis$2,
+  ai_rewrite: ai_rewrite$1,
+  save_strategy: save_strategy$1,
+  saving: saving$1,
+  create_new_strategy: create_new_strategy$1,
+  strategy_name: strategy_name$1,
+  create: create$3,
+  saved: saved$1,
+  save_failed: save_failed$1,
+  analysis_coming_soon: analysis_coming_soon$1,
+  rewrite_coming_soon: rewrite_coming_soon$1,
+  placeholder_name: placeholder_name$1
+};
+const title$6 = "Data Source Explorer";
+const fetch_data$1 = "Fetch Data";
+const datasourceEn = {
+  title: title$6,
+  fetch_data: fetch_data$1
+};
+const dashboard_title$1 = "Live Trading Dashboard";
+const dashboard_subtitle$1 = "Real-time paper and live trading with WebSocket updates";
+const connected$1 = "Connected";
+const disconnected$1 = "Disconnected";
+const portfolio_value$1 = "Portfolio Value";
+const cash_balance$1 = "Cash Balance";
+const unrealized_pnl$1 = "Unrealized P&L";
+const total_trades$1 = "Total Trades";
+const win_rate$2 = "% win";
+const start_new_session$1 = "Start New Session";
+const performance$2 = "Performance";
+const open_positions$2 = "Open Positions";
+const order_history$1 = "Order History";
+const trading_session_config$1 = "Trading Session Configuration";
+const live_trading_alert$1 = "Live Trading Mode";
+const live_trading_alert_desc$1 = "You are about to start REAL trading with REAL money. Please ensure your strategy is thoroughly tested in paper trading mode first.";
+const asset_class$1 = "Asset Class";
+const asset_crypto$1 = "Crypto (Spot/Futures)";
+const asset_stock$1 = "Stock (US/HK/A-Share)";
+const strategy$2 = "Strategy";
+const select_strategy$1 = "Select a strategy";
+const symbol$1 = "Symbol";
+const symbol_placeholder$1 = "BTC/USDT or AAPL";
+const symbol_tooltip$1 = "Trading pair or Ticker (e.g. BTC/USDT, AAPL)";
+const exchange$1 = "Exchange";
+const select_exchange$1 = "Please select an exchange";
+const mode$1 = "Mode";
+const mode_paper$1 = "Paper (Testnet)";
+const mode_live$1 = "Live (Real Money)";
+const mode_tooltip$1 = "Paper: testnet with simulated money. Live: real trading with real money.";
+const timeframe$1 = "Timeframe";
+const initial_cash$1 = "Initial Cash (USD)";
+const commission$2 = "Commission";
+const commission_tooltip$1 = "Trading fee rate (e.g., 0.001 = 0.1%)";
+const start_session$1 = "Start Trading Session";
+const session_status$1 = "Session Status";
+const session_id$1 = "Session ID";
+const start_trading$1 = "Start Trading";
+const stop_trading$1 = "Stop Trading";
+const stop_confirm_title$1 = "Stop Trading Session";
+const stop_confirm_desc$1 = "Are you sure you want to stop this trading session?";
+const yes_stop$1 = "Yes, Stop";
+const no_cancel$1 = "Cancel";
+const status_starting$1 = "Starting";
+const status_running$1 = "Running";
+const status_stopping$1 = "Stopping";
+const status_stopped$1 = "Stopped";
+const status_error$1 = "Error";
+const side$1 = "Side";
+const size$3 = "Size";
+const avg_price$1 = "Avg Price";
+const current_price$1 = "Current Price";
+const pnl_percent$1 = "P&L %";
+const no_open_positions$1 = "No open positions";
+const time$1 = "Time";
+const type$3 = "Type";
+const filled$1 = "Filled";
+const avg_fill_price$1 = "Avg Fill Price";
+const status$1 = "Status";
+const no_orders$1 = "No orders yet";
+const pnl_chart$1 = "P&L Chart";
+const break_even$1 = "Break Even";
+const no_pnl_data$1 = "No P&L data yet. Start trading to see real-time performance.";
+const liveEn = {
+  dashboard_title: dashboard_title$1,
+  dashboard_subtitle: dashboard_subtitle$1,
+  connected: connected$1,
+  disconnected: disconnected$1,
+  portfolio_value: portfolio_value$1,
+  cash_balance: cash_balance$1,
+  unrealized_pnl: unrealized_pnl$1,
+  total_trades: total_trades$1,
+  win_rate: win_rate$2,
+  start_new_session: start_new_session$1,
+  performance: performance$2,
+  open_positions: open_positions$2,
+  order_history: order_history$1,
+  trading_session_config: trading_session_config$1,
+  live_trading_alert: live_trading_alert$1,
+  live_trading_alert_desc: live_trading_alert_desc$1,
+  asset_class: asset_class$1,
+  asset_crypto: asset_crypto$1,
+  asset_stock: asset_stock$1,
+  strategy: strategy$2,
+  select_strategy: select_strategy$1,
+  symbol: symbol$1,
+  symbol_placeholder: symbol_placeholder$1,
+  symbol_tooltip: symbol_tooltip$1,
+  exchange: exchange$1,
+  select_exchange: select_exchange$1,
+  mode: mode$1,
+  mode_paper: mode_paper$1,
+  mode_live: mode_live$1,
+  mode_tooltip: mode_tooltip$1,
+  timeframe: timeframe$1,
+  initial_cash: initial_cash$1,
+  commission: commission$2,
+  commission_tooltip: commission_tooltip$1,
+  start_session: start_session$1,
+  session_status: session_status$1,
+  session_id: session_id$1,
+  start_trading: start_trading$1,
+  stop_trading: stop_trading$1,
+  stop_confirm_title: stop_confirm_title$1,
+  stop_confirm_desc: stop_confirm_desc$1,
+  yes_stop: yes_stop$1,
+  no_cancel: no_cancel$1,
+  status_starting: status_starting$1,
+  status_running: status_running$1,
+  status_stopping: status_stopping$1,
+  status_stopped: status_stopped$1,
+  status_error: status_error$1,
+  side: side$1,
+  size: size$3,
+  avg_price: avg_price$1,
+  current_price: current_price$1,
+  pnl_percent: pnl_percent$1,
+  no_open_positions: no_open_positions$1,
+  time: time$1,
+  type: type$3,
+  filled: filled$1,
+  avg_fill_price: avg_fill_price$1,
+  status: status$1,
+  no_orders: no_orders$1,
+  pnl_chart: pnl_chart$1,
+  break_even: break_even$1,
+  no_pnl_data: no_pnl_data$1
+};
+const title$5 = "Backtrader";
+const pro_title = "Backtrader Pro";
+const appZh = {
+  title: title$5,
+  pro_title
+};
+const run_strategy = "运行策略";
+const strategy_maintain = "策略维护";
+const datasource = "数据源";
+const live_trading$1 = "实盘交易";
+const navZh = {
+  run_strategy,
+  strategy_maintain,
   datasource,
-  live
+  live_trading: live_trading$1
+};
+const loading = "加载中...";
+const error = "错误";
+const save = "保存";
+const cancel = "取消";
+const expand_sidebar = "展开侧边栏";
+const collapse_sidebar = "收起侧边栏";
+const na = "N/A";
+const commonZh = {
+  loading,
+  error,
+  save,
+  cancel,
+  expand_sidebar,
+  collapse_sidebar,
+  na
+};
+const login = "登录";
+const logout = "登出";
+const signIn = "登录";
+const signingIn = "登录中...";
+const welcome = "欢迎";
+const profile = "个人资料";
+const unauthorized = "未授权";
+const sessionExpired = "会话已过期，请重新登录";
+const signInError = "认证失败，正在重定向...";
+const appTitle = "Backtrader 交易平台";
+const homeDescription = "使用专业的回测工具、AI驱动的分析和交互式图表，设计和测试算法交易策略。";
+const authZh = {
+  login,
+  logout,
+  signIn,
+  signingIn,
+  welcome,
+  profile,
+  unauthorized,
+  sessionExpired,
+  signInError,
+  appTitle,
+  homeDescription
+};
+const fast_backtesting = "极速回测";
+const ai_analysis$1 = "AI 智能分析";
+const interactive_charts = "交互式图表";
+const access_platform = "登录平台";
+const enter_platform = "进入平台";
+const subtitle$1 = "由 AI 驱动的下一代算法交易平台。";
+const future_features = "未来规划";
+const live_trading = "实盘/纸盘桥接";
+const live_trading_desc = "CCXT/IBKR 无缝切换模拟与实盘。";
+const monitoring = "监控与审计";
+const monitoring_desc = "持久化分析输出，仪表板与 API 审计。";
+const multi_asset = "多标的/组合回测";
+const multi_asset_desc = "多Ticker组合，权重与相关性管理。";
+const risk_control = "风控与持仓管理";
+const risk_control_desc = "统一风控模块，滑点模型与风险预警。";
+const team_collab = "用户与团队协作";
+const team_collab_desc = "角色/空间管理，策略版本分享。";
+const walk_forward = "Walk-forward 验证";
+const walk_forward_desc = "滚动训练验证，过拟合检测。";
+const benefits_title = "核心优势";
+const benefit_privacy = "隐私优先";
+const benefit_privacy_desc = "本地运行，策略零泄露。";
+const benefit_engine = "专业引擎";
+const benefit_engine_desc = "基于 Backtrader，久经考验。";
+const benefit_ai = "AI 原生";
+const benefit_ai_desc = "深度集成 LLM 智能分析。";
+const homeZh = {
+  fast_backtesting,
+  ai_analysis: ai_analysis$1,
+  interactive_charts,
+  access_platform,
+  enter_platform,
+  subtitle: subtitle$1,
+  future_features,
+  live_trading,
+  live_trading_desc,
+  monitoring,
+  monitoring_desc,
+  multi_asset,
+  multi_asset_desc,
+  risk_control,
+  risk_control_desc,
+  team_collab,
+  team_collab_desc,
+  walk_forward,
+  walk_forward_desc,
+  benefits_title,
+  benefit_privacy,
+  benefit_privacy_desc,
+  benefit_engine,
+  benefit_engine_desc,
+  benefit_ai,
+  benefit_ai_desc
+};
+const thinking_process = "思考过程";
+const aiInsightZh = {
+  thinking_process
+};
+const title$4 = "策略配置";
+const strategy$1 = "策略";
+const refresh = "刷新";
+const asset_ticker = "资产代码";
+const start_date = "开始日期";
+const end_date = "结束日期";
+const initial_capital = "初始资金 ($)";
+const commission$1 = "佣金 (费率)";
+const order_size = "下单数量 (股/手)";
+const run_backtest = "运行回测";
+const ready_to_run = "准备回测";
+const select_strategy_hint = "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。";
+const configFormZh = {
+  title: title$4,
+  strategy: strategy$1,
+  refresh,
+  asset_ticker,
+  start_date,
+  end_date,
+  initial_capital,
+  commission: commission$1,
+  order_size,
+  run_backtest,
+  ready_to_run,
+  select_strategy_hint
+};
+const title$3 = "绩效概览";
+const final_value = "最终价值";
+const sharpe_ratio = "夏普比率";
+const max_drawdown = "最大回撤";
+const sqn = "SQN";
+const win_rate$1 = "胜率";
+const closed_trades = "已平仓交易";
+const dd_duration = "回撤持续时间";
+const annual_returns = "年度回报";
+const per_calendar_year = "按日历年";
+const trades = "交易详情";
+const from_trade_analyzer = "来自 TradeAnalyzer";
+const closed_total = "已平仓 / 总计";
+const open_positions$1 = "持仓中";
+const avg_net_pnl = "平均净盈亏";
+const best_trade = "最佳交易";
+const worst_trade = "最差交易";
+const avg_duration = "平均持仓 (K线数)";
+const time_drawdown = "时间回撤";
+const depth_duration = "深度与持续时间";
+const longest_duration = "最长持续时间";
+const net_pnl$1 = "净盈亏";
+const bars = "根K线";
+const performanceZh = {
+  title: title$3,
+  final_value,
+  "return": "收益率",
+  sharpe_ratio,
+  max_drawdown,
+  sqn,
+  win_rate: win_rate$1,
+  closed_trades,
+  dd_duration,
+  annual_returns,
+  per_calendar_year,
+  trades,
+  from_trade_analyzer,
+  closed_total,
+  open_positions: open_positions$1,
+  avg_net_pnl,
+  best_trade,
+  worst_trade,
+  avg_duration,
+  time_drawdown,
+  depth_duration,
+  longest_duration,
+  net_pnl: net_pnl$1,
+  bars
+};
+const title$2 = "交易日志";
+const open_date = "开仓日期";
+const open_price = "开仓价格";
+const close_date = "平仓日期";
+const close_price = "平仓价格";
+const size$2 = "数量";
+const net_pnl = "净盈亏";
+const tradeLogZh = {
+  title: title$2,
+  open_date,
+  open_price,
+  close_date,
+  close_price,
+  size: size$2,
+  net_pnl,
+  "return": "收益率"
+};
+const title$1 = "策略可视化";
+const maximize = "最大化";
+const ai_interpretation = "AI 解读";
+const interpreting = "解读中...";
+const reset = "重置";
+const close = "关闭";
+const strategyPlotZh = {
+  title: title$1,
+  maximize,
+  ai_interpretation,
+  interpreting,
+  reset,
+  close
+};
+const editor_title = "策略编辑器 (UserStrategy)";
+const subtitle = "仅编辑下方的策略类；回测引擎是固定的。";
+const active_strategy = "当前策略";
+const reload = "重新加载";
+const refresh_list = "刷新列表";
+const ai_analysis = "AI 分析";
+const ai_rewrite = "AI 重写";
+const save_strategy = "保存策略";
+const saving = "保存中...";
+const create_new_strategy = "创建新策略";
+const strategy_name = "策略名称";
+const create$2 = "创建";
+const saved = "策略已保存！";
+const save_failed = "保存策略失败";
+const analysis_coming_soon = "AI 分析功能即将推出！";
+const rewrite_coming_soon = "AI 重写功能即将推出！";
+const placeholder_name = "例如：breakout_v2";
+const maintainZh = {
+  editor_title,
+  "new": "新建",
+  subtitle,
+  active_strategy,
+  reload,
+  refresh_list,
+  ai_analysis,
+  ai_rewrite,
+  save_strategy,
+  saving,
+  create_new_strategy,
+  strategy_name,
+  create: create$2,
+  saved,
+  save_failed,
+  analysis_coming_soon,
+  rewrite_coming_soon,
+  placeholder_name
+};
+const title = "数据源浏览器";
+const fetch_data = "获取数据";
+const datasourceZh = {
+  title,
+  fetch_data
+};
+const dashboard_title = "实盘交易仪表板";
+const dashboard_subtitle = "支持 WebSocket 实时更新的模拟与实盘交易";
+const connected = "已连接";
+const disconnected = "未连接";
+const portfolio_value = "投资组合价值";
+const cash_balance = "现金余额";
+const unrealized_pnl = "未实现盈亏";
+const total_trades = "总交易数";
+const win_rate = "% 胜率";
+const start_new_session = "开始新会话";
+const performance$1 = "绩效表现";
+const open_positions = "当前持仓";
+const order_history = "订单历史";
+const trading_session_config = "交易会话配置";
+const live_trading_alert = "实盘交易模式";
+const live_trading_alert_desc = "您即将开始使用真实资金进行实盘交易。请确保您的策略已在模拟模式下经过充分测试。";
+const asset_class = "资产类别";
+const asset_crypto = "加密货币 (现货/合约)";
+const asset_stock = "股票 (美股/港股/A股)";
+const strategy = "策略";
+const select_strategy = "选择策略";
+const symbol = "交易对/代码";
+const symbol_placeholder = "BTC/USDT 或 AAPL";
+const symbol_tooltip = "交易对或股票代码 (例如 BTC/USDT, AAPL)";
+const exchange = "交易所";
+const select_exchange = "请选择交易所";
+const mode = "模式";
+const mode_paper = "模拟 (测试网)";
+const mode_live = "实盘 (真金白银)";
+const mode_tooltip = "模拟：使用虚拟资金测试。实盘：使用真实资金交易。";
+const timeframe = "时间周期";
+const initial_cash = "初始资金 (USD)";
+const commission = "佣金费率";
+const commission_tooltip = "交易费率 (例如 0.001 = 0.1%)";
+const start_session = "开始交易会话";
+const session_status = "会话状态";
+const session_id = "会话 ID";
+const start_trading = "开始交易";
+const stop_trading = "停止交易";
+const stop_confirm_title = "停止交易会话";
+const stop_confirm_desc = "确定要停止当前的交易会话吗？";
+const yes_stop = "确认停止";
+const no_cancel = "取消";
+const status_starting = "启动中";
+const status_running = "运行中";
+const status_stopping = "停止中";
+const status_stopped = "已停止";
+const status_error = "错误";
+const side = "方向";
+const size$1 = "数量";
+const avg_price = "均价";
+const current_price = "现价";
+const pnl_percent = "盈亏 %";
+const no_open_positions = "无持仓";
+const time = "时间";
+const type$2 = "类型";
+const filled = "已成交";
+const avg_fill_price = "成交均价";
+const status = "状态";
+const no_orders = "暂无订单";
+const pnl_chart = "盈亏曲线";
+const break_even = "盈亏平衡线";
+const no_pnl_data = "暂无盈亏数据。开始交易以查看实时表现。";
+const liveZh = {
+  dashboard_title,
+  dashboard_subtitle,
+  connected,
+  disconnected,
+  portfolio_value,
+  cash_balance,
+  unrealized_pnl,
+  total_trades,
+  win_rate,
+  start_new_session,
+  performance: performance$1,
+  open_positions,
+  order_history,
+  trading_session_config,
+  live_trading_alert,
+  live_trading_alert_desc,
+  asset_class,
+  asset_crypto,
+  asset_stock,
+  strategy,
+  select_strategy,
+  symbol,
+  symbol_placeholder,
+  symbol_tooltip,
+  exchange,
+  select_exchange,
+  mode,
+  mode_paper,
+  mode_live,
+  mode_tooltip,
+  timeframe,
+  initial_cash,
+  commission,
+  commission_tooltip,
+  start_session,
+  session_status,
+  session_id,
+  start_trading,
+  stop_trading,
+  stop_confirm_title,
+  stop_confirm_desc,
+  yes_stop,
+  no_cancel,
+  status_starting,
+  status_running,
+  status_stopping,
+  status_stopped,
+  status_error,
+  side,
+  size: size$1,
+  avg_price,
+  current_price,
+  pnl_percent,
+  no_open_positions,
+  time,
+  type: type$2,
+  filled,
+  avg_fill_price,
+  status,
+  no_orders,
+  pnl_chart,
+  break_even,
+  no_pnl_data
+};
+const en$1 = {
+  app: appEn,
+  nav: navEn,
+  common: commonEn,
+  auth: authEn,
+  home: homeEn,
+  ai_insight: aiInsightEn,
+  config_form: configFormEn,
+  performance: performanceEn,
+  trade_log: tradeLogEn,
+  strategy_plot: strategyPlotEn,
+  maintain: maintainEn,
+  datasource: datasourceEn,
+  live: liveEn
+};
+const zh = {
+  app: appZh,
+  nav: navZh,
+  common: commonZh,
+  auth: authZh,
+  home: homeZh,
+  ai_insight: aiInsightZh,
+  config_form: configFormZh,
+  performance: performanceZh,
+  trade_log: tradeLogZh,
+  strategy_plot: strategyPlotZh,
+  maintain: maintainZh,
+  datasource: datasourceZh,
+  live: liveZh
 };
 instance.use(Browser).use(initReactI18next).init({
   debug: true,
@@ -10289,9 +11045,9 @@ function getUrlBasedHistory(getLocation, createHref2, validateLocation, options 
     let url2 = history.createHref(location2);
     try {
       globalHistory.pushState(historyState, "", url2);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "DataCloneError") {
-        throw error;
+    } catch (error2) {
+      if (error2 instanceof DOMException && error2.name === "DataCloneError") {
+        throw error2;
       }
       window2.location.assign(url2);
     }
@@ -10615,10 +11371,10 @@ function compilePath(path2, caseSensitive = false, end = true) {
 function decodePath(value) {
   try {
     return value.split("/").map((v2) => decodeURIComponent(v2).replace(/\//g, "%2F")).join("/");
-  } catch (error) {
+  } catch (error2) {
     warning$3(
       false,
-      `The URL path "${value}" could not be decoded because it is a malformed URL segment. This is probably due to a bad percent encoding (${error}).`
+      `The URL path "${value}" could not be decoded because it is a malformed URL segment. This is probably due to a bad percent encoding (${error2}).`
     );
     return value;
   }
@@ -10747,8 +11503,8 @@ var joinPaths = (paths) => paths.join("/").replace(/\/\/+/g, "/");
 var normalizePathname = (pathname) => pathname.replace(/\/+$/, "").replace(/^\/*/, "/");
 var normalizeSearch = (search2) => !search2 || search2 === "?" ? "" : search2.startsWith("?") ? search2 : "?" + search2;
 var normalizeHash = (hash2) => !hash2 || hash2 === "#" ? "" : hash2.startsWith("#") ? hash2 : "#" + hash2;
-function isRouteErrorResponse(error) {
-  return error != null && typeof error.status === "number" && typeof error.statusText === "string" && typeof error.internal === "boolean" && "data" in error;
+function isRouteErrorResponse(error2) {
+  return error2 != null && typeof error2.status === "number" && typeof error2.statusText === "string" && typeof error2.internal === "boolean" && "data" in error2;
 }
 function getRoutePattern(matches) {
   return matches.map((m2) => m2.route.path).filter(Boolean).join("/").replace(/\/\/*/g, "/") || "/";
@@ -11020,9 +11776,9 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   return renderedMatches;
 }
 function DefaultErrorComponent() {
-  let error = useRouteError();
-  let message2 = isRouteErrorResponse(error) ? `${error.status} ${error.statusText}` : error instanceof Error ? error.message : JSON.stringify(error);
-  let stack = error instanceof Error ? error.stack : null;
+  let error2 = useRouteError();
+  let message2 = isRouteErrorResponse(error2) ? `${error2.status} ${error2.statusText}` : error2 instanceof Error ? error2.message : JSON.stringify(error2);
+  let stack = error2 instanceof Error ? error2.stack : null;
   let lightgrey = "rgba(200,200,200, 0.5)";
   let preStyles = { padding: "0.5rem", backgroundColor: lightgrey };
   let codeStyles = { padding: "2px 4px", backgroundColor: lightgrey };
@@ -11030,7 +11786,7 @@ function DefaultErrorComponent() {
   {
     console.error(
       "Error handled by React Router default ErrorBoundary:",
-      error
+      error2
     );
     devInfo = /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, /* @__PURE__ */ reactExports.createElement("p", null, "💿 Hey developer 👋"), /* @__PURE__ */ reactExports.createElement("p", null, "You can provide a way better UX than this when your app throws errors by providing your own ", /* @__PURE__ */ reactExports.createElement("code", { style: codeStyles }, "ErrorBoundary"), " or", " ", /* @__PURE__ */ reactExports.createElement("code", { style: codeStyles }, "errorElement"), " prop on your route."));
   }
@@ -11046,8 +11802,8 @@ var RenderErrorBoundary = class extends reactExports.Component {
       error: props.error
     };
   }
-  static getDerivedStateFromError(error) {
-    return { error };
+  static getDerivedStateFromError(error2) {
+    return { error: error2 };
   }
   static getDerivedStateFromProps(props, state) {
     if (state.location !== props.location || state.revalidation !== "idle" && props.revalidation === "idle") {
@@ -11063,13 +11819,13 @@ var RenderErrorBoundary = class extends reactExports.Component {
       revalidation: props.revalidation || state.revalidation
     };
   }
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error2, errorInfo) {
     if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+      this.props.onError(error2, errorInfo);
     } else {
       console.error(
         "React Router caught the following error during render",
-        error
+        error2
       );
     }
   }
@@ -11143,9 +11899,9 @@ function _renderMatches(matches, parentMatches = [], dataRouterState = null, uns
       }
     }
   }
-  let onError = dataRouterState && unstable_onError ? (error, errorInfo) => {
+  let onError = dataRouterState && unstable_onError ? (error2, errorInfo) => {
     var _a2, _b2;
-    unstable_onError(error, {
+    unstable_onError(error2, {
       location: dataRouterState.location,
       params: ((_b2 = (_a2 = dataRouterState.matches) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.params) ?? {},
       unstable_pattern: getRoutePattern(dataRouterState.matches),
@@ -11154,12 +11910,12 @@ function _renderMatches(matches, parentMatches = [], dataRouterState = null, uns
   } : void 0;
   return renderedMatches.reduceRight(
     (outlet, match2, index2) => {
-      let error;
+      let error2;
       let shouldRenderHydrateFallback = false;
       let errorElement = null;
       let hydrateFallbackElement = null;
       if (dataRouterState) {
-        error = errors && match2.route.id ? errors[match2.route.id] : void 0;
+        error2 = errors && match2.route.id ? errors[match2.route.id] : void 0;
         errorElement = match2.route.errorElement || defaultErrorElement;
         if (renderFallback) {
           if (fallbackIndex < 0 && index2 === 0) {
@@ -11179,7 +11935,7 @@ function _renderMatches(matches, parentMatches = [], dataRouterState = null, uns
       let matches2 = parentMatches.concat(renderedMatches.slice(0, index2 + 1));
       let getChildren = () => {
         let children;
-        if (error) {
+        if (error2) {
           children = errorElement;
         } else if (shouldRenderHydrateFallback) {
           children = hydrateFallbackElement;
@@ -11209,7 +11965,7 @@ function _renderMatches(matches, parentMatches = [], dataRouterState = null, uns
           location: dataRouterState.location,
           revalidation: dataRouterState.revalidation,
           component: errorElement,
-          error,
+          error: error2,
           children: getChildren(),
           routeContext: { outlet: null, matches: matches2, isDataRoute: true },
           onError
@@ -11254,7 +12010,7 @@ function useRouteId() {
 }
 function useRouteError() {
   var _a2;
-  let error = reactExports.useContext(RouteErrorContext);
+  let error2 = reactExports.useContext(RouteErrorContext);
   let state = useDataRouterState(
     "useRouteError"
     /* UseRouteError */
@@ -11263,8 +12019,8 @@ function useRouteError() {
     "useRouteError"
     /* UseRouteError */
   );
-  if (error !== void 0) {
-    return error;
+  if (error2 !== void 0) {
+    return error2;
   }
   return (_a2 = state.errors) == null ? void 0 : _a2[routeId];
 }
@@ -11605,11 +12361,11 @@ async function loadRouteModule(route, routeModulesCache) {
     );
     routeModulesCache[route.id] = routeModule;
     return routeModule;
-  } catch (error) {
+  } catch (error2) {
     console.error(
       `Error loading route module \`${route.module}\`, reloading page...`
     );
-    console.error(error);
+    console.error(error2);
     if (window.__reactRouterContext && window.__reactRouterContext.isSpaMode && // @ts-expect-error
     void 0) ;
     window.location.reload();
@@ -11643,7 +12399,7 @@ async function getKeyedPrefetchLinks(matches, manifest, routeModules) {
     )
   );
 }
-function getNewMatchesForLinks(page, nextMatches, currentMatches, manifest, location2, mode) {
+function getNewMatchesForLinks(page, nextMatches, currentMatches, manifest, location2, mode2) {
   let isNew = (match2, index2) => {
     if (!currentMatches[index2]) return true;
     return match2.route.id !== currentMatches[index2].route.id;
@@ -11657,12 +12413,12 @@ function getNewMatchesForLinks(page, nextMatches, currentMatches, manifest, loca
       ((_a2 = currentMatches[index2].route.path) == null ? void 0 : _a2.endsWith("*")) && currentMatches[index2].params["*"] !== match2.params["*"]
     );
   };
-  if (mode === "assets") {
+  if (mode2 === "assets") {
     return nextMatches.filter(
       (match2, index2) => isNew(match2, index2) || matchPathChanged(match2, index2)
     );
   }
-  if (mode === "data") {
+  if (mode2 === "data") {
     return nextMatches.filter((match2, index2) => {
       var _a2;
       let manifestRoute = manifest.routes[match2.route.id];
@@ -17595,7 +18351,7 @@ const DoStep = true;
 function isActive(step) {
   return step === STEP_ACTIVE || step === STEP_ACTIVATED;
 }
-const useStepQueue = ((status, prepareOnly, callback) => {
+const useStepQueue = ((status2, prepareOnly, callback) => {
   const [step, setStep] = useSafeState(STEP_NONE);
   const [nextFrame, cancelNextFrame] = useNextFrame();
   function startQueue() {
@@ -17623,7 +18379,7 @@ const useStepQueue = ((status, prepareOnly, callback) => {
         });
       }
     }
-  }, [status, step]);
+  }, [status2, step]);
   reactExports.useEffect(() => () => {
     cancelNextFrame();
   }, []);
@@ -17664,8 +18420,8 @@ function useStatus(supportMotion, visible, getElement, {
     setStyle(null, true);
   }
   const onInternalMotionEnd = useEvent((event) => {
-    const status = getStatus2();
-    if (status === STATUS_NONE) {
+    const status2 = getStatus2();
+    if (status2 === STATUS_NONE) {
       return;
     }
     const element2 = getDomElement();
@@ -17674,11 +18430,11 @@ function useStatus(supportMotion, visible, getElement, {
     }
     const currentActive = activeRef.current;
     let canEnd;
-    if (status === STATUS_APPEAR && currentActive) {
+    if (status2 === STATUS_APPEAR && currentActive) {
       canEnd = onAppearEnd == null ? void 0 : onAppearEnd(element2, event);
-    } else if (status === STATUS_ENTER && currentActive) {
+    } else if (status2 === STATUS_ENTER && currentActive) {
       canEnd = onEnterEnd == null ? void 0 : onEnterEnd(element2, event);
-    } else if (status === STATUS_LEAVE && currentActive) {
+    } else if (status2 === STATUS_LEAVE && currentActive) {
       canEnd = onLeaveEnd == null ? void 0 : onLeaveEnd(element2, event);
     }
     if (currentActive && canEnd !== false) {
@@ -17833,7 +18589,7 @@ function genCSSMotion(config2) {
       return getDOM(nodeRef.current);
     }
     const [getStatus2, statusStep, statusStyle, mergedVisible] = useStatus(supportMotion, visible, getDomElement, props);
-    const status = getStatus2();
+    const status2 = getStatus2();
     const renderedRef = reactExports.useRef(mergedVisible);
     if (mergedVisible) {
       renderedRef.current = true;
@@ -17864,7 +18620,7 @@ function genCSSMotion(config2) {
     };
     if (!children) {
       motionChildren = null;
-    } else if (status === STATUS_NONE) {
+    } else if (status2 === STATUS_NONE) {
       if (mergedVisible) {
         motionChildren = children({
           ...mergedProps
@@ -17893,10 +18649,10 @@ function genCSSMotion(config2) {
       } else if (statusStep === STEP_START) {
         statusSuffix = "start";
       }
-      const motionCls = getTransitionName$1(motionName, `${status}-${statusSuffix}`);
+      const motionCls = getTransitionName$1(motionName, `${status2}-${statusSuffix}`);
       motionChildren = children({
         ...mergedProps,
-        className: clsx(getTransitionName$1(motionName, status), {
+        className: clsx(getTransitionName$1(motionName, status2), {
           [motionCls]: motionCls && statusSuffix,
           [motionName]: typeof motionName === "string"
         }),
@@ -17988,8 +18744,8 @@ function diffKeys(prevKeys = [], currentKeys = []) {
   duplicatedKeys.forEach((matchKey) => {
     list2 = list2.filter(({
       key,
-      status
-    }) => key !== matchKey || status !== STATUS_REMOVE);
+      status: status2
+    }) => key !== matchKey || status2 !== STATUS_REMOVE);
     list2.forEach((node2) => {
       if (node2.key === matchKey) {
         node2.status = STATUS_KEEP;
@@ -18038,8 +18794,8 @@ function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
             keyEntities
           } = this.state;
           const restKeysCount = keyEntities.filter(({
-            status
-          }) => status !== STATUS_REMOVED).length;
+            status: status2
+          }) => status2 !== STATUS_REMOVED).length;
           if (restKeysCount === 0 && this.props.onAllRemoved) {
             this.props.onAllRemoved();
           }
@@ -18084,10 +18840,10 @@ function genCSSMotionList(transitionSupport, CSSMotion$1 = CSSMotion) {
       });
       delete restProps.keys;
       return /* @__PURE__ */ reactExports.createElement(Component, restProps, keyEntities.map(({
-        status,
+        status: status2,
         ...eventProps
       }, index2) => {
-        const visible = status === STATUS_ADD || status === STATUS_KEEP;
+        const visible = status2 === STATUS_ADD || status2 === STATUS_KEEP;
         return /* @__PURE__ */ reactExports.createElement(CSSMotion$1, _extends$1O({}, motionProps, {
           key: eventProps.key,
           visible,
@@ -19041,7 +19797,7 @@ const Alert$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     description,
     prefixCls: customizePrefixCls,
     message: message2,
-    title,
+    title: title2,
     banner,
     className,
     rootClassName,
@@ -19060,7 +19816,7 @@ const Alert$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     classNames,
     ...otherProps
   } = props;
-  const mergedTitle = title ?? message2;
+  const mergedTitle = title2 ?? message2;
   const [closed, setClosed] = reactExports.useState(false);
   const internalRef = reactExports.useRef(null);
   reactExports.useImperativeHandle(ref, () => ({
@@ -19230,9 +19986,9 @@ let ErrorBoundary = /* @__PURE__ */ (function(_React$Component) {
   _inherits(ErrorBoundary2, _React$Component);
   return _createClass(ErrorBoundary2, [{
     key: "componentDidCatch",
-    value: function componentDidCatch(error, info) {
+    value: function componentDidCatch(error2, info) {
       this.setState({
-        error,
+        error: error2,
         info
       });
     }
@@ -19241,20 +19997,20 @@ let ErrorBoundary = /* @__PURE__ */ (function(_React$Component) {
     value: function render2() {
       const {
         message: message2,
-        title,
+        title: title2,
         description,
         id,
         children
       } = this.props;
       const {
-        error,
+        error: error2,
         info
       } = this.state;
-      const mergedTitle = title ?? message2;
+      const mergedTitle = title2 ?? message2;
       const componentStack = (info == null ? void 0 : info.componentStack) || null;
-      const errorMessage = typeof mergedTitle === "undefined" ? (error || "").toString() : mergedTitle;
+      const errorMessage = typeof mergedTitle === "undefined" ? (error2 || "").toString() : mergedTitle;
       const errorDescription = typeof description === "undefined" ? componentStack : description;
-      if (error) {
+      if (error2) {
         return /* @__PURE__ */ reactExports.createElement(Alert$1, {
           id,
           type: "error",
@@ -19392,8 +20148,8 @@ function scrollTo(y2, options = {}) {
   let rafId;
   const frameFunc = () => {
     const timestamp = Date.now();
-    const time = timestamp - startTime;
-    const nextScrollTop = easeInOutCubic(time > duration ? duration : time, scrollTop, y2, duration);
+    const time2 = timestamp - startTime;
+    const nextScrollTop = easeInOutCubic(time2 > duration ? duration : time2, scrollTop, y2, duration);
     if (isWindow(container)) {
       container.scrollTo(window.pageXOffset, nextScrollTop);
     } else if (container instanceof Document || container.constructor.name === "HTMLDocument") {
@@ -19401,7 +20157,7 @@ function scrollTo(y2, options = {}) {
     } else {
       container.scrollTop = nextScrollTop;
     }
-    if (time < duration) {
+    if (time2 < duration) {
       rafId = wrapperRaf(frameFunc);
     } else if (typeof callback === "function") {
       callback();
@@ -22780,7 +23536,7 @@ function wrapPromiseFn(openFn) {
   const result = () => {
     closeFn == null ? void 0 : closeFn();
   };
-  result.then = (filled, rejected) => closePromise.then(filled, rejected);
+  result.then = (filled2, rejected) => closePromise.then(filled2, rejected);
   result.promise = closePromise;
   return result;
 }
@@ -22866,7 +23622,7 @@ function useInternalMessage(messageConfig) {
   const holderRef = reactExports.useRef(null);
   devUseWarning();
   const wrapAPI = reactExports.useMemo(() => {
-    const close = (key) => {
+    const close2 = (key) => {
       var _a2;
       (_a2 = holderRef.current) == null ? void 0 : _a2.close(key);
     };
@@ -22951,14 +23707,14 @@ function useInternalMessage(messageConfig) {
           }
         });
         return () => {
-          close(mergedKey);
+          close2(mergedKey);
         };
       });
     };
     const destroy2 = (key) => {
       var _a2;
       if (key !== void 0) {
-        close(key);
+        close2(key);
       } else {
         (_a2 = holderRef.current) == null ? void 0 : _a2.destroy();
       }
@@ -23566,13 +24322,13 @@ const getRealWidth = (node2) => ({
 const DefaultLoadingIcon = (props) => {
   const {
     prefixCls,
-    loading,
+    loading: loading2,
     existIcon,
     className,
     style: style2,
     mount
   } = props;
-  const visible = !!loading;
+  const visible = !!loading2;
   if (existIcon) {
     return /* @__PURE__ */ We.createElement(InnerLoadingIcon, {
       prefixCls,
@@ -25118,9 +25874,9 @@ const Compact = genSubStyleComponent(["Button", "compact"], (token2) => {
     genButtonCompactStyle(buttonToken)
   ];
 }, prepareComponentToken$n);
-function getLoadingConfig(loading) {
-  if (typeof loading === "object" && loading) {
-    let delay = loading == null ? void 0 : loading.delay;
+function getLoadingConfig(loading2) {
+  if (typeof loading2 === "object" && loading2) {
+    let delay = loading2 == null ? void 0 : loading2.delay;
     delay = !Number.isNaN(delay) && typeof delay === "number" ? delay : 0;
     return {
       loading: delay <= 0,
@@ -25128,7 +25884,7 @@ function getLoadingConfig(loading) {
     };
   }
   return {
-    loading: !!loading,
+    loading: !!loading2,
     delay: 0
   };
 }
@@ -25143,7 +25899,7 @@ const ButtonTypeMap = {
 const InternalCompoundedButton = /* @__PURE__ */ We.forwardRef((props, ref) => {
   const {
     _skipSemantic,
-    loading = false,
+    loading: loading2 = false,
     prefixCls: customizePrefixCls,
     color: color2,
     variant,
@@ -25214,7 +25970,7 @@ const InternalCompoundedButton = /* @__PURE__ */ We.forwardRef((props, ref) => {
   const disabled = reactExports.useContext(DisabledContext);
   const mergedDisabled = customDisabled ?? disabled;
   const groupSize = reactExports.useContext(GroupSizeContext);
-  const loadingOrDelay = reactExports.useMemo(() => getLoadingConfig(loading), [loading]);
+  const loadingOrDelay = reactExports.useMemo(() => getLoadingConfig(loading2), [loading2]);
   const [innerLoading, setLoading] = reactExports.useState(loadingOrDelay.loading);
   const [hasTwoCNChar, setHasTwoCNChar] = reactExports.useState(false);
   const buttonRef = reactExports.useRef(null);
@@ -25339,8 +26095,8 @@ const InternalCompoundedButton = /* @__PURE__ */ We.forwardRef((props, ref) => {
   let iconNode;
   if (icon && !innerLoading) {
     iconNode = iconWrapperElement(icon);
-  } else if (loading && typeof loading === "object" && loading.icon) {
-    iconNode = iconWrapperElement(loading.icon);
+  } else if (loading2 && typeof loading2 === "object" && loading2.icon) {
+    iconNode = iconWrapperElement(loading2.icon);
   } else {
     iconNode = defaultLoadingIconElement;
   }
@@ -25390,7 +26146,7 @@ const ActionButton = (props) => {
     children,
     prefixCls,
     buttonProps,
-    close,
+    close: close2,
     autoFocus,
     emitEvent,
     isSilent,
@@ -25399,9 +26155,9 @@ const ActionButton = (props) => {
   } = props;
   const clickedRef = reactExports.useRef(false);
   const buttonRef = reactExports.useRef(null);
-  const [loading, setLoading] = useSafeState(false);
+  const [loading2, setLoading] = useSafeState(false);
   const onInternalClose = (...args) => {
-    close == null ? void 0 : close(...args);
+    close2 == null ? void 0 : close2(...args);
   };
   reactExports.useEffect(() => {
     let timeoutId = null;
@@ -25455,7 +26211,7 @@ const ActionButton = (props) => {
         return;
       }
     } else if (actionFn.length) {
-      returnValueOfOnOk = actionFn(close);
+      returnValueOfOnOk = actionFn(close2);
       clickedRef.current = false;
     } else {
       returnValueOfOnOk = actionFn();
@@ -25469,7 +26225,7 @@ const ActionButton = (props) => {
   return /* @__PURE__ */ reactExports.createElement(Button$1, {
     ...convertLegacyProps(type4),
     onClick,
-    loading,
+    loading: loading2,
     prefixCls,
     ...buttonProps,
     ref: buttonRef
@@ -25621,10 +26377,10 @@ var warning = function warning2() {
 function convertFieldsError(errors) {
   if (!errors || !errors.length) return null;
   var fields = {};
-  errors.forEach(function(error) {
-    var field = error.field;
+  errors.forEach(function(error2) {
+    var field = error2.field;
     fields[field] = fields[field] || [];
-    fields[field].push(error);
+    fields[field].push(error2);
   });
   return fields;
 }
@@ -25939,7 +26695,7 @@ const getUrlRegex = (function() {
     return options && options.exact ? v6exact : new RegExp("".concat(b2(options)).concat(v6).concat(b2(options)), "g");
   };
   var protocol = "(?:(?:[a-z]+:)?//)";
-  var auth2 = "(?:\\S+(?::\\S*)?@)?";
+  var auth = "(?:\\S+(?::\\S*)?@)?";
   var ipv4 = ip.v4().source;
   var ipv6 = ip.v6().source;
   var host = "(?:(?:[a-z\\u00a1-\\uffff0-9][-_]*)*[a-z\\u00a1-\\uffff0-9]+)";
@@ -25947,7 +26703,7 @@ const getUrlRegex = (function() {
   var tld = "(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))";
   var port = "(?::\\d{2,5})?";
   var path2 = '(?:[/?#][^\\s"]*)?';
-  var regex = "(?:".concat(protocol, "|www\\.)").concat(auth2, "(?:localhost|").concat(ipv4, "|").concat(ipv6, "|").concat(host).concat(domain).concat(tld, ")").concat(port).concat(path2);
+  var regex = "(?:".concat(protocol, "|www\\.)").concat(auth, "(?:localhost|").concat(ipv4, "|").concat(ipv6, "|").concat(host).concat(domain).concat(tld, ")").concat(port).concat(path2);
   urlReg = new RegExp("(?:^".concat(regex, "$)"), "i");
   return urlReg;
 });
@@ -26469,15 +27225,15 @@ var Schema$1 = /* @__PURE__ */ (function() {
         } else if (rule.validator) {
           try {
             res = rule.validator(rule, data.value, cb, data.source, options);
-          } catch (error) {
+          } catch (error2) {
             var _console$error, _console;
-            (_console$error = (_console = console).error) === null || _console$error === void 0 || _console$error.call(_console, error);
+            (_console$error = (_console = console).error) === null || _console$error === void 0 || _console$error.call(_console, error2);
             if (!options.suppressValidatorError) {
               setTimeout(function() {
-                throw error;
+                throw error2;
               }, 0);
             }
-            cb(error.message);
+            cb(error2.message);
           }
           if (res === true) {
             cb();
@@ -26609,8 +27365,8 @@ async function validateRule(name2, value, rule, options, messageVariables) {
     cloneRule.validator = (...args) => {
       try {
         return originValidator(...args);
-      } catch (error) {
-        console.error(error);
+      } catch (error2) {
+        console.error(error2);
         return Promise.reject(CODE_LOGIC_ERROR);
       }
     };
@@ -26657,11 +27413,11 @@ async function validateRule(name2, value, rule, options, messageVariables) {
     enum: (rule.enum || []).join(", "),
     ...messageVariables
   };
-  const fillVariableResult = result.map((error) => {
-    if (typeof error === "string") {
-      return replaceMessage(error, kv);
+  const fillVariableResult = result.map((error2) => {
+    if (typeof error2 === "string") {
+      return replaceMessage(error2, kv);
     }
-    return error;
+    return error2;
   });
   return fillVariableResult;
 }
@@ -28651,7 +29407,7 @@ const FormItemPrefixContext = /* @__PURE__ */ reactExports.createContext({
 const FormItemInputContext = /* @__PURE__ */ reactExports.createContext({});
 const NoFormStyle = ({
   children,
-  status,
+  status: status2,
   override
 }) => {
   const formItemInputContext = reactExports.useContext(FormItemInputContext);
@@ -28662,13 +29418,13 @@ const NoFormStyle = ({
     if (override) {
       delete newContext.isFormItemInput;
     }
-    if (status) {
+    if (status2) {
       delete newContext.status;
       delete newContext.hasFeedback;
       delete newContext.feedbackIcon;
     }
     return newContext;
-  }, [status, override, formItemInputContext]);
+  }, [status2, override, formItemInputContext]);
   return /* @__PURE__ */ reactExports.createElement(FormItemInputContext.Provider, {
     value: newFormItemInputContext
   }, children);
@@ -29346,7 +30102,7 @@ function getParagraphBasicProps(hasAvatar, hasTitle) {
 const Skeleton = (props) => {
   const {
     prefixCls: customizePrefixCls,
-    loading,
+    loading: loading2,
     className,
     rootClassName,
     classNames,
@@ -29354,7 +30110,7 @@ const Skeleton = (props) => {
     styles,
     children,
     avatar = false,
-    title = true,
+    title: title2 = true,
     paragraph: paragraph2 = true,
     active,
     round: round2
@@ -29372,15 +30128,15 @@ const Skeleton = (props) => {
   const mergedProps = {
     ...props,
     avatar,
-    title,
+    title: title2,
     paragraph: paragraph2
   };
   const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
     props: mergedProps
   });
-  if (loading || !("loading" in props)) {
+  if (loading2 || !("loading" in props)) {
     const hasAvatar = !!avatar;
-    const hasTitle = !!title;
+    const hasTitle = !!title2;
     const hasParagraph = !!paragraph2;
     let avatarNode;
     if (hasAvatar) {
@@ -29406,7 +30162,7 @@ const Skeleton = (props) => {
           className: mergedClassNames.title,
           prefixCls: `${prefixCls}-title`,
           ...getTitleBasicProps(hasAvatar, hasParagraph),
-          ...getComponentProps(title),
+          ...getComponentProps(title2),
           style: mergedStyles.title
         };
         $title = /* @__PURE__ */ reactExports.createElement(Title$3, {
@@ -29698,7 +30454,7 @@ const genPurePanel = (Component, alignPropName, postProps, defaultPrefixCls2, ge
   };
   return withPureRenderTheme(PurePanel2);
 };
-const useAllowClear = (prefixCls, displayValues, allowClear, clearIcon, disabled = false, mergedSearchValue, mode) => {
+const useAllowClear = (prefixCls, displayValues, allowClear, clearIcon, disabled = false, mergedSearchValue, mode2) => {
   const allowClearConfig = reactExports.useMemo(() => {
     if (typeof allowClear === "boolean") {
       return {
@@ -29713,12 +30469,12 @@ const useAllowClear = (prefixCls, displayValues, allowClear, clearIcon, disabled
     };
   }, [allowClear]);
   return reactExports.useMemo(() => {
-    const mergedAllowClear = !disabled && allowClearConfig.allowClear !== false && (displayValues.length || mergedSearchValue) && !(mode === "combobox" && mergedSearchValue === "");
+    const mergedAllowClear = !disabled && allowClearConfig.allowClear !== false && (displayValues.length || mergedSearchValue) && !(mode2 === "combobox" && mergedSearchValue === "");
     return {
       allowClear: mergedAllowClear,
       clearIcon: mergedAllowClear ? allowClearConfig.clearIcon || clearIcon || "×" : null
     };
-  }, [allowClearConfig, clearIcon, disabled, displayValues.length, mergedSearchValue, mode]);
+  }, [allowClearConfig, clearIcon, disabled, displayValues.length, mergedSearchValue, mode2]);
 };
 const BaseSelectContext = /* @__PURE__ */ reactExports.createContext(null);
 function useBaseProps() {
@@ -30120,7 +30876,7 @@ const Input$3 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   } = props;
   const {
     prefixCls,
-    mode,
+    mode: mode2,
     onSearch,
     onSearchSubmit,
     onInputBlur,
@@ -30166,7 +30922,7 @@ const Input$3 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     const {
       value: nextVal
     } = event.currentTarget;
-    if (key === "Enter" && mode === "tags" && !compositionStatusRef.current && onSearchSubmit) {
+    if (key === "Enter" && mode2 === "tags" && !compositionStatusRef.current && onSearchSubmit) {
       onSearchSubmit(nextVal);
     }
     onKeyDown2 == null ? void 0 : onKeyDown2(event);
@@ -30180,7 +30936,7 @@ const Input$3 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   };
   const handleCompositionEnd = (event) => {
     compositionStatusRef.current = false;
-    if (mode !== "combobox") {
+    if (mode2 !== "combobox") {
       const {
         value: nextVal
       } = event.currentTarget;
@@ -30206,7 +30962,7 @@ const Input$3 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, [syncWidth, value]);
   const sharedInputProps = {
     id,
-    type: mode === "combobox" ? "text" : "search",
+    type: mode2 === "combobox" ? "text" : "search",
     ...restProps,
     ref: inputRef,
     style: {
@@ -30294,19 +31050,19 @@ function hasValue(value) {
 function isComboNoValue(value) {
   return !value && value !== 0;
 }
-function isTitleType$1(title) {
-  return ["string", "number"].includes(typeof title);
+function isTitleType$1(title2) {
+  return ["string", "number"].includes(typeof title2);
 }
 function getTitle(item) {
-  let title = void 0;
+  let title2 = void 0;
   if (item) {
     if (isTitleType$1(item.title)) {
-      title = item.title.toString();
+      title2 = item.title.toString();
     } else if (isTitleType$1(item.label)) {
-      title = item.label.toString();
+      title2 = item.label.toString();
     }
   }
-  return title;
+  return title2;
 }
 function _extends$1C() {
   _extends$1C = Object.assign ? Object.assign.bind() : function(target) {
@@ -30331,7 +31087,7 @@ const SingleContent = /* @__PURE__ */ reactExports.forwardRef(({
     activeValue,
     displayValues,
     maxLength,
-    mode
+    mode: mode2
   } = useSelectInputContext();
   const {
     triggerOpen,
@@ -30342,7 +31098,7 @@ const SingleContent = /* @__PURE__ */ reactExports.forwardRef(({
   } = useBaseProps();
   const selectContext = reactExports.useContext(SelectContext);
   const [inputChanged, setInputChanged] = reactExports.useState(false);
-  const combobox = mode === "combobox";
+  const combobox = mode2 === "combobox";
   const displayValue = displayValues[0];
   const mergedSearchValue = reactExports.useMemo(() => {
     if (combobox && activeValue && !inputChanged && triggerOpen) {
@@ -30402,7 +31158,7 @@ const SingleContent = /* @__PURE__ */ reactExports.forwardRef(({
     ref
   }, inputProps, {
     value: mergedSearchValue,
-    maxLength: mode === "combobox" ? maxLength : void 0,
+    maxLength: mode2 === "combobox" ? maxLength : void 0,
     onChange: (e2) => {
       var _a2;
       setInputChanged(true);
@@ -30831,7 +31587,7 @@ const MultipleContent = /* @__PURE__ */ reactExports.forwardRef(function Multipl
     prefixCls,
     displayValues,
     searchValue,
-    mode,
+    mode: mode2,
     onSelectorRemove,
     removeIcon: removeIconFromContext
   } = useSelectInputContext();
@@ -30850,7 +31606,7 @@ const MultipleContent = /* @__PURE__ */ reactExports.forwardRef(function Multipl
   } = useBaseProps();
   const selectionItemPrefixCls = `${prefixCls}-selection-item`;
   let computedSearchValue = searchValue;
-  if (!triggerOpen && mode === "multiple" && autoClearSearchValue !== false) {
+  if (!triggerOpen && mode2 === "multiple" && autoClearSearchValue !== false) {
     computedSearchValue = "";
   }
   const inputValue = showSearch ? computedSearchValue || "" : "";
@@ -31051,7 +31807,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     multiple,
     displayValues,
     placeholder,
-    mode,
+    mode: mode2,
     // Search
     searchValue,
     onSearch,
@@ -31076,7 +31832,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     toggleOpen,
     showSearch,
     disabled,
-    loading,
+    loading: loading2,
     classNames,
     styles
   } = useBaseProps();
@@ -31121,7 +31877,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
       if (inputDOM && event.target !== inputDOM && !inputDOM.contains(event.target)) {
         event.preventDefault();
       }
-      const shouldPreventClose = triggerOpen && !multiple && (mode === "combobox" || showSearch);
+      const shouldPreventClose = triggerOpen && !multiple && (mode2 === "combobox" || showSearch);
       if (!event.nativeEvent._select_lazy) {
         (_a2 = inputRef.current) == null ? void 0 : _a2.focus();
         if (!shouldPreventClose) {
@@ -31167,7 +31923,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     ref: inputRef
   }), /* @__PURE__ */ reactExports.createElement(Affix, {
     className: clsx(`${prefixCls}-suffix`, {
-      [`${prefixCls}-suffix-loading`]: loading
+      [`${prefixCls}-suffix-loading`]: loading2
     }, classNames == null ? void 0 : classNames.suffix),
     style: styles == null ? void 0 : styles.suffix
   }, suffix), clearIcon && /* @__PURE__ */ reactExports.createElement(Affix, {
@@ -31211,7 +31967,7 @@ function _extends$1z() {
   };
   return _extends$1z.apply(this, arguments);
 }
-const isMultiple = (mode) => mode === "tags" || mode === "multiple";
+const isMultiple = (mode2) => mode2 === "tags" || mode2 === "multiple";
 const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     id,
@@ -31233,10 +31989,10 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     maxCount,
     placeholder,
     // Mode
-    mode,
+    mode: mode2,
     // Status
     disabled,
-    loading,
+    loading: loading2,
     // Customize Input
     getInputElement,
     getRawInputElement,
@@ -31285,7 +32041,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     // Rest Props
     ...restProps
   } = props;
-  const multiple = isMultiple(mode);
+  const multiple = isMultiple(mode2);
   const containerRef = reactExports.useRef(null);
   const triggerRef = reactExports.useRef(null);
   const listRef = reactExports.useRef(null);
@@ -31305,13 +32061,13 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const mergedComponents = useComponents(components, getInputElement, getRawInputElement);
   const mergedSearchValue = reactExports.useMemo(() => {
     var _a2;
-    if (mode !== "combobox") {
+    if (mode2 !== "combobox") {
       return searchValue;
     }
     const val = (_a2 = displayValues[0]) == null ? void 0 : _a2.value;
     return typeof val === "string" || typeof val === "number" ? String(val) : "";
-  }, [searchValue, mode, displayValues]);
-  const customizeInputElement = mode === "combobox" && typeof getInputElement === "function" && getInputElement() || null;
+  }, [searchValue, mode2, displayValues]);
+  const customizeInputElement = mode2 === "combobox" && typeof getInputElement === "function" && getInputElement() || null;
   const emptyListContent = !notFoundContent && emptyOptions2;
   const [mergedOpen, triggerOpen] = useOpen(open2, onPopupVisibleChange, (nextOpen) => disabled || emptyListContent ? false : nextOpen);
   const tokenWithEnter = reactExports.useMemo(() => (tokenSeparators || []).some((tokenSeparator) => ["\n", "\r\n"].includes(tokenSeparator)), [tokenSeparators]);
@@ -31324,7 +32080,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onActiveValueChange == null ? void 0 : onActiveValueChange(null);
     const separatedList = getSeparatedContent(searchText, tokenSeparators, isValidCount(maxCount) ? maxCount - displayValues.length : void 0);
     const patchLabels = isCompositing ? null : separatedList;
-    if (mode !== "combobox" && patchLabels) {
+    if (mode2 !== "combobox" && patchLabels) {
       newSearchText = "";
       onSearchSplit == null ? void 0 : onSearchSplit(patchLabels);
       triggerOpen(false);
@@ -31349,7 +32105,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     });
   };
   reactExports.useEffect(() => {
-    if (!mergedOpen && !multiple && mode !== "combobox") {
+    if (!mergedOpen && !multiple && mode2 !== "combobox") {
       onInternalSearch("", false, false);
     }
   }, [mergedOpen]);
@@ -31369,7 +32125,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     } = event;
     const isEnterKey = key === "Enter";
     if (isEnterKey) {
-      if (mode !== "combobox") {
+      if (mode2 !== "combobox") {
         event.preventDefault();
       }
       if (!mergedOpen) {
@@ -31448,11 +32204,11 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const onInternalBlur = (event) => {
     setFocused(false);
     if (mergedSearchValue) {
-      if (mode === "tags") {
+      if (mode2 === "tags") {
         onSearch(mergedSearchValue, {
           source: "submit"
         });
-      } else if (mode === "multiple") {
+      } else if (mode2 === "multiple") {
         onSearch("", {
           source: "blur"
         });
@@ -31509,11 +32265,11 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
         open: mergedOpen,
         focused,
         showSearch,
-        loading
+        loading: loading2
       });
     }
     return nextSuffix;
-  }, [suffix, suffixIcon, mergedSearchValue, mergedOpen, focused, showSearch, loading]);
+  }, [suffix, suffixIcon, mergedSearchValue, mergedOpen, focused, showSearch, loading2]);
   const onClearMouseDown = () => {
     var _a2;
     onClear == null ? void 0 : onClear();
@@ -31527,7 +32283,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     allowClear: mergedAllowClear,
     clearIcon: clearNode
-  } = useAllowClear(prefixCls, displayValues, allowClear, clearIcon, disabled, mergedSearchValue, mode);
+  } = useAllowClear(prefixCls, displayValues, allowClear, clearIcon, disabled, mergedSearchValue, mode2);
   const optionList = /* @__PURE__ */ reactExports.createElement(OptionList2, {
     ref: listRef
   });
@@ -31538,7 +32294,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     [`${prefixCls}-allow-clear`]: mergedAllowClear,
     [`${prefixCls}-show-arrow`]: mergedSuffixIcon !== void 0 && mergedSuffixIcon !== null,
     [`${prefixCls}-disabled`]: disabled,
-    [`${prefixCls}-loading`]: loading,
+    [`${prefixCls}-loading`]: loading2,
     [`${prefixCls}-open`]: mergedOpen,
     [`${prefixCls}-customize-input`]: customizeInputElement,
     [`${prefixCls}-show-search`]: showSearch
@@ -31553,7 +32309,7 @@ const BaseSelect = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     suffix: mergedSuffixIcon,
     clearIcon: clearNode,
     multiple,
-    mode,
+    mode: mode2,
     displayValues,
     placeholder,
     searchValue: mergedSearchValue,
@@ -32908,7 +33664,7 @@ const OptionList = (_2, ref) => {
     id,
     open: open2,
     multiple,
-    mode,
+    mode: mode2,
     searchValue,
     toggleOpen,
     notFoundContent,
@@ -32946,11 +33702,11 @@ const OptionList = (_2, ref) => {
     } : args);
   };
   const isSelected = reactExports.useCallback((value) => {
-    if (mode === "combobox") {
+    if (mode2 === "combobox") {
       return false;
     }
     return rawValues.has(value);
-  }, [mode, [...rawValues].toString(), rawValues.size]);
+  }, [mode2, [...rawValues].toString(), rawValues.size]);
   const getEnabledActiveIndex = (index2, offset2 = 1) => {
     const len = memoFlattenOptions.length;
     for (let i = 0; i < len; i += 1) {
@@ -32982,11 +33738,11 @@ const OptionList = (_2, ref) => {
     setActive(defaultActiveFirstOption !== false ? getEnabledActiveIndex(0) : -1);
   }, [memoFlattenOptions.length, searchValue]);
   const isAriaSelected = reactExports.useCallback((value) => {
-    if (mode === "combobox") {
+    if (mode2 === "combobox") {
       return String(value).toLowerCase() === searchValue.toLowerCase();
     }
     return rawValues.has(value);
-  }, [mode, searchValue, [...rawValues].toString(), rawValues.size]);
+  }, [mode2, searchValue, [...rawValues].toString(), rawValues.size]);
   reactExports.useEffect(() => {
     var _a3;
     let timeoutId;
@@ -33167,7 +33923,7 @@ const OptionList = (_2, ref) => {
     }
     const {
       disabled,
-      title,
+      title: title2,
       children,
       style: style2,
       className,
@@ -33187,8 +33943,8 @@ const OptionList = (_2, ref) => {
     const iconVisible = !menuItemSelectedIcon || typeof menuItemSelectedIcon === "function" || selected;
     const content2 = typeof mergedLabel === "number" ? mergedLabel : mergedLabel || value;
     let optionTitle = isTitleType(content2) ? content2.toString() : void 0;
-    if (title !== void 0) {
-      optionTitle = title;
+    if (title2 !== void 0) {
+      optionTitle = title2;
     }
     return /* @__PURE__ */ reactExports.createElement("div", _extends$1y({}, pickAttrs(passedProps), !virtual ? getItemAriaProps(item, itemIndex) : {}, {
       "aria-selected": virtual ? void 0 : isAriaSelected(value),
@@ -33394,7 +34150,7 @@ function useRefFunc(callback) {
   }, []);
   return cacheFn;
 }
-function useSearchConfig(showSearch, props, mode) {
+function useSearchConfig(showSearch, props, mode2) {
   const {
     filterOption,
     searchValue,
@@ -33414,8 +34170,8 @@ function useSearchConfig(showSearch, props, mode) {
       autoClearSearchValue,
       ...isObject2 ? showSearch : {}
     };
-    return [isObject2 || mode === "combobox" || mode === "tags" || mode === "multiple" && showSearch === void 0 ? true : showSearch, searchConfig];
-  }, [mode, showSearch, filterOption, searchValue, optionFilterProp, filterSort, onSearch, autoClearSearchValue]);
+    return [isObject2 || mode2 === "combobox" || mode2 === "tags" || mode2 === "multiple" && showSearch === void 0 ? true : showSearch, searchConfig];
+  }, [mode2, showSearch, filterOption, searchValue, optionFilterProp, filterSort, onSearch, autoClearSearchValue]);
 }
 function _extends$1x() {
   _extends$1x = Object.assign ? Object.assign.bind() : function(target) {
@@ -33438,7 +34194,7 @@ function isRawValue(value) {
 const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     id,
-    mode,
+    mode: mode2,
     prefixCls = "rc-select",
     backfill,
     fieldNames,
@@ -33484,7 +34240,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     optionFilterProp: legacyOptionFilterProp,
     filterSort: legacyFilterSort
   };
-  const [mergedShowSearch, searchConfig] = useSearchConfig(showSearch, searchProps, mode);
+  const [mergedShowSearch, searchConfig] = useSearchConfig(showSearch, searchProps, mode2);
   const {
     filterOption,
     searchValue,
@@ -33498,14 +34254,14 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     return Array.isArray(optionFilterProp) ? optionFilterProp : [optionFilterProp];
   }, [optionFilterProp]);
   const mergedId = useId(id);
-  const multiple = isMultiple(mode);
+  const multiple = isMultiple(mode2);
   const childrenAsData = !!(!options && children);
   const mergedFilterOption = reactExports.useMemo(() => {
-    if (filterOption === void 0 && mode === "combobox") {
+    if (filterOption === void 0 && mode2 === "combobox") {
       return false;
     }
     return filterOption;
-  }, [filterOption, mode]);
+  }, [filterOption, mode2]);
   const mergedFieldNames = reactExports.useMemo(
     () => fillFieldNames$1(fieldNames, childrenAsData),
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -33557,14 +34313,14 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     var _a2;
     const newInternalValue = multiple && internalValue === null ? [] : internalValue;
     const values = convert2LabelValues(newInternalValue);
-    if (mode === "combobox" && isComboNoValue((_a2 = values[0]) == null ? void 0 : _a2.value)) {
+    if (mode2 === "combobox" && isComboNoValue((_a2 = values[0]) == null ? void 0 : _a2.value)) {
       return [];
     }
     return values;
-  }, [internalValue, convert2LabelValues, mode, multiple]);
+  }, [internalValue, convert2LabelValues, mode2, multiple]);
   const [mergedValues, getMixedOption] = useCache(rawLabeledValues, valueOptions);
   const displayValues = reactExports.useMemo(() => {
-    if (!mode && mergedValues.length === 1) {
+    if (!mode2 && mergedValues.length === 1) {
       const firstValue = mergedValues[0];
       if (firstValue.value === null && (firstValue.label === null || firstValue.label === void 0)) {
         return [];
@@ -33574,11 +34330,11 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       ...item,
       label: (typeof labelRender === "function" ? labelRender(item) : item.label) ?? item.value
     }));
-  }, [mode, mergedValues, labelRender]);
+  }, [mode2, mergedValues, labelRender]);
   const rawValues = reactExports.useMemo(() => new Set(mergedValues.map((val) => val.value)), [mergedValues]);
   reactExports.useEffect(() => {
     var _a2;
-    if (mode === "combobox") {
+    if (mode2 === "combobox") {
       const strValue = (_a2 = mergedValues[0]) == null ? void 0 : _a2.value;
       setSearchValue(hasValue(strValue) ? String(strValue) : "");
     }
@@ -33591,7 +34347,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     };
   });
   const filledTagOptions = reactExports.useMemo(() => {
-    if (mode !== "tags") {
+    if (mode2 !== "tags") {
       return mergedOptions;
     }
     const cloneOptions = [...mergedOptions];
@@ -33603,7 +34359,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }
     });
     return cloneOptions;
-  }, [createTagOption, mergedOptions, valueOptions, mergedValues, mode]);
+  }, [createTagOption, mergedOptions, valueOptions, mergedValues, mode2]);
   const filteredOptions = useFilterOptions(filledTagOptions, mergedFieldNames, mergedSearchValue, mergedFilterOption, normalizedOptionFilterProp);
   const filledSearchOptions = reactExports.useMemo(() => {
     const hasItemMatchingSearch = (item) => {
@@ -33612,14 +34368,14 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }
       return (item == null ? void 0 : item.value) === mergedSearchValue;
     };
-    if (mode !== "tags" || !mergedSearchValue || filteredOptions.some((item) => hasItemMatchingSearch(item))) {
+    if (mode2 !== "tags" || !mergedSearchValue || filteredOptions.some((item) => hasItemMatchingSearch(item))) {
       return filteredOptions;
     }
     if (filteredOptions.some((item) => item[mergedFieldNames.value] === mergedSearchValue)) {
       return filteredOptions;
     }
     return [createTagOption(mergedSearchValue), ...filteredOptions];
-  }, [createTagOption, normalizedOptionFilterProp, mode, filteredOptions, mergedSearchValue, mergedFieldNames]);
+  }, [createTagOption, normalizedOptionFilterProp, mode2, filteredOptions, mergedSearchValue, mergedFieldNames]);
   const sorter = (inputOptions) => {
     const sortedOptions = [...inputOptions].sort((a2, b2) => filterSort(a2, b2, {
       searchValue: mergedSearchValue
@@ -33670,13 +34426,13 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   };
   const [activeValue, setActiveValue] = reactExports.useState(null);
   const [accessibilityIndex, setAccessibilityIndex] = reactExports.useState(0);
-  const mergedDefaultActiveFirstOption = defaultActiveFirstOption !== void 0 ? defaultActiveFirstOption : mode !== "combobox";
+  const mergedDefaultActiveFirstOption = defaultActiveFirstOption !== void 0 ? defaultActiveFirstOption : mode2 !== "combobox";
   const activeEventRef = reactExports.useRef();
   const onActiveValue = reactExports.useCallback((active, index2, {
     source = "keyboard"
   } = {}) => {
     setAccessibilityIndex(index2);
-    if (backfill && mode === "combobox" && active !== null && source === "keyboard") {
+    if (backfill && mode2 === "combobox" && active !== null && source === "keyboard") {
       setActiveValue(String(active));
     }
     const promise = Promise.resolve().then(() => {
@@ -33685,7 +34441,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       }
     });
     activeEventRef.current = promise;
-  }, [backfill, mode, onActive]);
+  }, [backfill, mode2, onActive]);
   const triggerSelect = (val, selected, type4) => {
     const getSelectEnt = () => {
       const option = getMixedOption(val);
@@ -33712,7 +34468,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     }
     triggerChange(cloneValues);
     triggerSelect(val, mergedSelect);
-    if (mode === "combobox") {
+    if (mode2 === "combobox") {
       setActiveValue("");
     } else if (!isMultiple || autoClearSearchValue) {
       setSearchValue("");
@@ -33745,7 +34501,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       return;
     }
     if (info.source !== "blur") {
-      if (mode === "combobox") {
+      if (mode2 === "combobox") {
         triggerChange(searchText);
       }
       onSearch == null ? void 0 : onSearch(searchText);
@@ -33753,7 +34509,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   };
   const onInternalSearchSplit = (words) => {
     let patchValues = words;
-    if (mode !== "tags") {
+    if (mode2 !== "tags") {
       patchValues = words.map((word) => {
         const opt = labelOptions.get(word);
         return opt == null ? void 0 : opt.value;
@@ -33795,7 +34551,7 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     prefixCls,
     ref,
     omitDomProps: OMIT_DOM_PROPS,
-    mode,
+    mode: mode2,
     classNames,
     styles,
     displayValues,
@@ -33817,12 +34573,12 @@ const Select$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
 const TypedSelect = Select$1;
 TypedSelect.Option = Option$1;
 TypedSelect.OptGroup = OptGroup;
-const getStatusClassNames = (prefixCls, status, hasFeedback) => {
+const getStatusClassNames = (prefixCls, status2, hasFeedback) => {
   return clsx({
-    [`${prefixCls}-status-success`]: status === "success",
-    [`${prefixCls}-status-warning`]: status === "warning",
-    [`${prefixCls}-status-error`]: status === "error",
-    [`${prefixCls}-status-validating`]: status === "validating",
+    [`${prefixCls}-status-success`]: status2 === "success",
+    [`${prefixCls}-status-warning`]: status2 === "warning",
+    [`${prefixCls}-status-error`]: status2 === "error",
+    [`${prefixCls}-status-validating`]: status2 === "validating",
     [`${prefixCls}-has-feedback`]: hasFeedback
   });
 };
@@ -35032,7 +35788,7 @@ function useIcons({
   clearIcon,
   menuItemSelectedIcon,
   removeIcon,
-  loading,
+  loading: loading2,
   multiple,
   hasFeedback,
   showSuffixIcon,
@@ -35050,7 +35806,7 @@ function useIcons({
   let mergedSuffixIcon = null;
   if (suffixIcon !== void 0) {
     mergedSuffixIcon = getSuffixIconNode(suffixIcon);
-  } else if (loading) {
+  } else if (loading2) {
     mergedSuffixIcon = getSuffixIconNode(/* @__PURE__ */ reactExports.createElement(RefIcon$10, {
       spin: true
     }));
@@ -35170,7 +35926,7 @@ const InternalSelect = (props, ref) => {
   const [variant, enableVariantCls] = useVariant("select", customizeVariant, bordered);
   const rootCls = useCSSVarCls(prefixCls);
   const [hashId, cssVarCls] = useSelectStyle(prefixCls, rootCls);
-  const mode = reactExports.useMemo(() => {
+  const mode2 = reactExports.useMemo(() => {
     const {
       mode: m2
     } = props;
@@ -35182,7 +35938,7 @@ const InternalSelect = (props, ref) => {
     }
     return m2;
   }, [props.mode]);
-  const isMultiple2 = mode === "multiple" || mode === "tags";
+  const isMultiple2 = mode2 === "multiple" || mode2 === "tags";
   const showSuffixIcon = useShowArrow(props.suffixIcon, props.showArrow);
   const mergedPopupMatchSelectWidth = popupMatchSelectWidth ?? dropdownMatchSelectWidth ?? contextPopupMatchSelectWidth;
   const mergedPopupRender = usePopupRender(popupRender || dropdownRender);
@@ -35197,7 +35953,7 @@ const InternalSelect = (props, ref) => {
   let mergedNotFound;
   if (notFoundContent !== void 0) {
     mergedNotFound = notFoundContent;
-  } else if (mode === "combobox") {
+  } else if (mode2 === "combobox") {
     mergedNotFound = null;
   } else {
     mergedNotFound = (renderEmpty == null ? void 0 : renderEmpty("Select")) || /* @__PURE__ */ reactExports.createElement(DefaultRenderEmpty, {
@@ -35276,7 +36032,7 @@ const InternalSelect = (props, ref) => {
     builtinPlacements: mergedBuiltinPlacements(builtinPlacements, popupOverflow),
     listHeight,
     listItemHeight,
-    mode,
+    mode: mode2,
     prefixCls,
     placement: memoPlacement,
     direction,
@@ -36519,7 +37275,7 @@ const PurePanel$3 = (props) => {
     prefixCls: customizePrefixCls,
     className,
     placement = "top",
-    title,
+    title: title2,
     color: color2,
     overlayInnerStyle,
     classNames,
@@ -36561,7 +37317,7 @@ const PurePanel$3 = (props) => {
     prefixCls,
     classNames: mergedClassNames,
     styles: mergedStyles
-  }, title));
+  }, title2));
 };
 const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
@@ -36574,7 +37330,7 @@ const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     arrow: tooltipArrow,
     destroyTooltipOnHide,
     destroyOnHidden,
-    title,
+    title: title2,
     overlay,
     trigger,
     builtinPlacements,
@@ -36624,7 +37380,7 @@ const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     };
   });
   const [open2, setOpen] = useControlledState(props.defaultOpen ?? false, props.open);
-  const noTitle = !title && !overlay && title !== 0;
+  const noTitle = !title2 && !overlay && title2 !== 0;
   const onInternalOpenChange = (vis) => {
     setOpen(noTitle ? false : vis);
     if (!noTitle && onOpenChange) {
@@ -36642,11 +37398,11 @@ const InternalTooltip = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     });
   }, [mergedArrow, builtinPlacements, token2, mergedShowArrow, autoAdjustOverflow2]);
   const memoOverlay = reactExports.useMemo(() => {
-    if (title === 0) {
-      return title;
+    if (title2 === 0) {
+      return title2;
     }
-    return overlay || title || "";
-  }, [overlay, title]);
+    return overlay || title2 || "";
+  }, [overlay, title2]);
   const memoOverlayWrapper = /* @__PURE__ */ reactExports.createElement(ContextIsolator, {
     space: true
   }, typeof memoOverlay === "function" ? memoOverlay() : memoOverlay);
@@ -36898,19 +37654,19 @@ const useStyle$r = genStyleHooks("Popover", (token2) => {
 });
 const Overlay$2 = (props) => {
   const {
-    title,
+    title: title2,
     content: content2,
     prefixCls,
     classNames,
     styles
   } = props;
-  if (!title && !content2) {
+  if (!title2 && !content2) {
     return null;
   }
-  return /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, title && /* @__PURE__ */ reactExports.createElement("div", {
+  return /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, title2 && /* @__PURE__ */ reactExports.createElement("div", {
     className: clsx(`${prefixCls}-title`, classNames == null ? void 0 : classNames.title),
     style: styles == null ? void 0 : styles.title
-  }, title), content2 && /* @__PURE__ */ reactExports.createElement("div", {
+  }, title2), content2 && /* @__PURE__ */ reactExports.createElement("div", {
     className: clsx(`${prefixCls}-content`, classNames == null ? void 0 : classNames.content),
     style: styles == null ? void 0 : styles.content
   }, content2));
@@ -36922,13 +37678,13 @@ const RawPurePanel = (props) => {
     className,
     style: style2,
     placement = "top",
-    title,
+    title: title2,
     content: content2,
     children,
     classNames,
     styles
   } = props;
-  const titleNode = getRenderPropValue(title);
+  const titleNode = getRenderPropValue(title2);
   const contentNode = getRenderPropValue(content2);
   const mergedProps = {
     ...props,
@@ -36978,7 +37734,7 @@ const PurePanel$2 = (props) => {
 const InternalPopover = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     prefixCls: customizePrefixCls,
-    title,
+    title: title2,
     content: content2,
     overlayClassName,
     placement = "top",
@@ -37035,7 +37791,7 @@ const InternalPopover = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   const onInternalOpenChange = (value) => {
     settingOpen(value);
   };
-  const titleNode = getRenderPropValue(title);
+  const titleNode = getRenderPropValue(title2);
   const contentNode = getRenderPropValue(content2);
   return /* @__PURE__ */ reactExports.createElement(Tooltip, {
     unique: false,
@@ -37267,7 +38023,7 @@ const ScrollNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     className,
     motionClassName,
     style: style2,
-    title,
+    title: title2,
     show,
     component: Component = "sup",
     children,
@@ -37282,7 +38038,7 @@ const ScrollNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     "data-show": show,
     style: style2,
     className: clsx(prefixCls, className, motionClassName),
-    title
+    title: title2
   };
   let numberNodes = count;
   if (count && Number(count) % 1 === 0) {
@@ -37639,14 +38395,14 @@ const Badge$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     prefixCls: customizePrefixCls,
     scrollNumberPrefixCls: customizeScrollNumberPrefixCls,
     children,
-    status,
+    status: status2,
     text: text2,
     color: color2,
     count = null,
     overflowCount = 99,
     dot = false,
     size: size2 = "default",
-    title,
+    title: title2,
     offset: offset2,
     style: style2,
     className,
@@ -37679,8 +38435,8 @@ const Badge$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const numberedDisplayCount = count > overflowCount ? `${overflowCount}+` : count;
   const isZero = numberedDisplayCount === "0" || numberedDisplayCount === 0 || text2 === "0" || text2 === 0;
   const ignoreCount = count === null || isZero && !showZero;
-  const hasStatus = (isNonNullable(status) || isNonNullable(color2)) && ignoreCount;
-  const hasStatusValue = isNonNullable(status) || !isZero;
+  const hasStatus = (isNonNullable(status2) || isNonNullable(color2)) && ignoreCount;
+  const hasStatusValue = isNonNullable(status2) || !isZero;
   const showAsDot = dot && !isZero;
   const mergedCount = showAsDot ? "" : numberedDisplayCount;
   const isHidden = reactExports.useMemo(() => {
@@ -37719,7 +38475,7 @@ const Badge$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       ...style2
     };
   }, [offset2, style2, contextStyle]);
-  const titleNode = title ?? (typeof livingCount === "string" || typeof livingCount === "number" ? livingCount : void 0);
+  const titleNode = title2 ?? (typeof livingCount === "string" || typeof livingCount === "number" ? livingCount : void 0);
   const showStatusTextNode = !isHidden && (text2 === 0 ? showZero : !!text2 && text2 !== true);
   const statusTextNode = !showStatusTextNode ? null : /* @__PURE__ */ reactExports.createElement("span", {
     className: `${prefixCls}-status-text`
@@ -37733,7 +38489,7 @@ const Badge$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const isInternalColor = isPresetColor(color2, false);
   const statusCls = clsx(mergedClassNames.indicator, {
     [`${prefixCls}-status-dot`]: hasStatus,
-    [`${prefixCls}-status-${status}`]: !!status,
+    [`${prefixCls}-status-${status2}`]: !!status2,
     [`${prefixCls}-color-${color2}`]: isInternalColor
   });
   const statusStyle = {};
@@ -37788,7 +38544,7 @@ const Badge$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       [`${prefixCls}-count`]: !isDot,
       [`${prefixCls}-count-sm`]: size2 === "small",
       [`${prefixCls}-multiple-words`]: !isDot && displayCount && displayCount.toString().length > 1,
-      [`${prefixCls}-status-${status}`]: !!status,
+      [`${prefixCls}-status-${status2}`]: !!status2,
       [`${prefixCls}-color-${color2}`]: isInternalColor
     });
     let scrollNumberStyle = {
@@ -38335,13 +39091,13 @@ const {
   END
 } = KeyCode;
 const ArrowKeys = [UP, DOWN, LEFT, RIGHT];
-function getOffset$1(mode, isRootLevel, isRtl, which) {
+function getOffset$1(mode2, isRootLevel, isRtl, which) {
   var _a2;
   const prev2 = "prev";
   const next2 = "next";
   const children = "children";
   const parent = "parent";
-  if (mode === "inline" && which === ENTER) {
+  if (mode2 === "inline" && which === ENTER) {
     return {
       inlineTrigger: true
     };
@@ -38372,7 +39128,7 @@ function getOffset$1(mode, isRootLevel, isRtl, which) {
     horizontalSub: vertical,
     verticalSub: vertical
   };
-  const type4 = (_a2 = offsets[`${mode}${isRootLevel ? "" : "Sub"}`]) == null ? void 0 : _a2[which];
+  const type4 = (_a2 = offsets[`${mode2}${isRootLevel ? "" : "Sub"}`]) == null ? void 0 : _a2[which];
   switch (type4) {
     case prev2:
       return {
@@ -38459,7 +39215,7 @@ const refreshElements = (keys2, id) => {
     element2key
   };
 };
-function useAccessibility(mode, activeKey, isRtl, id, containerRef, getKeys, getKeyPath, triggerActiveKey, triggerAccessibilityOpen, originOnKeyDown) {
+function useAccessibility(mode2, activeKey, isRtl, id, containerRef, getKeys, getKeyPath, triggerActiveKey, triggerAccessibilityOpen, originOnKeyDown) {
   const rafRef = reactExports.useRef();
   const activeRef = reactExports.useRef();
   activeRef.current = activeKey;
@@ -38484,7 +39240,7 @@ function useAccessibility(mode, activeKey, isRtl, id, containerRef, getKeys, get
       const activeElement = key2element.get(activeKey);
       const focusMenuElement = getFocusElement(activeElement, elements);
       const focusMenuKey = element2key.get(focusMenuElement);
-      const offsetObj = getOffset$1(mode, getKeyPath(focusMenuKey, true).length === 1, isRtl, which);
+      const offsetObj = getOffset$1(mode2, getKeyPath(focusMenuKey, true).length === 1, isRtl, which);
       if (!offsetObj && which !== HOME && which !== END) {
         return;
       }
@@ -38510,7 +39266,7 @@ function useAccessibility(mode, activeKey, isRtl, id, containerRef, getKeys, get
       };
       if ([HOME, END].includes(which) || offsetObj.sibling || !focusMenuElement) {
         let parentQueryContainer;
-        if (!focusMenuElement || mode === "inline") {
+        if (!focusMenuElement || mode2 === "inline") {
           parentQueryContainer = containerRef.current;
         } else {
           parentQueryContainer = findContainerUL(focusMenuElement);
@@ -38670,11 +39426,11 @@ function useActive(eventKey, disabled, onMouseEnter, onMouseLeave) {
 }
 function useDirectionStyle(level) {
   const {
-    mode,
+    mode: mode2,
     rtl,
     inlineIndent
   } = reactExports.useContext(MenuContext$1);
-  if (mode !== "inline") {
+  if (mode2 !== "inline") {
     return null;
   }
   const len = level;
@@ -38731,7 +39487,7 @@ function _extends$1q() {
 class LegacyMenuItem extends reactExports.Component {
   render() {
     const {
-      title,
+      title: title2,
       attribute,
       elementRef,
       ...restProps
@@ -38739,7 +39495,7 @@ class LegacyMenuItem extends reactExports.Component {
     const passedProps = omit(restProps, ["eventKey", "popupClassName", "popupOffset", "onTitleClick"]);
     warningOnce(!attribute, "`attribute` of Menu.Item is deprecated. Please pass attribute directly.");
     return /* @__PURE__ */ reactExports.createElement(ForwardOverflow.Item, _extends$1q({}, attribute, {
-      title: typeof title === "string" ? title : void 0
+      title: typeof title2 === "string" ? title2 : void 0
     }, passedProps, {
       ref: elementRef
     }));
@@ -38904,11 +39660,11 @@ const InternalSubMenuList = ({
 }, ref) => {
   const {
     prefixCls,
-    mode,
+    mode: mode2,
     rtl
   } = reactExports.useContext(MenuContext$1);
   return /* @__PURE__ */ reactExports.createElement("ul", _extends$1p({
-    className: clsx(prefixCls, rtl && `${prefixCls}-rtl`, `${prefixCls}-sub`, `${prefixCls}-${mode === "inline" ? "inline" : "vertical"}`, className),
+    className: clsx(prefixCls, rtl && `${prefixCls}-rtl`, `${prefixCls}-sub`, `${prefixCls}-${mode2 === "inline" ? "inline" : "vertical"}`, className),
     role: "menu"
   }, restProps, {
     "data-menu-list": true,
@@ -39009,12 +39765,12 @@ const placementsRtl = {
     overflow: autoAdjustOverflow
   }
 };
-function getMotion(mode, motion2, defaultMotions) {
+function getMotion(mode2, motion2, defaultMotions) {
   if (motion2) {
     return motion2;
   }
   if (defaultMotions) {
-    return defaultMotions[mode] || defaultMotions.other;
+    return defaultMotions[mode2] || defaultMotions.other;
   }
   return void 0;
 }
@@ -39033,7 +39789,7 @@ function PopupTrigger({
   popupClassName,
   popupOffset,
   disabled,
-  mode,
+  mode: mode2,
   onVisibleChange
 }) {
   const {
@@ -39057,10 +39813,10 @@ function PopupTrigger({
     ...placements,
     ...builtinPlacements
   };
-  const popupPlacement = popupPlacementMap[mode];
-  const targetMotion = getMotion(mode, motion2, defaultMotions);
+  const popupPlacement = popupPlacementMap[mode2];
+  const targetMotion = getMotion(mode2, motion2, defaultMotions);
   const targetMotionRef = reactExports.useRef(targetMotion);
-  if (mode !== "inline") {
+  if (mode2 !== "inline") {
     targetMotionRef.current = targetMotion;
   }
   const mergedMotion = {
@@ -39083,7 +39839,7 @@ function PopupTrigger({
     popupClassName: clsx(`${prefixCls}-popup`, {
       [`${prefixCls}-rtl`]: rtl
     }, popupClassName, rootClassName),
-    stretch: mode === "horizontal" ? "minWidth" : null,
+    stretch: mode2 === "horizontal" ? "minWidth" : null,
     getPopupContainer,
     builtinPlacements: placement,
     popupPlacement,
@@ -39128,17 +39884,17 @@ function InlineSubMenuList({
     forceSubMenuRender,
     motion: motion2,
     defaultMotions,
-    mode
+    mode: mode2
   } = reactExports.useContext(MenuContext$1);
   const sameModeRef = reactExports.useRef(false);
-  sameModeRef.current = mode === fixedMode;
+  sameModeRef.current = mode2 === fixedMode;
   const [destroy2, setDestroy] = reactExports.useState(!sameModeRef.current);
   const mergedOpen = sameModeRef.current ? open2 : false;
   reactExports.useEffect(() => {
     if (sameModeRef.current) {
       setDestroy(false);
     }
-  }, [mode]);
+  }, [mode2]);
   const mergedMotion = {
     ...getMotion(fixedMode, motion2, defaultMotions)
   };
@@ -39195,7 +39951,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     className,
     styles,
     classNames: menuClassNames,
-    title,
+    title: title2,
     eventKey,
     warnKey,
     disabled,
@@ -39221,7 +39977,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   const domDataId = useMenuId(eventKey);
   const {
     prefixCls,
-    mode,
+    mode: mode2,
     openKeys,
     // Disabled
     disabled: contextDisabled,
@@ -39283,11 +40039,11 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     if (active) {
       return active;
     }
-    if (mode !== "inline") {
+    if (mode2 !== "inline") {
       return childrenActive || isSubPathKey([activeKey], eventKey);
     }
     return false;
-  }, [mode, active, activeKey, childrenActive, eventKey, isSubPathKey]);
+  }, [mode2, active, activeKey, childrenActive, eventKey, isSubPathKey]);
   const directionStyle = useDirectionStyle(connectedPath.length);
   const onInternalTitleClick = (e2) => {
     if (mergedDisabled) {
@@ -39297,7 +40053,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
       key: eventKey,
       domEvent: e2
     });
-    if (mode === "inline") {
+    if (mode2 === "inline") {
       onOpenChange(eventKey, !originOpen);
     }
   };
@@ -39306,7 +40062,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     onItemClick(info);
   });
   const onPopupVisibleChange = (newVisible) => {
-    if (mode !== "inline") {
+    if (mode2 !== "inline") {
       onOpenChange(eventKey, newVisible);
     }
   };
@@ -39315,7 +40071,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   };
   const popupId = domDataId && `${domDataId}-popup`;
   const expandIconNode = reactExports.useMemo(() => /* @__PURE__ */ reactExports.createElement(Icon, {
-    icon: mode !== "horizontal" ? mergedExpandIcon : void 0,
+    icon: mode2 !== "horizontal" ? mergedExpandIcon : void 0,
     props: {
       ...props,
       isOpen: open2,
@@ -39324,14 +40080,14 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     }
   }, /* @__PURE__ */ reactExports.createElement("i", {
     className: `${subMenuPrefixCls}-arrow`
-  })), [mode, mergedExpandIcon, props, open2, subMenuPrefixCls]);
+  })), [mode2, mergedExpandIcon, props, open2, subMenuPrefixCls]);
   let titleNode = /* @__PURE__ */ reactExports.createElement("div", _extends$1n({
     role: "menuitem",
     style: directionStyle,
     className: `${subMenuPrefixCls}-title`,
     tabIndex: mergedDisabled ? null : -1,
     ref: elementRef,
-    title: typeof title === "string" ? title : null,
+    title: typeof title2 === "string" ? title2 : null,
     "data-menu-id": overflowDisabled && domDataId ? null : domDataId,
     "aria-expanded": open2,
     "aria-haspopup": true,
@@ -39339,12 +40095,12 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     "aria-disabled": mergedDisabled,
     onClick: onInternalTitleClick,
     onFocus: onInternalFocus
-  }, activeProps), title, expandIconNode);
-  const triggerModeRef = reactExports.useRef(mode);
-  if (mode !== "inline" && connectedPath.length > 1) {
+  }, activeProps), title2, expandIconNode);
+  const triggerModeRef = reactExports.useRef(mode2);
+  if (mode2 !== "inline" && connectedPath.length > 1) {
     triggerModeRef.current = "vertical";
   } else {
-    triggerModeRef.current = mode;
+    triggerModeRef.current = mode2;
   }
   const popupContentTriggerMode = triggerModeRef.current;
   const renderPopupContent = reactExports.useMemo(() => {
@@ -39371,7 +40127,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     titleNode = /* @__PURE__ */ reactExports.createElement(PopupTrigger, {
       mode: triggerMode,
       prefixCls: subMenuPrefixCls,
-      visible: !internalPopupClose && open2 && mode !== "inline",
+      visible: !internalPopupClose && open2 && mode2 !== "inline",
       popupClassName,
       popupOffset,
       popupStyle,
@@ -39386,7 +40142,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
   }, restProps, {
     component: "li",
     style: style2,
-    className: clsx(subMenuPrefixCls, `${subMenuPrefixCls}-${mode}`, className, {
+    className: clsx(subMenuPrefixCls, `${subMenuPrefixCls}-${mode2}`, className, {
       [`${subMenuPrefixCls}-open`]: open2,
       [`${subMenuPrefixCls}-active`]: mergedActive,
       [`${subMenuPrefixCls}-selected`]: childrenSelected,
@@ -39411,7 +40167,7 @@ const InternalSubMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => 
     classNames: menuClassNames,
     styles,
     onItemClick: onMergedItemClick,
-    mode: mode === "horizontal" ? "vertical" : mode,
+    mode: mode2 === "horizontal" ? "vertical" : mode2,
     itemIcon: mergedItemIcon,
     expandIcon: mergedExpandIcon
   }, listNode);
@@ -39478,7 +40234,7 @@ function _extends$1m() {
 const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
     className,
-    title,
+    title: title2,
     eventKey,
     children,
     ...restProps
@@ -39499,8 +40255,8 @@ const InternalMenuItemGroup = /* @__PURE__ */ reactExports.forwardRef((props, re
     role: "presentation",
     className: clsx(`${groupPrefixCls}-title`, menuClassNames == null ? void 0 : menuClassNames.listTitle),
     style: styles == null ? void 0 : styles.listTitle,
-    title: typeof title === "string" ? title : void 0
-  }, title), /* @__PURE__ */ reactExports.createElement("ul", {
+    title: typeof title2 === "string" ? title2 : void 0
+  }, title2), /* @__PURE__ */ reactExports.createElement("ul", {
     role: "group",
     className: clsx(`${groupPrefixCls}-list`, menuClassNames == null ? void 0 : menuClassNames.list),
     style: styles == null ? void 0 : styles.list
@@ -39612,7 +40368,7 @@ function _extends$1k() {
   return _extends$1k.apply(this, arguments);
 }
 const EMPTY_LIST$3 = [];
-const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
+const Menu$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   var _a2;
   const {
     prefixCls = "rc-menu",
@@ -39627,7 +40383,7 @@ const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     direction,
     id,
     // Mode
-    mode = "vertical",
+    mode: mode2 = "vertical",
     inlineCollapsed,
     // Disabled
     disabled,
@@ -39698,11 +40454,11 @@ const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const [inlineCacheOpenKeys, setInlineCacheOpenKeys] = reactExports.useState(mergedOpenKeys);
   const mountRef = reactExports.useRef(false);
   const [mergedMode, mergedInlineCollapsed] = reactExports.useMemo(() => {
-    if ((mode === "inline" || mode === "vertical") && inlineCollapsed) {
+    if ((mode2 === "inline" || mode2 === "vertical") && inlineCollapsed) {
       return ["vertical", inlineCollapsed];
     }
-    return [mode, false];
-  }, [mode, inlineCollapsed]);
+    return [mode2, false];
+  }, [mode2, inlineCollapsed]);
   const isInlineMode = mergedMode === "inline";
   const [internalMode, setInternalMode] = reactExports.useState(mergedMode);
   const [internalInlineCollapsed, setInternalInlineCollapsed] = reactExports.useState(mergedInlineCollapsed);
@@ -39949,7 +40705,7 @@ const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     value: registerPathContext
   }, measureChildList)))));
 });
-const ExportMenu = Menu$1;
+const ExportMenu = Menu$2;
 ExportMenu.Item = MenuItem$2;
 ExportMenu.SubMenu = SubMenu$1;
 ExportMenu.ItemGroup = MenuItemGroup;
@@ -40306,8 +41062,8 @@ const Sider = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     expanded: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$$, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$X, null),
     collapsed: reverseIcon ? /* @__PURE__ */ reactExports.createElement(RefIcon$X, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$$, null)
   };
-  const status = collapsed ? "collapsed" : "expanded";
-  const defaultTrigger = iconObj[status];
+  const status2 = collapsed ? "collapsed" : "expanded";
+  const defaultTrigger = iconObj[status2];
   const triggerDom = trigger !== null ? zeroWidthTrigger || /* @__PURE__ */ reactExports.createElement("div", {
     className: `${prefixCls}-trigger`,
     onClick: toggle,
@@ -40395,7 +41151,7 @@ const MenuItem = (props) => {
     className,
     children,
     icon,
-    title,
+    title: title2,
     danger,
     extra
   } = props;
@@ -40428,10 +41184,10 @@ const MenuItem = (props) => {
   const {
     siderCollapsed
   } = reactExports.useContext(SiderContext);
-  let tooltipTitle = title;
-  if (typeof title === "undefined") {
+  let tooltipTitle = title2;
+  if (typeof title2 === "undefined") {
     tooltipTitle = firstLevel ? children : "";
-  } else if (title === false) {
+  } else if (title2 === false) {
     tooltipTitle = "";
   }
   const tooltipProps = {
@@ -40452,7 +41208,7 @@ const MenuItem = (props) => {
       ...firstLevel ? styles.item : styles.subMenu.item,
       ...props.style
     },
-    title: typeof title === "string" ? title : void 0
+    title: typeof title2 === "string" ? title2 : void 0
   }, cloneElement(icon, (oriProps) => ({
     className: clsx(`${prefixCls}-item-icon`, firstLevel ? classNames.itemIcon : classNames.subMenu.itemIcon, oriProps.className),
     style: {
@@ -41532,7 +42288,7 @@ const SubMenu = (props) => {
   const {
     popupClassName,
     icon,
-    title,
+    title: title2,
     theme: customTheme
   } = props;
   const context = reactExports.useContext(MenuContext);
@@ -41546,22 +42302,22 @@ const SubMenu = (props) => {
   const parentPath = useFullPath();
   let titleNode;
   if (!icon) {
-    titleNode = inlineCollapsed && !parentPath.length && title && typeof title === "string" ? /* @__PURE__ */ reactExports.createElement("div", {
+    titleNode = inlineCollapsed && !parentPath.length && title2 && typeof title2 === "string" ? /* @__PURE__ */ reactExports.createElement("div", {
       className: `${prefixCls}-inline-collapsed-noicon`
-    }, title.charAt(0)) : /* @__PURE__ */ reactExports.createElement("span", {
+    }, title2.charAt(0)) : /* @__PURE__ */ reactExports.createElement("span", {
       className: `${prefixCls}-title-content`
-    }, title);
+    }, title2);
   } else {
-    const titleIsSpan = /* @__PURE__ */ reactExports.isValidElement(title) && title.type === "span";
+    const titleIsSpan = /* @__PURE__ */ reactExports.isValidElement(title2) && title2.type === "span";
     titleNode = /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, cloneElement(icon, (oriProps) => ({
       className: clsx(oriProps.className, `${prefixCls}-item-icon`, classNames.itemIcon),
       style: {
         ...oriProps.style,
         ...styles.itemIcon
       }
-    })), titleIsSpan ? title : /* @__PURE__ */ reactExports.createElement("span", {
+    })), titleIsSpan ? title2 : /* @__PURE__ */ reactExports.createElement("span", {
       className: `${prefixCls}-title-content`
-    }, title));
+    }, title2));
   }
   const contextValue = reactExports.useMemo(() => ({
     ...context,
@@ -41612,7 +42368,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     inlineCollapsed,
     siderCollapsed,
     rootClassName,
-    mode,
+    mode: mode2,
     selectable,
     onClick,
     overflowedIndicatorPopupClassName,
@@ -41635,14 +42391,14 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const rootPrefixCls = getPrefixCls();
   const passedProps = omit(restProps, ["collapsedWidth"]);
   (_a2 = overrideObj.validator) == null ? void 0 : _a2.call(overrideObj, {
-    mode
+    mode: mode2
   });
   const onItemClick = useEvent((...args) => {
     var _a3;
     onClick == null ? void 0 : onClick(...args);
     (_a3 = overrideObj.onClick) == null ? void 0 : _a3.call(overrideObj);
   });
-  const mergedMode = overrideObj.mode || mode;
+  const mergedMode = overrideObj.mode || mode2;
   const mergedSelectable = selectable ?? overrideObj.selectable;
   const mergedInlineCollapsed = inlineCollapsed ?? siderCollapsed;
   const mergedProps = {
@@ -41738,7 +42494,7 @@ const InternalMenu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     _internalComponents: MENU_COMPONENTS
   })));
 });
-const Menu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
+const Menu$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const menuRef = reactExports.useRef(null);
   const context = reactExports.useContext(SiderContext);
   reactExports.useImperativeHandle(ref, () => ({
@@ -41754,10 +42510,10 @@ const Menu = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ...context
   });
 });
-Menu.Item = MenuItem;
-Menu.SubMenu = SubMenu;
-Menu.Divider = MenuDivider;
-Menu.ItemGroup = MenuItemGroup;
+Menu$1.Item = MenuItem;
+Menu$1.SubMenu = SubMenu;
+Menu$1.Divider = MenuDivider;
+Menu$1.ItemGroup = MenuItemGroup;
 const genStatusStyle = (token2) => {
   const {
     componentCls,
@@ -42189,7 +42945,7 @@ const Dropdown$1 = (props) => {
     const menuStyles = omit(mergedStyles, ["root"]);
     let overlayNode;
     if (menu == null ? void 0 : menu.items) {
-      overlayNode = /* @__PURE__ */ reactExports.createElement(Menu, {
+      overlayNode = /* @__PURE__ */ reactExports.createElement(Menu$1, {
         ...menu,
         classNames: {
           ...menuClassNames,
@@ -42223,7 +42979,7 @@ const Dropdown$1 = (props) => {
       selectable: false,
       onClick: onMenuClick,
       validator: ({
-        mode
+        mode: mode2
       }) => {
       }
     }, overlayNode);
@@ -42568,19 +43324,19 @@ function getFieldId(namePath, formName) {
   return isIllegalName ? `${defaultItemNamePrefixCls}_${mergedId}` : mergedId;
 }
 function getStatus(errors, warnings, meta, defaultValidateStatus, hasFeedback, validateStatus) {
-  let status = defaultValidateStatus;
+  let status2 = defaultValidateStatus;
   if (validateStatus !== void 0) {
-    status = validateStatus;
+    status2 = validateStatus;
   } else if (meta.validating) {
-    status = "validating";
+    status2 = "validating";
   } else if (errors.length) {
-    status = "error";
+    status2 = "error";
   } else if (warnings.length) {
-    status = "warning";
+    status2 = "warning";
   } else if (meta.touched || hasFeedback && meta.validated) {
-    status = "success";
+    status2 = "success";
   }
-  return status;
+  return status2;
 }
 function toNamePathStr(name2) {
   const namePath = toArray$1(name2);
@@ -42672,7 +43428,7 @@ const Checkbox$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     disabled,
     defaultChecked = false,
     type: type4 = "checkbox",
-    title,
+    title: title2,
     onChange,
     ...inputProps
   } = props;
@@ -42719,7 +43475,7 @@ const Checkbox$2 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   };
   return /* @__PURE__ */ reactExports.createElement("span", {
     className: classString,
-    title,
+    title: title2,
     style: style2,
     ref: holderRef
   }, /* @__PURE__ */ reactExports.createElement("input", _extends$1h({}, inputProps, {
@@ -43229,7 +43985,7 @@ const InternalRadio = (props, ref) => {
     rootClassName,
     children,
     style: style2,
-    title,
+    title: title2,
     classNames,
     styles,
     ...restProps
@@ -43277,7 +44033,7 @@ const InternalRadio = (props, ref) => {
     },
     onMouseEnter: props.onMouseEnter,
     onMouseLeave: props.onMouseLeave,
-    title,
+    title: title2,
     onClick: onLabelClick
   }, /* @__PURE__ */ reactExports.createElement(Checkbox$2, {
     ...radioProps,
@@ -47364,8 +48120,8 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     extra,
     headStyle = {},
     bodyStyle = {},
-    title,
-    loading,
+    title: title2,
+    loading: loading2,
     bordered,
     variant: customVariant,
     size: customizeSize,
@@ -47397,7 +48153,7 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ...props,
     size: mergedSize,
     variant,
-    loading
+    loading: loading2
   };
   const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
     props: mergedProps
@@ -47441,7 +48197,7 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       ...item
     }))
   }) : null;
-  if (title || extra || tabs) {
+  if (title2 || extra || tabs) {
     const headClasses = clsx(`${prefixCls}-head`, mergedClassNames.header);
     const titleClasses = clsx(`${prefixCls}-head-title`, mergedClassNames.title);
     const extraClasses = clsx(`${prefixCls}-extra`, mergedClassNames.extra);
@@ -47454,10 +48210,10 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       style: mergedHeadStyle
     }, /* @__PURE__ */ reactExports.createElement("div", {
       className: `${prefixCls}-head-wrapper`
-    }, title && /* @__PURE__ */ reactExports.createElement("div", {
+    }, title2 && /* @__PURE__ */ reactExports.createElement("div", {
       className: titleClasses,
       style: mergedStyles.title
-    }, title), extra && /* @__PURE__ */ reactExports.createElement("div", {
+    }, title2), extra && /* @__PURE__ */ reactExports.createElement("div", {
       className: extraClasses,
       style: mergedStyles.extra
     }, extra)), tabs);
@@ -47475,7 +48231,7 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const body = /* @__PURE__ */ reactExports.createElement("div", {
     className: bodyClasses,
     style: mergedBodyStyle
-  }, loading ? loadingBlock : children);
+  }, loading2 ? loadingBlock : children);
   const actionClasses = clsx(`${prefixCls}-actions`, mergedClassNames.actions);
   const actionDom = (actions == null ? void 0 : actions.length) ? /* @__PURE__ */ reactExports.createElement(ActionNode, {
     actionClasses,
@@ -47484,7 +48240,7 @@ const Card$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }) : null;
   const divProps = omit(rest, ["onTabChange"]);
   const classString = clsx(prefixCls, contextClassName, {
-    [`${prefixCls}-loading`]: loading,
+    [`${prefixCls}-loading`]: loading2,
     [`${prefixCls}-bordered`]: variant !== "borderless",
     [`${prefixCls}-hoverable`]: hoverable,
     [`${prefixCls}-contain-grid`]: isContainGrid,
@@ -47510,7 +48266,7 @@ const CardMeta = (props) => {
     prefixCls: customizePrefixCls,
     className,
     avatar,
-    title,
+    title: title2,
     description,
     style: style2,
     classNames: cardMetaClassNames,
@@ -47543,10 +48299,10 @@ const CardMeta = (props) => {
     className: avatarClassNames,
     style: mergedStyles.avatar
   }, avatar) : null;
-  const titleDom = title ? /* @__PURE__ */ reactExports.createElement("div", {
+  const titleDom = title2 ? /* @__PURE__ */ reactExports.createElement("div", {
     className: titleClassNames,
     style: mergedStyles.title
-  }, title) : null;
+  }, title2) : null;
   const descriptionDom = description ? /* @__PURE__ */ reactExports.createElement("div", {
     className: descriptionClassNames,
     style: mergedStyles.description
@@ -47574,7 +48330,7 @@ function throttle(delay, callback, options) {
       clearTimeout(timeoutID);
     }
   }
-  function cancel(options2) {
+  function cancel2(options2) {
     var _ref2 = options2 || {}, _ref2$upcomingOnly = _ref2.upcomingOnly, upcomingOnly = _ref2$upcomingOnly === void 0 ? false : _ref2$upcomingOnly;
     clearExistingTimeout();
     cancelled = !upcomingOnly;
@@ -47612,7 +48368,7 @@ function throttle(delay, callback, options) {
       timeoutID = setTimeout(debounceMode ? clear : exec, debounceMode === void 0 ? delay - elapsed : delay);
     }
   }
-  wrapper.cancel = cancel;
+  wrapper.cancel = cancel2;
   return wrapper;
 }
 function debounce(delay, callback, options) {
@@ -47638,12 +48394,12 @@ function getKey(key, pos) {
 }
 function fillFieldNames(fieldNames) {
   const {
-    title,
+    title: title2,
     _title,
     key,
     children
   } = fieldNames || {};
-  const mergedTitle = title || "title";
+  const mergedTitle = title2 || "title";
   return {
     title: mergedTitle,
     _title: _title || [mergedTitle],
@@ -47874,7 +48630,7 @@ function convertNodePropsToEventData(props) {
     selected,
     checked,
     loaded,
-    loading,
+    loading: loading2,
     halfChecked,
     dragOver,
     dragOverGapTop,
@@ -47889,7 +48645,7 @@ function convertNodePropsToEventData(props) {
     selected,
     checked,
     loaded,
-    loading,
+    loading: loading2,
     halfChecked,
     dragOver,
     dragOverGapTop,
@@ -50671,7 +51427,7 @@ const getDecimalIfValidate = (value) => {
 };
 const InputNumber$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const {
-    mode = "input",
+    mode: mode2 = "input",
     prefixCls = "rc-input-number",
     className,
     style: style2,
@@ -50998,7 +51754,7 @@ const InputNumber$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }), downHandler);
   return /* @__PURE__ */ reactExports.createElement("div", {
     ref: rootRef,
-    className: clsx(prefixCls, `${prefixCls}-mode-${mode}`, className, classNames == null ? void 0 : classNames.root, {
+    className: clsx(prefixCls, `${prefixCls}-mode-${mode2}`, className, classNames == null ? void 0 : classNames.root, {
       [`${prefixCls}-focused`]: focus,
       [`${prefixCls}-disabled`]: disabled,
       [`${prefixCls}-readonly`]: readOnly,
@@ -51025,7 +51781,7 @@ const InputNumber$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     onCompositionStart,
     onCompositionEnd,
     onBeforeInput
-  }, mode === "spinner" && controls && downNode, prefix2 !== void 0 && /* @__PURE__ */ reactExports.createElement("div", {
+  }, mode2 === "spinner" && controls && downNode, prefix2 !== void 0 && /* @__PURE__ */ reactExports.createElement("div", {
     className: clsx(`${prefixCls}-prefix`, classNames == null ? void 0 : classNames.prefix),
     style: styles == null ? void 0 : styles.prefix
   }, prefix2), /* @__PURE__ */ reactExports.createElement("input", _extends$j({
@@ -51045,7 +51801,7 @@ const InputNumber$1 = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   }, restProps)), suffix !== void 0 && /* @__PURE__ */ reactExports.createElement("div", {
     className: clsx(`${prefixCls}-suffix`, classNames == null ? void 0 : classNames.suffix),
     style: styles == null ? void 0 : styles.suffix
-  }, suffix), mode === "spinner" && controls && upNode, mode === "input" && controls && /* @__PURE__ */ reactExports.createElement("div", {
+  }, suffix), mode2 === "spinner" && controls && upNode, mode2 === "input" && controls && /* @__PURE__ */ reactExports.createElement("div", {
     className: clsx(`${prefixCls}-actions`, classNames == null ? void 0 : classNames.actions),
     style: styles == null ? void 0 : styles.actions
   }, upNode, downNode));
@@ -51176,7 +51932,7 @@ const SpaceAddon = /* @__PURE__ */ We.forwardRef((props, ref) => {
     prefixCls: customizePrefixCls,
     variant = "outlined",
     disabled,
-    status,
+    status: status2,
     ...restProps
   } = props;
   const {
@@ -51189,7 +51945,7 @@ const SpaceAddon = /* @__PURE__ */ We.forwardRef((props, ref) => {
     compactItemClassnames,
     compactSize
   } = useCompactItemContext(prefixCls, directionConfig);
-  const statusCls = getStatusClassNames(prefixCls, status);
+  const statusCls = getStatusClassNames(prefixCls, status2);
   const classes = clsx(prefixCls, hashId, compactItemClassnames, cssVarCls, `${prefixCls}-variant-${variant}`, statusCls, {
     [`${prefixCls}-${compactSize}`]: compactSize,
     [`${prefixCls}-disabled`]: disabled
@@ -51530,14 +52286,14 @@ const InternalInputNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref)
     suffix,
     bordered,
     readOnly,
-    status,
+    status: status2,
     controls = true,
     variant: customVariant,
     className,
     style: style2,
     classNames,
     styles,
-    mode,
+    mode: mode2,
     ...others
   } = props;
   const {
@@ -51557,8 +52313,8 @@ const InternalInputNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref)
     compactSize,
     compactItemClassnames
   } = useCompactItemContext(prefixCls, direction);
-  let upIcon = mode === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$U, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$1, null);
-  let downIcon = mode === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$k, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$Z, null);
+  let upIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$U, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$1, null);
+  let downIcon = mode2 === "spinner" ? /* @__PURE__ */ reactExports.createElement(RefIcon$k, null) : /* @__PURE__ */ reactExports.createElement(RefIcon$Z, null);
   const controlsTemp = typeof mergedControls === "boolean" ? mergedControls : void 0;
   if (typeof mergedControls === "object") {
     upIcon = mergedControls.upIcon || upIcon;
@@ -51585,9 +52341,9 @@ const InternalInputNumber = /* @__PURE__ */ reactExports.forwardRef((props, ref)
   });
   return /* @__PURE__ */ reactExports.createElement(InputNumber$1, {
     ref: inputRef,
-    mode,
+    mode: mode2,
     disabled: mergedDisabled,
-    className: clsx(className, rootClassName, mergedClassNames.root, contextClassName, compactItemClassnames, getStatusClassNames(prefixCls, status, hasFeedback), {
+    className: clsx(className, rootClassName, mergedClassNames.root, contextClassName, compactItemClassnames, getStatusClassNames(prefixCls, status2, hasFeedback), {
       [`${prefixCls}-${variant}`]: enableVariantCls,
       [`${prefixCls}-lg`]: mergedSize === "large",
       [`${prefixCls}-sm`]: mergedSize === "small",
@@ -52500,7 +53256,7 @@ const DropdownButton = (props) => {
     type: type4 = "default",
     danger,
     disabled,
-    loading,
+    loading: loading2,
     onClick,
     htmlType,
     children,
@@ -52516,7 +53272,7 @@ const DropdownButton = (props) => {
     getPopupContainer,
     href,
     icon = /* @__PURE__ */ reactExports.createElement(RefIcon$V, null),
-    title,
+    title: title2,
     buttonsRender = (buttons) => buttons,
     mouseEnterDelay,
     mouseLeaveDelay,
@@ -52571,11 +53327,11 @@ const DropdownButton = (props) => {
     type: type4,
     danger,
     disabled,
-    loading,
+    loading: loading2,
     onClick,
     htmlType,
     href,
-    title
+    title: title2
   }, children);
   const rightButton = /* @__PURE__ */ reactExports.createElement(Button$1, {
     type: type4,
@@ -53134,10 +53890,10 @@ const useStyle$b = genStyleHooks("Form", (token2, {
   order: -1e3
 });
 const EMPTY_LIST$2 = [];
-function toErrorEntity(error, prefix2, errorStatus, index2 = 0) {
+function toErrorEntity(error2, prefix2, errorStatus, index2 = 0) {
   return {
-    key: typeof error === "string" ? error : `${prefix2}-${index2}`,
-    error,
+    key: typeof error2 === "string" ? error2 : `${prefix2}-${index2}`,
+    error: error2,
     errorStatus
   };
 }
@@ -53163,7 +53919,7 @@ const ErrorList = ({
     if (isNonNullable(help)) {
       return [toErrorEntity(help, "help", helpStatus)];
     }
-    return [].concat(_toConsumableArray(debounceErrors.map((error, index2) => toErrorEntity(error, "error", "error", index2))), _toConsumableArray(debounceWarnings.map((warning3, index2) => toErrorEntity(warning3, "warning", "warning", index2))));
+    return [].concat(_toConsumableArray(debounceErrors.map((error2, index2) => toErrorEntity(error2, "error", "error", index2))), _toConsumableArray(debounceWarnings.map((warning3, index2) => toErrorEntity(warning3, "warning", "warning", index2))));
   }, [help, helpStatus, debounceErrors, debounceWarnings]);
   const filledKeyFullKeyList = reactExports.useMemo(() => {
     const keysCount = {};
@@ -53203,7 +53959,7 @@ const ErrorList = ({
     }, (itemProps) => {
       const {
         key,
-        error,
+        error: error2,
         errorStatus,
         className: itemClassName,
         style: itemStyle
@@ -53214,7 +53970,7 @@ const ErrorList = ({
           [`${baseClassName}-${errorStatus}`]: errorStatus
         }),
         style: itemStyle
-      }, error);
+      }, error2);
     }));
   });
 };
@@ -53380,12 +54136,12 @@ function useChildren(children) {
 }
 const useFormItemStatus = () => {
   const {
-    status,
+    status: status2,
     errors = [],
     warnings = []
   } = reactExports.useContext(FormItemInputContext);
   return {
-    status,
+    status: status2,
     errors,
     warnings
   };
@@ -53465,7 +54221,7 @@ const GRID_MAX = 24;
 const FormItemInput = (props) => {
   const {
     prefixCls,
-    status,
+    status: status2,
     labelCol,
     wrapperCol,
     children,
@@ -53530,8 +54286,8 @@ const FormItemInput = (props) => {
   }, children));
   const formItemContext = reactExports.useMemo(() => ({
     prefixCls,
-    status
-  }), [prefixCls, status]);
+    status: status2
+  }), [prefixCls, status2]);
   const errorListDom = marginBottom !== null || errors.length || warnings.length ? /* @__PURE__ */ reactExports.createElement(FormItemPrefixContext.Provider, {
     value: formItemContext
   }, /* @__PURE__ */ reactExports.createElement(ErrorList, {
@@ -53539,7 +54295,7 @@ const FormItemInput = (props) => {
     errors,
     warnings,
     help,
-    helpStatus: status,
+    helpStatus: status2,
     className: `${baseClassName}-explain-connected`,
     onVisibleChanged: onErrorVisibleChanged
   })) : null;
@@ -54626,7 +55382,7 @@ const Search = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     style: style2,
     enterButton = false,
     addonAfter,
-    loading,
+    loading: loading2,
     disabled,
     onSearch: customOnSearch,
     onChange: customOnChange,
@@ -54688,7 +55444,7 @@ const Search = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     }
   };
   const onPressEnter = (e2) => {
-    if (composedRef.current || loading) {
+    if (composedRef.current || loading2) {
       return;
     }
     customOnPressEnter == null ? void 0 : customOnPressEnter(e2);
@@ -54727,7 +55483,7 @@ const Search = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       key: "enterButton",
       onMouseDown,
       onClick: onSearch,
-      loading,
+      loading: loading2,
       icon: searchIcon,
       variant: variant === "borderless" || variant === "filled" || variant === "underlined" ? "text" : enterButton ? "solid" : void 0
     }, enterButton);
@@ -57768,14 +58524,14 @@ const Overlay = (props) => {
     prefixCls,
     okButtonProps,
     cancelButtonProps,
-    title,
+    title: title2,
     description,
     cancelText,
     okText,
     okType = "primary",
     icon = /* @__PURE__ */ reactExports.createElement(RefIcon$12, null),
     showCancel = true,
-    close,
+    close: close2,
     onConfirm,
     onCancel,
     onPopupClick,
@@ -57786,7 +58542,7 @@ const Overlay = (props) => {
     getPrefixCls
   } = reactExports.useContext(ConfigContext);
   const [contextLocale] = useLocale("Popconfirm", localeValues.Popconfirm);
-  const titleNode = getRenderPropValue(title);
+  const titleNode = getRenderPropValue(title2);
   const descriptionNode = getRenderPropValue(description);
   return /* @__PURE__ */ reactExports.createElement("div", {
     className: `${prefixCls}-inner-content`,
@@ -57816,7 +58572,7 @@ const Overlay = (props) => {
       ...okButtonProps
     },
     actionFn: onConfirm,
-    close,
+    close: close2,
     prefixCls: getPrefixCls("btn"),
     quitOnNullishReturnValue: true,
     emitEvent: true
@@ -57877,7 +58633,7 @@ const InternalPopconfirm = /* @__PURE__ */ reactExports.forwardRef((props, ref) 
     setOpen(value);
     onOpenChange == null ? void 0 : onOpenChange(value, e2);
   };
-  const close = (e2) => {
+  const close2 = (e2) => {
     settingOpen(false, e2);
   };
   const onConfirm = (e2) => {
@@ -57940,7 +58696,7 @@ const InternalPopconfirm = /* @__PURE__ */ reactExports.forwardRef((props, ref) 
       icon,
       ...props,
       prefixCls,
-      close,
+      close: close2,
       onConfirm,
       onCancel,
       classNames: mergedClassNames,
@@ -58059,11 +58815,11 @@ const Statistic = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     style: style2,
     valueStyle,
     value = 0,
-    title,
+    title: title2,
     valueRender,
     prefix: prefix2,
     suffix,
-    loading = false,
+    loading: loading2 = false,
     /* --- FormatConfig starts --- */
     formatter,
     precision,
@@ -58090,7 +58846,7 @@ const Statistic = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ...props,
     decimalSeparator,
     groupSeparator,
-    loading,
+    loading: loading2,
     value
   };
   const [mergedClassNames, mergedStyles] = useMergeSemantic([contextClassNames, classNames], [contextStyles, styles], {
@@ -58131,15 +58887,15 @@ const Statistic = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     ref: internalRef,
     onMouseEnter,
     onMouseLeave
-  }, title && /* @__PURE__ */ reactExports.createElement("div", {
+  }, title2 && /* @__PURE__ */ reactExports.createElement("div", {
     className: headerClassNames,
     style: mergedStyles.header
   }, /* @__PURE__ */ reactExports.createElement("div", {
     className: titleClassNames,
     style: mergedStyles.title
-  }, title)), /* @__PURE__ */ reactExports.createElement(Skeleton, {
+  }, title2)), /* @__PURE__ */ reactExports.createElement(Skeleton, {
     paragraph: false,
-    loading,
+    loading: loading2,
     className: `${prefixCls}-skeleton`,
     active: true
   }, /* @__PURE__ */ reactExports.createElement("div", {
@@ -58522,18 +59278,18 @@ const getTitleFromCellRenderChildren = ({
   children
 }) => {
   var _a2, _b2;
-  let title;
+  let title2;
   const ellipsisConfig = ellipsis === true ? {
     showTitle: true
   } : ellipsis;
   if (ellipsisConfig && (ellipsisConfig.showTitle || rowType === "header")) {
     if (typeof children === "string" || typeof children === "number") {
-      title = children.toString();
+      title2 = children.toString();
     } else if (/* @__PURE__ */ reactExports.isValidElement(children) && typeof ((_a2 = children.props) == null ? void 0 : _a2.children) === "string") {
-      title = (_b2 = children.props) == null ? void 0 : _b2.children;
+      title2 = (_b2 = children.props) == null ? void 0 : _b2.children;
     }
   }
-  return title;
+  return title2;
 };
 const Cell = (props) => {
   const {
@@ -58624,7 +59380,7 @@ const Cell = (props) => {
   if (mergedColSpan === 0 || mergedRowSpan === 0) {
     return null;
   }
-  const title = additionalProps.title ?? getTitleFromCellRenderChildren({
+  const title2 = additionalProps.title ?? getTitleFromCellRenderChildren({
     rowType,
     ellipsis,
     children: childNode
@@ -58667,7 +59423,7 @@ const Cell = (props) => {
   return /* @__PURE__ */ reactExports.createElement(Component, _extends$c({}, legacyCellProps, additionalProps, {
     className: mergedClassName,
     style: mergedStyle,
-    title,
+    title: title2,
     scope,
     onMouseEnter: rowHoverable ? onMouseEnter : void 0,
     onMouseLeave: rowHoverable ? onMouseLeave : void 0,
@@ -59164,7 +59920,7 @@ const MeasureCell = (props) => {
   const {
     columnKey,
     onColumnResize,
-    title
+    title: title2
   } = props;
   const cellRef = reactExports.useRef(null);
   useLayoutEffect(() => {
@@ -59189,7 +59945,7 @@ const MeasureCell = (props) => {
       overflow: "hidden",
       fontWeight: "bold"
     }
-  }, title || " ")));
+  }, title2 || " ")));
 };
 const MeasureRow = ({
   prefixCls,
@@ -60304,7 +61060,7 @@ const Table$1 = (tableProps, ref) => {
     tableLayout,
     direction,
     // Additional Part
-    title,
+    title: title2,
     footer: footer2,
     summary,
     caption,
@@ -60735,10 +61491,10 @@ const Table$1 = (tableProps, ref) => {
     style: tableStyle,
     id,
     ref: fullTableRef
-  }, dataProps), title && /* @__PURE__ */ reactExports.createElement(Panel, {
+  }, dataProps), title2 && /* @__PURE__ */ reactExports.createElement(Panel, {
     className: clsx(`${prefixCls}-title`, classNames == null ? void 0 : classNames.title),
     style: styles == null ? void 0 : styles.title
-  }, title(mergedData)), /* @__PURE__ */ reactExports.createElement("div", {
+  }, title2(mergedData)), /* @__PURE__ */ reactExports.createElement("div", {
     ref: scrollBodyContainerRef,
     className: clsx(`${prefixCls}-container`, classNames == null ? void 0 : classNames.section),
     style: styles == null ? void 0 : styles.section
@@ -61446,7 +62202,7 @@ const TreeNode = (props) => {
     selected,
     checked,
     halfChecked,
-    loading,
+    loading: loading2,
     domRef,
     active,
     data,
@@ -61548,7 +62304,7 @@ const TreeNode = (props) => {
     context.onNodeDrop(e2, props);
   };
   const onExpand = (e2) => {
-    if (loading) {
+    if (loading2) {
       return;
     }
     context.onNodeExpand(e2, convertNodePropsToEventData(props));
@@ -61566,13 +62322,13 @@ const TreeNode = (props) => {
     return isLeaf || !context.loadData && !hasChildren || context.loadData && props.loaded && !hasChildren;
   }, [isLeaf, context.loadData, hasChildren, props.loaded]);
   We.useEffect(() => {
-    if (loading) {
+    if (loading2) {
       return;
     }
     if (typeof context.loadData === "function" && expanded && !memoizedIsLeaf && !props.loaded) {
       context.onNodeLoad(convertNodePropsToEventData(props));
     }
-  }, [loading, context.loadData, context.onNodeLoad, expanded, memoizedIsLeaf, props]);
+  }, [loading2, context.loadData, context.onNodeLoad, expanded, memoizedIsLeaf, props]);
   const dragHandlerNode = We.useMemo(() => {
     var _a3;
     if (!((_a3 = context.draggable) == null ? void 0 : _a3.icon)) {
@@ -61632,11 +62388,11 @@ const TreeNode = (props) => {
   const iconNode = We.useMemo(() => {
     return /* @__PURE__ */ We.createElement("span", {
       className: clsx(treeClassNames == null ? void 0 : treeClassNames.itemIcon, `${context.prefixCls}-iconEle`, `${context.prefixCls}-icon__${nodeState || "docu"}`, {
-        [`${context.prefixCls}-icon_loading`]: loading
+        [`${context.prefixCls}-icon_loading`]: loading2
       }),
       style: styles == null ? void 0 : styles.itemIcon
     });
-  }, [context.prefixCls, nodeState, loading]);
+  }, [context.prefixCls, nodeState, loading2]);
   const dropIndicatorNode = We.useMemo(() => {
     const rootDraggable = Boolean(context.draggable);
     const showIndicator = !props.disabled && rootDraggable && context.dragOverNodeKey === eventKey;
@@ -61653,7 +62409,7 @@ const TreeNode = (props) => {
   }, [context.dropPosition, context.dropLevelOffset, context.indent, context.prefixCls, context.direction, context.draggable, context.dragOverNodeKey, context.dropIndicatorRender]);
   const selectorNode = We.useMemo(() => {
     const {
-      title = defaultTitle
+      title: title2 = defaultTitle
     } = props;
     const wrapClass = `${context.prefixCls}-node-content-wrapper`;
     let $icon;
@@ -61663,20 +62419,20 @@ const TreeNode = (props) => {
         className: clsx(treeClassNames == null ? void 0 : treeClassNames.itemIcon, `${context.prefixCls}-iconEle`, `${context.prefixCls}-icon__customize`),
         style: styles == null ? void 0 : styles.itemIcon
       }, typeof currentIcon === "function" ? currentIcon(props) : currentIcon) : iconNode;
-    } else if (context.loadData && loading) {
+    } else if (context.loadData && loading2) {
       $icon = iconNode;
     }
     let titleNode;
-    if (typeof title === "function") {
-      titleNode = title(data);
+    if (typeof title2 === "function") {
+      titleNode = title2(data);
     } else if (context.titleRender) {
       titleNode = context.titleRender(data);
     } else {
-      titleNode = title;
+      titleNode = title2;
     }
     return /* @__PURE__ */ We.createElement("span", {
       ref: selectHandleRef,
-      title: typeof title === "string" ? title : "",
+      title: typeof title2 === "string" ? title2 : "",
       className: clsx(wrapClass, `${wrapClass}-${nodeState || "normal"}`, {
         [`${context.prefixCls}-node-selected`]: !isDisabled && (selected || dragNodeHighlight)
       }),
@@ -61713,7 +62469,7 @@ const TreeNode = (props) => {
       [`${context.prefixCls}-treenode-checkbox-checked`]: checked,
       [`${context.prefixCls}-treenode-checkbox-indeterminate`]: halfChecked,
       [`${context.prefixCls}-treenode-selected`]: selected,
-      [`${context.prefixCls}-treenode-loading`]: loading,
+      [`${context.prefixCls}-treenode-loading`]: loading2,
       [`${context.prefixCls}-treenode-active`]: active,
       [`${context.prefixCls}-treenode-leaf-last`]: isEndNode,
       [`${context.prefixCls}-treenode-draggable`]: isDraggable,
@@ -62204,7 +62960,7 @@ const useSelection = (config2, rowSelection) => {
       setSelectedKeys(keys2, "all");
       updatePrevSelectedIndex(null);
     };
-    let title;
+    let title2;
     let columnTitleCheckbox;
     if (selectionType !== "radio") {
       let customizeSelections;
@@ -62267,7 +63023,7 @@ const useSelection = (config2, rowSelection) => {
         disabled: disabled ?? (flattedData.length === 0 || allDisabled),
         skipGroup: true
       });
-      title = !hideSelectAll && /* @__PURE__ */ reactExports.createElement("div", {
+      title2 = !hideSelectAll && /* @__PURE__ */ reactExports.createElement("div", {
         className: `${prefixCls}-selection`
       }, columnTitleCheckbox, customizeSelections);
     }
@@ -62410,7 +63166,7 @@ const useSelection = (config2, rowSelection) => {
     });
     const renderColumnTitle2 = () => {
       if (!(rowSelection == null ? void 0 : rowSelection.columnTitle)) {
-        return title;
+        return title2;
       }
       if (typeof rowSelection.columnTitle === "function") {
         return rowSelection.columnTitle(columnTitleCheckbox);
@@ -62485,14 +63241,14 @@ const getColumnKey = (column2, defaultKey) => {
 function getColumnPos(index2, pos) {
   return pos ? `${pos}-${index2}` : `${index2}`;
 }
-const renderColumnTitle = (title, props) => {
-  if (typeof title === "function") {
-    return title(props);
+const renderColumnTitle = (title2, props) => {
+  if (typeof title2 === "function") {
+    return title2(props);
   }
-  return title;
+  return title2;
 };
-const safeColumnTitle = (title, props) => {
-  const res = renderColumnTitle(title, props);
+const safeColumnTitle = (title2, props) => {
+  const res = renderColumnTitle(title2, props);
   if (Object.prototype.toString.call(res) === "[object Object]") {
     return "";
   }
@@ -62622,7 +63378,7 @@ const MotionTreeNode = /* @__PURE__ */ reactExports.forwardRef((oriProps, ref) =
         data: {
           ...restProps
         },
-        title,
+        title: title2,
         key,
         isStart,
         isEnd
@@ -62630,7 +63386,7 @@ const MotionTreeNode = /* @__PURE__ */ reactExports.forwardRef((oriProps, ref) =
       delete restProps.children;
       const treeNodeProps = getTreeNodeProps(key, treeNodeRequiredProps);
       return /* @__PURE__ */ reactExports.createElement(TreeNode, _extends$2({}, restProps, treeNodeProps, {
-        title,
+        title: title2,
         active,
         data: treeNode.data,
         key,
@@ -62912,7 +63668,7 @@ const NodeList = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
       data: {
         ...restProps
       },
-      title,
+      title: title2,
       key,
       isStart,
       isEnd
@@ -62922,7 +63678,7 @@ const NodeList = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     delete restProps.children;
     const treeNodeProps = getTreeNodeProps(mergedKey, treeNodeRequiredProps);
     return /* @__PURE__ */ reactExports.createElement(MotionTreeNode, _extends$1({}, restProps, treeNodeProps, {
-      title,
+      title: title2,
       active: !!activeItem && key === activeItem.key,
       pos,
       data: treeNode.data,
@@ -64545,9 +65301,9 @@ const SwitcherIconCom = (props) => {
   const {
     isLeaf,
     expanded,
-    loading
+    loading: loading2
   } = treeNodeProps;
-  if (loading) {
+  if (loading2) {
     if (/* @__PURE__ */ reactExports.isValidElement(switcherLoadingIcon)) {
       return switcherLoadingIcon;
     }
@@ -65309,7 +66065,7 @@ const FilterDropdown = (props) => {
         onChange: onSearch,
         tablePrefixCls,
         locale: locale2
-      }), isEmpty2 ? empty2 : /* @__PURE__ */ reactExports.createElement(Menu, {
+      }), isEmpty2 ? empty2 : /* @__PURE__ */ reactExports.createElement(Menu$1, {
         selectable: true,
         multiple: filterMultiple,
         prefixCls: `${dropdownPrefixCls}-menu`,
@@ -67419,7 +68175,7 @@ const InternalTable = (props, ref) => {
     childrenColumnName: legacyChildrenColumnName,
     onChange,
     getPopupContainer,
-    loading,
+    loading: loading2,
     expandIcon,
     expandable,
     expandedRowRender,
@@ -67523,13 +68279,13 @@ const InternalTable = (props, ref) => {
   }, [rowKey]);
   const [getRecordByKey] = useLazyKVMap(rawData, childrenColumnName, getRowKey);
   const changeEventInfo = {};
-  const triggerOnChange = (info, action, reset = false) => {
+  const triggerOnChange = (info, action, reset2 = false) => {
     var _a3, _b2, _c2, _d;
     const changeInfo = {
       ...changeEventInfo,
       ...info
     };
-    if (reset) {
+    if (reset2) {
       (_a3 = changeEventInfo.resetPagination) == null ? void 0 : _a3.call(changeEventInfo);
       if ((_b2 = changeInfo.pagination) == null ? void 0 : _b2.current) {
         changeInfo.pagination.current = 1;
@@ -67699,19 +68455,19 @@ const InternalTable = (props, ref) => {
     }
   }
   const spinProps = reactExports.useMemo(() => {
-    if (typeof loading === "boolean") {
+    if (typeof loading2 === "boolean") {
       return {
-        spinning: loading
+        spinning: loading2
       };
-    } else if (typeof loading === "object" && loading !== null) {
+    } else if (typeof loading2 === "object" && loading2 !== null) {
       return {
         spinning: true,
-        ...loading
+        ...loading2
       };
     } else {
       return void 0;
     }
-  }, [loading]);
+  }, [loading2]);
   const wrappercls = clsx(cssVarCls, rootCls, `${prefixCls}-wrapper`, contextClassName, {
     [`${prefixCls}-wrapper-rtl`]: direction === "rtl"
   }, className, rootClassName, mergedClassNames.root, hashId);
@@ -68186,10 +68942,10 @@ function capitalize(str) {
   const ret = str.charAt(0).toUpperCase() + str.slice(1);
   return ret;
 }
-const genTagStatusStyle = (token2, status, cssVariableType) => {
+const genTagStatusStyle = (token2, status2, cssVariableType) => {
   const capitalizedCssVariableType = capitalize(cssVariableType);
   return {
-    [`${token2.componentCls}${token2.componentCls}-${status}:not(${token2.componentCls}-disabled)`]: {
+    [`${token2.componentCls}${token2.componentCls}-${status2}:not(${token2.componentCls}-disabled)`]: {
       [`&${token2.componentCls}-outlined`]: {
         backgroundColor: token2[`color${capitalizedCssVariableType}Bg`],
         borderColor: token2[`color${capitalizedCssVariableType}Border`],
@@ -68941,9 +69697,9 @@ const useCopyClick = ({
         setCopied(false);
       }, 3e3);
       (_a2 = copyConfig.onCopy) == null ? void 0 : _a2.call(copyConfig, e2);
-    } catch (error) {
+    } catch (error2) {
       setCopyLoading(false);
-      throw error;
+      throw error2;
     }
   });
   return {
@@ -69321,7 +70077,7 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     editable,
     copyable,
     component,
-    title,
+    title: title2,
     ...restProps
   } = props;
   const {
@@ -69462,8 +70218,8 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     if (!enableEllipsis || cssEllipsis) {
       return void 0;
     }
-    return [editConfig.text, children, title, tooltipProps.title].find(isValidText);
-  }, [enableEllipsis, cssEllipsis, title, tooltipProps.title, isMergedEllipsis]);
+    return [editConfig.text, children, title2, tooltipProps.title].find(isValidText);
+  }, [enableEllipsis, cssEllipsis, title2, tooltipProps.title, isMergedEllipsis]);
   if (editing) {
     return /* @__PURE__ */ reactExports.createElement(Editable, {
       value: editConfig.text ?? (typeof children === "string" ? children : ""),
@@ -69483,7 +70239,7 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
   const renderExpand = () => {
     const {
       expandable,
-      symbol
+      symbol: symbol2
     } = ellipsisConfig;
     return expandable ? /* @__PURE__ */ reactExports.createElement("button", {
       type: "button",
@@ -69493,7 +70249,7 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
         expanded: !expanded
       }),
       "aria-label": expanded ? textLocale.collapse : textLocale == null ? void 0 : textLocale.expand
-    }, typeof symbol === "function" ? symbol(expanded) : symbol) : null;
+    }, typeof symbol2 === "function" ? symbol2(expanded) : symbol2) : null;
   };
   const renderEdit = () => {
     if (!enableEdit) {
@@ -69565,7 +70321,7 @@ const Base = /* @__PURE__ */ reactExports.forwardRef((props, ref) => {
     direction,
     onClick: triggerType.includes("text") ? onEditClick : void 0,
     "aria-label": topAriaLabel == null ? void 0 : topAriaLabel.toString(),
-    title,
+    title: title2,
     ...textProps
   }, /* @__PURE__ */ reactExports.createElement(EllipsisMeasure, {
     enableMeasure: mergedEnableEllipsis && !cssEllipsis,
@@ -70270,12 +71026,12 @@ const trySafe = (exec, onError) => {
     const unwrapped = typeof exec === "function" ? exec() : exec;
     return isPromise(unwrapped) ? (
       // eslint-disable-next-line promise/prefer-await-to-then
-      unwrapped.catch((error) => {
-        onError == null ? void 0 : onError(error);
+      unwrapped.catch((error2) => {
+        onError == null ? void 0 : onError(error2);
       })
     ) : unwrapped;
-  } catch (error) {
-    onError == null ? void 0 : onError(error);
+  } catch (error2) {
+    onError == null ? void 0 : onError(error2);
   }
 };
 const replaceNonUrlSafeCharacters = (base64String) => base64String.replaceAll("+", "-").replaceAll("/", "_").replaceAll(/=+$/g, "");
@@ -70328,8 +71084,8 @@ class LogtoRequestError extends Error {
   }
 }
 class OidcError {
-  constructor(error, errorDescription) {
-    this.error = error;
+  constructor(error2, errorDescription) {
+    this.error = error2;
     this.errorDescription = errorDescription;
     this.name = "OidcError";
   }
@@ -70343,10 +71099,10 @@ const verifyAndParseCodeFromCallbackUri = (callbackUri, redirectUri, state) => {
     throw new LogtoError("callback_uri_verification.redirect_uri_mismatched");
   }
   const uriParameters = parseUriParameters(callbackUri);
-  const error = conditional(uriParameters.get(QueryKey.Error));
+  const error2 = conditional(uriParameters.get(QueryKey.Error));
   const errorDescription = conditional(uriParameters.get(QueryKey.ErrorDescription));
-  if (error) {
-    throw new LogtoError("callback_uri_verification.error_found", new OidcError(error, errorDescription));
+  if (error2) {
+    throw new LogtoError("callback_uri_verification.error_found", new OidcError(error2, errorDescription));
   }
   const stateFromCallbackUri = uriParameters.get(QueryKey.State);
   if (!stateFromCallbackUri) {
@@ -71483,9 +72239,9 @@ class LocalJWKSet {
       throw new JWKSNoMatchingKey();
     }
     if (length2 !== 1) {
-      const error = new JWKSMultipleMatchingKeys();
+      const error2 = new JWKSMultipleMatchingKeys();
       const { _cached } = this;
-      error[Symbol.asyncIterator] = async function* () {
+      error2[Symbol.asyncIterator] = async function* () {
         for (const jwk2 of candidates) {
           try {
             yield await importWithAlgCache(_cached, jwk2, alg);
@@ -71493,7 +72249,7 @@ class LocalJWKSet {
           }
         }
       };
-      throw error;
+      throw error2;
     }
     return importWithAlgCache(this._cached, jwk, alg);
   }
@@ -71920,13 +72676,13 @@ class StandardLogtoClient {
     }
     return fetchUserInfo(userinfoEndpoint, accessToken, this.adapter.requester);
   }
-  async signIn(options, mode, hint) {
+  async signIn(options, mode2, hint) {
     const { redirectUri: redirectUriUrl, postRedirectUri: postRedirectUriUrl, firstScreen, identifiers, interactionMode, loginHint, directSignIn, extraParams, prompt, clearTokens } = typeof options === "string" || options instanceof URL ? {
       redirectUri: options,
       postRedirectUri: void 0,
       firstScreen: void 0,
       identifiers: void 0,
-      interactionMode: mode,
+      interactionMode: mode2,
       loginHint: hint,
       directSignIn: void 0,
       extraParams: void 0,
@@ -72085,8 +72841,8 @@ class StandardLogtoClient {
       for (const [key, accessToken] of Object.entries(json)) {
         this.accessTokenMap.set(key, accessToken);
       }
-    } catch (error) {
-      console.warn(error);
+    } catch (error2) {
+      console.warn(error2);
     }
   }
 }
@@ -72326,7 +73082,7 @@ const LogtoProvider$1 = ({ config: config2, LogtoClientClass = LogtoClient2, chi
   const [loadingCount, setLoadingCount] = reactExports.useState(1);
   const memorizedLogtoClient = reactExports.useMemo(() => ({ logtoClient: new LogtoClientClass(config2, unstable_enableCache) }), [LogtoClientClass, config2, unstable_enableCache]);
   const [isAuthenticated, setIsAuthenticated] = reactExports.useState(false);
-  const [error, setError] = reactExports.useState();
+  const [error2, setError] = reactExports.useState();
   const isLoading = reactExports.useMemo(() => loadingCount > 0, [loadingCount]);
   const setIsLoading = reactExports.useCallback((state) => {
     if (state) {
@@ -72348,32 +73104,32 @@ const LogtoProvider$1 = ({ config: config2, LogtoClientClass = LogtoClient2, chi
     setIsAuthenticated,
     isLoading,
     setIsLoading,
-    error,
+    error: error2,
     setError
-  }), [memorizedLogtoClient, isAuthenticated, isLoading, setIsLoading, error]);
+  }), [memorizedLogtoClient, isAuthenticated, isLoading, setIsLoading, error2]);
   return jsxRuntimeExports.jsx(LogtoContext.Provider, { value: memorizedContextValue, children });
 };
 const useErrorHandler = () => {
   const { setError } = reactExports.useContext(LogtoContext);
-  const handleError = reactExports.useCallback((error, fallbackErrorMessage) => {
-    if (error instanceof Error) {
-      setError(error);
+  const handleError = reactExports.useCallback((error2, fallbackErrorMessage) => {
+    if (error2 instanceof Error) {
+      setError(error2);
     } else if (fallbackErrorMessage) {
       setError(new Error(fallbackErrorMessage));
     }
-    console.error(error);
+    console.error(error2);
   }, [setError]);
   return { handleError };
 };
 const useHandleSignInCallback = (callback) => {
-  const { logtoClient, isAuthenticated, error, setIsAuthenticated, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
+  const { logtoClient, isAuthenticated, error: error2, setIsAuthenticated, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
   const { handleError } = useErrorHandler();
   const callbackRef = reactExports.useRef();
   reactExports.useEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
   reactExports.useEffect(() => {
-    if (!logtoClient || isLoading || error) {
+    if (!logtoClient || isLoading || error2) {
       return;
     }
     (async () => {
@@ -72386,14 +73142,14 @@ const useHandleSignInCallback = (callback) => {
           await logtoClient.handleSignInCallback(currentPageUrl);
           setIsAuthenticated(true);
           (_a2 = callbackRef.current) == null ? void 0 : _a2.call(callbackRef);
-        }, (error2) => {
-          handleError(error2, "Unexpected error occurred while handling sign in callback.");
+        }, (error3) => {
+          handleError(error3, "Unexpected error occurred while handling sign in callback.");
         });
         setIsLoading(false);
       }
     })();
   }, [
-    error,
+    error2,
     handleError,
     isAuthenticated,
     isLoading,
@@ -72404,11 +73160,11 @@ const useHandleSignInCallback = (callback) => {
   return {
     isLoading,
     isAuthenticated,
-    error
+    error: error2
   };
 };
 const useLogto = () => {
-  const { logtoClient, isAuthenticated, error, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
+  const { logtoClient, isAuthenticated, error: error2, isLoading, setIsLoading } = reactExports.useContext(LogtoContext);
   const { handleError } = useErrorHandler();
   const client2 = logtoClient ?? throwContextError();
   const proxy = reactExports.useCallback((run, resetLoadingState = true) => {
@@ -72416,8 +73172,8 @@ const useLogto = () => {
       try {
         setIsLoading(true);
         return await run(...args);
-      } catch (error2) {
-        handleError(error2, `Unexpected error occurred while calling ${run.name}.`);
+      } catch (error3) {
+        handleError(error3, `Unexpected error occurred while calling ${run.name}.`);
       } finally {
         if (resetLoadingState) {
           setIsLoading(false);
@@ -72447,7 +73203,7 @@ const useLogto = () => {
   return {
     isAuthenticated,
     isLoading,
-    error,
+    error: error2,
     ...methods2
   };
 };
@@ -72579,9 +73335,73 @@ function PrivateRoute({ children }) {
 PrivateRoute.propTypes = {
   children: PropTypes.node.isRequired
 };
+const Menu = ({ collapsed, setCollapsed }) => {
+  const { t: t2 } = useTranslation();
+  const location2 = useLocation();
+  const getNavClass = (path2) => {
+    const current = location2.pathname;
+    if (path2 === "/strategy") {
+      return current === "/strategy" || current === "/" ? "nav-item active" : "nav-item";
+    }
+    return current.startsWith(path2) ? "nav-item active" : "nav-item";
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: `sidebar ${collapsed ? "collapsed" : ""}`, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-header", children: !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: t2("app.title") }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "sidebar-nav", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Link$1, { to: "/strategy", className: getNavClass("/strategy"), title: t2("nav.run_strategy"), children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, {}) }),
+        !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.run_strategy") })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        Link$1,
+        {
+          to: "/maintain",
+          className: getNavClass("/maintain"),
+          title: t2("nav.strategy_maintain"),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$J, {}) }),
+            !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.strategy_maintain") })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        Link$1,
+        {
+          to: "/datasource",
+          className: getNavClass("/datasource"),
+          title: t2("nav.datasource"),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, {}) }),
+            !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.datasource") })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        Link$1,
+        {
+          to: "/live",
+          className: getNavClass("/live"),
+          title: t2("nav.live_trading", "Live Trading"),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, {}) }),
+            !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.live_trading", "Live Trading") })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-footer", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "button",
+      {
+        className: "collapse-toggle",
+        onClick: () => setCollapsed(!collapsed),
+        title: collapsed ? t2("common.expand_sidebar") : t2("common.collapse_sidebar"),
+        children: collapsed ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$m, {})
+      }
+    ) })
+  ] });
+};
 function Layout() {
   const { t: t2, i18n } = useTranslation();
-  const location2 = useLocation();
   const [collapsed, setCollapsed] = reactExports.useState(false);
   const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth();
   const [userInfo, setUserInfo] = reactExports.useState({
@@ -72600,8 +73420,8 @@ function Layout() {
           name: (claims == null ? void 0 : claims.name) || (claims == null ? void 0 : claims.email) || "User",
           username: claims == null ? void 0 : claims.username
         });
-      }).catch((error) => {
-        console.error("Failed to get user claims:", error);
+      }).catch((error2) => {
+        console.error("Failed to get user claims:", error2);
       });
     } else {
       setUserInfo({
@@ -72642,69 +73462,9 @@ function Layout() {
       disabled: true
     }
   ];
-  const getNavClass = (path2) => {
-    const current = location2.pathname;
-    if (path2 === "/strategy") {
-      return current === "/strategy" || current === "/" ? "nav-item active" : "nav-item";
-    }
-    return current.startsWith(path2) ? "nav-item active" : "nav-item";
-  };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `layout-container ${collapsed ? "collapsed" : ""}`, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "functional-bg-grid" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: `sidebar ${collapsed ? "collapsed" : ""}`, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-header", children: !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: t2("app.title") }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "sidebar-nav", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(Link$1, { to: "/strategy", className: getNavClass("/strategy"), title: t2("nav.run_strategy"), children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, {}) }),
-          !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.run_strategy") })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Link$1,
-          {
-            to: "/maintain",
-            className: getNavClass("/maintain"),
-            title: t2("nav.strategy_maintain"),
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$J, {}) }),
-              !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.strategy_maintain") })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Link$1,
-          {
-            to: "/datasource",
-            className: getNavClass("/datasource"),
-            title: t2("nav.datasource"),
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, {}) }),
-              !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.datasource") })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Link$1,
-          {
-            to: "/live",
-            className: getNavClass("/live"),
-            title: t2("nav.live_trading", "Live Trading"),
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, {}) }),
-              !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t2("nav.live_trading", "Live Trading") })
-            ]
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-footer", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          className: "collapse-toggle",
-          onClick: () => setCollapsed(!collapsed),
-          title: collapsed ? t2("common.expand_sidebar") : t2("common.collapse_sidebar"),
-          children: collapsed ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$m, {})
-        }
-      ) })
-    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Menu, { collapsed, setCollapsed }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `main-wrapper ${collapsed ? "collapsed" : ""}`, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "top-header", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "header-title", children: /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: t2("app.pro_title") }) }),
@@ -72752,8 +73512,8 @@ const buildRequest = async (path2, options = {}) => {
       if (token2) {
         headers.set("Authorization", `Bearer ${token2}`);
       }
-    } catch (error) {
-      console.error("Failed to get access token:", error);
+    } catch (error2) {
+      console.error("Failed to get access token:", error2);
     }
   }
   return fetch(`${API_URL}${path2}`, { ...options, headers });
@@ -72827,8 +73587,8 @@ const api = {
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
         }
-      } catch (error) {
-        console.error("Failed to get access token:", error);
+      } catch (error2) {
+        console.error("Failed to get access token:", error2);
       }
     }
     const res = await fetch(`${API_URL}/ai_analyze`, {
@@ -72853,8 +73613,8 @@ ${code2}`;
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
         }
-      } catch (error) {
-        console.error("Failed to get access token:", error);
+      } catch (error2) {
+        console.error("Failed to get access token:", error2);
       }
     }
     const res = await fetch(`${API_URL}/ai_analyze`, {
@@ -72880,8 +73640,8 @@ ${code2}`;
         if (token2) {
           headers.set("Authorization", `Bearer ${token2}`);
         }
-      } catch (error) {
-        console.error("Failed to get access token:", error);
+      } catch (error2) {
+        console.error("Failed to get access token:", error2);
       }
     }
     const res = await fetch(`${API_URL}/ai_analyze`, {
@@ -72953,13 +73713,13 @@ function StrategyConfigForm({
   setEndDate,
   initialCash,
   setInitialCash,
-  commission,
+  commission: commission2,
   setCommission,
   stake,
   setStake,
-  loading,
+  loading: loading2,
   onSubmit,
-  error
+  error: error2
 }) {
   const { t: t2 } = useTranslation();
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card form-card-enhanced", children: [
@@ -73069,7 +73829,7 @@ function StrategyConfigForm({
                 id: "commission",
                 type: "number",
                 step: "0.0001",
-                value: commission,
+                value: commission2,
                 onChange: (e2) => setCommission(e2.target.value),
                 required: true
               }
@@ -73093,11 +73853,11 @@ function StrategyConfigForm({
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary glow-effect", disabled: loading, children: loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner-sm" }) : t2("config_form.run_backtest") }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary glow-effect", disabled: loading2, children: loading2 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner-sm" }) : t2("config_form.run_backtest") }) })
     ] }),
-    error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+    error2 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
       "⚠️ ",
-      error
+      error2
     ] }) })
   ] });
 }
@@ -73130,21 +73890,21 @@ function PerformanceOverview({ result }) {
   var _a2, _b2, _c2, _d, _e2, _f, _g, _h, _i2, _j, _k, _l, _m, _n2, _o;
   const { t: t2 } = useTranslation();
   const metrics = (result == null ? void 0 : result.metrics) || {};
-  const trades = metrics.trades || {};
-  const totalTrades = ((_a2 = trades.total) == null ? void 0 : _a2.total) ?? 0;
-  const closedTrades = ((_b2 = trades.total) == null ? void 0 : _b2.closed) ?? 0;
-  const openTrades = ((_c2 = trades.total) == null ? void 0 : _c2.open) ?? 0;
-  const wins = ((_d = trades.won) == null ? void 0 : _d.total) ?? 0;
+  const trades2 = metrics.trades || {};
+  const totalTrades = ((_a2 = trades2.total) == null ? void 0 : _a2.total) ?? 0;
+  const closedTrades = ((_b2 = trades2.total) == null ? void 0 : _b2.closed) ?? 0;
+  const openTrades = ((_c2 = trades2.total) == null ? void 0 : _c2.open) ?? 0;
+  const wins = ((_d = trades2.won) == null ? void 0 : _d.total) ?? 0;
   const winRate = closedTrades ? wins / closedTrades * 100 : null;
   const winRateColor = isNumber(winRate) ? winRate >= 50 ? "green" : "red" : "";
   const winRateTone = isNumber(winRate) ? winRate >= 50 ? "positive" : "negative" : "";
-  const avgNetPnl = (_f = (_e2 = trades.pnl) == null ? void 0 : _e2.net) == null ? void 0 : _f.average;
-  const totalNetPnl = (_h = (_g = trades.pnl) == null ? void 0 : _g.net) == null ? void 0 : _h.total;
-  const bestTrade = (_j = (_i2 = trades.won) == null ? void 0 : _i2.pnl) == null ? void 0 : _j.max;
-  const worstTrade = (_l = (_k = trades.lost) == null ? void 0 : _k.pnl) == null ? void 0 : _l.max;
+  const avgNetPnl = (_f = (_e2 = trades2.pnl) == null ? void 0 : _e2.net) == null ? void 0 : _f.average;
+  const totalNetPnl = (_h = (_g = trades2.pnl) == null ? void 0 : _g.net) == null ? void 0 : _h.total;
+  const bestTrade = (_j = (_i2 = trades2.won) == null ? void 0 : _i2.pnl) == null ? void 0 : _j.max;
+  const worstTrade = (_l = (_k = trades2.lost) == null ? void 0 : _k.pnl) == null ? void 0 : _l.max;
   const bestTradeClass = isNumber(bestTrade) ? "positive" : "";
   const worstTradeClass = isNumber(worstTrade) ? "negative" : "";
-  const avgTradeLen = (_m = trades.len) == null ? void 0 : _m.average;
+  const avgTradeLen = (_m = trades2.len) == null ? void 0 : _m.average;
   const annualEntries = Object.entries(metrics.annual_returns || {}).sort((a2, b2) => Number(a2[0]) - Number(b2[0]));
   const maxDrawDuration = (_n2 = metrics.time_drawdown) == null ? void 0 : _n2.maxdrawdownperiod;
   const maxDrawdownValue = ((_o = metrics.time_drawdown) == null ? void 0 : _o.maxdrawdown) ?? metrics.drawdown;
@@ -73269,9 +74029,9 @@ function PerformanceOverview({ result }) {
 PerformanceOverview.propTypes = {
   result: PropTypes.object
 };
-function TradeLog({ trades }) {
+function TradeLog({ trades: trades2 }) {
   const { t: t2 } = useTranslation();
-  if (!trades || trades.length === 0) {
+  if (!trades2 || trades2.length === 0) {
     return null;
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card", children: [
@@ -73287,7 +74047,7 @@ function TradeLog({ trades }) {
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { children: t2("trade_log.net_pnl") }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { children: t2("trade_log.return") })
       ] }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: trades.map((trade) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: trades2.map((trade) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { children: trade.trade_num }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { children: trade.open_date }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { children: formatCurrency(trade.open_price) }),
@@ -74583,7 +75343,7 @@ function requireCjs$2() {
       this.source = options.source;
     }
     Position.prototype.content = style2;
-    function error(msg) {
+    function error2(msg) {
       var err = new Error(
         options.source + ":" + lineno + ":" + column2 + ": " + msg
       );
@@ -74627,7 +75387,7 @@ function requireCjs$2() {
       }
       i += 2;
       if (EMPTY_STRING === style2.charAt(i - 1)) {
-        return error("End of comment missing");
+        return error2("End of comment missing");
       }
       var str = style2.slice(2, i - 2);
       column2 += 2;
@@ -74644,7 +75404,7 @@ function requireCjs$2() {
       var prop = match2(PROPERTY_REGEX);
       if (!prop) return;
       comment2();
-      if (!match2(COLON_REGEX)) return error("property missing ':'");
+      if (!match2(COLON_REGEX)) return error2("property missing ':'");
       var val = match2(VALUE_REGEX);
       var ret = pos({
         type: TYPE_DECLARATION,
@@ -75246,13 +76006,13 @@ function createProperty(state, prop, value) {
 function parseStyle(state, value) {
   try {
     return styleToJs(value, { reactCompat: true });
-  } catch (error) {
+  } catch (error2) {
     if (state.ignoreInvalidStyle) {
       return {};
     }
     const cause = (
       /** @type {Error} */
-      error
+      error2
     );
     const message2 = new VFileMessage("Cannot parse `style` attribute", {
       ancestors: state.ancestors,
@@ -75944,9 +76704,9 @@ function tokenizeAttention(effects, ok2) {
     const token2 = effects.exit("attentionSequence");
     const after = classifyCharacter(code2);
     const open2 = !after || after === 2 && before || attentionMarkers2.includes(code2);
-    const close = !before || before === 2 && after || attentionMarkers2.includes(previous2);
-    token2._open = Boolean(marker === 42 ? open2 : open2 && (before || !close));
-    token2._close = Boolean(marker === 42 ? close : close && (after || !open2));
+    const close2 = !before || before === 2 && after || attentionMarkers2.includes(previous2);
+    token2._open = Boolean(marker === 42 ? open2 : open2 && (before || !close2));
+    token2._close = Boolean(marker === 42 ? close2 : close2 && (after || !open2));
     return ok2(code2);
   }
 }
@@ -78177,7 +78937,7 @@ function resolveToLabelEnd(events, context) {
   let offset2 = 0;
   let token2;
   let open2;
-  let close;
+  let close2;
   let media;
   while (index2--) {
     token2 = events[index2][1];
@@ -78188,7 +78948,7 @@ function resolveToLabelEnd(events, context) {
       if (events[index2][0] === "enter" && token2.type === "labelLink") {
         token2._inactive = true;
       }
-    } else if (close) {
+    } else if (close2) {
       if (events[index2][0] === "enter" && (token2.type === "labelImage" || token2.type === "labelLink") && !token2._balanced) {
         open2 = index2;
         if (token2.type !== "labelLink") {
@@ -78197,7 +78957,7 @@ function resolveToLabelEnd(events, context) {
         }
       }
     } else if (token2.type === "labelEnd") {
-      close = index2;
+      close2 = index2;
     }
   }
   const group = {
@@ -78215,7 +78975,7 @@ function resolveToLabelEnd(events, context) {
       ...events[open2][1].start
     },
     end: {
-      ...events[close][1].end
+      ...events[close2][1].end
     }
   };
   const text2 = {
@@ -78224,15 +78984,15 @@ function resolveToLabelEnd(events, context) {
       ...events[open2 + offset2 + 2][1].end
     },
     end: {
-      ...events[close - 2][1].start
+      ...events[close2 - 2][1].start
     }
   };
   media = [["enter", group, context], ["enter", label, context]];
   media = push(media, events.slice(open2 + 1, open2 + offset2 + 3));
   media = push(media, [["enter", text2, context]]);
-  media = push(media, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open2 + offset2 + 4, close - 3), context));
-  media = push(media, [["exit", text2, context], events[close - 2], events[close - 1], ["exit", label, context]]);
-  media = push(media, events.slice(close + 1));
+  media = push(media, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open2 + offset2 + 4, close2 - 3), context));
+  media = push(media, [["exit", text2, context], events[close2 - 2], events[close2 - 1], ["exit", label, context]]);
+  media = push(media, events.slice(close2 + 1));
   media = push(media, [["exit", group, context]]);
   splice(events, open2, events.length, media);
   return events;
@@ -79647,8 +80407,8 @@ function compiler(options) {
     };
   }
   function closer(and) {
-    return close;
-    function close(token2) {
+    return close2;
+    function close2(token2) {
       if (and) and.call(this, token2);
       exit2.call(this, token2);
     }
@@ -81246,9 +82006,9 @@ function remarkRehype(destination, options) {
     );
   };
 }
-function bail(error) {
-  if (error) {
-    throw error;
+function bail(error2) {
+  if (error2) {
+    throw error2;
   }
 }
 var extend$1;
@@ -81362,11 +82122,11 @@ function trough() {
       throw new TypeError("Expected function as last argument, not " + callback);
     }
     next2(null, ...values);
-    function next2(error, ...output) {
+    function next2(error2, ...output) {
       const fn2 = fns[++middlewareIndex];
       let index2 = -1;
-      if (error) {
-        callback(error);
+      if (error2) {
+        callback(error2);
         return;
       }
       while (++index2 < values.length) {
@@ -81403,10 +82163,10 @@ function wrap(middleware2, callback) {
     }
     try {
       result = middleware2.apply(this, parameters);
-    } catch (error) {
+    } catch (error2) {
       const exception = (
         /** @type {Error} */
-        error
+        error2
       );
       if (fnExpectsCallback && called) {
         throw exception;
@@ -81423,10 +82183,10 @@ function wrap(middleware2, callback) {
       }
     }
   }
-  function done(error, ...output) {
+  function done(error2, ...output) {
     if (!called) {
       called = true;
-      callback(error, ...output);
+      callback(error2, ...output);
     }
   }
   function then(value) {
@@ -81658,26 +82418,26 @@ function urlToPath(path2) {
   if (typeof path2 === "string") {
     path2 = new URL(path2);
   } else if (!isUrl(path2)) {
-    const error = new TypeError(
+    const error2 = new TypeError(
       'The "path" argument must be of type string or an instance of URL. Received `' + path2 + "`"
     );
-    error.code = "ERR_INVALID_ARG_TYPE";
-    throw error;
+    error2.code = "ERR_INVALID_ARG_TYPE";
+    throw error2;
   }
   if (path2.protocol !== "file:") {
-    const error = new TypeError("The URL must be of scheme file");
-    error.code = "ERR_INVALID_URL_SCHEME";
-    throw error;
+    const error2 = new TypeError("The URL must be of scheme file");
+    error2.code = "ERR_INVALID_URL_SCHEME";
+    throw error2;
   }
   return getPathFromURLPosix(path2);
 }
 function getPathFromURLPosix(url2) {
   if (url2.hostname !== "") {
-    const error = new TypeError(
+    const error2 = new TypeError(
       'File URL host must be "localhost" or empty on darwin'
     );
-    error.code = "ERR_INVALID_FILE_URL_HOST";
-    throw error;
+    error2.code = "ERR_INVALID_FILE_URL_HOST";
+    throw error2;
   }
   const pathname = url2.pathname;
   let index2 = -1;
@@ -81685,11 +82445,11 @@ function getPathFromURLPosix(url2) {
     if (pathname.codePointAt(index2) === 37 && pathname.codePointAt(index2 + 1) === 50) {
       const third = pathname.codePointAt(index2 + 2);
       if (third === 70 || third === 102) {
-        const error = new TypeError(
+        const error2 = new TypeError(
           "File URL path must not include encoded / characters"
         );
-        error.code = "ERR_INVALID_FILE_URL_PATH";
-        throw error;
+        error2.code = "ERR_INVALID_FILE_URL_PATH";
+        throw error2;
       }
     }
   }
@@ -82411,9 +83171,9 @@ class Processor extends CallableInstance {
         /** @type {unknown} */
         self2.parse(realFile)
       );
-      self2.run(parseTree, realFile, function(error, tree, file2) {
-        if (error || !tree || !file2) {
-          return realDone(error);
+      self2.run(parseTree, realFile, function(error2, tree, file2) {
+        if (error2 || !tree || !file2) {
+          return realDone(error2);
         }
         const compileTree = (
           /** @type {CompileTree extends undefined ? Node : CompileTree} */
@@ -82427,14 +83187,14 @@ class Processor extends CallableInstance {
           file2.result = compileResult;
         }
         realDone(
-          error,
+          error2,
           /** @type {VFileWithOutput<CompileResult>} */
           file2
         );
       });
-      function realDone(error, file2) {
-        if (error || !file2) {
-          reject(error);
+      function realDone(error2, file2) {
+        if (error2 || !file2) {
+          reject(error2);
         } else if (resolve) {
           resolve(file2);
         } else {
@@ -82483,9 +83243,9 @@ class Processor extends CallableInstance {
     this.process(file, realDone);
     assertDone("processSync", "process", complete);
     return result;
-    function realDone(error, file2) {
+    function realDone(error2, file2) {
       complete = true;
-      bail(error);
+      bail(error2);
       result = file2;
     }
   }
@@ -82539,13 +83299,13 @@ class Processor extends CallableInstance {
     function executor(resolve, reject) {
       const realFile = vfile(file);
       transformers.run(tree, realFile, realDone);
-      function realDone(error, outputTree, file2) {
+      function realDone(error2, outputTree, file2) {
         const resultingTree = (
           /** @type {TailTree extends undefined ? Node : TailTree} */
           outputTree || tree
         );
-        if (error) {
-          reject(error);
+        if (error2) {
+          reject(error2);
         } else if (resolve) {
           resolve(resultingTree);
         } else {
@@ -82577,8 +83337,8 @@ class Processor extends CallableInstance {
     this.run(tree, file, realDone);
     assertDone("runSync", "run", complete);
     return result;
-    function realDone(error, tree2) {
-      bail(error);
+    function realDone(error2, tree2) {
+      bail(error2);
       result = tree2;
       complete = true;
     }
@@ -82970,9 +83730,9 @@ const performFullStrategyAnalysis = async ({
     console.warn("Error fetching chart image", e2);
   }
   const metrics = result.metrics || {};
-  const trades = metrics.trades || {};
-  const totalTrades = ((_a2 = trades.total) == null ? void 0 : _a2.total) ?? (((_c2 = (_b2 = metrics.trade_details) == null ? void 0 : _b2.trades) == null ? void 0 : _c2.length) ?? 0);
-  const winRate = ((_d = trades.total) == null ? void 0 : _d.closed) ? (((_e2 = trades.won) == null ? void 0 : _e2.total) ?? 0) / trades.total.closed * 100 : 0;
+  const trades2 = metrics.trades || {};
+  const totalTrades = ((_a2 = trades2.total) == null ? void 0 : _a2.total) ?? (((_c2 = (_b2 = metrics.trade_details) == null ? void 0 : _b2.trades) == null ? void 0 : _c2.length) ?? 0);
+  const winRate = ((_d = trades2.total) == null ? void 0 : _d.closed) ? (((_e2 = trades2.won) == null ? void 0 : _e2.total) ?? 0) / trades2.total.closed * 100 : 0;
   const metricsText = `
 Strategy Performance Metrics:
 - Final Value: ${formatCurrency(metrics.final_value)}
@@ -83216,13 +83976,13 @@ function RunStrategy() {
   const [startDate, setStartDate] = reactExports.useState("2022-01-01");
   const [endDate, setEndDate] = reactExports.useState("2023-12-31");
   const [initialCash, setInitialCash] = reactExports.useState(1e5);
-  const [commission, setCommission] = reactExports.useState(5e-4);
+  const [commission2, setCommission] = reactExports.useState(5e-4);
   const [stake, setStake] = reactExports.useState(100);
   const [strategies, setStrategies] = reactExports.useState([]);
   const [selectedStrategy, setSelectedStrategy] = reactExports.useState("");
   const [result, setResult] = reactExports.useState(null);
-  const [loading, setLoading] = reactExports.useState(false);
-  const [error, setError] = reactExports.useState(null);
+  const [loading2, setLoading] = reactExports.useState(false);
+  const [error2, setError] = reactExports.useState(null);
   reactExports.useEffect(() => {
     const init2 = async () => {
       const names = await fetchStrategies();
@@ -83259,7 +84019,7 @@ function RunStrategy() {
         start_date: startDate,
         end_date: endDate,
         initial_cash: parseFloat(initialCash),
-        commission: parseFloat(commission),
+        commission: parseFloat(commission2),
         stake: parseInt(stake, 10),
         strategy_name: selectedStrategy
       });
@@ -83288,13 +84048,13 @@ function RunStrategy() {
         setEndDate,
         initialCash,
         setInitialCash,
-        commission,
+        commission: commission2,
         setCommission,
         stake,
         setStake,
-        loading,
+        loading: loading2,
         onSubmit: handleBacktest,
-        error
+        error: error2
       }
     ),
     result ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "results-animate-in", children: [
@@ -83798,8 +84558,8 @@ function configureLoader() {
     var monaco = loaded.m || loaded;
     storeMonacoInstance(monaco);
     state.resolve(monaco);
-  }, function(error) {
-    state.reject(error);
+  }, function(error2) {
+    state.reject(error2);
   });
 }
 function storeMonacoInstance(monaco) {
@@ -84002,7 +84762,7 @@ const StrategySelector = ({
   onRefreshList,
   onAIAnalysis,
   onAIRewrite,
-  loading,
+  loading: loading2,
   t: t2
 }) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "strategy-toolbar", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "strategy-row", children: [
@@ -84013,7 +84773,7 @@ const StrategySelector = ({
         id: "editor-strategy-select",
         value: selectedStrategy,
         onChange: (e2) => onSelectStrategy(e2.target.value),
-        disabled: loading,
+        disabled: loading2,
         children: strategies.map((s) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: s, children: s }, s))
       }
     ),
@@ -84023,7 +84783,7 @@ const StrategySelector = ({
         type: "button",
         className: "btn-ghost",
         onClick: onReload,
-        disabled: loading,
+        disabled: loading2,
         children: t2("maintain.reload")
       }
     ),
@@ -84033,7 +84793,7 @@ const StrategySelector = ({
         type: "button",
         className: "btn-ghost",
         onClick: onRefreshList,
-        disabled: loading,
+        disabled: loading2,
         children: t2("maintain.refresh_list")
       }
     ),
@@ -84044,7 +84804,7 @@ const StrategySelector = ({
         type: "button",
         className: "btn-secondary",
         onClick: onAIAnalysis,
-        disabled: loading,
+        disabled: loading2,
         title: "Analyze code structure and logic",
         children: t2("maintain.ai_analysis")
       }
@@ -84055,7 +84815,7 @@ const StrategySelector = ({
         type: "button",
         className: "btn-secondary",
         onClick: onAIRewrite,
-        disabled: loading,
+        disabled: loading2,
         title: "Rewrite code for optimization",
         children: t2("maintain.ai_rewrite")
       }
@@ -84064,10 +84824,10 @@ const StrategySelector = ({
 };
 const EditorActions = ({
   onSave,
-  loading,
+  loading: loading2,
   t: t2
 }) => {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "btn-primary", onClick: onSave, disabled: loading, style: { marginLeft: "auto" }, children: loading ? t2("maintain.saving") : t2("maintain.save_strategy") }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "btn-primary", onClick: onSave, disabled: loading2, style: { marginLeft: "auto" }, children: loading2 ? t2("maintain.saving") : t2("maintain.save_strategy") }) });
 };
 function StrategyEditorPanel({
   strategies,
@@ -84158,11 +84918,11 @@ StrategyEditorPanel.propTypes = {
   openNewStrategyModal: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired
 };
-const AnalysisModal = ({ isOpen, onClose, content: content2, title, t: t2 }) => {
+const AnalysisModal = ({ isOpen, onClose, content: content2, title: title2, t: t2 }) => {
   if (!isOpen) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-overlay", onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-content", style: { maxWidth: "800px", width: "90%", maxHeight: "85vh", display: "flex", flexDirection: "column" }, onClick: (e2) => e2.stopPropagation(), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "modal-header", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: title }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: title2 }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "btn-ghost", onClick: onClose, style: { fontSize: "1.5rem", lineHeight: 1, padding: "0 0.5rem" }, children: "×" })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "modal-body", style: { overflowY: "auto", flex: 1, padding: "1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "markdown-body", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Markdown, { children: content2 }) }) }),
@@ -90776,9 +91536,9 @@ function DataSourceConfigForm({
   setStartDate,
   endDate,
   setEndDate,
-  loading,
+  loading: loading2,
   onSubmit,
-  error
+  error: error2
 }) {
   const { t: t2 } = useTranslation();
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card form-card-enhanced", children: [
@@ -90838,11 +91598,11 @@ function DataSourceConfigForm({
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary glow-effect", disabled: loading, children: loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner-sm" }) : t2("datasource.fetch_data") }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "form-actions-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "submit", className: "btn-primary glow-effect", disabled: loading2, children: loading2 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "spinner-sm" }) : t2("datasource.fetch_data") }) })
     ] }),
-    error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+    error2 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "error-message-enhanced", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
       "⚠️ ",
-      error
+      error2
     ] }) })
   ] });
 }
@@ -90863,8 +91623,8 @@ function DataSource() {
   const [startDate, setStartDate] = reactExports.useState("2023-01-01");
   const [endDate, setEndDate] = reactExports.useState("2023-12-31");
   const [chartData, setChartData] = reactExports.useState([]);
-  const [loading, setLoading] = reactExports.useState(false);
-  const [error, setError] = reactExports.useState(null);
+  const [loading2, setLoading] = reactExports.useState(false);
+  const [error2, setError] = reactExports.useState(null);
   const handleFetchData = async (e2) => {
     e2.preventDefault();
     setLoading(true);
@@ -90898,9 +91658,9 @@ function DataSource() {
         setStartDate,
         endDate,
         setEndDate,
-        loading,
+        loading: loading2,
         onSubmit: handleFetchData,
-        error
+        error: error2
       }
     ),
     chartData.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "card results-animate-in", children: [
@@ -90919,13 +91679,13 @@ function DataSource() {
   ] });
 }
 const { Option } = Select;
-const LiveConfigForm = ({ onSubmit, loading }) => {
+const LiveConfigForm = ({ onSubmit, loading: loading2 }) => {
   const { t: t2 } = useTranslation();
   const [form] = Form.useForm();
   const [strategies, setStrategies] = reactExports.useState([]);
   const [exchanges, setExchanges] = reactExports.useState([]);
   const [loadingData, setLoadingData] = reactExports.useState(false);
-  const [mode, setMode] = reactExports.useState("paper");
+  const [mode2, setMode] = reactExports.useState("paper");
   const [assetClass, setAssetClass] = reactExports.useState("crypto");
   reactExports.useEffect(() => {
     loadStrategies();
@@ -90936,8 +91696,8 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
       setLoadingData(true);
       const data = await api.getStrategies();
       setStrategies(data || []);
-    } catch (error) {
-      console.error("Failed to load strategies:", error);
+    } catch (error2) {
+      console.error("Failed to load strategies:", error2);
     } finally {
       setLoadingData(false);
     }
@@ -90947,8 +91707,8 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
       try {
         const data = await api.getExchanges();
         setExchanges((data == null ? void 0 : data.exchanges) || ["binance", "okx", "bybit"]);
-      } catch (error) {
-        console.error("Failed to load exchanges:", error);
+      } catch (error2) {
+        console.error("Failed to load exchanges:", error2);
         setExchanges(["binance", "okx", "bybit"]);
       }
     } else {
@@ -90965,7 +91725,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     onSubmit({ ...values, asset_class: assetClass });
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { title: t2("live.trading_session_config"), children: [
-    mode === "live" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+    mode2 === "live" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       Alert,
       {
         message: t2("live.live_trading_alert"),
@@ -91007,7 +91767,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
                   loading: loadingData,
                   showSearch: true,
                   filterOption: (input, option) => option.children.toLowerCase().includes(input.toLowerCase()),
-                  children: strategies.map((strategy) => /* @__PURE__ */ jsxRuntimeExports.jsx(Option, { value: strategy, children: strategy }, strategy))
+                  children: strategies.map((strategy2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Option, { value: strategy2, children: strategy2 }, strategy2))
                 }
               )
             }
@@ -91030,7 +91790,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
                 name: "exchange",
                 rules: [{ required: true, message: t2("live.select_exchange") }],
                 style: { minWidth: 150 },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Select, { children: exchanges.map((exchange) => /* @__PURE__ */ jsxRuntimeExports.jsx(Option, { value: exchange, children: exchange.toUpperCase() }, exchange)) })
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Select, { children: exchanges.map((exchange2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Option, { value: exchange2, children: exchange2.toUpperCase() }, exchange2)) })
               }
             ),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -91123,7 +91883,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
             {
               type: "primary",
               htmlType: "submit",
-              loading,
+              loading: loading2,
               size: "large",
               block: true,
               children: t2("live.start_session")
@@ -91134,10 +91894,10 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     )
   ] });
 };
-const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
+const SessionControls = ({ session, onStart, onStop, onRefresh, loading: loading2 }) => {
   var _a2;
   const { t: t2 } = useTranslation();
-  const getStatusColor = (status) => {
+  const getStatusColor = (status2) => {
     const statusColors = {
       "starting": "blue",
       "running": "green",
@@ -91145,10 +91905,10 @@ const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
       "stopped": "default",
       "error": "red"
     };
-    return statusColors[status] || "default";
+    return statusColors[status2] || "default";
   };
-  const getStatusText = (status) => {
-    return t2(`live.status_${status}`) || status;
+  const getStatusText = (status2) => {
+    return t2(`live.status_${status2}`) || status2;
   };
   session && ["starting", "running"].includes(session.status);
   const isStopped = session && ["stopped", "error"].includes(session.status);
@@ -91179,7 +91939,7 @@ const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
           type: "primary",
           icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$f, {}),
           onClick: onStart,
-          loading,
+          loading: loading2,
           children: t2("live.start_trading")
         }
       ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -91195,7 +91955,7 @@ const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
             {
               danger: true,
               icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, {}),
-              loading,
+              loading: loading2,
               disabled: session.status === "stopping",
               children: t2("live.stop_trading")
             }
@@ -91207,21 +91967,21 @@ const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
         {
           icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$c, {}),
           onClick: onRefresh,
-          loading
+          loading: loading2
         }
       ) })
     ] })
   ] });
 };
 const { Text: Text$3 } = Typography;
-const PositionTable = ({ positions, loading }) => {
+const PositionTable = ({ positions, loading: loading2 }) => {
   const { t: t2 } = useTranslation();
   const columns = [
     {
       title: t2("live.symbol"),
       dataIndex: "symbol",
       key: "symbol",
-      render: (symbol) => /* @__PURE__ */ jsxRuntimeExports.jsx(Text$3, { strong: true, children: symbol })
+      render: (symbol2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Text$3, { strong: true, children: symbol2 })
     },
     {
       title: t2("live.side"),
@@ -91284,7 +92044,7 @@ const PositionTable = ({ positions, loading }) => {
       columns,
       dataSource: positions,
       rowKey: (record, index2) => record.symbol || index2,
-      loading,
+      loading: loading2,
       pagination: false,
       locale: {
         emptyText: t2("live.no_open_positions")
@@ -91294,9 +92054,9 @@ const PositionTable = ({ positions, loading }) => {
   );
 };
 const { Text: Text$2 } = Typography;
-const OrderLog = ({ orders, loading }) => {
+const OrderLog = ({ orders, loading: loading2 }) => {
   const { t: t2 } = useTranslation();
-  const getStatusConfig = (status) => {
+  const getStatusConfig = (status2) => {
     const configs = {
       "created": { color: "default", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$M, {}), text: "Created" },
       "submitted": { color: "processing", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$4, { spin: true }), text: "Submitted" },
@@ -91306,7 +92066,7 @@ const OrderLog = ({ orders, loading }) => {
       "canceled": { color: "default", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$L, {}), text: "Canceled" },
       "rejected": { color: "error", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$L, {}), text: "Rejected" }
     };
-    return configs[status] || { color: "default", icon: null, text: status };
+    return configs[status2] || { color: "default", icon: null, text: status2 };
   };
   const columns = [
     {
@@ -91314,8 +92074,8 @@ const OrderLog = ({ orders, loading }) => {
       dataIndex: "created_at",
       key: "created_at",
       width: 120,
-      render: (time) => {
-        const date4 = dayjs(time);
+      render: (time2) => {
+        const date4 = dayjs(time2);
         return /* @__PURE__ */ jsxRuntimeExports.jsx(Tooltip, { title: date4.format("YYYY-MM-DD HH:mm:ss"), children: date4.format("HH:mm:ss") });
       }
     },
@@ -91323,13 +92083,13 @@ const OrderLog = ({ orders, loading }) => {
       title: t2("live.symbol"),
       dataIndex: "symbol",
       key: "symbol",
-      render: (symbol) => /* @__PURE__ */ jsxRuntimeExports.jsx(Text$2, { strong: true, children: symbol })
+      render: (symbol2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Text$2, { strong: true, children: symbol2 })
     },
     {
       title: t2("live.side"),
       dataIndex: "side",
       key: "side",
-      render: (side) => /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: side === "buy" ? "green" : "red", children: side == null ? void 0 : side.toUpperCase() })
+      render: (side2) => /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: side2 === "buy" ? "green" : "red", children: side2 == null ? void 0 : side2.toUpperCase() })
     },
     {
       title: t2("live.type"),
@@ -91353,11 +92113,11 @@ const OrderLog = ({ orders, loading }) => {
       title: t2("live.filled"),
       dataIndex: "filled_size",
       key: "filled_size",
-      render: (filled, record) => {
+      render: (filled2, record) => {
         var _a2;
-        const fillPercent = record.size ? filled / record.size * 100 : 0;
+        const fillPercent = record.size ? filled2 / record.size * 100 : 0;
         return /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { title: `${fillPercent.toFixed(1)}% filled`, children: [
-          (filled == null ? void 0 : filled.toFixed(4)) || "0",
+          (filled2 == null ? void 0 : filled2.toFixed(4)) || "0",
           " / ",
           ((_a2 = record.size) == null ? void 0 : _a2.toFixed(4)) || "0"
         ] });
@@ -91373,8 +92133,8 @@ const OrderLog = ({ orders, loading }) => {
       title: t2("live.status"),
       dataIndex: "status",
       key: "status",
-      render: (status) => {
-        const config2 = getStatusConfig(status);
+      render: (status2) => {
+        const config2 = getStatusConfig(status2);
         return /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { color: config2.color, icon: config2.icon, children: config2.text });
       }
     },
@@ -91382,7 +92142,7 @@ const OrderLog = ({ orders, loading }) => {
       title: t2("live.commission"),
       dataIndex: "commission",
       key: "commission",
-      render: (commission) => commission ? `$${commission.toFixed(4)}` : "-"
+      render: (commission2) => commission2 ? `$${commission2.toFixed(4)}` : "-"
     }
   ];
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -91391,7 +92151,7 @@ const OrderLog = ({ orders, loading }) => {
       columns,
       dataSource: orders,
       rowKey: (record) => record.order_id || record.created_at,
-      loading,
+      loading: loading2,
       pagination: {
         pageSize: 20,
         showSizeChanger: true,
@@ -91571,8 +92331,8 @@ function useWebSocket(sessionId, options = {}) {
           if (message2.type === "pong") {
             return;
           }
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
+        } catch (error2) {
+          console.error("Failed to parse WebSocket message:", error2);
         }
       };
       ws2.onerror = (event) => {
@@ -91600,8 +92360,8 @@ function useWebSocket(sessionId, options = {}) {
         }
       };
       wsRef.current = ws2;
-    } catch (error) {
-      console.error("Failed to create WebSocket connection:", error);
+    } catch (error2) {
+      console.error("Failed to create WebSocket connection:", error2);
       setReadyState("ERROR");
     }
   }, [
@@ -91663,7 +92423,7 @@ const WS_MESSAGE_TYPES = {
 };
 const useLiveTrading = () => {
   const [session, setSession] = reactExports.useState(null);
-  const [loading, setLoading] = reactExports.useState(false);
+  const [loading2, setLoading] = reactExports.useState(false);
   const [positions, setPositions] = reactExports.useState([]);
   const [orders, setOrders] = reactExports.useState([]);
   const [pnlHistory, setPnlHistory] = reactExports.useState([]);
@@ -91730,8 +92490,8 @@ const useLiveTrading = () => {
         break;
       case WS_MESSAGE_TYPES.TRADE:
         const trade = msg.data;
-        const side = trade.side === "buy" ? "Bought" : "Sold";
-        staticMethods.success(`${side} ${trade.size} ${trade.symbol} @ $${trade.price.toFixed(2)}`, 3);
+        const side2 = trade.side === "buy" ? "Bought" : "Sold";
+        staticMethods.success(`${side2} ${trade.size} ${trade.symbol} @ $${trade.price.toFixed(2)}`, 3);
         setStats((prev2) => ({
           ...prev2,
           totalTrades: prev2.totalTrades + 1
@@ -91759,8 +92519,8 @@ const useLiveTrading = () => {
   } = useWebSocket(session == null ? void 0 : session.session_id, {
     autoConnect: false,
     onMessage: handleWebSocketMessage,
-    onError: (error) => {
-      console.error("WebSocket error:", error);
+    onError: (error2) => {
+      console.error("WebSocket error:", error2);
       staticMethods.error("WebSocket connection error");
     }
   });
@@ -91788,9 +92548,9 @@ const useLiveTrading = () => {
       setTimeout(() => {
         wsConnect();
       }, 1e3);
-    } catch (error) {
-      console.error("Failed to start trading session:", error);
-      staticMethods.error(`Failed to start session: ${error.message}`);
+    } catch (error2) {
+      console.error("Failed to start trading session:", error2);
+      staticMethods.error(`Failed to start session: ${error2.message}`);
     } finally {
       setLoading(false);
     }
@@ -91805,9 +92565,9 @@ const useLiveTrading = () => {
       setTimeout(() => {
         setSession(null);
       }, 3e3);
-    } catch (error) {
-      console.error("Failed to stop trading session:", error);
-      staticMethods.error(`Failed to stop session: ${error.message}`);
+    } catch (error2) {
+      console.error("Failed to stop trading session:", error2);
+      staticMethods.error(`Failed to stop session: ${error2.message}`);
     } finally {
       setLoading(false);
     }
@@ -91816,12 +92576,12 @@ const useLiveTrading = () => {
     if (!session) return;
     try {
       setLoading(true);
-      const status = await api.getLiveStatus(session.session_id);
-      setSession(status);
+      const status2 = await api.getLiveStatus(session.session_id);
+      setSession(status2);
       const sessionOrders = await api.getSessionOrders(session.session_id);
       setOrders((sessionOrders == null ? void 0 : sessionOrders.orders) || []);
-    } catch (error) {
-      console.error("Failed to refresh session:", error);
+    } catch (error2) {
+      console.error("Failed to refresh session:", error2);
       staticMethods.error("Failed to refresh session status");
     } finally {
       setLoading(false);
@@ -91842,8 +92602,8 @@ const useLiveTrading = () => {
           }, 500);
         }
       }
-    } catch (error) {
-      console.error("Failed to load active sessions:", error);
+    } catch (error2) {
+      console.error("Failed to load active sessions:", error2);
     }
   };
   reactExports.useEffect(() => {
@@ -91856,7 +92616,7 @@ const useLiveTrading = () => {
   }, [wsDisconnect]);
   return {
     session,
-    loading,
+    loading: loading2,
     positions,
     orders,
     pnlHistory,
@@ -91876,7 +92636,7 @@ const LiveTradingDashboard = () => {
   const { t: t2 } = useTranslation();
   const {
     session,
-    loading,
+    loading: loading2,
     positions,
     orders,
     pnlHistory,
@@ -91900,7 +92660,7 @@ const LiveTradingDashboard = () => {
     ] }),
     !isSessionActive ? (
       // Configuration form when no active session
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Row, { justify: "center", style: { marginTop: 40 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Col, { xs: 24, lg: 16, xl: 12, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "dashboard-card", title: t2("live.start_new_session"), bordered: false, children: /* @__PURE__ */ jsxRuntimeExports.jsx(LiveConfigForm, { onSubmit: handleStartSession, loading }) }) }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Row, { justify: "center", style: { marginTop: 40 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Col, { xs: 24, lg: 16, xl: 12, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "dashboard-card", title: t2("live.start_new_session"), bordered: false, children: /* @__PURE__ */ jsxRuntimeExports.jsx(LiveConfigForm, { onSubmit: handleStartSession, loading: loading2 }) }) }) })
     ) : (
       // Trading dashboard when session is active
       /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
@@ -91912,7 +92672,7 @@ const LiveTradingDashboard = () => {
               onStart: handleStartSession,
               onStop: handleStopSession,
               onRefresh: handleRefreshSession,
-              loading
+              loading: loading2
             }
           ) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Col, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Space, { children: [
@@ -92000,7 +92760,7 @@ const CustomLogo = () => /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: 
   /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "60", cy: "60", r: "56", stroke: "url(#logoGradient)", strokeWidth: "2", strokeDasharray: "10 5", opacity: "0.3" })
 ] });
 function Home() {
-  const { signIn, isAuthenticated, loginEnabled } = useAuth();
+  const { signIn: signIn2, isAuthenticated, loginEnabled } = useAuth();
   const navigate2 = useNavigate();
   const { t: t2, i18n } = useTranslation();
   reactExports.useEffect(() => {
@@ -92014,7 +92774,7 @@ function Home() {
       return;
     }
     const redirectUri = "https://trade.fary.chat/callback";
-    signIn(redirectUri);
+    signIn2(redirectUri);
   };
   const handleLanguageChange = ({ key }) => {
     i18n.changeLanguage(key);
@@ -92123,20 +92883,20 @@ function Home() {
 function Callback() {
   const navigate2 = useNavigate();
   const { t: t2 } = useTranslation();
-  const { error } = useHandleSignInCallback(() => {
+  const { error: error2 } = useHandleSignInCallback(() => {
     navigate2("/", { replace: true });
   });
   reactExports.useEffect(() => {
-    if (error) {
-      console.error("Sign-in callback error:", error);
+    if (error2) {
+      console.error("Sign-in callback error:", error2);
       setTimeout(() => {
         navigate2("/login", { replace: true });
       }, 3e3);
     }
-  }, [error, navigate2]);
+  }, [error2, navigate2]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "callback-page", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Spin, { size: "large", tip: t2("auth.signingIn", "Signing in...") }),
-    error && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "callback-error", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: t2("auth.signInError", "Authentication failed. Redirecting...") }) })
+    error2 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "callback-error", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: t2("auth.signInError", "Authentication failed. Redirecting...") }) })
   ] });
 }
 function AppContent() {
@@ -92191,4 +92951,4 @@ function App() {
 clientExports.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(reactExports.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-CdqBOTCJ.js.map
+//# sourceMappingURL=index-BvrgectN.js.map

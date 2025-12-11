@@ -2,8 +2,67 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-import en from './locales/en.json';
-import zh from './locales/zh.json';
+// English imports
+import appEn from './locales/en/app.json';
+import navEn from './locales/en/nav.json';
+import commonEn from './locales/en/common.json';
+import authEn from './locales/en/auth.json';
+import homeEn from './locales/en/home.json';
+import aiInsightEn from './locales/en/ai_insight.json';
+import configFormEn from './locales/en/config_form.json';
+import performanceEn from './locales/en/performance.json';
+import tradeLogEn from './locales/en/trade_log.json';
+import strategyPlotEn from './locales/en/strategy_plot.json';
+import maintainEn from './locales/en/maintain.json';
+import datasourceEn from './locales/en/datasource.json';
+import liveEn from './locales/en/live.json';
+
+// Chinese imports
+import appZh from './locales/zh/app.json';
+import navZh from './locales/zh/nav.json';
+import commonZh from './locales/zh/common.json';
+import authZh from './locales/zh/auth.json';
+import homeZh from './locales/zh/home.json';
+import aiInsightZh from './locales/zh/ai_insight.json';
+import configFormZh from './locales/zh/config_form.json';
+import performanceZh from './locales/zh/performance.json';
+import tradeLogZh from './locales/zh/trade_log.json';
+import strategyPlotZh from './locales/zh/strategy_plot.json';
+import maintainZh from './locales/zh/maintain.json';
+import datasourceZh from './locales/zh/datasource.json';
+import liveZh from './locales/zh/live.json';
+
+const en = {
+  app: appEn,
+  nav: navEn,
+  common: commonEn,
+  auth: authEn,
+  home: homeEn,
+  ai_insight: aiInsightEn,
+  config_form: configFormEn,
+  performance: performanceEn,
+  trade_log: tradeLogEn,
+  strategy_plot: strategyPlotEn,
+  maintain: maintainEn,
+  datasource: datasourceEn,
+  live: liveEn
+};
+
+const zh = {
+  app: appZh,
+  nav: navZh,
+  common: commonZh,
+  auth: authZh,
+  home: homeZh,
+  ai_insight: aiInsightZh,
+  config_form: configFormZh,
+  performance: performanceZh,
+  trade_log: tradeLogZh,
+  strategy_plot: strategyPlotZh,
+  maintain: maintainZh,
+  datasource: datasourceZh,
+  live: liveZh
+};
 
 i18n
   // detect user language

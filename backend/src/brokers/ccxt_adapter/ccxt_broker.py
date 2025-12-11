@@ -249,6 +249,15 @@ class CCXTBroker(bt.BrokerBase):
         """
         return self._cash
 
+    def getcash(self) -> float:
+        """
+        Backtrader compatibility wrapper for cash balance.
+
+        Backtrader analyzers and engine internals call broker.getcash();
+        delegate to the existing get_cash implementation.
+        """
+        return self.get_cash()
+
     def get_value(self, datas: Optional[list] = None) -> float:
         """
         Get total portfolio value (cash + positions).
@@ -274,6 +283,15 @@ class CCXTBroker(bt.BrokerBase):
 
         self._value = value
         return value
+
+    def getvalue(self, datas: Optional[list] = None) -> float:
+        """
+        Backtrader compatibility wrapper for portfolio value.
+
+        Backtrader analyzers expect broker.getvalue() to exist; reuse
+        the get_value calculation to avoid falling back to BrokerBase.
+        """
+        return self.get_value(datas)
 
     def getposition(self, data: bt.DataBase) -> bt.Position:
         """
