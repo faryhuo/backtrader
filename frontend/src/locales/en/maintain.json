@@ -1,0 +1,20 @@
+{
+  "editor_title": "Strategy Editor (UserStrategy)",
+  "new": "New",
+  "subtitle": "Edit only the strategy class below; backtest engine is fixed.",
+  "active_strategy": "Active Strategy",
+  "reload": "Reload",
+  "refresh_list": "Refresh List",
+  "ai_analysis": "AI Analysis",
+  "ai_rewrite": "AI - Rewrite",
+  "save_strategy": "Save Strategy",
+  "saving": "Saving...",
+  "create_new_strategy": "Create New Strategy",
+  "strategy_name": "Strategy Name",
+  "create": "Create",
+  "saved": "Strategy Saved!",
+  "save_failed": "Failed to save strategy",
+  "analysis_coming_soon": "AI Analysis feature coming soon!",
+  "rewrite_coming_soon": "AI Rewrite feature coming soon!",
+  "placeholder_name": "e.g., breakout_v2"
+}

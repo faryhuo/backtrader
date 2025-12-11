@@ -1,0 +1,14 @@
+{
+  "title": "Strategy Configuration",
+  "strategy": "Strategy",
+  "refresh": "Refresh",
+  "asset_ticker": "Asset Ticker",
+  "start_date": "Start Date",
+  "end_date": "End Date",
+  "initial_capital": "Initial Capital ($)",
+  "commission": "Commission (rate)",
+  "order_size": "Order Size (shares/contracts)",
+  "run_backtest": "Run Backtest",
+  "ready_to_run": "Ready to Backtest",
+  "select_strategy_hint": "Configure your parameters above and hit \"Run Backtest\" to see AI-powered analysis."
+}

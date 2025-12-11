@@ -1,0 +1,10 @@
+{
+  "title": "Trade Log",
+  "open_date": "Open Date",
+  "open_price": "Open Price",
+  "close_date": "Close Date",
+  "close_price": "Close Price",
+  "size": "Size",
+  "net_pnl": "Net PnL",
+  "return": "Return"
+}

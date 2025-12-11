@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import '../index.css'
+import '../components/RunStrategy/RunStrategy.css'
 import { api } from '../services/api'
 import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm'
 import PerformanceOverview from '../components/RunStrategy/PerformanceOverview'
