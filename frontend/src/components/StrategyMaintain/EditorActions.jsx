@@ -1,4 +1,5 @@
 import React from 'react'
+import { SaveOutlined, LoadingOutlined } from '@ant-design/icons'
 
 const EditorActions = ({ 
     onSave, 
@@ -6,11 +7,14 @@ const EditorActions = ({
     t 
 }) => {
     return (
-        <div className="form-actions">
-            <button className="btn-primary" onClick={onSave} disabled={loading} style={{ marginLeft: 'auto' }}>
-                {loading ? t('maintain.saving') : t('maintain.save_strategy')}
-            </button>
-        </div>
+        <button 
+            className="btn-primary" 
+            onClick={onSave} 
+            disabled={loading}
+        >
+            {loading ? <LoadingOutlined /> : <SaveOutlined />} 
+            {loading ? t('maintain.saving') : t('maintain.save_strategy')}
+        </button>
     )
 }
 
