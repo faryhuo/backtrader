@@ -1,6 +1,20 @@
 # service 目录说明
 
-- 作用：应用服务层，负责 FastAPI 应用初始化（`app.py`）、实时交易引擎（`live_engine.py`）、会话管理（`session_manager.py`）与 WebSocket 管理（`websocket_manager.py`）。
-- 责任边界：不再存放路由（已迁移到 `src/routes`）；专注运行时编排与资源管理，避免直接操作数据库模型外的业务细节。
-- 依赖约束：优先通过配置层获取环境变量与路径，不在此写死常量；跨模块调用保持清晰接口，避免循环依赖。
-- 测试建议：新增/改动需配套最小化启动或集成测试（如 FastAPI 应用导入、引擎生命周期管理），并记录必需的环境变量。
+应用服务层目录，承载核心业务编排与运行时资源管理。
+
+## 功能职责（Functional）
+- `app.py`：FastAPI 应用创建、路由注册与中间件配置。
+- `live_engine.py`：实盘/模拟盘运行引擎与 broker 选择。
+- `session_manager.py`：回测/实盘会话生命周期管理。
+- `websocket_manager.py`：WebSocket 连接与频道管理。
+
+## 非功能性要求（Non-Functional）
+- 解耦：服务层通过清晰接口调用 DB/适配层，避免直接依赖路由细节。
+- 可靠性：对外部 broker/AI/数据源异常做统一封装，便于重试与熔断。
+- 可测试性：业务用例应可在 mock 外部依赖下运行。
+
+## 约定与规范
+- 服务层不定义路由；路由放 `backend/src/routes`。
+- 读取配置统一来自 `backend/src/config/settings.py`。
+- 新增长耗时任务需考虑异步/后台执行与取消机制。
+
