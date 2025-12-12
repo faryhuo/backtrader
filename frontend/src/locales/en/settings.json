@@ -1,0 +1,12 @@
+{
+    "title": "Settings",
+    "ai_configuration": "AI Configuration",
+    "default_model": "Default AI Model",
+    "code_analysis_prompt": "Code Analysis Prompt",
+    "backtest_analysis_prompt": "Backtest Analysis Prompt",
+    "code_rewrite_prompt": "Code Rewrite Prompt",
+    "save": "Save Changes",
+    "saved": "Settings saved!",
+    "reset": "Reset Defaults",
+    "confirm_reset": "Are you sure you want to reset all settings to default?"
+}

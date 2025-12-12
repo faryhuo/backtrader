@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
-import { performFullStrategyAnalysis } from '../../services/aiAnalysis';
+import { performFullStrategyAnalysis, getAvailableModels } from '../../services/aiAnalysis';
 import AIInsight from './AIInsight';
 
 function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
@@ -13,8 +13,10 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
     const [aiLoading, setAiLoading] = useState(false);
     const [analyses, setAnalyses] = useState({});
     const [activeTab, setActiveTab] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('gpt-5.1');
-    const AVAILABLE_MODELS = ['gpt-5.1', 'deepseek-v3.1', 'gemini-3-pro'];
+    
+    // Initialize available models from settings
+    const availableModels = getAvailableModels();
+    const [selectedModel, setSelectedModel] = useState(availableModels[0] || 'gpt-5.1');
 
     if (!result || !result.plot_url) {
         return null;
@@ -79,7 +81,7 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                         onChange={(e) => setSelectedModel(e.target.value)}
                         style={{ maxWidth: '150px' }}
                     >
-                        {AVAILABLE_MODELS.map(m => (
+                        {availableModels.map(m => (
                             <option key={m} value={m}>{m}</option>
                         ))}
                     </select>

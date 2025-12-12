@@ -88,7 +88,8 @@ class ExchangeInfo(BaseModel):
     """Exchange information model."""
     id: str
     name: str
-    ccxt_id: str
+    adapter: str = Field(default="ccxt", description="Underlying adapter (ccxt/ibkr)")
+    ccxt_id: Optional[str] = Field(default=None, description="CCXT exchange id if applicable")
     markets: List[str]
     default_market: str
     paper_mode_available: bool
@@ -130,14 +131,6 @@ async def start_live_trading(request: StartLiveRequest):
         raise HTTPException(
             status_code=400,
             detail=f"Invalid mode: '{request.mode}'. Must be 'paper' or 'live'"
-        )
-
-    # Live mode additional checks (Phase 6)
-    if request.mode == 'live':
-        raise HTTPException(
-            status_code=403,
-            detail="Live trading not yet available. Use mode='paper' for testing. "
-                   "Live mode will be enabled in Phase 6 after thorough testing."
         )
 
     try:

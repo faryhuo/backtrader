@@ -18,3 +18,5 @@ aiohttp>=3.9.0
 aiodns>=3.6.0
 pycares>=5.0.0
 pydantic>=2.5.0
+# IBKR
+ibapi>=9.81.1

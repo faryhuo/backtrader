@@ -37,6 +37,7 @@ class ExchangeConfig(BaseModel):
     """Exchange-specific configuration."""
     enabled: bool = True
     name: str
+    adapter: str = "ccxt"
     ccxt_id: str
     markets: List[str]
     default_market: str = "spot"
@@ -205,6 +206,13 @@ def get_exchange_config(exchange_id: str, config: Optional[BrokerConfig] = None)
     if not ex_config.enabled:
         raise ValueError(f"Exchange '{exchange_id}' is disabled in configuration")
 
+    # Basic adapter validation to avoid unsupported integrations
+    if ex_config.adapter.lower() not in {"ccxt", "ibkr"}:
+        raise ValueError(
+            f"Exchange '{exchange_id}' uses unsupported adapter '{ex_config.adapter}'. "
+            "Supported adapters: ccxt, ibkr"
+        )
+
     return ex_config
 
 
@@ -227,6 +235,7 @@ def list_enabled_exchanges(config: Optional[BrokerConfig] = None) -> List[Dict]:
             exchanges.append({
                 'id': ex_id,
                 'name': ex_config.name,
+                'adapter': ex_config.adapter,
                 'ccxt_id': ex_config.ccxt_id,
                 'markets': ex_config.markets,
                 'default_market': ex_config.default_market,

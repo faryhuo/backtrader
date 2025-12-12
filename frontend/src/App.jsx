@@ -9,6 +9,7 @@ import RunStrategy from './pages/RunStrategy'
 import StrategyMaintain from './pages/StrategyMaintain'
 import DataSource from './pages/DataSource'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
+import Settings from './pages/Settings'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
 import { setTokenGetter } from './services/api'
@@ -68,6 +69,7 @@ function AppContent() {
                         <Route path="maintain" element={<StrategyMaintain />} />
                         <Route path="datasource" element={<DataSource />} />
                         <Route path="live" element={<LiveTradingDashboard />} />
+                        <Route path="settings" element={<Settings />} />
                     </Route>
 
                     {/* Redirects for Auth Disabled */}

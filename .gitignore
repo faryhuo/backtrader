@@ -8,3 +8,4 @@ backend/.envprod
 backend/trading_sessions.db
 frontend/.env
 frontend/.envprod
+backend/resources/frontend
