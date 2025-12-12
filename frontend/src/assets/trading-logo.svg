@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#34d399;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" rx="100" fill="url(#grad1)"/>
+  
+  <!-- Chart Grid Lines (Subtle) -->
+  <line x1="60" y1="350" x2="452" y2="350" stroke="#334155" stroke-width="4"/>
+  <line x1="60" y1="250" x2="452" y2="250" stroke="#334155" stroke-width="4"/>
+  <line x1="60" y1="150" x2="452" y2="150" stroke="#334155" stroke-width="4"/>
+
+  <!-- Candlesticks / Bars -->
+  <rect x="100" y="280" width="30" height="70" fill="#ef4444" rx="4"/>
+  <line x1="115" y1="260" x2="115" y2="370" stroke="#ef4444" stroke-width="4"/>
+
+  <rect x="160" y="240" width="30" height="90" fill="#10b981" rx="4"/>
+  <line x1="175" y1="220" x2="175" y2="340" stroke="#10b981" stroke-width="4"/>
+  
+  <rect x="220" y="260" width="30" height="40" fill="#ef4444" rx="4"/>
+  <line x1="235" y1="250" x2="235" y2="320" stroke="#ef4444" stroke-width="4"/>
+
+  <!-- Rising Trend Line -->
+  <path d="M60 400 L140 380 L200 300 L280 320 L350 200 L452 100" 
+        stroke="url(#grad2)" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        
+  <!-- Glowing Dot at the end -->
+  <circle cx="452" cy="100" r="12" fill="#34d399">
+    <animate attributeName="r" values="12;16;12" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite" />
+  </circle>
+</svg>

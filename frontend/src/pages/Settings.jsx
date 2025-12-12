@@ -7,7 +7,8 @@ import './Settings.css';
 const DEFAULT_SETTINGS = {
     selectedModels: ['gpt-5.1', 'deepseek-v3.1'],
     codeAnalysisPrompt: 'Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n{code}',
-    codeRewritePrompt: 'Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}'
+    codeRewritePrompt: 'Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}',
+    fullStrategyAnalysisPrompt: 'Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.\n\n{contextText}\n\n{metricsText}\n\n{logsText}\n\nProvide a comprehensive assessment including:\n1. Overall Performance: Is it profitable and consistent?\n2. Risk Profile: analysis of drawdowns and volatility.\n3. Strengths & Weaknesses: What is working well and what isn\'t?\n4. Suggestions: Recommendations for improvement.\n5. Code Analysis: Comments on the strategy logic.\n6. Always return with Chinese.\n7. 不需要对策略代码逻辑进行点评'
 };
 
 const AVAILABLE_MODELS = [
@@ -95,6 +96,17 @@ function Settings() {
                         value={settings.codeAnalysisPrompt}
                         onChange={(e) => handleChange('codeAnalysisPrompt', e.target.value)}
                         placeholder="Use {code} as placeholder"
+                    />
+                </div>
+
+                <div className="settings-form-group">
+                    <label>{t('settings.full_strategy_analysis_prompt', 'Full Strategy Analysis Prompt')}</label>
+                    <textarea 
+                        className="settings-textarea"
+                        rows={6}
+                        value={settings.fullStrategyAnalysisPrompt}
+                        onChange={(e) => handleChange('fullStrategyAnalysisPrompt', e.target.value)}
+                        placeholder="Use {contextText}, {metricsText}, {logsText} as placeholders"
                     />
                 </div>
 

@@ -86,7 +86,13 @@ class IBKRStore:
             return
 
         try:
-            self._store = bt.stores.IBStore(
+            from backtrader.stores import ibstore as ibstore_mod
+
+            ib_cls = getattr(ibstore_mod, "IBStore", None)
+            if ib_cls is None:
+                raise ImportError("IBStore not available. Ensure ibapi is installed.")
+
+            self._store = ib_cls(
                 host=self.host,
                 port=self.port,
                 clientId=self.client_id,
@@ -112,7 +118,7 @@ class IBKRStore:
         finally:
             self._store = None
 
-    def _ensure_started(self) -> bt.stores.IBStore:
+    def _ensure_started(self):
         if not self._store:
             raise IBKRStoreError("IBKRStore not started. Call start() first.")
         return self._store
