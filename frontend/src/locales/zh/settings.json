@@ -3,7 +3,6 @@
     "ai_configuration": "AI 配置",
     "default_model": "默认 AI 模型",
     "code_analysis_prompt": "代码分析提示词",
-    "backtest_analysis_prompt": "回测分析提示词",
     "code_rewrite_prompt": "代码重写提示词",
     "save": "保存更改",
     "saved": "设置已保存！",

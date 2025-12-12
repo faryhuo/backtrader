@@ -3,7 +3,7 @@
     "ai_configuration": "AI Configuration",
     "default_model": "Default AI Model",
     "code_analysis_prompt": "Code Analysis Prompt",
-    "backtest_analysis_prompt": "Backtest Analysis Prompt",
+    "full_strategy_analysis_prompt": "Full Strategy Analysis Prompt",
     "code_rewrite_prompt": "Code Rewrite Prompt",
     "save": "Save Changes",
     "saved": "Settings saved!",
