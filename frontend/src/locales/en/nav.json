@@ -2,5 +2,7 @@
   "run_strategy": "Run Strategy",
   "strategy_maintain": "Strategy Maintain",
   "datasource": "Data Source",
-  "live_trading": "Live Trading"
+  "history": "Backtest History",
+  "live_trading": "Live Trading",
+  "settings": "Settings"
 }

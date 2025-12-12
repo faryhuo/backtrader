@@ -8,6 +8,7 @@ import Layout from './components/Layout/Layout'
 import RunStrategy from './pages/RunStrategy'
 import StrategyMaintain from './pages/StrategyMaintain'
 import DataSource from './pages/DataSource'
+import BacktestHistory from './pages/BacktestHistory'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
 import Settings from './pages/Settings'
 import { Home } from './pages/Home'
@@ -68,6 +69,7 @@ function AppContent() {
                         <Route path="strategy" element={<RunStrategy />} />
                         <Route path="maintain" element={<StrategyMaintain />} />
                         <Route path="datasource" element={<DataSource />} />
+                        <Route path="history" element={<BacktestHistory />} />
                         <Route path="live" element={<LiveTradingDashboard />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>

@@ -68,7 +68,7 @@ export const performFullStrategyAnalysis = async ({
     let strategyCode = '';
     try {
         if (strategyName) {
-            const stratData = await fetch(`${API_URL}/strategy/${strategyName}`);
+            const stratData = await fetch(`${API_URL}/strategy?name=${strategyName}`);
             strategyCode = stratData?.code || 'Code not available';
         }
     } catch (e) {

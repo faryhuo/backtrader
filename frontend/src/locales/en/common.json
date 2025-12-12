@@ -5,5 +5,10 @@
   "cancel": "Cancel",
   "expand_sidebar": "Expand Sidebar",
   "collapse_sidebar": "Collapse Sidebar",
-  "na": "N/A"
+  "na": "N/A",
+  "view": "View",
+  "filter": "Filter",
+  "reset": "Reset",
+  "yes": "Yes",
+  "no": "No"
 }

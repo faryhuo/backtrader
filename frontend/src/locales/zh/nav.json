@@ -2,5 +2,7 @@
   "run_strategy": "运行策略",
   "strategy_maintain": "策略维护",
   "datasource": "数据源",
-  "live_trading": "实盘交易"
+  "history": "回测历史",
+  "live_trading": "实盘交易",
+  "settings": "设置"
 }

@@ -12,11 +12,32 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, Enum, Float, Integer, JSON, String, Text, create_engine
+from sqlalchemy import Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import json
 
 Base = declarative_base()
+
+
+class SafeJSON(TypeDecorator):
+    """JSON type that handles NULL and empty strings gracefully."""
+
+    impl = Text
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None or value == '':
+            return None
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return None
 
 
 class SessionStatusEnum(enum.Enum):
@@ -83,9 +104,9 @@ class TradingSessionModel(Base):
     losing_trades = Column(Integer, default=0)
 
     # JSON fields for complex data
-    positions = Column(JSON, default=list)  # Current positions
-    config = Column(JSON, default=dict)  # Session configuration
-    metrics = Column(JSON, default=dict)  # Performance metrics
+    positions = Column(SafeJSON, default=list)  # Current positions
+    config = Column(SafeJSON, default=dict)  # Session configuration
+    metrics = Column(SafeJSON, default=dict)  # Performance metrics
 
     # Error tracking
     error_message = Column(Text, nullable=True)
@@ -140,7 +161,7 @@ class OrderModel(Base):
     pnl = Column(Float, nullable=True)  # P&L for closing orders
 
     # Additional data
-    metadata_json = Column("metadata", JSON, default=dict)
+    metadata_json = Column("metadata", SafeJSON, default=dict)
 
     def __repr__(self):
         return (
@@ -186,7 +207,7 @@ class PositionModel(Base):
     is_open = Column(Integer, default=1, index=True)  # 1 for open, 0 for closed
 
     # Additional data
-    metadata_json = Column("metadata", JSON, default=dict)
+    metadata_json = Column("metadata", SafeJSON, default=dict)
 
     def __repr__(self):
         status = "OPEN" if self.is_open else "CLOSED"
@@ -231,6 +252,67 @@ def init_database(database_url: str, echo: bool = False):
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     return engine, SessionLocal
+
+
+class BacktestHistoryModel(Base):
+    """
+    Backtest History Model - Stores historical backtest results.
+
+    Stores all backtest configurations, metrics, AI analysis, and plot references
+    for historical tracking and comparison.
+    """
+    __tablename__ = "backtest_history"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Unique identifier for the backtest run
+    backtest_id = Column(String(36), unique=True, nullable=False, index=True)
+
+    # User identification (optional, for multi-user support)
+    user_id = Column(String(255), nullable=True, index=True)
+
+    # Configuration parameters
+    ticker = Column(String(50), nullable=False, index=True)
+    start_date = Column(String(10), nullable=False)  # YYYY-MM-DD
+    end_date = Column(String(10), nullable=False)    # YYYY-MM-DD
+    initial_cash = Column(Float, nullable=False)
+    commission = Column(Float, default=0.0005)
+    stake = Column(Integer, default=100)
+    strategy_name = Column(String(255), nullable=False, index=True)
+
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # Key performance metrics (denormalized for fast filtering/sorting)
+    final_value = Column(Float, nullable=True)
+    total_return = Column(Float, nullable=True, index=True)  # For sorting
+    sharpe_ratio = Column(Float, nullable=True, index=True)  # For sorting
+    max_drawdown = Column(Float, nullable=True)
+    total_trades = Column(Integer, default=0)
+    winning_trades = Column(Integer, default=0)
+    losing_trades = Column(Integer, default=0)
+
+    # Complete metrics JSON (all metrics from backtest engine)
+    metrics = Column(SafeJSON, nullable=False)
+
+    # AI Analysis - JSON format: {"model_name": "gpt-4o", "analysis_content": "..."}
+    # Can store multiple analyses as a dict: {"gpt-4o": "...", "deepseek-v3.1": "..."}
+    ai_analysis = Column(SafeJSON, nullable=True)
+
+    # Strategy code snapshot (saved at backtest runtime)
+    strategy_code = Column(Text, nullable=True)
+
+    # Plot image reference
+    plot_filename = Column(String(255), nullable=True)  # UUID.png
+
+    def __repr__(self):
+        return (
+            f"<BacktestHistory(id={self.backtest_id}, "
+            f"ticker={self.ticker}, "
+            f"strategy={self.strategy_name}, "
+            f"return={self.total_return:.2f}% if self.total_return else 'N/A')>"
+        )
 
 
 # Default database path for local development

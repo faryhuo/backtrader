@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python -m src.db.migrate_add_columns:*)",
+      "Bash(python:*)"
     ]
   }
 }
