@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { PlusOutlined } from '@ant-design/icons'
 import '../index.css'
+import '../components/StrategyMaintain/StrategyMaintain.css'
 import { api } from '../services/api'
 import { analyzeCode, rewriteCode } from '../services/aiAnalysis'
 import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
@@ -140,7 +142,14 @@ class UserStrategy(bt.Strategy):
     }
 
     return (
-        <div className="page-container">
+        <div className="strategy-maintain-container">
+            <div className="strategy-header">
+                <h1>{t('maintain.title')}</h1>
+                <button className="btn-primary" onClick={openNewStrategyModal}>
+                    <PlusOutlined /> {t('maintain.new')}
+                </button>
+            </div>
+
             <StrategyEditorPanel
                 strategies={strategies}
                 selectedStrategy={selectedStrategy}
@@ -153,7 +162,6 @@ class UserStrategy(bt.Strategy):
                 code={code}
                 setCode={setCode}
                 saveStrategy={saveStrategy}
-                openNewStrategyModal={openNewStrategyModal}
                 t={t}
             />
 

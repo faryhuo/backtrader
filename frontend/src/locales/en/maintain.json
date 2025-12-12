@@ -1,4 +1,5 @@
 {
+  "title": "Strategy Management",
   "editor_title": "Strategy Editor (UserStrategy)",
   "new": "New",
   "subtitle": "Edit only the strategy class below; backtest engine is fixed.",

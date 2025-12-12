@@ -1,4 +1,5 @@
 import React from 'react'
+import { ReloadOutlined, SyncOutlined, RobotOutlined, ThunderboltOutlined } from '@ant-design/icons'
 
 const StrategySelector = ({ 
     strategies, 
@@ -12,11 +13,12 @@ const StrategySelector = ({
     t 
 }) => {
     return (
-        <div className="strategy-toolbar">
-            <div className="strategy-row">
-                <label htmlFor="editor-strategy-select">{t('maintain.active_strategy')}</label>
+        <>
+            <div className="strategy-selector-group">
+                <label htmlFor="editor-strategy-select">{t('maintain.active_strategy')}:</label>
                 <select
                     id="editor-strategy-select"
+                    className="strategy-select"
                     value={selectedStrategy}
                     onChange={(e) => onSelectStrategy(e.target.value)}
                     disabled={loading}
@@ -25,23 +27,32 @@ const StrategySelector = ({
                         <option key={s} value={s}>{s}</option>
                     ))}
                 </select>
+            </div>
+
+            <div className="toolbar-actions">
                 <button
                     type="button"
                     className="btn-ghost"
                     onClick={onReload}
                     disabled={loading}
+                    title={t('maintain.reload')}
                 >
-                    {t('maintain.reload')}
+                    <ReloadOutlined />
                 </button>
                 <button
                     type="button"
                     className="btn-ghost"
                     onClick={onRefreshList}
                     disabled={loading}
+                    title={t('maintain.refresh_list')}
                 >
-                    {t('maintain.refresh_list')}
+                    <SyncOutlined />
                 </button>
-                <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 0.5rem' }}></div>
+            </div>
+
+            <div className="toolbar-divider"></div>
+
+            <div className="toolbar-actions">
                 <button
                     type="button"
                     className="btn-secondary"
@@ -49,7 +60,7 @@ const StrategySelector = ({
                     disabled={loading}
                     title="Analyze code structure and logic"
                 >
-                    {t('maintain.ai_analysis')}
+                    <RobotOutlined /> {t('maintain.ai_analysis')}
                 </button>
                 <button
                     type="button"
@@ -58,10 +69,10 @@ const StrategySelector = ({
                     disabled={loading}
                     title="Rewrite code for optimization"
                 >
-                    {t('maintain.ai_rewrite')}
+                    <ThunderboltOutlined /> {t('maintain.ai_rewrite')}
                 </button>
             </div>
-        </div>
+        </>
     )
 }
 
