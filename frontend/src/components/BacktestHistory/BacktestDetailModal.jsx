@@ -38,13 +38,14 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
             const data = await performFullStrategyAnalysis({
                 result: {
                     metrics: backtest.metrics,
-                    plot_url: backtest.plot_url
+                    plot_url: backtest.plot_url,
                 },
                 strategyName: backtest.strategy_name,
                 ticker: backtest.ticker,
                 startDate: backtest.start_date,
                 endDate: backtest.end_date,
-                model: selectedModel
+                model: selectedModel,
+                initialStrategyCode: backtest.strategy_code
             })
 
             setAnalyses(prev => {

@@ -62,18 +62,23 @@ export const performFullStrategyAnalysis = async ({
     ticker,
     startDate,
     endDate,
-    model = "gpt-5.1"
+    model = "gpt-5.1",
+    initialStrategyCode
 }) => {
     // 1. Fetch Strategy Code
     let strategyCode = '';
-    try {
-        if (strategyName) {
-            const stratData = await fetch(`${API_URL}/strategy?name=${strategyName}`);
-            strategyCode = stratData?.code || 'Code not available';
+    if (initialStrategyCode) {
+        strategyCode = initialStrategyCode;
+    }else{
+        try {
+            if (strategyName) {
+                const stratData = await fetch(`${API_URL}/strategy?name=${strategyName}`);
+                strategyCode = stratData?.code || 'Code not available';
+            }
+        } catch (e) {
+            console.warn("Could not fetch strategy code", e);
+            strategyCode = 'Error fetching code';
         }
-    } catch (e) {
-        console.warn("Could not fetch strategy code", e);
-        strategyCode = 'Error fetching code';
     }
 
     // 2. Fetch Plot Image Blob
