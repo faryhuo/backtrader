@@ -4,6 +4,7 @@ import {
     FundOutlined,
     CodeOutlined,
     DatabaseOutlined,
+    HistoryOutlined,
     ThunderboltOutlined,
     SettingOutlined,
     MenuFoldOutlined,
@@ -49,6 +50,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><DatabaseOutlined /></span>
                     {!collapsed && <span>{t('nav.datasource')}</span>}
+                </Link>
+                <Link
+                    to="/history"
+                    className={getNavClass('/history')}
+                    title={t('nav.history')}
+                >
+                    <span className="icon"><HistoryOutlined /></span>
+                    {!collapsed && <span>{t('nav.history')}</span>}
                 </Link>
                 <Link
                     to="/live"

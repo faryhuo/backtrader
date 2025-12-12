@@ -15,6 +15,7 @@ import tradeLogEn from './locales/en/trade_log.json';
 import strategyPlotEn from './locales/en/strategy_plot.json';
 import maintainEn from './locales/en/maintain.json';
 import datasourceEn from './locales/en/datasource.json';
+import historyEn from './locales/en/history.json';
 import liveEn from './locales/en/live.json';
 import settingsEn from './locales/en/settings.json';
 
@@ -31,6 +32,7 @@ import tradeLogZh from './locales/zh/trade_log.json';
 import strategyPlotZh from './locales/zh/strategy_plot.json';
 import maintainZh from './locales/zh/maintain.json';
 import datasourceZh from './locales/zh/datasource.json';
+import historyZh from './locales/zh/history.json';
 import liveZh from './locales/zh/live.json';
 import settingsZh from './locales/zh/settings.json';
 
@@ -47,6 +49,7 @@ const en = {
   strategy_plot: strategyPlotEn,
   maintain: maintainEn,
   datasource: datasourceEn,
+  history: historyEn,
   live: liveEn,
   settings: settingsEn
 };
@@ -64,6 +67,7 @@ const zh = {
   strategy_plot: strategyPlotZh,
   maintain: maintainZh,
   datasource: datasourceZh,
+  history: historyZh,
   live: liveZh,
   settings: settingsZh
 };

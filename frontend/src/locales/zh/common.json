@@ -5,5 +5,10 @@
   "cancel": "取消",
   "expand_sidebar": "展开侧边栏",
   "collapse_sidebar": "收起侧边栏",
-  "na": "N/A"
+  "na": "N/A",
+  "view": "查看",
+  "filter": "筛选",
+  "reset": "重置",
+  "yes": "是",
+  "no": "否"
 }

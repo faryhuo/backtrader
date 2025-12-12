@@ -1,0 +1,223 @@
+import { useState } from 'react'
+import { Modal, Tabs, Descriptions, Tag, Button, Select, message } from 'antd'
+import { useTranslation } from 'react-i18next'
+import dayjs from 'dayjs'
+import { performFullStrategyAnalysis, getAvailableModels } from '../../services/aiAnalysis'
+import { api } from '../../services/api'
+import PerformanceOverview from '../RunStrategy/PerformanceOverview'
+import TradeLog from '../RunStrategy/TradeLog'
+import AIInsight from '../RunStrategy/AIInsight'
+
+function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
+    const { t } = useTranslation()
+    const [aiLoading, setAiLoading] = useState(false)
+    const [analyses, setAnalyses] = useState({})
+    const [activeTab, setActiveTab] = useState(null)
+
+    // Initialize available models from settings
+    const availableModels = getAvailableModels()
+    const [selectedModel, setSelectedModel] = useState(availableModels[0] || 'gpt-4o')
+
+    if (!backtest) return null
+
+    // Load existing AI analyses from backtest data (stored as JSON: {model_name: analysis_content})
+    const savedAnalyses = backtest.ai_analysis || {}
+
+    // Merge saved analyses with new analyses from current session
+    const allAnalyses = { ...savedAnalyses, ...analyses }
+
+    const tradeList = backtest.metrics?.trade_details?.trades || []
+
+    const handleAIAnalysis = async () => {
+        if (!backtest || !backtest.plot_url) {
+            return
+        }
+        setAiLoading(true)
+
+        try {
+            const data = await performFullStrategyAnalysis({
+                result: {
+                    metrics: backtest.metrics,
+                    plot_url: backtest.plot_url
+                },
+                strategyName: backtest.strategy_name,
+                ticker: backtest.ticker,
+                startDate: backtest.start_date,
+                endDate: backtest.end_date,
+                model: selectedModel
+            })
+
+            setAnalyses(prev => {
+                const newState = { ...prev, [selectedModel]: data.analysis }
+                return newState
+            })
+            setActiveTab(selectedModel)
+
+            // Save AI analysis to backtest history
+            if (backtest.backtest_id) {
+                try {
+                    await api.updateBacktestAiAnalysis(backtest.backtest_id, selectedModel, data.analysis)
+                    message.success(t('history.ai_analysis_saved', 'AI analysis saved successfully'))
+
+                    // Update backtest object with new analysis
+                    backtest.ai_analysis = { ...backtest.ai_analysis, [selectedModel]: data.analysis }
+
+                    // Notify parent component to refresh data if callback provided
+                    if (onAnalysisUpdate) {
+                        onAnalysisUpdate(backtest.backtest_id, backtest.ai_analysis)
+                    }
+                } catch (err) {
+                    console.error("Failed to save AI analysis to history:", err)
+                    message.error(t('history.ai_analysis_save_error', 'Failed to save AI analysis'))
+                }
+            }
+
+        } catch (err) {
+            console.error(err)
+            message.error("Failed to perform AI analysis: " + err.message)
+        } finally {
+            setAiLoading(false)
+        }
+    }
+
+    return (
+        <Modal
+            title={t('history.detail_title')}
+            open={visible}
+            onCancel={onClose}
+            width="90%"
+            footer={null}
+            style={{ top: 20 }}
+        >
+            <Tabs defaultActiveKey="overview">
+                <Tabs.TabPane tab={t('history.tab_overview')} key="overview">
+                    <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label={t('history.backtest_id')}>
+                            {backtest.backtest_id}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('history.run_date')}>
+                            {backtest.created_at ? dayjs(backtest.created_at).format('YYYY-MM-DD HH:mm:ss') : 'N/A'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('config_form.ticker')}>
+                            <Tag color="blue">{backtest.ticker}</Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('config_form.strategy')}>
+                            {backtest.strategy_name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('history.test_period')}>
+                            {backtest.start_date} ~ {backtest.end_date}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('config_form.initial_cash')}>
+                            ${backtest.initial_cash?.toLocaleString()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('config_form.commission')}>
+                            {backtest.commission}
+                        </Descriptions.Item>
+                        <Descriptions.Item label={t('config_form.stake')}>
+                            {backtest.stake}
+                        </Descriptions.Item>
+                    </Descriptions>
+
+                    <div style={{ marginTop: 20 }}>
+                        <PerformanceOverview
+                            result={{
+                                metrics: backtest.metrics,
+                                plot_url: backtest.plot_url
+                            }}
+                        />
+                    </div>
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab={t('history.tab_chart')} key="chart">
+                    {backtest.plot_url && (
+                        <div style={{ padding: '20px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <img
+                                    src={backtest.plot_url}
+                                    alt="Strategy Plot"
+                                    style={{ maxWidth: '100%', height: 'auto' }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab={t('history.tab_trades')} key="trades">
+                    <TradeLog trades={tradeList} />
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab={t('history.tab_ai_insight', 'AI Insight')} key="ai_insight">
+                    <div style={{ padding: '20px' }}>
+                        {/* AI Analysis Controls */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: '1rem',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            background: 'rgba(22, 27, 34, 0.6)',
+                            borderRadius: '8px',
+                            marginBottom: '1.5rem'
+                        }}>
+                            <Select
+                                value={selectedModel}
+                                onChange={(value) => setSelectedModel(value)}
+                                style={{ width: 150 }}
+                            >
+                                {availableModels.map(m => (
+                                    <Select.Option key={m} value={m}>{m}</Select.Option>
+                                ))}
+                            </Select>
+                            <Button
+                                type="primary"
+                                onClick={handleAIAnalysis}
+                                loading={aiLoading}
+                            >
+                                {aiLoading ? t('strategy_plot.interpreting', 'Analyzing...') : t('strategy_plot.ai_interpretation', 'AI Analysis')}
+                            </Button>
+                        </div>
+
+                        {/* AI Analysis Results */}
+                        {Object.keys(allAnalyses).length > 0 ? (
+                            <AIInsight
+                                analyses={allAnalyses}
+                                activeTab={activeTab || Object.keys(allAnalyses)[0]}
+                                onTabChange={setActiveTab}
+                            />
+                        ) : (
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '2rem',
+                                color: '#888'
+                            }}>
+                                {t('history.no_ai_analysis', 'No AI analysis available. Click the button above to generate one.')}
+                            </div>
+                        )}
+                    </div>
+                </Tabs.TabPane>
+
+                {backtest.strategy_code && (
+                    <Tabs.TabPane tab={t('history.tab_strategy_code', 'Strategy Code')} key="strategy_code">
+                        <div style={{ padding: '20px' }}>
+                            <pre style={{
+                                background: 'rgba(22, 27, 34, 0.6)',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                overflow: 'auto',
+                                maxHeight: '600px',
+                                whiteSpace: 'pre',
+                                fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+                                fontSize: '13px',
+                                lineHeight: '1.5'
+                            }}>
+                                {backtest.strategy_code}
+                            </pre>
+                        </div>
+                    </Tabs.TabPane>
+                )}
+            </Tabs>
+        </Modal>
+    )
+}
+
+export default BacktestDetailModal

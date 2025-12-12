@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { performFullStrategyAnalysis, getAvailableModels } from '../../services/aiAnalysis';
+import { api } from '../../services/api';
 import AIInsight from './AIInsight';
 
 function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
@@ -44,6 +45,16 @@ function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
                 return newState;
             });
             setActiveTab(selectedModel);
+
+            // Save AI analysis to backtest history if backtest_id exists
+            if (result.backtest_id) {
+                try {
+                    await api.updateBacktestAiAnalysis(result.backtest_id,model, data.analysis);
+                } catch (err) {
+                    console.error("Failed to save AI analysis to history:", err);
+                    // Don't show error to user - analysis is still displayed
+                }
+            }
 
         } catch (err) {
             console.error(err);
