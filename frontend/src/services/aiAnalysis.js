@@ -1,5 +1,60 @@
-import { API_URL, api } from './api';
+import { API_URL, getAccessToken, parseResponse } from './api';
 import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
+
+export const getAISettings = () => {
+    const DEFAULT_SETTINGS = {
+        selectedModels: ['gpt-5.1'],
+        codeAnalysisPrompt: 'Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n{code}',
+        codeRewritePrompt: 'Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}',
+        fullStrategyAnalysisPrompt: 'Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.\n\n{contextText}\n\n{metricsText}\n\n{logsText}\n\nProvide a comprehensive assessment including:\n1. Overall Performance: Is it profitable and consistent?\n2. Risk Profile: analysis of drawdowns and volatility.\n3. Strengths & Weaknesses: What is working well and what isn\'t?\n4. Suggestions: Recommendations for improvement.\n5. Code Analysis: Comments on the strategy logic.\n6. Always return with Chinese.\n7. 不需要对策略代码逻辑进行点评'
+    };
+
+    try {
+        const stored = localStorage.getItem('userSettings');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Migration handling
+            if (parsed.aiModel && !parsed.selectedModels) {
+                parsed.selectedModels = [parsed.aiModel];
+                delete parsed.aiModel;
+            }
+            return { ...DEFAULT_SETTINGS, ...parsed };
+        }
+    } catch (e) {
+        console.error('Failed to read settings from localStorage', e);
+    }
+    return DEFAULT_SETTINGS;
+};
+
+export const getAvailableModels = () => {
+    const settings = getAISettings();
+    return settings.selectedModels && settings.selectedModels.length > 0 
+        ? settings.selectedModels 
+        : ['gpt-5.1'];
+};
+
+export const analyzeChart = async (message, model, file) => {
+    const formData = new FormData()
+    formData.append('message', message)
+    formData.append('model', model)
+    if (file) {
+        formData.append('file', file)
+    }
+
+    // Build headers with auth token
+    const headers = new Headers()
+    const token = await getAccessToken()
+    if (token) {
+        headers.set('Authorization', `Bearer ${token}`)
+    }
+
+    const res = await fetch(`${API_URL}/ai_analyze`, {
+        method: 'POST',
+        headers,
+        body: formData
+    })
+    return await parseResponse(res)
+}
 
 export const performFullStrategyAnalysis = async ({
     result,
@@ -80,13 +135,14 @@ ${strategyCode}
 \`\`\`
 `;
 
-    const message = `Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.
+    const settings = getAISettings();
+    const promptTemplate = settings.fullStrategyAnalysisPrompt || `Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.
 
-${contextText}
+{contextText}
 
-${metricsText}
+{metricsText}
 
-${logsText}
+{logsText}
 
 Provide a comprehensive assessment including:
 1. Overall Performance: Is it profitable and consistent?
@@ -95,10 +151,39 @@ Provide a comprehensive assessment including:
 4. Suggestions: Recommendations for improvement.
 5. Code Analysis: Comments on the strategy logic.
 6. Always return with Chinese.
-7. 不需要对策略代码逻辑进行点评
-`;
+7. 不需要对策略代码逻辑进行点评`;
+
+    const message = promptTemplate
+        .replace('{contextText}', contextText)
+        .replace('{metricsText}', metricsText)
+        .replace('{logsText}', logsText);
 
     // 4. Call API
     // Note: api.analyzeChart expects (message, model, file)
-    return await api.analyzeChart(message, model, file);
+    return await analyzeChart(message, model, file);
 };
+
+export const analyzeCode = async (code, model = null) => {
+    const settings = getAISettings();
+    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : 'gpt-5.1');
+    const prompt = settings.codeAnalysisPrompt.replace('{code}', code);
+    
+    const data = await analyzeChart(prompt, effectiveModel, null);
+    return data.analysis;
+};
+
+export const rewriteCode = async (code, model = null) => {
+    const settings = getAISettings();
+    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : 'gpt-5.1');
+    const prompt = settings.codeRewritePrompt.replace('{code}', code);
+
+    const data = await analyzeChart(prompt, effectiveModel, null);
+    let cleanCode = data.analysis;
+    if (cleanCode.startsWith('```python')) {
+        cleanCode = cleanCode.replace(/^```python\n/, '').replace(/\n```$/, '');
+    } else if (cleanCode.startsWith('```')) {
+        cleanCode = cleanCode.replace(/^```\n/, '').replace(/\n```$/, '');
+    }
+    return cleanCode;
+};
+

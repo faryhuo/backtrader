@@ -10,16 +10,16 @@ import threading
 import uuid
 import warnings
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, Optional
 
 import backtrader as bt
 
 from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
+from src.brokers.ibkr_adapter import IBKRStore
 from src.db.session_storage import SessionStorage
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.session_manager import SessionStatus, get_session_manager
-from src.utils.config_loader import load_broker_config
+from src.utils.config_loader import get_exchange_config, load_broker_config
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,49 @@ class SafeReturns(bt.analyzers.Returns):
             self.rets['ravg'] = 0.0
             self.rets['rnorm'] = 0.0
             self.rets['rnorm100'] = 0.0
+
+
+def _build_components(
+    exchange: str,
+    mode: str,
+    symbol: str,
+    timeframe: str,
+    initial_cash: float,
+    commission: float,
+    session_id: Optional[str],
+    config,
+):
+    """
+    Create store/broker/data based on exchange adapter (ccxt/ibkr).
+    """
+    ex_config = get_exchange_config(exchange, config)
+    adapter = ex_config.adapter.lower()
+
+    if adapter == 'ccxt':
+        store = CCXTStore(exchange_id=exchange, mode=mode)
+        store.start()
+        broker = CCXTBroker(
+            store=store,
+            cash=initial_cash,
+            commission=commission,
+            session_id=session_id
+        )
+        data_feed = CCXTData(
+            store=store,
+            symbol=symbol,
+            timeframe=timeframe
+        )
+        logger.info("Initialized CCXT components for %s (%s)", symbol, exchange)
+    elif adapter == 'ibkr':
+        store = IBKRStore(mode=mode)
+        store.start()
+        broker = store.get_broker(initial_cash=initial_cash, commission=commission)
+        data_feed = store.get_data(symbol=symbol, timeframe=timeframe)
+        logger.info("Initialized IBKR components for %s", symbol)
+    else:
+        raise LiveTradingError(f"Unsupported adapter '{adapter}' for exchange '{exchange}'")
+
+    return store, broker, data_feed, adapter
 
 
 def run_live(
@@ -99,6 +142,7 @@ def run_live(
 
     # Get session manager
     session_manager = get_session_manager()
+    store = None
 
     try:
         # 1. Create session in manager
@@ -121,25 +165,18 @@ def run_live(
         if config is None:
             config = load_broker_config()
 
-        # 4. Initialize CCXT components
-        store = CCXTStore(exchange_id=exchange, mode=mode)
-        store.start()
-        logger.info(f"CCXT store started for {exchange}")
-
-        broker = CCXTBroker(
-            store=store,
-            cash=initial_cash,
-            commission=commission,
-            session_id=session_id  # Pass session_id for WebSocket broadcasting
-        )
-        logger.info(f"CCXT broker initialized with ${initial_cash}")
-
-        data_feed = CCXTData(
-            store=store,
+        # 4. Initialize components based on adapter
+        store, broker, data_feed, adapter = _build_components(
+            exchange=exchange,
+            mode=mode,
             symbol=symbol,
-            timeframe=timeframe
+            timeframe=timeframe,
+            initial_cash=initial_cash,
+            commission=commission,
+            session_id=session_id,
+            config=config
         )
-        logger.info(f"CCXT data feed initialized for {symbol} ({timeframe})")
+        logger.info("Adapter '%s' initialized for exchange %s", adapter, exchange)
 
         # 5. Initialize Cerebro
         cerebro = bt.Cerebro()

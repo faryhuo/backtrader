@@ -4,6 +4,7 @@
     "binance": {
       "enabled": true,
       "name": "Binance",
+      "adapter": "ccxt",
       "ccxt_id": "binance",
       "markets": [
         "spot",
@@ -23,6 +24,7 @@
     "okx": {
       "enabled": false,
       "name": "OKX",
+      "adapter": "ccxt",
       "ccxt_id": "okx",
       "markets": [
         "spot",
@@ -42,6 +44,7 @@
     "bybit": {
       "enabled": false,
       "name": "Bybit",
+      "adapter": "ccxt",
       "ccxt_id": "bybit",
       "markets": [
         "spot",
@@ -57,6 +60,26 @@
         "orders_per_second": 10,
         "requests_per_minute": 600
       }
+    },
+    "ibkr": {
+      "enabled": false,
+      "name": "Interactive Brokers",
+      "adapter": "ibkr",
+      "ccxt_id": "ibkr",
+      "markets": [
+        "stock",
+        "forex",
+        "futures",
+        "options"
+      ],
+      "default_market": "stock",
+      "paper_mode": {
+        "enabled": true,
+        "sandbox_url": null,
+        "initial_balance_usdt": 100000
+      },
+      "rate_limits": null,
+      "notes": "Requires IB Gateway/TWS; configure IBKR_{MODE}_HOST/PORT/CLIENT_ID/ACCOUNT env vars."
     }
   },
   "risk_management": {

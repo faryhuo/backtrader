@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import '../index.css'
 import { api } from '../services/api'
+import { analyzeCode, rewriteCode } from '../services/aiAnalysis'
 import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
 import StrategyEditorPanel from '../components/StrategyMaintain/StrategyEditorPanel'
 import AnalysisModal from '../components/StrategyMaintain/AnalysisModal'
@@ -110,7 +111,7 @@ class UserStrategy(bt.Strategy):
         if (!code) return;
         try {
             setCodeLoading(true);
-            const result = await api.analyzeCode(code);
+            const result = await analyzeCode(code);
             setAnalysisResult(result);
             setShowAnalysisModal(true);
         } catch (err) {
@@ -128,7 +129,7 @@ class UserStrategy(bt.Strategy):
         }
         try {
             setCodeLoading(true);
-            const newCode = await api.rewriteCode(code);
+            const newCode = await rewriteCode(code);
             setCode(newCode);
         } catch (err) {
             console.error("AI Rewrite failed", err);

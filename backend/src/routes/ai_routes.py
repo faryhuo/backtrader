@@ -55,7 +55,7 @@ async def analyze_chart(
         proxy = HTTPS_PROXY or HTTP_PROXY
         # Build OpenAI client; wrap in httpx client when a proxy is configured.
         if proxy:
-            async with httpx.AsyncClient(proxy=proxy, timeout=60) as http_client:
+            async with httpx.AsyncClient(proxy=proxy, timeout=900) as http_client:
                 client = AsyncOpenAI(
                     api_key=OPENAI_API_KEY,
                     base_url=OPENAI_BASE_URL,

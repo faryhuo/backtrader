@@ -1,0 +1,74 @@
+.settings-page {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-section {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h2 {
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.settings-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.settings-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.settings-input,
+.settings-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.settings-input:focus,
+.settings-textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.settings-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: monospace;
+}
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.save-success {
+    color: var(--success-color);
+    margin-left: 1rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.save-success.visible {
+    opacity: 1;
+}

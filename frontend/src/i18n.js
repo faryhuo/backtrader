@@ -16,6 +16,7 @@ import strategyPlotEn from './locales/en/strategy_plot.json';
 import maintainEn from './locales/en/maintain.json';
 import datasourceEn from './locales/en/datasource.json';
 import liveEn from './locales/en/live.json';
+import settingsEn from './locales/en/settings.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -31,6 +32,7 @@ import strategyPlotZh from './locales/zh/strategy_plot.json';
 import maintainZh from './locales/zh/maintain.json';
 import datasourceZh from './locales/zh/datasource.json';
 import liveZh from './locales/zh/live.json';
+import settingsZh from './locales/zh/settings.json';
 
 const en = {
   app: appEn,
@@ -45,7 +47,8 @@ const en = {
   strategy_plot: strategyPlotEn,
   maintain: maintainEn,
   datasource: datasourceEn,
-  live: liveEn
+  live: liveEn,
+  settings: settingsEn
 };
 
 const zh = {
@@ -61,7 +64,8 @@ const zh = {
   strategy_plot: strategyPlotZh,
   maintain: maintainZh,
   datasource: datasourceZh,
-  live: liveZh
+  live: liveZh,
+  settings: settingsZh
 };
 
 i18n

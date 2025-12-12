@@ -5,6 +5,7 @@ import {
     CodeOutlined,
     DatabaseOutlined,
     ThunderboltOutlined,
+    SettingOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
 } from '@ant-design/icons'
@@ -56,6 +57,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><ThunderboltOutlined /></span>
                     {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                </Link>
+                <Link
+                    to="/settings"
+                    className={getNavClass('/settings')}
+                    title={t('nav.settings', 'Settings')}
+                >
+                    <span className="icon"><SettingOutlined /></span>
+                    {!collapsed && <span>{t('nav.settings', 'Settings')}</span>}
                 </Link>
             </nav>
             <div className="sidebar-footer">
