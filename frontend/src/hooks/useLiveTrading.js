@@ -17,7 +17,6 @@ export const useLiveTrading = () => {
     const [currentPnl, setCurrentPnl] = useState(0);
     const [portfolioValue, setPortfolioValue] = useState(0);
     const [cash, setCash] = useState(0);
-
     // Statistics
     const [stats, setStats] = useState({
         totalTrades: 0,
@@ -25,6 +24,10 @@ export const useLiveTrading = () => {
         losingTrades: 0,
         winRate: 0
     });
+    let wsConnect;
+    let wsDisconnect;
+    let wsConnected;
+
 
     // Handle WebSocket messages
     const handleWebSocketMessage = useCallback((msg) => {
@@ -32,8 +35,8 @@ export const useLiveTrading = () => {
 
         switch (msg.type) {
             case WS_MESSAGE_TYPES.CONNECTED:
-                message.success('Connected to live trading session');
-                addNotification('Connected to live trading session', 'success');
+                // Silently connected - no UI spam
+                console.log('WebSocket connected to session');
                 break;
 
             case WS_MESSAGE_TYPES.POSITION:
@@ -121,20 +124,6 @@ export const useLiveTrading = () => {
         }
     }, [addNotification]);
 
-    // WebSocket connection
-    const {
-        isOpen: wsConnected,
-        connect: wsConnect,
-        disconnect: wsDisconnect
-    } = useWebSocket(session?.session_id, {
-        autoConnect: false,
-        onMessage: handleWebSocketMessage,
-        onError: (error) => {
-            console.error('WebSocket error:', error);
-            message.error('WebSocket connection error');
-        }
-    });
-
     // Start trading session
     const handleStartSession = async (config) => {
         try {
@@ -157,12 +146,27 @@ export const useLiveTrading = () => {
                 losingTrades: 0,
                 winRate: 0
             });
-
+            // WebSocket connection - NEVER auto-connect, only manual connect after session starts
+            const wsObj = useWebSocket(session?.session_id, {
+                autoConnect: false,  // Never auto-connect to prevent reconnection loops
+                maxReconnectAttempts: 0,  // Disable auto-reconnect completely
+                onMessage: handleWebSocketMessage,
+                onError: (error) => {
+                    // Suppress error messages to avoid flooding UI
+                    console.error('WebSocket error:', error);
+                }
+            });
+            wsConnect = wsObj.connect;
+            wsDisconnect = wsObj.disconnect;
+            wsConnected = wsObj.isOpen;
             message.success('Trading session started successfully');
             addNotification('Trading session started successfully', 'success');
 
+            // Manually connect WebSocket after session is successfully created
             setTimeout(() => {
-                wsConnect();
+                if (result.session_id && result.status === 'running') {
+                    wsConnect(result.session_id);
+                }
             }, 1000);
 
         } catch (error) {
@@ -201,7 +205,10 @@ export const useLiveTrading = () => {
 
     // Refresh session status
     const handleRefreshSession = async () => {
-        if (!session) return;
+        if (!session || !session.session_id) {
+            console.warn('Cannot refresh: no active session');
+            return;
+        }
 
         try {
             setLoading(true);
@@ -229,13 +236,14 @@ export const useLiveTrading = () => {
                 const activeSession = activeSessions[0];
                 setSession(activeSession);
 
+                // Only fetch orders if session_id exists
                 if (activeSession.session_id) {
                     const ordersData = await api.getSessionOrders(activeSession.session_id);
                     setOrders(ordersData?.orders || []);
 
-                    setTimeout(() => {
-                        wsConnect();
-                    }, 500);
+                    if (activeSession.status === 'running') {
+                        setTimeout(() => wsConnect(activeSession.session_id), 500);
+                    }
                 }
             }
         } catch (error) {

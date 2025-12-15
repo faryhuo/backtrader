@@ -10,7 +10,8 @@ import asyncio
 import logging
 import os
 import threading
-from typing import Any, Optional, Dict
+import time
+from typing import Any, Optional, Dict, Callable, Awaitable
 
 import ccxt.async_support as ccxt
 
@@ -49,6 +50,7 @@ class CCXTStore:
         self._exchange: Optional[ccxt.Exchange] = None
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._thread: Optional[threading.Thread] = None
+        self._loop_ready = threading.Event()  # Signal when loop is running
         self._running = False
 
         logger.info(f"Initialized CCXTStore for {exchange_id} in {mode} mode")
@@ -58,37 +60,60 @@ class CCXTStore:
         Start the CCXT store.
 
         This method:
-        1. Loads API credentials from environment variables
-        2. Initializes CCXT exchange instance
-        3. Starts asyncio event loop in background thread
+        1. Loads API credentials
+        2. Starts asyncio event loop in background thread
+        3. Initializes CCXT exchange instance (requires loop)
+        4. Verifies connection
         """
         if self._running:
             logger.warning("CCXTStore already started")
             return
 
-        self._load_credentials()
-        self._init_exchange()
-        self._start_event_loop()
+        try:
+            # 1. Start Event Loop first (Exchange init often needs it for async calls)
+            self._start_event_loop()
 
-        self._running = True
-        logger.info(f"CCXTStore started for {self.exchange_id}")
+            # 2. Load Credentials
+            self._load_credentials()
+
+            # 3. Initialize Exchange
+            self._init_exchange()
+
+            # 4. Verify Connection & Load Markets
+            # We run this on the loop to ensure async internals are set up
+            self.run_coroutine(
+                self._fetch_with_retry(lambda: self._exchange.load_markets(), max_attempts=3),
+                timeout=90
+            )
+            
+            self._running = True
+            logger.info(f"CCXTStore started for {self.exchange_id} (Markets loaded: {len(self._exchange.markets)})")
+
+        except Exception as e:
+            logger.error(f"Failed to start CCXTStore: {e}")
+            self.stop()
+            raise
 
     def stop(self) -> None:
         """Stop the CCXT store and clean up resources."""
-        if not self._running:
+        if not self._running and not self._thread:
             return
 
         self._running = False
 
-        # Close exchange connection
-        if self._exchange:
-            self.run_coroutine(self._exchange.close())
+        # 1. Close exchange connection safely on the loop
+        if self._exchange and self._loop and self._loop.is_running():
+            try:
+                future = asyncio.run_coroutine_threadsafe(self._exchange.close(), self._loop)
+                future.result(timeout=5)  # Wait for close
+            except Exception as e:
+                logger.warning(f"Error closing exchange: {e}")
 
-        # Stop event loop
+        # 2. Stop event loop
         if self._loop and self._loop.is_running():
             self._loop.call_soon_threadsafe(self._loop.stop)
 
-        # Wait for thread to finish
+        # 3. Wait for thread to finish
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=5)
 
@@ -134,19 +159,16 @@ class CCXTStore:
         try:
             return future.result(timeout=timeout)
         except asyncio.TimeoutError:
+            # We don't cancel the future here because it might be a critical operation
+            # that should complete even if we stopped waiting.
             raise TimeoutError(f"Coroutine execution exceeded {timeout}s timeout")
+        except Exception as e:
+            # Re-raise exceptions from the coroutine
+            raise e
 
     def _load_credentials(self) -> None:
         """
         Load API credentials from environment variables.
-
-        Expected env var format:
-        - CCXT_{EXCHANGE}_{MODE}_API_KEY
-        - CCXT_{EXCHANGE}_{MODE}_SECRET
-        - CCXT_{EXCHANGE}_{MODE}_PASSPHRASE (for exchanges that require it)
-
-        Raises:
-            ValueError: If required credentials not found
         """
         exchange_upper = self.exchange_id.upper()
         mode_upper = self.mode.upper()
@@ -157,142 +179,136 @@ class CCXTStore:
 
         self.api_key = os.getenv(api_key_var)
         self.secret = os.getenv(secret_var)
-        self.passphrase = os.getenv(passphrase_var)  # Optional, only for some exchanges
+        self.passphrase = os.getenv(passphrase_var)
 
+        # Allow running without credentials ONLY in paper mode if specifically configured
+        # But generally paper trading still needs API keys for most exchanges
         if not self.api_key or not self.secret:
-            raise ValueError(
-                f"Missing API credentials. Set {api_key_var} and {secret_var} "
-                f"in environment variables."
-            )
-
-        logger.info(f"Loaded credentials for {self.exchange_id} {self.mode} mode")
+             # Check if we are in a special 'simulation' mode that doesn't need keys? 
+             # For now, strict check.
+            if self.mode == 'live':
+                raise ValueError(
+                    f"Missing API credentials for LIVE mode. Set {api_key_var} and {secret_var}."
+                )
+            else:
+                 logger.warning(
+                     f"No API credentials found for {self.exchange_id} {self.mode}. "
+                     "Some calls may fail if the exchange requires auth even for testnet."
+                 )
 
     def _init_exchange(self) -> None:
         """
         Initialize CCXT exchange instance.
-
-        Configures exchange with:
-        - API credentials
-        - Testnet/sandbox URL for paper trading
-        - Rate limits and other options
-
-        Raises:
-            ValueError: If exchange ID not supported
         """
         # Get exchange class
         exchange_class = getattr(ccxt, self.exchange_id, None)
         if not exchange_class:
             raise ValueError(f"Unsupported exchange: {self.exchange_id}")
 
+        default_market = str(self.config.get('default_market', 'spot')).lower()
+        if default_market in {'futures', 'future'}:
+            default_type = 'future'
+        else:
+            default_type = 'spot'
+
         # Build exchange config
         exchange_config = {
             'apiKey': self.api_key,
             'secret': self.secret,
             'enableRateLimit': True,
-            'timeout': 30000,  # 30 seconds
+            'timeout': 20000,  # ms
+            'options': {'defaultType': default_type},  # 'spot' or 'future' (binance)
         }
 
-        # Add passphrase if present (required for OKX)
+        # Add passphrase if present (required for OKX, KuCoin, etc)
         if self.passphrase:
             exchange_config['password'] = self.passphrase
-
-        # Set sandbox URL for paper trading
-        if self.mode == 'paper':
-            exchange_config['sandbox'] = True
-
-            # Exchange-specific testnet URLs
-            testnet_urls = {
-                'binance': {
-                    'test': True,
-                },
-                'okx': {
-                    'hostname': 'www.okx.com',  # OKX uses same URL for testnet
-                },
-                'bybit': {
-                    'hostname': 'api-testnet.bybit.com',
-                }
-            }
-
-            if self.exchange_id in testnet_urls:
-                exchange_config.update(testnet_urls[self.exchange_id])
 
         # Initialize exchange
         self._exchange = exchange_class(exchange_config)
 
-        logger.info(f"Initialized {self.exchange_id} exchange (sandbox={self.mode == 'paper'})")
+        # Enable sandbox/testnet if needed
+        if self.mode == 'paper':
+            self._exchange.set_sandbox_mode(True)
+
+            # Explicit overrides for Binance Spot Testnet (https://testnet.binance.vision/)
+            # Use updates instead of replacement to avoid stripping futures endpoints (fapi*) that CCXT expects.
+            if self.exchange_id == 'binance':
+                self._exchange.options['defaultType'] = default_type
+                self._exchange.options['defaultMarket'] = default_type
+                self._exchange.options['defaultSubType'] = None
+
+                # Only override the spot base URLs; futures testnet URLs live under fapi*/dapi*.
+                if default_type == 'spot':
+                    self._exchange.urls.setdefault('api', {})
+                    self._exchange.urls['api'].update({
+                        'public': 'https://testnet.binance.vision/api/v3',
+                        'private': 'https://testnet.binance.vision/api/v3',
+                        'v1': 'https://testnet.binance.vision/api/v1',
+                    })
+
+            logger.info(f"Enabled sandbox mode for {self.exchange_id}")
 
     def _start_event_loop(self) -> None:
         """
         Start asyncio event loop in background thread.
-
-        This allows async CCXT operations to run concurrently with
-        Backtrader's synchronous execution.
         """
+        if self._thread and self._thread.is_alive():
+            return
+
+        self._loop_ready.clear()
+
         def run_loop():
             """Background thread function that runs event loop."""
             self._loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self._loop)
+            self._loop_ready.set()  # Signal ready
 
             try:
                 self._loop.run_forever()
             finally:
                 # Clean up pending tasks
-                pending = asyncio.all_tasks(self._loop)
-                for task in pending:
-                    task.cancel()
-
-                # Run until all tasks are cancelled
-                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                try:
+                    pending = asyncio.all_tasks(self._loop)
+                    for task in pending:
+                        task.cancel()
+                    
+                    if pending:
+                        self._loop.run_until_complete(
+                            asyncio.gather(*pending, return_exceptions=True)
+                        )
+                except Exception as e:
+                    logger.error(f"Error closing loop tasks: {e}")
+                
                 self._loop.close()
+                logger.info("Event loop closed")
 
         self._thread = threading.Thread(target=run_loop, daemon=True, name=f"CCXT-{self.exchange_id}")
         self._thread.start()
 
-        # Wait for loop to start
-        import time
-        timeout = 5
-        start_time = time.time()
-        while not self._loop or not self._loop.is_running():
-            if time.time() - start_time > timeout:
-                raise RuntimeError("Failed to start event loop within timeout")
-            time.sleep(0.1)
+        # Wait for loop to be ready
+        if not self._loop_ready.wait(timeout=5.0):
+             raise RuntimeError("Failed to start asyncio event loop within 5s")
 
-        logger.info("Event loop started in background thread")
-
-    async def _fetch_with_retry(self, coro: Any, max_attempts: int = 3) -> Any:
+    async def _fetch_with_retry(self, coro_factory: Callable[[], Awaitable[Any]], max_attempts: int = 3) -> Any:
         """
         Execute coroutine with retry logic on network failures.
-
-        Args:
-            coro: Coroutine to execute
-            max_attempts: Maximum number of retry attempts
-
-        Returns:
-            Result of coroutine execution
-
-        Raises:
-            Exception: If all retry attempts fail
         """
         last_error = None
 
         for attempt in range(max_attempts):
             try:
-                return await coro
-            except ccxt.NetworkError as e:
+                return await coro_factory()
+            except (ccxt.NetworkError, ccxt.RequestTimeout) as e:
                 last_error = e
                 if attempt < max_attempts - 1:
-                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                    wait_time = 0.5 * (2 ** attempt)  # 0.5s, 1s, 2s
                     logger.warning(
-                        f"Network error on attempt {attempt + 1}/{max_attempts}: {e}. "
-                        f"Retrying in {wait_time}s..."
+                        f"Network error ({self.exchange_id}): {e}. Retrying in {wait_time}s..."
                     )
                     await asyncio.sleep(wait_time)
-                else:
-                    logger.error(f"All {max_attempts} attempts failed")
-            except Exception as e:
-                # Non-network errors are not retried
-                logger.error(f"Non-retryable error: {e}")
-                raise
+            except Exception:
+                raise # Non-retryable
 
         raise last_error
 
