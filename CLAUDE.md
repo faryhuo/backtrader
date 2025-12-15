@@ -111,8 +111,7 @@ backend/
 │   │   └── websocket_manager.py# WebSocket connection manager
 │   └── utils/            # Utilities
 │       ├── auth.py             # JWT authentication (Logto)
-│       ├── config_loader.py    # Broker config loader
-│       └── dns_compat.py       # aiodns/pycares compatibility shim
+│       └── config_loader.py    # Broker config loader
 ├── resources/
 │   ├── config/
 │   │   └── broker_config.json  # Exchange settings, risk limits
@@ -430,13 +429,3 @@ Per `feature.md`, planned enhancements include:
 
 - Dockerfile uses Aliyun mirrors for apt and pip (faster in China)
 - To use default mirrors, edit `Dockerfile` and remove `-i https://mirrors.aliyun.com/pypi/simple/`
-
-### DNS Compatibility Shim
-
-- `src/utils/dns_compat.py` provides compatibility between `aiodns>=3.6.0` and `pycares>=5.0.0`
-- Required for CCXT's async DNS resolution
-
-### Protobuf Warnings
-
-- Suppressed in `app.py` and `live_engine.py` via `warnings.filterwarnings`
-- Related to IBKR API protobuf version mismatches (harmless)

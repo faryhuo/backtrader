@@ -94,13 +94,15 @@ export function useWebSocket(sessionId, options = {}) {
   }, []);
 
   // Connect to WebSocket
-  const connect = useCallback(() => {
-    if (!sessionId) {
+  const connect = useCallback((overrideSessionId = null) => {
+    const targetSessionId = overrideSessionId || sessionId;
+
+    if (!targetSessionId) {
       console.warn('Cannot connect: no session ID provided');
       return;
     }
 
-    const url = getWebSocketUrl(sessionId);
+    const url = getWebSocketUrl(targetSessionId);
     if (!url) {
       console.warn('Cannot connect: invalid WebSocket URL');
       return;

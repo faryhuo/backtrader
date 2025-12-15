@@ -12,11 +12,9 @@ requests>=2.31.0
 SQLAlchemy>=2.0.0
 
 # Live Trading - CCXT Integration
-ccxt>=4.2.0
+ccxt
 websockets>=12.0
-aiohttp>=3.9.0
-aiodns>=3.6.0
-pycares>=5.0.0
+aiohttp
 pydantic>=2.5.0
 # IBKR
 ibapi>=9.81.1

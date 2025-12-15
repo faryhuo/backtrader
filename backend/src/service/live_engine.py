@@ -23,13 +23,6 @@ from src.utils.config_loader import get_exchange_config, load_broker_config
 
 logger = logging.getLogger(__name__)
 
-# Suppress noisy protobuf warnings
-warnings.filterwarnings(
-    "once",
-    message=r"Protobuf gencode version .*runtime version .*",
-    category=UserWarning,
-    module=r"google\.protobuf\.runtime_version"
-)
 
 # Initialize session storage
 _session_storage = SessionStorage()
@@ -71,7 +64,14 @@ def _build_components(
     adapter = ex_config.adapter.lower()
 
     if adapter == 'ccxt':
-        store = CCXTStore(exchange_id=exchange, mode=mode)
+        store = CCXTStore(
+            exchange_id=ex_config.ccxt_id,
+            mode=mode,
+            config={
+                'default_market': ex_config.default_market,
+                'markets': ex_config.markets,
+            },
+        )
         store.start()
         broker = CCXTBroker(
             store=store,

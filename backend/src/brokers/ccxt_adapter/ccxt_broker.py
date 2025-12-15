@@ -7,7 +7,7 @@ cryptocurrency exchanges via CCXT.
 
 import asyncio
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -98,8 +98,8 @@ class CCXTBroker(bt.BrokerBase):
         # Counter for generating order IDs
         self._order_id_counter = 0
 
-        # Notifier for order/trade events
-        self._notifiers = []
+        # Notification queue for cerebro to poll order updates
+        self._notifications = deque()
 
         # WebSocket manager (lazy import to avoid circular dependency)
         self._ws_manager = None
@@ -149,15 +149,23 @@ class CCXTBroker(bt.BrokerBase):
 
         super().stop()
 
-    def add_notifier(self, notifier):
-        """Add notifier for order/trade events."""
-        self._notifiers.append(notifier)
-
     def notify(self, order):
-        """Notify all registered notifiers about order event."""
-        for notifier in self._notifiers:
-            if hasattr(notifier, 'notify_order'):
-                notifier.notify_order(order)
+        """Queue order notification for cerebro to poll."""
+        self._notifications.append(order)
+
+    def get_notification(self):
+        """
+        Get next notification from queue.
+        
+        This method is called by cerebro to retrieve order notifications.
+        
+        Returns:
+            Order object if notification available, None otherwise
+        """
+        try:
+            return self._notifications.popleft()
+        except IndexError:
+            return None
 
     def submit(self, order: bt.Order) -> bt.Order:
         """
