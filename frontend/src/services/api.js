@@ -250,5 +250,27 @@ export const api = {
             method: 'DELETE'
         })
         return await parseResponse(res)
+    },
+
+    // Settings API Methods
+
+    async getSettings() {
+        const res = await buildRequest('/settings')
+        return await parseResponse(res)
+    },
+
+    async updateSettings(settings) {
+        const res = await buildRequest('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        })
+        return await parseResponse(res)
+    },
+
+    async resetSettings() {
+        const res = await buildRequest('/settings/reset', {
+            method: 'POST'
+        })
+        return await parseResponse(res)
     }
 }

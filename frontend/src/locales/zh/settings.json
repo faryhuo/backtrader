@@ -4,8 +4,11 @@
     "default_model": "默认 AI 模型",
     "code_analysis_prompt": "代码分析提示词",
     "code_rewrite_prompt": "代码重写提示词",
+    "full_strategy_analysis_prompt": "完整策略分析提示词",
     "save": "保存更改",
     "saved": "设置已保存！",
     "reset": "重置默认",
-    "confirm_reset": "确定要将所有设置重置为默认值吗？"
+    "confirm_reset": "确定要将所有设置重置为默认值吗？",
+    "select_at_least_one": "请至少选择一个模型。",
+    "reset_success": "设置已重置为默认值"
 }

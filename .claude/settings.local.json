@@ -6,7 +6,10 @@
       "Bash(python:*)",
       "Bash(npm run build:*)",
       "Bash(xcopy:*)",
-      "Bash(robocopy:*)"
+      "Bash(robocopy:*)",
+      "Bash(ls:*)",
+      "Bash(timeout 5 python:*)",
+      "Bash(del:*)"
     ]
   }
 }
