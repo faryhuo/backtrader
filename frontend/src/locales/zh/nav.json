@@ -3,6 +3,7 @@
   "strategy_maintain": "策略维护",
   "datasource": "数据源",
   "history": "回测历史",
+  "walkforward": "参数优化",
   "live_trading": "实盘交易",
   "settings": "设置"
 }
