@@ -1,4 +1,26 @@
 {
   "title": "Data Source Explorer",
-  "fetch_data": "Fetch Data"
+  "fetch_data": "Fetch Data",
+  "sector": "Sector",
+  "industry": "Industry",
+  "website": "Website",
+  "market_metrics": "Market Metrics",
+  "market_cap": "Market Cap",
+  "pe_ratio": "P/E Ratio",
+  "beta": "Beta",
+  "52w_high": "52-Week High",
+  "52w_low": "52-Week Low",
+  "trading_stats": "Trading Statistics",
+  "current_price": "Current Price",
+  "previous_close": "Previous Close",
+  "day_range": "Day Range",
+  "avg_volume": "Avg Volume",
+  "fundamentals": "Fundamentals",
+  "dividend_yield": "Dividend Yield",
+  "eps": "EPS (TTM)",
+  "profit_margins": "Profit Margin",
+  "cached_data": "Cached Data",
+  "days_old": "days old",
+  "invalid_ticker": "Invalid ticker symbol. Please check and try again.",
+  "validation_error": "Ticker Validation Error"
 }

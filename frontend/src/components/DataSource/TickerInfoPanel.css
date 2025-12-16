@@ -1,0 +1,159 @@
+.ticker-info-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ticker-metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 1400px) {
+    .ticker-metrics-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ticker-info-card {
+    padding: 1.5rem;
+    background: var(--card-bg, #161b22);
+    border: 1px solid var(--border-color, #30363d);
+    border-radius: 8px;
+}
+
+.ticker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color, #30363d);
+}
+
+.ticker-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #c9d1d9);
+}
+
+.ticker-symbol {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent-color, #58a6ff);
+    background: rgba(88, 166, 255, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+}
+
+.ticker-basics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-icon {
+    color: var(--accent-color, #58a6ff);
+    font-size: 1rem;
+}
+
+.info-label {
+    font-weight: 500;
+    color: var(--text-secondary, #8b949e);
+}
+
+.info-value {
+    color: var(--text-primary, #c9d1d9);
+}
+
+.info-link {
+    color: var(--accent-color, #58a6ff);
+    text-decoration: none;
+}
+
+.info-link:hover {
+    text-decoration: underline;
+}
+
+.ticker-description {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #30363d);
+}
+
+.ticker-description p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary, #8b949e);
+}
+
+.ticker-info-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #c9d1d9);
+}
+
+.ticker-info-card h3 svg {
+    color: var(--accent-color, #58a6ff);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary, #8b949e);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #c9d1d9);
+}
+
+.metric-price {
+    color: var(--success-color, #2ea043);
+    font-size: 1.3rem;
+}
+
+.cache-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(88, 166, 255, 0.05);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #8b949e);
+}
+
+.cache-indicator svg {
+    color: var(--accent-color, #58a6ff);
+}

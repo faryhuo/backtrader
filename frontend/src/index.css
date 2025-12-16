@@ -408,3 +408,27 @@ body {
     background-color: var(--card-bg-hover) !important;
     color: var(--text-main) !important;
 }
+
+/* DataSource Page Grid Layout */
+.datasource-results-grid {
+    display: grid;
+    grid-template-columns: 35% 65%;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .datasource-results-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ticker-info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chart-column {
+    min-height: 500px;
+}
