@@ -188,7 +188,8 @@ export const useLiveTrading = () => {
 
             message.success('Trading session stopped');
             addNotification('Trading session stopped', 'info');
-            wsDisconnect();
+            if (wsDisconnect && typeof wsDisconnect === 'function')
+                wsDisconnect();
 
             setTimeout(() => {
                 setSession(null);
@@ -255,12 +256,6 @@ export const useLiveTrading = () => {
         loadActiveSessions();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    useEffect(() => {
-        return () => {
-            wsDisconnect();
-        };
-    }, [wsDisconnect]);
 
     return {
         session,

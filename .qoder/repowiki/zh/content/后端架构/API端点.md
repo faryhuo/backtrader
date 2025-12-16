@@ -7,14 +7,24 @@
 - [backend/src/routes/live_routes.py](file://backend/src/routes/live_routes.py)
 - [backend/src/routes/walkforward_routes.py](file://backend/src/routes/walkforward_routes.py)
 - [backend/src/routes/ai_routes.py](file://backend/src/routes/ai_routes.py)
+- [backend/src/routes/settings_routes.py](file://backend/src/routes/settings_routes.py)
 - [backend/src/utils/auth.py](file://backend/src/utils/auth.py)
 - [backend/src/config/settings.py](file://backend/src/config/settings.py)
 - [backend/src/db/models.py](file://backend/src/db/models.py)
+- [backend/src/db/settings_storage.py](file://backend/src/db/settings_storage.py)
 - [frontend/src/services/api.js](file://frontend/src/services/api.js)
 - [frontend/vite.config.js](file://frontend/vite.config.js)
 - [CLAUDE.md](file://CLAUDE.md)
 - [backend/main.py](file://backend/main.py)
 </cite>
+
+## 更新摘要
+**已做更改**
+- 新增“用户设置接口（settings_routes.py）”章节，详细描述/settings相关接口
+- 在“项目结构”和“架构总览”图表中添加settings_routes模块
+- 在“依赖关系分析”图表中添加settings_routes模块
+- 更新“附录”中的路由注册机制说明，包含settings_routes
+- 在文档引用文件列表中添加settings_routes.py、settings_storage.py
 
 ## 目录
 1. [简介](#简介)
@@ -34,6 +44,7 @@
 - 实盘/纸模拟交易：live_routes.py
 - 参数优化（滚动窗/锚定窗）：walkforward_routes.py
 - 图表AI分析：ai_routes.py
+- 用户设置管理：settings_routes.py
 
 文档说明每个端点的HTTP方法、URL路径、请求参数、请求体结构、响应格式、错误码、认证要求（如get_current_user依赖），并解释路由注册机制（在app.py中通过include_router集成各功能模块路由）。同时提供新增端点的流程参考（CLAUDE.md中的“Adding a New API Endpoint”），以及前后端交互规范（同步更新frontend/src/services/api.js）。
 
@@ -48,6 +59,7 @@ R1["/api 路由组<br/>api_routes.py"]
 R2["/api 路由组<br/>live_routes.py"]
 R3["/api 路由组<br/>walkforward_routes.py"]
 R4["/api 路由组<br/>ai_routes.py"]
+R5["/api 路由组<br/>settings_routes.py"]
 S1["设置与认证<br/>settings.py / auth.py"]
 D1["数据库模型<br/>models.py"]
 end
@@ -60,13 +72,16 @@ A --> R1
 A --> R2
 A --> R3
 A --> R4
+A --> R5
 R1 --> S1
 R2 --> S1
 R3 --> S1
 R4 --> S1
+R5 --> S1
 R1 --> D1
 R2 --> D1
 R3 --> D1
+R5 --> D1
 ```
 
 图表来源
@@ -349,6 +364,43 @@ ROUTE-->>FE : 返回JSON响应
 - [backend/src/utils/auth.py](file://backend/src/utils/auth.py#L1-L191)
 - [backend/src/config/settings.py](file://backend/src/config/settings.py#L1-L81)
 
+### 用户设置接口（settings_routes.py）
+- 基础路径前缀：/api
+- 认证要求：所有端点依赖get_current_user，需携带Bearer Token
+- 关键端点与行为
+
+1) 获取用户设置
+- 方法与路径：GET /api/settings
+- 认证：需要登录态
+- 行为：从数据库获取用户设置，若未找到则返回默认值
+- 响应：包含selected_models、code_analysis_prompt、code_rewrite_prompt、full_strategy_analysis_prompt等字段的设置对象
+- 错误码：500（内部异常）
+
+2) 保存用户设置
+- 方法与路径：PUT /api/settings
+- 请求体：UserSettingsRequest（selected_models, code_analysis_prompt, code_rewrite_prompt, full_strategy_analysis_prompt）
+- 认证：需要登录态
+- 行为：创建新设置或更新现有设置，验证至少选择一个AI模型
+- 响应：status, message, settings
+- 错误码：400（未选择模型）、500（内部异常）
+
+3) 重置用户设置
+- 方法与路径：POST /api/settings/reset
+- 认证：需要登录态
+- 行为：删除用户设置并返回默认值
+- 响应：status, message, settings
+- 错误码：500（内部异常）
+
+- 请求体与响应模型
+  - UserSettingsRequest：包含selected_models（AI模型列表）、code_analysis_prompt（代码分析提示）、code_rewrite_prompt（代码重写提示）、full_strategy_analysis_prompt（完整策略分析提示）
+- 错误处理
+  - 使用HTTPException返回标准错误码与消息；验证至少选择一个AI模型；日志记录异常堆栈
+
+章节来源
+- [backend/src/routes/settings_routes.py](file://backend/src/routes/settings_routes.py#L1-L128)
+- [backend/src/db/settings_storage.py](file://backend/src/db/settings_storage.py#L1-L257)
+- [backend/src/db/models.py](file://backend/src/db/models.py#L436-L471)
+
 ## 依赖关系分析
 - 路由注册
   - app.py统一include_router，将各模块router注册到FastAPI应用，并设置CORS。
@@ -418,7 +470,7 @@ ROUTERS --> MODELS["数据库模型<br/>models.py"]
 
 ### 路由注册机制与前后端交互
 - 路由注册
-  - 在app.py中include_router，统一前缀/api；ai_routes、live_routes、api_routes均使用该前缀；walkforward_routes.py内已包含/api前缀，注册时无需再次加前缀。
+  - 在app.py中include_router，统一前缀/api；ai_routes、live_routes、api_routes、settings_routes均使用该前缀；walkforward_routes.py内已包含/api前缀，注册时无需再次加前缀。
 - 前后端交互
   - 前端通过Vite代理将/api与/images转发到后端；API客户端自动注入Authorization头并处理401跳转。
 

@@ -68,8 +68,27 @@ def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
 @router.post("/data")
 def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_user)) -> dict:
     try:
+        # Step 1: Get ticker metadata (validates ticker)
+        from src.db.datasource import get_ticker_metadata
+        ticker_info = get_ticker_metadata(request.ticker)
+
+        # Step 2: Validate ticker
+        if not ticker_info.get('is_valid'):
+            raise HTTPException(
+                status_code=400,
+                detail=ticker_info.get('validation_error', 'Invalid ticker symbol')
+            )
+
+        # Step 3: Fetch OHLCV data (existing logic)
         data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
-        return {"data": data}
+
+        # Step 4: Return enhanced response
+        return {
+            "ticker_info": ticker_info,
+            "data": data
+        }
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 

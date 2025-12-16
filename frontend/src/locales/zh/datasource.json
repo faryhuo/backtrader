@@ -1,4 +1,26 @@
 {
   "title": "数据源浏览器",
-  "fetch_data": "获取数据"
+  "fetch_data": "获取数据",
+  "sector": "行业板块",
+  "industry": "细分行业",
+  "website": "官网",
+  "market_metrics": "市场指标",
+  "market_cap": "市值",
+  "pe_ratio": "市盈率",
+  "beta": "贝塔系数",
+  "52w_high": "52周最高",
+  "52w_low": "52周最低",
+  "trading_stats": "交易统计",
+  "current_price": "当前价格",
+  "previous_close": "前收盘价",
+  "day_range": "日内区间",
+  "avg_volume": "平均成交量",
+  "fundamentals": "基本面数据",
+  "dividend_yield": "股息率",
+  "eps": "每股收益",
+  "profit_margins": "利润率",
+  "cached_data": "缓存数据",
+  "days_old": "天前",
+  "invalid_ticker": "无效的股票代码,请检查后重试。",
+  "validation_error": "代码验证错误"
 }
