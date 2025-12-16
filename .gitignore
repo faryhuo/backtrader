@@ -9,3 +9,4 @@ backend/trading_sessions.db
 frontend/.env
 frontend/.envprod
 backend/resources/frontend
+backend/venv_new

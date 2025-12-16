@@ -1,20 +1,23 @@
-fastapi>=0.103.2
-daphne>=4.1.0
+fastapi>=0.124.4
+daphne>=4.2.1
 backtrader>=1.9.78.123
-yfinance
-pandas>=2.2.2
-matplotlib>=3.8.0
+yfinance>=0.2.66
+pandas>=2.3.3
+matplotlib>=3.10.8
 python-dotenv>=1.0.1
-openai>=1.0.0
-python-multipart>=0.0.6
+openai>=2.11.0
+python-multipart>=0.0.16
 python-jose[cryptography]>=3.3.0
-requests>=2.31.0
-SQLAlchemy>=2.0.0
+requests>=2.32.3
+SQLAlchemy>=2.0.45
 
 # Live Trading - CCXT Integration
-ccxt
-websockets>=12.0
-aiohttp
-pydantic>=2.5.0
+ccxt>=4.5.28
+websockets>=15.0.1
+aiohttp>=3.13.2
+pydantic>=2.12.5,<3.0.0
 # IBKR
 ibapi>=9.81.1
+
+# Constraints to avoid dependency conflicts
+httpx>=0.28.0  # Required by newer packages, conflicts with investiny if installed

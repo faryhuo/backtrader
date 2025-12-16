@@ -3,6 +3,15 @@ setlocal
 
 set "ROOT=%~dp0"
 
+REM Activate virtual environment if exists
+if exist "%ROOT%venv_new\Scripts\activate.bat" (
+    echo Activating virtual environment...
+    call "%ROOT%venv_new\Scripts\activate.bat"
+) else (
+    echo Warning: Virtual environment not found at venv_new\Scripts\
+    echo Continuing with system Python...
+)
+
 cd /d "%ROOT%backend" || exit /b 1
 echo Installing backend dependencies...
 python -m pip install -r requirements.txt
