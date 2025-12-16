@@ -5,6 +5,7 @@ from src.config.settings import ensure_resource_dirs
 from src.routes.ai_routes import router as ai_router
 from src.routes.api_routes import router as api_router
 from src.routes.live_routes import router as live_router
+from src.routes.walkforward_routes import router as walkforward_router
 from src.routes.websocket_routes import router as websocket_router
 from src.routes.frontend_routes import mount_frontend
 
@@ -24,5 +25,6 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
 app.include_router(live_router, prefix="/api")
+app.include_router(walkforward_router)  # Walk-forward routes (includes /api prefix)
 app.include_router(websocket_router)  # WebSocket routes (no prefix)
 mount_frontend(app)

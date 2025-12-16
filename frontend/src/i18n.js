@@ -16,6 +16,7 @@ import strategyPlotEn from './locales/en/strategy_plot.json';
 import maintainEn from './locales/en/maintain.json';
 import datasourceEn from './locales/en/datasource.json';
 import historyEn from './locales/en/history.json';
+import walkforwardEn from './locales/en/walkforward.json';
 import liveEn from './locales/en/live.json';
 import settingsEn from './locales/en/settings.json';
 
@@ -33,6 +34,7 @@ import strategyPlotZh from './locales/zh/strategy_plot.json';
 import maintainZh from './locales/zh/maintain.json';
 import datasourceZh from './locales/zh/datasource.json';
 import historyZh from './locales/zh/history.json';
+import walkforwardZh from './locales/zh/walkforward.json';
 import liveZh from './locales/zh/live.json';
 import settingsZh from './locales/zh/settings.json';
 
@@ -50,6 +52,7 @@ const en = {
   maintain: maintainEn,
   datasource: datasourceEn,
   history: historyEn,
+  walkforward: walkforwardEn?.walkforward ?? walkforwardEn,
   live: liveEn,
   settings: settingsEn
 };
@@ -68,6 +71,7 @@ const zh = {
   maintain: maintainZh,
   datasource: datasourceZh,
   history: historyZh,
+  walkforward: walkforwardZh?.walkforward ?? walkforwardZh,
   live: liveZh,
   settings: settingsZh
 };

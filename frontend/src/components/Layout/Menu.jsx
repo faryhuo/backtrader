@@ -5,6 +5,7 @@ import {
     CodeOutlined,
     DatabaseOutlined,
     HistoryOutlined,
+    ExperimentOutlined,
     ThunderboltOutlined,
     SettingOutlined,
     MenuFoldOutlined,
@@ -58,6 +59,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><HistoryOutlined /></span>
                     {!collapsed && <span>{t('nav.history')}</span>}
+                </Link>
+                <Link
+                    to="/walkforward"
+                    className={getNavClass('/walkforward')}
+                    title={t('nav.walkforward')}
+                >
+                    <span className="icon"><ExperimentOutlined /></span>
+                    {!collapsed && <span>{t('nav.walkforward')}</span>}
                 </Link>
                 <Link
                     to="/live"

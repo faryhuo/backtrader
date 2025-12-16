@@ -3,7 +3,10 @@
     "allow": [
       "Bash(find:*)",
       "Bash(python -m src.db.migrate_add_columns:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm run build:*)",
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)"
     ]
   }
 }
