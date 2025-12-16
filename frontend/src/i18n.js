@@ -52,7 +52,7 @@ const en = {
   maintain: maintainEn,
   datasource: datasourceEn,
   history: historyEn,
-  walkforward: walkforwardEn?.walkforward ?? walkforwardEn,
+  walkforward: walkforwardEn ?? walkforwardEn,
   live: liveEn,
   settings: settingsEn
 };
@@ -71,7 +71,7 @@ const zh = {
   maintain: maintainZh,
   datasource: datasourceZh,
   history: historyZh,
-  walkforward: walkforwardZh?.walkforward ?? walkforwardZh,
+  walkforward: walkforwardZh ?? walkforwardZh,
   live: liveZh,
   settings: settingsZh
 };
