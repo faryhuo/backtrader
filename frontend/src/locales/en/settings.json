@@ -8,5 +8,7 @@
     "save": "Save Changes",
     "saved": "Settings saved!",
     "reset": "Reset Defaults",
-    "confirm_reset": "Are you sure you want to reset all settings to default?"
+    "confirm_reset": "Are you sure you want to reset all settings to default?",
+    "select_at_least_one": "Please select at least one model.",
+    "reset_success": "Settings reset to defaults"
 }

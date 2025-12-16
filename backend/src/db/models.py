@@ -390,5 +390,43 @@ class WalkForwardOptimizationModel(Base):
         )
 
 
+class UserSettingsModel(Base):
+    """
+    User Settings Model - Stores user preferences for AI models and prompts.
+
+    Supports both authenticated and anonymous users. Settings are per-user
+    with fallback to localStorage on frontend if DB operations fail.
+    """
+    __tablename__ = "user_settings"
+
+    # Primary key (auto-increment for simpler management)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # User identification (nullable for anonymous users)
+    # For authenticated users: Logto 'sub' claim (e.g., "auth0|123456")
+    # For anonymous: NULL (single row for all anonymous users)
+    user_id = Column(String(255), nullable=True, unique=True, index=True)
+
+    # AI Model Configuration
+    # Comma-separated list of model names (e.g., "gpt-5.1,deepseek-v3.1")
+    # Max length: 500 chars (supports ~50 models at 10 chars each)
+    selected_models = Column(String(500), nullable=False, default="gpt-5.1,deepseek-v3.1")
+
+    # AI Prompt Templates
+    code_analysis_prompt = Column(Text, nullable=False, default="Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n{code}")
+    code_rewrite_prompt = Column(Text, nullable=False, default="Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}")
+    full_strategy_analysis_prompt = Column(Text, nullable=False, default="Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.\n\n{contextText}\n\n{metricsText}\n\n{logsText}\n\nProvide a comprehensive assessment including:\n1. Overall Performance: Is it profitable and consistent?\n2. Risk Profile: analysis of drawdowns and volatility.\n3. Strengths & Weaknesses: What is working well and what isn't?\n4. Suggestions: Recommendations for improvement.\n5. Code Analysis: Comments on the strategy logic.\n6. Always return with Chinese.\n7. 不需要对策略代码逻辑进行点评")
+
+    # Timestamps for auditing
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return (
+            f"<UserSettings(user_id={self.user_id}, "
+            f"models={self.selected_models})>"
+        )
+
+
 # Default database path for local development
 DEFAULT_DB_PATH = "sqlite:///trading_sessions.db"
