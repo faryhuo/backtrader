@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SaveOutlined, UndoOutlined } from '@ant-design/icons';
-import { Select, message } from 'antd';
+import { SaveOutlined, UndoOutlined, CheckCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Select, message, Card, Input, Button, Space, Tabs, Tag, Switch } from 'antd';
 import { api } from '../services/api';
 import './Settings.css';
 
@@ -27,8 +27,25 @@ function Settings() {
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    // Credential state
+    const [credentials, setCredentials] = useState({
+        openai_api_key: '',
+        openai_base_url: '',
+        logto_issuer: '',
+        logto_jwks_uri: '',
+        logto_audience: '',
+        logto_required_scopes: '',
+        enable_login: false,
+        http_proxy: '',
+        https_proxy: '',
+        ccxt: {} // { binance: { paper: {api_key, secret}, live: {...} }, okx: {...}, bybit: {...} }
+    });
+    const [credentialSources, setCredentialSources] = useState({});
+    const [testingCredential, setTestingCredential] = useState(null);
+
     useEffect(() => {
         loadSettings();
+        loadCredentials();
     }, []);
 
     const loadSettings = async () => {
@@ -188,6 +205,152 @@ function Settings() {
         }
     };
 
+    // Credential management functions
+    const loadCredentials = async () => {
+        try {
+            const response = await api.getCredentials();
+            if (response.credentials) {
+                setCredentials(response.credentials);
+                setCredentialSources(response.sources || {});
+            }
+        } catch (error) {
+            console.error('Failed to load credentials:', error);
+            message.error('Failed to load credentials');
+        }
+    };
+
+    const handleCredentialChange = (key, value) => {
+        setCredentials(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleCCXTCredentialChange = (exchange, mode, field, value) => {
+        setCredentials(prev => ({
+            ...prev,
+            ccxt: {
+                ...prev.ccxt,
+                [exchange]: {
+                    ...prev.ccxt[exchange],
+                    [mode]: {
+                        ...prev.ccxt[exchange]?.[mode],
+                        [field]: value
+                    }
+                }
+            }
+        }));
+    };
+
+    const handleSaveCredentials = async (credentialType) => {
+        try {
+            setLoading(true);
+            let response;
+
+            if (credentialType === 'openai') {
+                response = await api.updateCredentials({
+                    openai_api_key: credentials.openai_api_key,
+                    openai_base_url: credentials.openai_base_url
+                });
+            } else if (credentialType === 'logto') {
+                response = await api.updateCredentials({
+                    logto_issuer: credentials.logto_issuer,
+                    logto_jwks_uri: credentials.logto_jwks_uri,
+                    logto_audience: credentials.logto_audience,
+                    logto_required_scopes: credentials.logto_required_scopes,
+                    enable_login: credentials.enable_login
+                });
+            } else if (credentialType === 'proxy') {
+                response = await api.updateCredentials({
+                    http_proxy: credentials.http_proxy,
+                    https_proxy: credentials.https_proxy
+                });
+            } else if (credentialType.startsWith('ccxt-')) {
+                const [, exchange, mode] = credentialType.split('-');
+                const creds = credentials.ccxt[exchange]?.[mode] || {};
+                response = await api.updateCCXTCredentials(exchange, mode, creds);
+            }
+
+            if (response.status === 'ok') {
+                message.success('Credentials saved successfully');
+                await loadCredentials(); // Reload to get masked values
+            }
+        } catch (error) {
+            console.error('Failed to save credentials:', error);
+            message.error(error.message || 'Failed to save credentials');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTestCredential = async (credentialType) => {
+        try {
+            setTestingCredential(credentialType);
+            let params = {};
+
+            if (credentialType === 'openai') {
+                params = {
+                    credential_type: 'openai',
+                    api_key: credentials.openai_api_key,
+                    base_url: credentials.openai_base_url
+                };
+            } else if (credentialType === 'logto') {
+                params = {
+                    credential_type: 'logto',
+                    issuer: credentials.logto_issuer,
+                    jwks_uri: credentials.logto_jwks_uri
+                };
+            } else if (credentialType.startsWith('ccxt-')) {
+                const [, exchange, mode] = credentialType.split('-');
+                const creds = credentials.ccxt[exchange]?.[mode] || {};
+                params = {
+                    credential_type: 'ccxt',
+                    exchange,
+                    mode,
+                    api_key: creds.api_key,
+                    secret: creds.secret,
+                    passphrase: creds.passphrase
+                };
+            }
+
+            const response = await api.testCredential(params.credential_type, params);
+
+            if (response.valid) {
+                message.success(response.message || 'Credentials are valid');
+            } else {
+                message.error(response.message || 'Credentials are invalid');
+            }
+        } catch (error) {
+            console.error('Failed to test credentials:', error);
+            message.error(error.message || 'Failed to test credentials');
+        } finally {
+            setTestingCredential(null);
+        }
+    };
+
+    const handleResetCredential = async (credentialKey) => {
+        try {
+            setLoading(true);
+            const response = await api.resetCredential(credentialKey);
+
+            if (response.status === 'ok') {
+                message.success(`Reset ${credentialKey} to .env value`);
+                await loadCredentials(); // Reload to get .env values
+            }
+        } catch (error) {
+            console.error('Failed to reset credential:', error);
+            message.error(error.message || 'Failed to reset credential');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const renderSourceTag = (key) => {
+        const source = credentialSources[key] || 'env';
+        return (
+            <Tag color={source === 'database' ? 'green' : 'blue'} style={{ marginLeft: 8 }}>
+                {source === 'database' ? 'Database' : '.env'}
+            </Tag>
+        );
+    };
+
     return (
         <div className="page-container settings-page">
             <div className="settings-header">
@@ -260,6 +423,495 @@ function Settings() {
                         <SaveOutlined /> {t('settings.save', 'Save Changes')}
                     </button>
                 </div>
+            </div>
+
+            {/* Credential Configuration Section */}
+            <div className="settings-section">
+                <h2>Credentials Configuration</h2>
+                <p style={{ color: '#888', marginBottom: '1rem' }}>
+                    Configure API credentials. Values saved here take precedence over .env file.
+                </p>
+
+                {/* OpenAI Configuration */}
+                <Card title="OpenAI Configuration" style={{ marginBottom: '1rem' }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <div>
+                            <label>
+                                API Key {renderSourceTag('openai_api_key')}
+                            </label>
+                            <Input.Password
+                                value={credentials.openai_api_key}
+                                onChange={(e) => handleCredentialChange('openai_api_key', e.target.value)}
+                                placeholder="sk-..."
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label>Base URL</label>
+                            <Input
+                                value={credentials.openai_base_url}
+                                onChange={(e) => handleCredentialChange('openai_base_url', e.target.value)}
+                                placeholder="https://api.openai.com/v1"
+                                disabled={loading}
+                            />
+                        </div>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={() => handleSaveCredentials('openai')}
+                                loading={loading}
+                            >
+                                Save
+                            </Button>
+                            <Button
+                                icon={<CheckCircleOutlined />}
+                                onClick={() => handleTestCredential('openai')}
+                                loading={testingCredential === 'openai'}
+                            >
+                                Test
+                            </Button>
+                            <Button
+                                icon={<ReloadOutlined />}
+                                onClick={() => handleResetCredential('openai_api_key')}
+                                loading={loading}
+                            >
+                                Reset to .env
+                            </Button>
+                        </Space>
+                    </Space>
+                </Card>
+
+                {/* Logto Configuration */}
+                <Card title="Logto Authentication Configuration" style={{ marginBottom: '1rem' }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <div>
+                            <label>Enable Login</label>
+                            <div>
+                                <Switch
+                                    checked={credentials.enable_login}
+                                    onChange={(checked) => handleCredentialChange('enable_login', checked)}
+                                    disabled={loading}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label>Issuer URL {renderSourceTag('logto_issuer')}</label>
+                            <Input
+                                value={credentials.logto_issuer}
+                                onChange={(e) => handleCredentialChange('logto_issuer', e.target.value)}
+                                placeholder="https://your-logto-instance.com"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label>JWKS URI {renderSourceTag('logto_jwks_uri')}</label>
+                            <Input
+                                value={credentials.logto_jwks_uri}
+                                onChange={(e) => handleCredentialChange('logto_jwks_uri', e.target.value)}
+                                placeholder="https://your-logto-instance.com/oidc/jwks"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label>Audience</label>
+                            <Input
+                                value={credentials.logto_audience}
+                                onChange={(e) => handleCredentialChange('logto_audience', e.target.value)}
+                                placeholder="https://api.your-app.com"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label>Required Scopes</label>
+                            <Input
+                                value={credentials.logto_required_scopes}
+                                onChange={(e) => handleCredentialChange('logto_required_scopes', e.target.value)}
+                                placeholder="openid profile email"
+                                disabled={loading}
+                            />
+                        </div>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={() => handleSaveCredentials('logto')}
+                                loading={loading}
+                            >
+                                Save
+                            </Button>
+                            <Button
+                                icon={<CheckCircleOutlined />}
+                                onClick={() => handleTestCredential('logto')}
+                                loading={testingCredential === 'logto'}
+                            >
+                                Test
+                            </Button>
+                            <Button
+                                icon={<ReloadOutlined />}
+                                onClick={() => handleResetCredential('logto_issuer')}
+                                loading={loading}
+                            >
+                                Reset to .env
+                            </Button>
+                        </Space>
+                    </Space>
+                </Card>
+
+                {/* Proxy Configuration */}
+                <Card title="Proxy Configuration" style={{ marginBottom: '1rem' }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                        <div>
+                            <label>HTTP Proxy {renderSourceTag('http_proxy')}</label>
+                            <Input
+                                value={credentials.http_proxy}
+                                onChange={(e) => handleCredentialChange('http_proxy', e.target.value)}
+                                placeholder="http://proxy.example.com:8080"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <label>HTTPS Proxy {renderSourceTag('https_proxy')}</label>
+                            <Input
+                                value={credentials.https_proxy}
+                                onChange={(e) => handleCredentialChange('https_proxy', e.target.value)}
+                                placeholder="http://proxy.example.com:8080"
+                                disabled={loading}
+                            />
+                        </div>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<SaveOutlined />}
+                                onClick={() => handleSaveCredentials('proxy')}
+                                loading={loading}
+                            >
+                                Save
+                            </Button>
+                            <Button
+                                icon={<ReloadOutlined />}
+                                onClick={() => handleResetCredential('http_proxy')}
+                                loading={loading}
+                            >
+                                Reset to .env
+                            </Button>
+                        </Space>
+                    </Space>
+                </Card>
+
+                {/* Exchange Credentials */}
+                <Card title="Exchange Credentials" style={{ marginBottom: '1rem' }}>
+                    <Tabs
+                        items={[
+                            {
+                                key: 'binance',
+                                label: 'Binance',
+                                children: (
+                                    <Tabs
+                                        items={[
+                                            {
+                                                key: 'paper',
+                                                label: 'Paper (Testnet)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.binance?.paper?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('binance', 'paper', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.binance?.paper?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('binance', 'paper', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-binance-paper')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-binance-paper')}
+                                                                loading={testingCredential === 'ccxt-binance-paper'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            },
+                                            {
+                                                key: 'live',
+                                                label: 'Live (Production)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.binance?.live?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('binance', 'live', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.binance?.live?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('binance', 'live', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-binance-live')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-binance-live')}
+                                                                loading={testingCredential === 'ccxt-binance-live'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            }
+                                        ]}
+                                    />
+                                )
+                            },
+                            {
+                                key: 'okx',
+                                label: 'OKX',
+                                children: (
+                                    <Tabs
+                                        items={[
+                                            {
+                                                key: 'paper',
+                                                label: 'Paper (Testnet)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.paper?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'paper', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.paper?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'paper', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Passphrase</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.paper?.passphrase || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'paper', 'passphrase', e.target.value)}
+                                                                placeholder="Passphrase"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-okx-paper')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-okx-paper')}
+                                                                loading={testingCredential === 'ccxt-okx-paper'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            },
+                                            {
+                                                key: 'live',
+                                                label: 'Live (Production)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.live?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'live', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.live?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'live', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Passphrase</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.okx?.live?.passphrase || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('okx', 'live', 'passphrase', e.target.value)}
+                                                                placeholder="Passphrase"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-okx-live')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-okx-live')}
+                                                                loading={testingCredential === 'ccxt-okx-live'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            }
+                                        ]}
+                                    />
+                                )
+                            },
+                            {
+                                key: 'bybit',
+                                label: 'Bybit',
+                                children: (
+                                    <Tabs
+                                        items={[
+                                            {
+                                                key: 'paper',
+                                                label: 'Paper (Testnet)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.bybit?.paper?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('bybit', 'paper', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.bybit?.paper?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('bybit', 'paper', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-bybit-paper')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-bybit-paper')}
+                                                                loading={testingCredential === 'ccxt-bybit-paper'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            },
+                                            {
+                                                key: 'live',
+                                                label: 'Live (Production)',
+                                                children: (
+                                                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                                                        <div>
+                                                            <label>API Key</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.bybit?.live?.api_key || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('bybit', 'live', 'api_key', e.target.value)}
+                                                                placeholder="API Key"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label>Secret</label>
+                                                            <Input.Password
+                                                                value={credentials.ccxt?.bybit?.live?.secret || ''}
+                                                                onChange={(e) => handleCCXTCredentialChange('bybit', 'live', 'secret', e.target.value)}
+                                                                placeholder="Secret"
+                                                                disabled={loading}
+                                                            />
+                                                        </div>
+                                                        <Space>
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<SaveOutlined />}
+                                                                onClick={() => handleSaveCredentials('ccxt-bybit-live')}
+                                                                loading={loading}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                icon={<CheckCircleOutlined />}
+                                                                onClick={() => handleTestCredential('ccxt-bybit-live')}
+                                                                loading={testingCredential === 'ccxt-bybit-live'}
+                                                            >
+                                                                Test
+                                                            </Button>
+                                                        </Space>
+                                                    </Space>
+                                                )
+                                            }
+                                        ]}
+                                    />
+                                )
+                            }
+                        ]}
+                    />
+                </Card>
             </div>
         </div>
     );

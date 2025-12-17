@@ -544,6 +544,38 @@ class UserSettingsModel(Base):
     code_rewrite_prompt = Column(Text, nullable=False, default="Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}")
     full_strategy_analysis_prompt = Column(Text, nullable=False, default="Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.\n\n{contextText}\n\n{metricsText}\n\n{logsText}\n\nProvide a comprehensive assessment including:\n1. Overall Performance: Is it profitable and consistent?\n2. Risk Profile: analysis of drawdowns and volatility.\n3. Strengths & Weaknesses: What is working well and what isn't?\n4. Suggestions: Recommendations for improvement.\n5. Code Analysis: Comments on the strategy logic.\n6. Always return with Chinese.\n7. 不需要对策略代码逻辑进行点评")
 
+    # ========== ENCRYPTED CREDENTIALS ==========
+    # Note: All credential fields are encrypted using Fernet encryption
+    # Values are stored as base64-encoded ciphertext
+
+    # OpenAI Configuration (encrypted)
+    openai_api_key = Column(Text, nullable=True)  # Encrypted API key
+    openai_base_url = Column(String(500), nullable=True)  # Base URL (not encrypted)
+
+    # Logto Authentication Configuration (encrypted where sensitive)
+    logto_issuer = Column(String(500), nullable=True)  # Issuer URL (not encrypted)
+    logto_jwks_uri = Column(String(500), nullable=True)  # JWKS URI (not encrypted)
+    logto_audience = Column(String(500), nullable=True)  # Audience (not encrypted)
+    logto_required_scopes = Column(String(500), nullable=True)  # Space-separated scopes (not encrypted)
+    enable_login = Column(Boolean, nullable=True)  # Enable/disable login (not encrypted)
+
+    # Proxy Configuration (not encrypted - just URLs)
+    http_proxy = Column(String(500), nullable=True)
+    https_proxy = Column(String(500), nullable=True)
+
+    # CCXT Exchange Credentials (JSON field for flexible structure)
+    # Structure: {
+    #   "binance": {
+    #     "paper": {"api_key": "encrypted...", "secret": "encrypted..."},
+    #     "live": {"api_key": "encrypted...", "secret": "encrypted..."}
+    #   },
+    #   "okx": {
+    #     "paper": {"api_key": "encrypted...", "secret": "encrypted...", "passphrase": "encrypted..."},
+    #     "live": {...}
+    #   }
+    # }
+    ccxt_credentials = Column(JSON, nullable=True)
+
     # Timestamps for auditing
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

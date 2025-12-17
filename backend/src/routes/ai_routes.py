@@ -5,7 +5,7 @@ import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from openai import AsyncOpenAI
 
-from src.config.settings import HTTP_PROXY, HTTPS_PROXY, OPENAI_API_KEY, OPENAI_BASE_URL
+from src.config.config_manager import ConfigManager
 from src.utils.auth import get_current_user
 
 router = APIRouter()
@@ -22,10 +22,21 @@ async def analyze_chart(
     user: dict = Depends(get_current_user),
 ):
     try:
-        if not OPENAI_API_KEY or not OPENAI_BASE_URL:
+        # Get user-specific configuration with database fallback
+        user_id = user.get("sub") if user else None
+        config_manager = ConfigManager(user_id=user_id)
+
+        # Get OpenAI and proxy configuration
+        openai_config = config_manager.get_openai_config()
+        proxy_config = config_manager.get_proxy_config()
+
+        api_key = openai_config.get("api_key")
+        base_url = openai_config.get("base_url")
+
+        if not api_key or not base_url:
             raise HTTPException(
                 status_code=500,
-                detail="OPENAI_API_KEY or OPENAI_BASE_URL not found in environment variables"
+                detail="OpenAI API credentials not configured. Please configure them in Settings or set OPENAI_API_KEY/OPENAI_BASE_URL in .env"
             )
 
         # Prepare content based on whether there's an image
@@ -52,13 +63,13 @@ async def analyze_chart(
             }
         ]
 
-        proxy = HTTPS_PROXY or HTTP_PROXY
+        proxy = proxy_config.get("https_proxy") or proxy_config.get("http_proxy")
         # Build OpenAI client; wrap in httpx client when a proxy is configured.
         if proxy:
             async with httpx.AsyncClient(proxy=proxy, timeout=900) as http_client:
                 client = AsyncOpenAI(
-                    api_key=OPENAI_API_KEY,
-                    base_url=OPENAI_BASE_URL,
+                    api_key=api_key,
+                    base_url=base_url,
                     http_client=http_client,
                 )
                 response = await client.chat.completions.create(
@@ -66,7 +77,7 @@ async def analyze_chart(
                     messages=messages,
                 )
         else:
-            client = AsyncOpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+            client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
             response = await client.chat.completions.create(
                 model=model,
