@@ -19,7 +19,8 @@ import os
 import base64
 import logging
 from typing import Optional
-
+from dotenv import load_dotenv
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 
@@ -36,19 +37,41 @@ def get_encryption_key() -> bytes:
     Note:
         Generate a new key with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     """
-    key = os.getenv("ENCRYPTION_KEY")
+    key = os.getenv("ENCRYPTION_KEY", "")
     if not key:
         raise ValueError(
             "ENCRYPTION_KEY not set in environment. "
             "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
         )
 
+    import hashlib
+    
     try:
-        # Fernet keys are URL-safe base64 encoded 32-byte keys.
-        decoded = base64.urlsafe_b64decode(key)
-        if len(decoded) != 32:
-            raise ValueError("ENCRYPTION_KEY must be 32 bytes when decoded")
-        return key.encode() if isinstance(key, str) else key
+        key = key.strip()
+        
+        # First, try to use the key directly as a Fernet key
+        # Auto-pad if missing padding (= characters)
+        padding_needed = 4 - (len(key) % 4)
+        if padding_needed != 4:
+            padded_key = key + '=' * padding_needed
+        else:
+            padded_key = key
+        
+        try:
+            decoded = base64.urlsafe_b64decode(padded_key)
+            if len(decoded) == 32:
+                # Valid Fernet key format
+                return padded_key.encode() if isinstance(padded_key, str) else padded_key
+        except Exception:
+            pass
+        
+        # If key is not valid Fernet format, derive a 32-byte key using SHA-256
+        # This allows any string to be used as an encryption key
+        logger.info("ENCRYPTION_KEY is not in Fernet format, deriving key using SHA-256")
+        derived_key = hashlib.sha256(key.encode()).digest()
+        # Convert to URL-safe base64 for Fernet
+        fernet_key = base64.urlsafe_b64encode(derived_key)
+        return fernet_key
     except Exception as e:
         raise ValueError(f"Invalid ENCRYPTION_KEY format: {e}")
 

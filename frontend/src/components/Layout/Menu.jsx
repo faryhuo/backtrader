@@ -6,6 +6,7 @@ import {
     DatabaseOutlined,
     HistoryOutlined,
     ExperimentOutlined,
+    PieChartOutlined,
     ThunderboltOutlined,
     SettingOutlined,
     MenuFoldOutlined,
@@ -67,6 +68,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><ExperimentOutlined /></span>
                     {!collapsed && <span>{t('nav.walkforward')}</span>}
+                </Link>
+                <Link
+                    to="/portfolio"
+                    className={getNavClass('/portfolio')}
+                    title={t('nav.portfolio', 'Portfolio')}
+                >
+                    <span className="icon"><PieChartOutlined /></span>
+                    {!collapsed && <span>{t('nav.portfolio', 'Portfolio')}</span>}
                 </Link>
                 <Link
                     to="/live"

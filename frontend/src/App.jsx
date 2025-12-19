@@ -11,6 +11,7 @@ import DataSource from './pages/DataSource'
 import BacktestHistory from './pages/BacktestHistory'
 import WalkForward from './pages/WalkForward'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
+import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
@@ -72,6 +73,7 @@ function AppContent() {
                         <Route path="datasource" element={<DataSource />} />
                         <Route path="history" element={<BacktestHistory />} />
                         <Route path="walkforward" element={<WalkForward />} />
+                        <Route path="portfolio" element={<PortfolioBacktest />} />
                         <Route path="live" element={<LiveTradingDashboard />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>
@@ -83,7 +85,7 @@ function AppContent() {
                             <Route path="/callback" element={<Navigate to="/" replace />} />
                         </>
                     )}
-                    
+
                     {/* Catch-all redirect */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

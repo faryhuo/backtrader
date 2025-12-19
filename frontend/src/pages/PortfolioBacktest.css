@@ -1,0 +1,379 @@
+/* Portfolio Backtest Page Styles */
+
+.portfolio-page {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.portfolio-header {
+    margin-bottom: 24px;
+}
+
+.portfolio-header h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.portfolio-header p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Configuration Card */
+.portfolio-config-card {
+    margin-bottom: 24px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.portfolio-config-card .ant-card-head {
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Ticker & Weight Section */
+.ticker-weight-section {
+    margin-bottom: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h4 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.ticker-weight-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ticker-weight-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.ticker-input {
+    flex: 1;
+    max-width: 200px;
+}
+
+.weight-input {
+    width: 100px;
+}
+
+.weight-status {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.weight-status .ant-progress {
+    width: 200px;
+}
+
+.weight-warning {
+    color: var(--warning-color);
+    font-size: 12px;
+}
+
+/* Strategy Parameters Section */
+.strategy-params-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.strategy-params-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 0;
+    color: var(--text-color);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.strategy-params-header:hover {
+    color: var(--primary-color);
+}
+
+.params-toggle-icon {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.params-count {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.strategy-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.strategy-param-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.strategy-param-item label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.strategy-param-item .param-type {
+    color: var(--text-muted, #888);
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+/* Parameters Section */
+.params-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.param-group label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Run Button */
+.run-button-container {
+    display: flex;
+    justify-content: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Loading */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    gap: 16px;
+}
+
+.loading-container p {
+    color: var(--text-secondary);
+}
+
+/* Results Section */
+.results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Metrics Card */
+.portfolio-metrics-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.metric-value.positive {
+    color: #52c41a;
+}
+
+.metric-value.negative {
+    color: #ff4d4f;
+}
+
+/* Individual Results Card */
+.individual-results-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.individual-results-card .positive {
+    color: #52c41a;
+}
+
+.individual-results-card .negative {
+    color: #ff4d4f;
+}
+
+/* Correlation Card */
+.correlation-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.correlation-matrix {
+    overflow-x: auto;
+}
+
+.correlation-matrix table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.correlation-matrix th,
+.correlation-matrix td {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.correlation-matrix th {
+    background: rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+}
+
+.correlation-matrix td {
+    font-family: monospace;
+}
+
+/* Optimization Card */
+.optimization-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.optimization-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.optimization-intro {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.optimal-weights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.optimal-weight-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.optimization-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Chart Card */
+.chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.portfolio-chart {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+/* Empty State */
+.empty-state-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 48px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .portfolio-page {
+        padding: 12px;
+    }
+
+    .params-section {
+        flex-direction: column;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .metric-value {
+        font-size: 18px;
+    }
+}

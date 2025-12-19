@@ -319,6 +319,68 @@ class BacktestHistoryModel(Base):
         )
 
 
+class PortfolioResultModel(Base):
+    """
+    Portfolio Result Model - Stores multi-asset portfolio backtest results.
+
+    Stores portfolio configuration, combined metrics, individual asset metrics,
+    correlation analysis, and Markowitz optimization suggestions.
+    """
+    __tablename__ = "portfolio_results"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Unique identifier for the portfolio backtest run
+    portfolio_id = Column(String(36), unique=True, nullable=False, index=True)
+
+    # User identification (optional, for multi-user support)
+    user_id = Column(String(255), nullable=True, index=True)
+
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # Portfolio configuration
+    tickers = Column(SafeJSON, nullable=False)  # ["AAPL", "GOOGL", "MSFT"]
+    weights = Column(SafeJSON, nullable=False)  # [0.4, 0.3, 0.3]
+    start_date = Column(String(10), nullable=False)  # YYYY-MM-DD
+    end_date = Column(String(10), nullable=False)    # YYYY-MM-DD
+    initial_cash = Column(Float, nullable=False)
+    commission = Column(Float, default=0.0005)
+    stake = Column(Integer, default=100)
+    strategy_name = Column(String(255), nullable=True, index=True)
+
+    # Key combined portfolio metrics (denormalized for fast querying)
+    final_value = Column(Float, nullable=True)
+    total_return = Column(Float, nullable=True, index=True)
+    weighted_sharpe = Column(Float, nullable=True, index=True)
+    max_drawdown = Column(Float, nullable=True)
+    num_assets = Column(Integer, default=0)
+    successful_backtests = Column(Integer, default=0)
+    failed_backtests = Column(Integer, default=0)
+
+    # Complete results (JSON format)
+    portfolio_metrics = Column(SafeJSON, nullable=True)  # Combined metrics
+    individual_results = Column(SafeJSON, nullable=True)  # Per-ticker metrics
+    correlation_matrix = Column(SafeJSON, nullable=True)  # Correlation data
+    optimization_suggestion = Column(SafeJSON, nullable=True)  # Optimal weights
+
+    # Strategy parameters used
+    params = Column(SafeJSON, nullable=True)
+
+    # Plot image reference
+    plot_filename = Column(String(255), nullable=True)
+
+    def __repr__(self):
+        tickers_str = ",".join(self.tickers[:3]) if self.tickers else "N/A"
+        if self.tickers and len(self.tickers) > 3:
+            tickers_str += "..."
+        return (
+            f"<PortfolioResult(id={self.portfolio_id}, "
+            f"tickers=[{tickers_str}], "
+            f"return={self.total_return:.2f}% if self.total_return else 'N/A')>"
+        )
+
 class WalkForwardOptimizationModel(Base):
     """
     Walk-Forward Optimization Model - Stores walk-forward analysis results.
