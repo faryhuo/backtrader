@@ -22,7 +22,7 @@ router = APIRouter()
 async def websocket_live_updates(
     websocket: WebSocket,
     session_id: str,
-    token: Optional[str] = Query(None, description="Authentication token (optional for Phase 3)")
+    token: Optional[str] = Query(None, description="Session ws_token from /api/live/start response (required)")
 ):
     """
     WebSocket endpoint for real-time trading updates.
@@ -152,16 +152,20 @@ async def websocket_live_updates(
     ws_manager = get_websocket_manager()
     session_manager = get_session_manager()
 
-    # TODO: Phase 6 - Implement authentication
-    # For now, authentication is optional
-    if token:
-        logger.debug(f"WebSocket connection with token: {token[:10]}...")
-
     # Verify session exists
     session = session_manager.get_session(session_id)
     if not session:
         logger.warning(f"WebSocket connection attempted for non-existent session: {session_id}")
         await websocket.close(code=1008, reason="Session not found")
+        return
+
+    # Verify ws_token matches session
+    if not token or token != session.ws_token:
+        logger.warning(
+            f"WebSocket auth failed for session {session_id}: "
+            f"{'missing token' if not token else 'invalid token'}"
+        )
+        await websocket.close(code=1008, reason="Invalid or missing token")
         return
 
     # Connect WebSocket

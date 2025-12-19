@@ -163,9 +163,10 @@ export const useLiveTrading = () => {
             addNotification('Trading session started successfully', 'success');
 
             // Manually connect WebSocket after session is successfully created
+            // Pass ws_token for authentication
             setTimeout(() => {
-                if (result.session_id && result.status === 'running') {
-                    wsConnect(result.session_id);
+                if (result.session_id && result.status === 'running' && result.ws_token) {
+                    wsConnect(result.session_id, result.ws_token);
                 }
             }, 1000);
 
@@ -242,8 +243,8 @@ export const useLiveTrading = () => {
                     const ordersData = await api.getSessionOrders(activeSession.session_id);
                     setOrders(ordersData?.orders || []);
 
-                    if (activeSession.status === 'running') {
-                        setTimeout(() => wsConnect(activeSession.session_id), 500);
+                    if (activeSession.status === 'running' && activeSession.ws_token) {
+                        setTimeout(() => wsConnect(activeSession.session_id, activeSession.ws_token), 500);
                     }
                 }
             }

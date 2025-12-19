@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.config.settings import ensure_resource_dirs
+from src.config.settings import (
+    CORS_ALLOW_CREDENTIALS,
+    CORS_ALLOW_ORIGINS,
+    CORS_ALLOW_ORIGIN_REGEX,
+    ensure_resource_dirs,
+)
 from src.routes.ai_routes import router as ai_router
 from src.routes.api_routes import router as api_router
 from src.routes.live_routes import router as live_router
@@ -15,11 +20,16 @@ ensure_resource_dirs()
 
 app = FastAPI()
 
-# Enable CORS for frontend
+cors_allow_credentials = CORS_ALLOW_CREDENTIALS
+if cors_allow_credentials and ("*" in CORS_ALLOW_ORIGINS or CORS_ALLOW_ORIGIN_REGEX == ".*"):
+    cors_allow_credentials = False
+
+# Configure CORS via environment (safe by default).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify the frontend URL
-    allow_credentials=True,
+    allow_origins=CORS_ALLOW_ORIGINS,
+    allow_origin_regex=CORS_ALLOW_ORIGIN_REGEX,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -161,7 +161,8 @@ def run_live(
             mode=mode,
             timeframe=timeframe,
             initial_cash=initial_cash,
-            commission=commission
+            commission=commission,
+            user_id=user_id  # Pass user_id for WebSocket auth
         )
 
         # 2. Load strategy class

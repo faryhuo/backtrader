@@ -46,6 +46,10 @@ class TradingSession:
     start_time: datetime = field(default_factory=datetime.now)
     end_time: Optional[datetime] = None
 
+    # User and authentication
+    user_id: Optional[str] = None  # Owner's user ID (from JWT 'sub' or None for anonymous)
+    ws_token: str = field(default_factory=lambda: str(__import__('uuid').uuid4()))  # WebSocket auth token
+
     # Runtime objects (not serialized)
     cerebro: Optional[bt.Cerebro] = None
     store: Optional[Any] = None  # CCXTStore
@@ -81,7 +85,9 @@ class TradingSession:
             'total_trades': self.total_trades,
             'positions': self.positions,
             'open_orders': [o for o in self.orders if o.get('status') not in ['filled', 'canceled']],
-            'error_message': self.error_message
+            'error_message': self.error_message,
+            'ws_token': self.ws_token,  # Token for WebSocket authentication
+            'user_id': self.user_id
         }
 
     def is_active(self) -> bool:
@@ -139,7 +145,8 @@ class SessionManager:
         mode: str = 'paper',
         timeframe: str = '1m',
         initial_cash: float = 10000.0,
-        commission: float = 0.001
+        commission: float = 0.001,
+        user_id: Optional[str] = None
     ) -> TradingSession:
         """
         Create a new trading session.
@@ -153,6 +160,7 @@ class SessionManager:
             timeframe: Bar timeframe
             initial_cash: Starting capital
             commission: Commission rate
+            user_id: Optional user identifier (from JWT 'sub' claim)
 
         Returns:
             TradingSession: Created session object
@@ -174,13 +182,14 @@ class SessionManager:
                 initial_cash=initial_cash,
                 commission=commission,
                 status=SessionStatus.STARTING,
-                start_time=datetime.now()
+                start_time=datetime.now(),
+                user_id=user_id
             )
 
             self._sessions[session_id] = session
             logger.info(
                 f"Created session {session_id}: {strategy_name} on {symbol} "
-                f"({exchange} {mode})"
+                f"({exchange} {mode}) [user={user_id}]"
             )
 
             return session
