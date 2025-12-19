@@ -56,10 +56,9 @@ class ConfigManager:
         if database_url:
             self.settings_storage = SettingsStorage(database_url)
         else:
-            # Use default database URL from environment
+            # Use default database URL from settings (already has fallback to DEFAULT_DB_URL)
             from src.config.settings import DATABASE_URL
-            db_url = DATABASE_URL or "sqlite:///trading_sessions.db"
-            self.settings_storage = SettingsStorage(db_url)
+            self.settings_storage = SettingsStorage(DATABASE_URL)
 
         logger.debug(f"ConfigManager initialized for user_id={user_id}")
 
@@ -272,10 +271,10 @@ class ConfigManager:
         Get database URL.
 
         Returns:
-            Database connection string
+            Database connection string (from DATABASE_URL setting with absolute path fallback)
         """
         from src.config.settings import DATABASE_URL
-        return DATABASE_URL or "sqlite:///trading_sessions.db"
+        return DATABASE_URL
 
     # ========== Utility Methods ==========
 

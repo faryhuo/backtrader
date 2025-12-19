@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
-from src.config.settings import IMAGES_DIR
+from src.config.settings import DATABASE_URL, IMAGES_DIR
 from src.db.models import BacktestHistoryModel, init_database
 
 logger = logging.getLogger(__name__)
@@ -24,11 +24,15 @@ class BacktestStorage:
 
     MAX_RECORDS = 100  # Keep last 100 backtests
 
-    def __init__(self, database_url: str = "sqlite:///trading_sessions.db"):
-        """Initialize backtest storage."""
-        self.database_url = database_url
-        self._engine, self._SessionLocal = init_database(database_url)
-        logger.info(f"BacktestStorage initialized with database: {database_url}")
+    def __init__(self, database_url: Optional[str] = None):
+        """Initialize backtest storage.
+
+        Args:
+            database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
+        """
+        self.database_url = database_url or DATABASE_URL
+        self._engine, self._SessionLocal = init_database(self.database_url)
+        logger.info(f"BacktestStorage initialized with database: {self.database_url}")
 
     def get_db_session(self) -> Session:
         """Get database session."""

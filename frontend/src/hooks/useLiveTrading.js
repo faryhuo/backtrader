@@ -24,12 +24,8 @@ export const useLiveTrading = () => {
         losingTrades: 0,
         winRate: 0
     });
-    let wsConnect;
-    let wsDisconnect;
-    let wsConnected;
 
-
-    // Handle WebSocket messages
+    // Handle WebSocket messages - defined before useWebSocket to avoid dependency issues
     const handleWebSocketMessage = useCallback((msg) => {
         if (!msg || !msg.type) return;
 
@@ -124,6 +120,22 @@ export const useLiveTrading = () => {
         }
     }, [addNotification]);
 
+    // WebSocket connection - initialized at top level per React Hook rules
+    // autoConnect: false prevents automatic connection, we manually connect after session starts
+    const {
+        connect: wsConnect,
+        disconnect: wsDisconnect,
+        isOpen: wsConnected
+    } = useWebSocket(null, {
+        autoConnect: false,  // Never auto-connect to prevent reconnection loops
+        maxReconnectAttempts: 3,  // Allow some reconnection attempts
+        onMessage: handleWebSocketMessage,
+        onError: (error) => {
+            // Suppress error messages to avoid flooding UI
+            console.error('WebSocket error:', error);
+        }
+    });
+
     // Start trading session
     const handleStartSession = async (config) => {
         try {
@@ -146,19 +158,7 @@ export const useLiveTrading = () => {
                 losingTrades: 0,
                 winRate: 0
             });
-            // WebSocket connection - NEVER auto-connect, only manual connect after session starts
-            const wsObj = useWebSocket(session?.session_id, {
-                autoConnect: false,  // Never auto-connect to prevent reconnection loops
-                maxReconnectAttempts: 0,  // Disable auto-reconnect completely
-                onMessage: handleWebSocketMessage,
-                onError: (error) => {
-                    // Suppress error messages to avoid flooding UI
-                    console.error('WebSocket error:', error);
-                }
-            });
-            wsConnect = wsObj.connect;
-            wsDisconnect = wsObj.disconnect;
-            wsConnected = wsObj.isOpen;
+
             message.success('Trading session started successfully');
             addNotification('Trading session started successfully', 'success');
 
@@ -189,8 +189,7 @@ export const useLiveTrading = () => {
 
             message.success('Trading session stopped');
             addNotification('Trading session stopped', 'info');
-            if (wsDisconnect && typeof wsDisconnect === 'function')
-                wsDisconnect();
+            wsDisconnect();  // Disconnect WebSocket
 
             setTimeout(() => {
                 setSession(null);

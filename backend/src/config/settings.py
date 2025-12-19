@@ -28,7 +28,11 @@ LOGTO_REQUIRED_SCOPES = [
 ]
 
 # External services.
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Database configuration with centralized default path
+DEFAULT_DB_PATH = PROJECT_ROOT / "trading_sessions.db"
+DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH}"
+DATABASE_URL = os.getenv("DATABASE_URL") or DEFAULT_DB_URL
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 # Optional outbound proxies for backend requests.
@@ -85,6 +89,8 @@ __all__ = [
     "CORS_ALLOW_ORIGINS",
     "CORS_ALLOW_ORIGIN_REGEX",
     "DATABASE_URL",
+    "DEFAULT_DB_PATH",
+    "DEFAULT_DB_URL",
     "DEFAULT_EXCHANGE",
     "DEFAULT_TRADE_MODE",
     "ENABLE_LOGIN",

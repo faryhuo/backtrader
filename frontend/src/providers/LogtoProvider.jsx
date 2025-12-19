@@ -11,6 +11,8 @@ export function LogtoProvider({ children }) {
   const config = {
     endpoint: import.meta.env.VITE_LOGTO_ENDPOINT,
     appId: import.meta.env.VITE_LOGTO_APP_ID,
+    // VITE_API_RESOURCE is the OAuth2 resource/audience identifier for access tokens
+    // This is separate from VITE_API_BASE_URL which is the HTTP API endpoint
     resources: [import.meta.env.VITE_API_RESOURCE],
   };
 
