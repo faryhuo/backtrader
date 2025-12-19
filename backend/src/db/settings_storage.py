@@ -403,6 +403,11 @@ class SettingsStorage:
         try:
             normalized_user_id = self._normalize_user_id(user_id)
 
+            # Check if the credential_key is a valid attribute of the model
+            if not hasattr(UserSettingsModel, credential_key):
+                logger.error(f"Invalid credential key: {credential_key}")
+                return False
+
             settings = db.query(UserSettingsModel).filter(
                 UserSettingsModel.user_id == normalized_user_id
             ).first()
@@ -412,11 +417,16 @@ class SettingsStorage:
                 settings.updated_at = datetime.utcnow()
                 db.commit()
                 logger.debug(f"Deleted credential {credential_key} for user {normalized_user_id}")
+            else:
+                # No settings record exists, which is fine (nothing to delete)
+                logger.debug(f"No settings found for user {normalized_user_id}, nothing to delete")
 
             return True
 
         except Exception as e:
             logger.error(f"Failed to delete credential {credential_key} for user {normalized_user_id}: {e}")
+            import traceback
+            traceback.print_exc()
             db.rollback()
             return False
         finally:

@@ -117,8 +117,8 @@ def mask_credential(value: Optional[str]) -> str:
     """
     Mask sensitive credential values for display purposes.
 
-    Shows first 4 and last 4 characters, masks the middle.
-    For short values (< 8 chars), returns all asterisks.
+    Shows prefix (up to first dash), masks middle, shows last few characters.
+    For API keys like 'sk-123456789', returns 'sk-xxxxxxx-789'
 
     Args:
         value: The credential value to mask
@@ -128,18 +128,34 @@ def mask_credential(value: Optional[str]) -> str:
 
     Examples:
         >>> mask_credential("sk-abc123def456ghi789")
-        'sk-a••••••••i789'
+        'sk-xxxxxxxxxxx-789'
 
         >>> mask_credential("short")
-        '••••••••'
+        'xxxxx'
 
         >>> mask_credential(None)
-        '••••••••'
+        ''
     """
-    if not value or len(value) < 8:
-        return "••••••••"
+    if not value:
+        return ""
 
-    return f"{value[:4]}••••••••{value[-4:]}"
+    if len(value) < 8:
+        return "x" * len(value)
+
+    # Handle keys with prefix (like sk-, pk-, etc.)
+    if '-' in value and value.index('-') < 5:
+        prefix_end = value.index('-') + 1
+        prefix = value[:prefix_end]
+        rest = value[prefix_end:]
+
+        if len(rest) <= 6:
+            return prefix + "x" * len(rest)
+        else:
+            # Show last 3 characters
+            return prefix + "x" * (len(rest) - 3) + "-" + rest[-3:]
+
+    # For values without prefix, show first 4 and last 3
+    return value[:4] + "x" * (len(value) - 7) + value[-3:]
 
 
 def is_encryption_enabled() -> bool:

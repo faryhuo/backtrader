@@ -9,7 +9,13 @@
       "Bash(robocopy:*)",
       "Bash(ls:*)",
       "Bash(timeout 5 python:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(pip install:*)",
+      "Bash(timeout 3 python:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }
