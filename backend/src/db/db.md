@@ -17,6 +17,7 @@
 
 ## 约定与规范
 - DB 层不写业务流程，只负责数据定义与访问。
-- 跨模块引用模型需通过明确接口，避免循环依赖。
+- 跨模块引用模型需通过明确接口,避免循环依赖。
 - 敏感数据（API Key/Secret）必须使用 `utils/encryption.py` 加密后存储。
+- **数据库路径配置**：所有 Storage 类默认从 `config/settings.py` 的 `DATABASE_URL` 读取数据库路径，该路径为绝对路径 `PROJECT_ROOT/trading_sessions.db`，避免因工作目录不同导致多数据库文件问题。
 

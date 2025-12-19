@@ -4,7 +4,7 @@ import { LOGIN_ENABLED } from '../config/auth'
 export const API_URL = import.meta.env.VITE_API_BASE_URL
 
 // Logto resource/audience for OAuth2 access tokens
-const API_RESOURCE = import.meta.env.VITE_API_RESOURCE
+const API_RESOURCE = import.meta.env.VITE_API_BASE_URL
 
 // Token getter function (set by App component)
 let getTokenFn = null
@@ -55,19 +55,26 @@ export const getAccessToken = async () => {
 }
 
 export const parseResponse = async (response) => {
+    // Handle 401 Unauthorized first (before trying to parse body)
+    if (response.status === 401 && LOGIN_ENABLED) {
+        console.error('Unauthorized - redirecting to login')
+        const loginPath = '/login'
+        if (window.location.pathname !== loginPath) {
+            window.location.href = loginPath
+        }
+        throw new Error('Unauthorized')
+    }
 
+    // Handle 204 No Content (no response body)
+    if (response.status === 204) {
+        return null
+    }
+
+    // Parse response body
     const data = await response.json()
 
-    if (response.status !== 200) {
-        // Handle 401 Unauthorized - redirect to login
-        if (response.status === 401 && LOGIN_ENABLED) {
-            console.error('Unauthorized - redirecting to login')
-            const loginPath = '/login'
-            if (window.location.pathname !== loginPath) {
-                window.location.href = loginPath
-            }
-        }
-
+    // Check if response is successful (status 200-299)
+    if (!response.ok) {
         const message = (data && (data.detail || data.message)) || `HTTP error! status: ${response.status}`
         throw new Error(message)
     }

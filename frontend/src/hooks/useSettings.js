@@ -1,0 +1,167 @@
+import { useState, useCallback } from 'react';
+import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { api } from '../services/api';
+import { DEFAULT_SETTINGS } from '../constants/settingsConstants';
+
+/**
+ * Custom hook for managing AI settings state and operations
+ */
+export function useSettings() {
+    const { t } = useTranslation();
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+    const [saved, setSaved] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const saveToDatabase = useCallback(async (settingsToSave, showMessage = true) => {
+        const payload = {
+            selected_models: settingsToSave.selectedModels,
+            code_analysis_prompt: settingsToSave.codeAnalysisPrompt,
+            code_rewrite_prompt: settingsToSave.codeRewritePrompt,
+            full_strategy_analysis_prompt: settingsToSave.fullStrategyAnalysisPrompt
+        };
+
+        const response = await api.updateSettings(payload);
+
+        if (response.status === 'ok') {
+            if (showMessage) {
+                message.success(t('settings.saved', 'Settings saved!'));
+            }
+            return true;
+        }
+        return false;
+    }, [t]);
+
+    const migrateFromLocalStorage = useCallback(async () => {
+        const storedSettings = localStorage.getItem('userSettings');
+        if (storedSettings) {
+            try {
+                const parsed = JSON.parse(storedSettings);
+
+                if (parsed.aiModel && !parsed.selectedModels) {
+                    parsed.selectedModels = [parsed.aiModel];
+                    delete parsed.aiModel;
+                }
+
+                const migratedSettings = { ...DEFAULT_SETTINGS, ...parsed };
+                setSettings(migratedSettings);
+
+                try {
+                    await saveToDatabase(migratedSettings, false);
+                    console.log('Successfully migrated settings from localStorage to database');
+                } catch (e) {
+                    console.warn('Failed to auto-migrate settings to database:', e);
+                }
+            } catch (e) {
+                console.error('Failed to parse localStorage settings:', e);
+                setSettings(DEFAULT_SETTINGS);
+            }
+        }
+    }, [saveToDatabase]);
+
+    const loadSettings = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await api.getSettings();
+
+            if (response.status === 'ok' && response.settings) {
+                const dbSettings = {
+                    selectedModels: response.settings.selected_models || DEFAULT_SETTINGS.selectedModels,
+                    codeAnalysisPrompt: response.settings.code_analysis_prompt || DEFAULT_SETTINGS.codeAnalysisPrompt,
+                    codeRewritePrompt: response.settings.code_rewrite_prompt || DEFAULT_SETTINGS.codeRewritePrompt,
+                    fullStrategyAnalysisPrompt: response.settings.full_strategy_analysis_prompt || DEFAULT_SETTINGS.fullStrategyAnalysisPrompt
+                };
+                setSettings(dbSettings);
+
+                const isDefaults = JSON.stringify(dbSettings.selectedModels) === JSON.stringify(DEFAULT_SETTINGS.selectedModels) &&
+                    dbSettings.codeAnalysisPrompt === DEFAULT_SETTINGS.codeAnalysisPrompt;
+
+                if (isDefaults) {
+                    await migrateFromLocalStorage();
+                }
+            } else {
+                await migrateFromLocalStorage();
+            }
+        } catch (error) {
+            console.error('Failed to load settings from database:', error);
+            await migrateFromLocalStorage();
+        } finally {
+            setLoading(false);
+        }
+    }, [migrateFromLocalStorage]);
+
+    const handleChange = useCallback((key, value) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+        setSaved(false);
+    }, []);
+
+    const handleModelChange = useCallback((value) => {
+        setSettings(prev => ({ ...prev, selectedModels: value }));
+        setSaved(false);
+    }, []);
+
+    const handleSave = useCallback(async () => {
+        try {
+            setLoading(true);
+
+            if (!settings.selectedModels || settings.selectedModels.length === 0) {
+                message.error(t('settings.select_at_least_one', 'Please select at least one model.'));
+                return;
+            }
+
+            try {
+                await saveToDatabase(settings, true);
+                setSaved(true);
+                setTimeout(() => setSaved(false), 3000);
+            } catch (error) {
+                console.error('Database save failed, falling back to localStorage:', error);
+                message.warning('Saved to local storage (database unavailable)');
+                localStorage.setItem('userSettings', JSON.stringify(settings));
+                setSaved(true);
+                setTimeout(() => setSaved(false), 3000);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [settings, saveToDatabase, t]);
+
+    const handleReset = useCallback(async () => {
+        if (window.confirm(t('settings.confirm_reset', 'Are you sure you want to reset all settings to default?'))) {
+            try {
+                setLoading(true);
+
+                try {
+                    const response = await api.resetSettings();
+                    if (response.status === 'ok') {
+                        setSettings(DEFAULT_SETTINGS);
+                        message.success(t('settings.reset_success', 'Settings reset to defaults'));
+                        setSaved(true);
+                        setTimeout(() => setSaved(false), 3000);
+                    }
+                } catch (error) {
+                    console.error('Database reset failed, using localStorage:', error);
+                    setSettings(DEFAULT_SETTINGS);
+                    localStorage.removeItem('userSettings');
+                    message.success(t('settings.reset_success', 'Settings reset to defaults'));
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 3000);
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+    }, [t]);
+
+    return {
+        settings,
+        loading,
+        saved,
+        loadSettings,
+        handleChange,
+        handleModelChange,
+        handleSave,
+        handleReset
+    };
+}
+
+export default useSettings;
