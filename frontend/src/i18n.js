@@ -19,6 +19,7 @@ import historyEn from './locales/en/history.json';
 import walkforwardEn from './locales/en/walkforward.json';
 import liveEn from './locales/en/live.json';
 import settingsEn from './locales/en/settings.json';
+import portfolioEn from './locales/en/portfolio.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -37,6 +38,7 @@ import historyZh from './locales/zh/history.json';
 import walkforwardZh from './locales/zh/walkforward.json';
 import liveZh from './locales/zh/live.json';
 import settingsZh from './locales/zh/settings.json';
+import portfolioZh from './locales/zh/portfolio.json';
 
 const en = {
   app: appEn,
@@ -54,7 +56,8 @@ const en = {
   history: historyEn,
   walkforward: walkforwardEn ?? walkforwardEn,
   live: liveEn,
-  settings: settingsEn
+  settings: settingsEn,
+  portfolio: portfolioEn
 };
 
 const zh = {
@@ -73,7 +76,8 @@ const zh = {
   history: historyZh,
   walkforward: walkforwardZh ?? walkforwardZh,
   live: liveZh,
-  settings: settingsZh
+  settings: settingsZh,
+  portfolio: portfolioZh
 };
 
 i18n

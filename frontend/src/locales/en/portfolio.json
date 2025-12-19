@@ -1,0 +1,51 @@
+{
+  "title": "Portfolio Backtest",
+  "description": "Run backtests on multiple assets with custom weight allocation",
+  "configuration": "Portfolio Configuration",
+  "assets": "Assets & Weights",
+  "equal_weights": "Equal Weights",
+  "normalize": "Normalize",
+  "add_ticker": "Add Ticker",
+  "weight_warning": "Weights will be normalized to 100%",
+  "date_range": "Date Range",
+  "strategy": "Strategy",
+  "initial_cash": "Initial Cash",
+  "commission": "Commission",
+  "strategy_params": "Strategy Parameters",
+  "run_backtest": "Run Portfolio Backtest",
+  "running": "Running portfolio backtest...",
+  "portfolio_metrics": "Portfolio Metrics",
+  "final_value": "Final Value",
+  "total_return": "Total Return",
+  "sharpe": "Weighted Sharpe",
+  "max_drawdown": "Max Drawdown",
+  "individual_results": "Individual Asset Results",
+  "correlation": "Correlation Matrix",
+  "optimization": "Optimization Suggestions",
+  "optimization_intro": "Based on historical returns and covariance, here are the optimal weights for maximum Sharpe ratio:",
+  "chart": "Portfolio Chart",
+  "chart_alt": "Portfolio Chart",
+  "empty_state": "Configure your portfolio above and run a backtest to see results",
+  "validation": {
+    "no_ticker": "Please enter at least one ticker",
+    "no_date_range": "Please select a date range"
+  },
+  "error": {
+    "run_failed": "Portfolio backtest failed"
+  },
+  "table": {
+    "ticker": "Ticker",
+    "weight": "Weight",
+    "status": "Status",
+    "initial": "Initial",
+    "final": "Final",
+    "return": "Return",
+    "sharpe": "Sharpe"
+  },
+  "optimization_metrics": {
+    "expected_return": "Expected Return",
+    "expected_volatility": "Expected Volatility",
+    "sharpe_ratio": "Sharpe Ratio"
+  }
+}
+

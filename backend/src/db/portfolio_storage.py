@@ -56,6 +56,7 @@ class PortfolioStorage:
                 start_date=result.get("start_date"),
                 end_date=result.get("end_date"),
                 initial_cash=portfolio_metrics.get("initial_cash", 0),
+                commission=portfolio_metrics.get("commission", 0.0005),
                 strategy_name=result.get("strategy_name"),
                 final_value=portfolio_metrics.get("final_value"),
                 total_return=portfolio_metrics.get("total_return"),
@@ -68,6 +69,8 @@ class PortfolioStorage:
                 individual_results=result.get("individual_results", []),
                 correlation_matrix=result.get("correlation", {}),
                 optimization_suggestion=result.get("optimization", {}),
+                plot_filename=result.get("plot_filename"),
+                params=result.get("params"),
             )
 
             session.add(model)

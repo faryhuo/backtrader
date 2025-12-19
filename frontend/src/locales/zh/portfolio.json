@@ -1,0 +1,51 @@
+{
+  "title": "投资组合回测",
+  "description": "对多个资产按自定义权重进行回测",
+  "configuration": "组合配置",
+  "assets": "资产与权重",
+  "equal_weights": "等权",
+  "normalize": "归一化",
+  "add_ticker": "添加标的",
+  "weight_warning": "权重将被归一化为 100%",
+  "date_range": "日期范围",
+  "strategy": "策略",
+  "initial_cash": "初始资金",
+  "commission": "手续费",
+  "strategy_params": "策略参数",
+  "run_backtest": "运行组合回测",
+  "running": "正在运行组合回测...",
+  "portfolio_metrics": "组合指标",
+  "final_value": "最终价值",
+  "total_return": "总收益",
+  "sharpe": "加权夏普",
+  "max_drawdown": "最大回撤",
+  "individual_results": "单资产结果",
+  "correlation": "相关系数矩阵",
+  "optimization": "优化建议",
+  "optimization_intro": "基于历史收益与协方差，以下为最大化夏普比率的最优权重：",
+  "chart": "组合净值图",
+  "chart_alt": "组合净值图",
+  "empty_state": "请在上方配置投资组合并运行回测以查看结果",
+  "validation": {
+    "no_ticker": "请至少输入一个标的",
+    "no_date_range": "请选择日期范围"
+  },
+  "error": {
+    "run_failed": "组合回测失败"
+  },
+  "table": {
+    "ticker": "标的",
+    "weight": "权重",
+    "status": "状态",
+    "initial": "初始",
+    "final": "最终",
+    "return": "收益",
+    "sharpe": "夏普"
+  },
+  "optimization_metrics": {
+    "expected_return": "预期收益",
+    "expected_volatility": "预期波动率",
+    "sharpe_ratio": "夏普比率"
+  }
+}
+

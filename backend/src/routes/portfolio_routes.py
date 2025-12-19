@@ -90,8 +90,9 @@ async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Dep
             save_path=save_path,
         )
         
-        # Save to database
+        # Save to database (include plot_filename)
         user_id = user.get("sub") if user else None
+        result["plot_filename"] = plot_filename  # Add plot filename for storage
         storage = get_portfolio_storage()
         storage.save_result(result, user_id=user_id)
         

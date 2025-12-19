@@ -57,22 +57,41 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         if (!portfolio.individual_results) return []
 
         const results = []
-        const weights = portfolio.weights || []
-        const tickers = portfolio.tickers || []
+        const individualResults = portfolio.individual_results
 
-        Object.entries(portfolio.individual_results).forEach(([ticker, data], index) => {
-            if (data && data.status === 'success' && data.metrics) {
-                results.push({
-                    key: ticker,
-                    ticker,
-                    weight: weights[index] || 0,
-                    total_return: data.metrics.total_return,
-                    sharpe_ratio: data.metrics.sharpe_ratio,
-                    max_drawdown: data.metrics.max_drawdown,
-                    total_trades: data.metrics.total_trades
-                })
-            }
-        })
+        // Handle both array format (from run_portfolio_backtest) and object format
+        if (Array.isArray(individualResults)) {
+            // Array format: [{ticker, success, weight, return, sharpe, drawdown, ...}, ...]
+            individualResults.forEach((item, index) => {
+                if (item && item.success) {
+                    results.push({
+                        key: item.ticker,
+                        ticker: item.ticker,
+                        weight: item.weight || 0,
+                        total_return: item.return,  // Backend uses 'return' not 'total_return'
+                        sharpe_ratio: item.sharpe,  // Backend uses 'sharpe' not 'sharpe_ratio'
+                        max_drawdown: item.drawdown, // Backend uses 'drawdown' not 'max_drawdown'
+                        total_trades: item.total_trades || 'N/A'
+                    })
+                }
+            })
+        } else {
+            // Object format: {AAPL: {status: 'success', metrics: {...}}, ...}
+            const weights = portfolio.weights || []
+            Object.entries(individualResults).forEach(([ticker, data], index) => {
+                if (data && data.status === 'success' && data.metrics) {
+                    results.push({
+                        key: ticker,
+                        ticker,
+                        weight: weights[index] || 0,
+                        total_return: data.metrics.total_return,
+                        sharpe_ratio: data.metrics.sharpe_ratio,
+                        max_drawdown: data.metrics.max_drawdown,
+                        total_trades: data.metrics.total_trades
+                    })
+                }
+            })
+        }
         return results
     }
 
@@ -302,7 +321,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                 <div style={{ textAlign: 'center' }}>
                     {portfolio.plot_filename ? (
                         <img
-                            src={`${API_URL}/images/${portfolio.plot_filename}`}
+                            src={`/images/${portfolio.plot_filename}`}
                             alt="Portfolio Chart"
                             style={{ maxWidth: '100%', maxHeight: '500px' }}
                         />

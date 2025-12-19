@@ -139,11 +139,11 @@ function PortfolioBacktest() {
         // Validate
         const validTickers = tickers.filter(t => t.trim())
         if (validTickers.length === 0) {
-            setError('Please enter at least one ticker')
+            setError(t('portfolio.validation.no_ticker', 'Please enter at least one ticker'))
             return
         }
         if (!dateRange || dateRange.length !== 2) {
-            setError('Please select a date range')
+            setError(t('portfolio.validation.no_date_range', 'Please select a date range'))
             return
         }
 
@@ -168,7 +168,7 @@ function PortfolioBacktest() {
             })
             setResult(data)
         } catch (err) {
-            setError(err.message || 'Portfolio backtest failed')
+            setError(err?.message || t('portfolio.error.run_failed', 'Portfolio backtest failed'))
         } finally {
             setLoading(false)
         }
@@ -398,41 +398,41 @@ function PortfolioBacktest() {
                             pagination={false}
                             columns={[
                                 {
-                                    title: 'Ticker',
+                                    title: t('portfolio.table.ticker', 'Ticker'),
                                     dataIndex: 'ticker',
-                                    render: t => <Tag color="blue">{t}</Tag>
+                                    render: ticker => <Tag color="blue">{ticker}</Tag>
                                 },
                                 {
-                                    title: 'Weight',
+                                    title: t('portfolio.table.weight', 'Weight'),
                                     dataIndex: 'weight',
                                     render: w => `${(w * 100).toFixed(0)}%`
                                 },
                                 {
-                                    title: 'Status',
+                                    title: t('portfolio.table.status', 'Status'),
                                     dataIndex: 'success',
                                     render: s => s
                                         ? <CheckCircleOutlined style={{ color: '#52c41a' }} />
                                         : <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
                                 },
                                 {
-                                    title: 'Initial',
+                                    title: t('portfolio.table.initial', 'Initial'),
                                     dataIndex: 'initial_cash',
                                     render: v => v ? `$${v.toLocaleString()}` : '-'
                                 },
                                 {
-                                    title: 'Final',
+                                    title: t('portfolio.table.final', 'Final'),
                                     dataIndex: 'final_value',
                                     render: v => v ? `$${v.toLocaleString()}` : '-'
                                 },
                                 {
-                                    title: 'Return',
+                                    title: t('portfolio.table.return', 'Return'),
                                     dataIndex: 'return',
                                     render: r => r != null
                                         ? <span className={r >= 0 ? 'positive' : 'negative'}>{r.toFixed(2)}%</span>
                                         : '-'
                                 },
                                 {
-                                    title: 'Sharpe',
+                                    title: t('portfolio.table.sharpe', 'Sharpe'),
                                     dataIndex: 'sharpe',
                                     render: s => s?.toFixed(4) || '-'
                                 },
@@ -498,9 +498,9 @@ function PortfolioBacktest() {
                                 </div>
                                 {result.optimization.expected_return && (
                                     <div className="optimization-metrics">
-                                        <span>Expected Return: {(result.optimization.expected_return * 100).toFixed(2)}%</span>
-                                        <span>Expected Volatility: {(result.optimization.expected_volatility * 100).toFixed(2)}%</span>
-                                        <span>Sharpe Ratio: {result.optimization.sharpe_ratio?.toFixed(4)}</span>
+                                        <span>{t('portfolio.optimization_metrics.expected_return', 'Expected Return')}: {(result.optimization.expected_return * 100).toFixed(2)}%</span>
+                                        <span>{t('portfolio.optimization_metrics.expected_volatility', 'Expected Volatility')}: {(result.optimization.expected_volatility * 100).toFixed(2)}%</span>
+                                        <span>{t('portfolio.optimization_metrics.sharpe_ratio', 'Sharpe Ratio')}: {result.optimization.sharpe_ratio?.toFixed(4)}</span>
                                     </div>
                                 )}
                             </div>
@@ -510,7 +510,7 @@ function PortfolioBacktest() {
                     {/* Portfolio Chart */}
                     {result.plot_url && (
                         <Card className="chart-card" title={t('portfolio.chart', 'Portfolio Chart')}>
-                            <img src={result.plot_url} alt="Portfolio Chart" className="portfolio-chart" />
+                            <img src={result.plot_url} alt={t('portfolio.chart_alt', 'Portfolio Chart')} className="portfolio-chart" />
                         </Card>
                     )}
                 </div>
