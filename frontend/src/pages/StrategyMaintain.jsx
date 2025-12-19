@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, AppstoreOutlined } from '@ant-design/icons'
 import '../index.css'
 import '../components/StrategyMaintain/StrategyMaintain.css'
 import { api } from '../services/api'
@@ -8,6 +8,7 @@ import { analyzeCode, rewriteCode } from '../services/aiAnalysis'
 import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
 import StrategyEditorPanel from '../components/StrategyMaintain/StrategyEditorPanel'
 import AnalysisModal from '../components/StrategyMaintain/AnalysisModal'
+import { TemplateLibrary } from '../components/StrategyMaintain/TemplateLibrary'
 
 function StrategyMaintain() {
     const { t } = useTranslation();
@@ -19,6 +20,7 @@ function StrategyMaintain() {
     const [codeLoading, setCodeLoading] = useState(false)
     const [analysisResult, setAnalysisResult] = useState('')
     const [showAnalysisModal, setShowAnalysisModal] = useState(false)
+    const [showTemplateLibrary, setShowTemplateLibrary] = useState(false)
 
     useEffect(() => {
         const init = async () => {
@@ -141,13 +143,25 @@ class UserStrategy(bt.Strategy):
         }
     }
 
+    const handleTemplateImport = async (name) => {
+        setShowTemplateLibrary(false);
+        await fetchStrategies();
+        setSelectedStrategy(name);
+        await fetchStrategy(name);
+    }
+
     return (
         <div className="strategy-maintain-container">
             <div className="strategy-header">
                 <h1>{t('maintain.title')}</h1>
-                <button className="btn-primary" onClick={openNewStrategyModal}>
-                    <PlusOutlined /> {t('maintain.new')}
-                </button>
+                <div className="header-actions">
+                    <button className="btn-secondary" onClick={() => setShowTemplateLibrary(true)}>
+                        <AppstoreOutlined /> {t('maintain.template_library')}
+                    </button>
+                    <button className="btn-primary" onClick={openNewStrategyModal}>
+                        <PlusOutlined /> {t('maintain.new')}
+                    </button>
+                </div>
             </div>
 
             <StrategyEditorPanel
@@ -179,6 +193,13 @@ class UserStrategy(bt.Strategy):
                 title={t('maintain.ai_analysis')}
                 t={t}
             />
+
+            {showTemplateLibrary && (
+                <TemplateLibrary
+                    onImport={handleTemplateImport}
+                    onClose={() => setShowTemplateLibrary(false)}
+                />
+            )}
         </div>
     )
 }

@@ -79,3 +79,31 @@ def test_save_ccxt_credentials_allows_deletion(storage):
 
     creds = storage.get_ccxt_credentials("binance", "paper", user_id="u1")
     assert creds == {"api_key": "k", "secret": "s"}
+
+
+def test_get_ccxt_credentials_all_env_fallback(monkeypatch, storage):
+    monkeypatch.setenv("CCXT_BINANCE_PAPER_API_KEY", "sk-abc123def456ghi789")
+    monkeypatch.setenv("CCXT_BINANCE_PAPER_SECRET", "sk-xyz123def456ghi789")
+    monkeypatch.delenv("CCXT_BINANCE_PAPER_PASSPHRASE", raising=False)
+
+    all_creds, source = storage.get_ccxt_credentials_all(user_id="missing", mask_sensitive=True)
+
+    assert source == "mixed"  # env + none for other exchanges/modes
+    assert all_creds["binance"]["paper"]["source"] == "env"
+    assert "x" in all_creds["binance"]["paper"]["api_key"]
+    assert "x" in all_creds["binance"]["paper"]["secret"]
+
+
+def test_get_all_credentials_includes_sources(monkeypatch, storage):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-abc123def456ghi789")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.com/v1")
+    monkeypatch.setenv("ENABLE_LOGIN", "false")
+
+    data = storage.get_all_credentials(user_id="missing", mask_sensitive=True)
+
+    assert data["openai"]["api_key_source"] == "env"
+    assert data["openai"]["base_url_source"] == "env"
+    assert "x" in data["openai"]["api_key"]
+    assert data["openai"]["base_url"] == "https://example.com/v1"
+    assert data["logto"]["enable_login"] is False
+    assert data["logto"]["enable_login_source"] == "env"

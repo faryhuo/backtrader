@@ -15,6 +15,12 @@ from src.service.backtest_engine import (
 from src.db.datasource import get_raw_data_json, DataLoadError
 from src.db.backtest_storage import BacktestStorage
 from src.utils.auth import get_current_user
+from src.service.strategy_templates import (
+    get_all_templates,
+    get_template_by_id,
+    get_categories,
+    get_difficulty_levels,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -61,6 +67,79 @@ def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
     try:
         names = list_strategies()
         return {"strategies": names}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ========== Strategy Template Endpoints ==========
+
+@router.get("/templates")
+def get_templates(user: dict = Depends(get_current_user)) -> dict:
+    """Get all strategy templates with metadata."""
+    try:
+        templates = get_all_templates()
+        categories = get_categories()
+        difficulties = get_difficulty_levels()
+        return {
+            "templates": templates,
+            "categories": categories,
+            "difficulties": difficulties,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/templates/{template_id}")
+def get_template_detail(template_id: str, user: dict = Depends(get_current_user)) -> dict:
+    """Get template detail including code."""
+    try:
+        template = get_template_by_id(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return template
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+class TemplateImportRequest(BaseModel):
+    template_id: str
+    name: str  # New strategy name
+
+
+@router.post("/templates/import")
+def import_template(request: TemplateImportRequest, user: dict = Depends(get_current_user)) -> dict:
+    """Import a template as a new strategy."""
+    try:
+        # Get template
+        template = get_template_by_id(request.template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Validate name
+        if not request.name or not request.name.strip():
+            raise HTTPException(status_code=400, detail="Strategy name is required")
+        
+        # Check if strategy already exists
+        existing = list_strategies()
+        if request.name in existing:
+            raise HTTPException(status_code=400, detail=f"Strategy '{request.name}' already exists")
+        
+        # Save as new strategy
+        code = template.get("code", "")
+        if not code:
+            raise HTTPException(status_code=500, detail="Template code is empty")
+        
+        save_user_strategy_code(request.name, code)
+        
+        return {
+            "status": "ok",
+            "message": f"Template imported as '{request.name}'",
+            "name": request.name,
+        }
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 

@@ -137,6 +137,26 @@ export const api = {
         return await parseResponse(res)
     },
 
+    // Strategy Template API Methods
+
+    async getTemplates() {
+        const res = await buildRequest('/templates')
+        return await parseResponse(res)
+    },
+
+    async getTemplateDetail(templateId) {
+        const res = await buildRequest(`/templates/${encodeURIComponent(templateId)}`)
+        return await parseResponse(res)
+    },
+
+    async importTemplate(templateId, name) {
+        const res = await buildRequest('/templates/import', {
+            method: 'POST',
+            body: JSON.stringify({ template_id: templateId, name })
+        })
+        return await parseResponse(res)
+    },
+
     // Backtest History API Methods
 
     async getBacktestHistory(params = {}) {

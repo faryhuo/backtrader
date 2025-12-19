@@ -1,4 +1,5 @@
 {
+  "title": "策略管理",
   "editor_title": "策略编辑器 (UserStrategy)",
   "new": "新建",
   "subtitle": "仅编辑下方的策略类；回测引擎是固定的。",
@@ -16,5 +17,16 @@
   "save_failed": "保存策略失败",
   "analysis_coming_soon": "AI 分析功能即将推出！",
   "rewrite_coming_soon": "AI 重写功能即将推出！",
-  "placeholder_name": "例如：breakout_v2"
+  "placeholder_name": "例如：breakout_v2",
+  "template_library": "策略模板库",
+  "all_categories": "全部",
+  "no_templates": "暂无模板",
+  "import_template": "导入模板",
+  "import": "导入",
+  "import_failed": "导入失败",
+  "parameters": "参数",
+  "new_strategy_name": "新策略名称",
+  "name_required": "请输入策略名称",
+  "invalid_name_format": "名称必须以字母开头，只能包含字母、数字和下划线",
+  "name_hint": "名称以字母开头，只能包含字母、数字和下划线"
 }

@@ -94,3 +94,16 @@ def test_ccxt_credentials_from_db(stub_storage):
     assert creds["api_key"] == "dbk"
     assert creds["secret"] == "dbs"
 
+
+def test_get_all_config_sources(stub_storage, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "env-key")
+    monkeypatch.setenv("LOGTO_ISSUER", "https://issuer")
+    monkeypatch.delenv("HTTP_PROXY", raising=False)
+    monkeypatch.delenv("HTTPS_PROXY", raising=False)
+
+    manager = cm.ConfigManager(user_id="u1", database_url="sqlite:///:memory:")
+    sources = manager.get_all_config_sources()
+
+    assert sources["openai_api_key"] in {"database", "env", "none"}
+    assert sources["logto_issuer"] in {"database", "env", "none"}
+    assert sources["http_proxy"] in {"database", "env", "none"}

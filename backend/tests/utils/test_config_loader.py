@@ -151,3 +151,19 @@ def test_validate_symbol_and_timeframe(tmp_path):
     with pytest.raises(ValueError):
         config_loader.validate_timeframe("2h", config)
 
+
+def test_reload_config_forces_reload(tmp_path):
+    data = make_config_data()
+    config_path = write_config(tmp_path, data)
+
+    first = config_loader.load_broker_config(config_path=config_path)
+
+    changed = make_config_data()
+    changed["exchanges"]["binance"]["name"] = "Binance Changed"
+    write_config(tmp_path, changed)
+
+    reloaded = config_loader.load_broker_config(config_path=config_path, reload=True)
+    assert reloaded is not first
+    assert reloaded.exchanges["binance"].name == "Binance Changed"
+
+

@@ -17,5 +17,16 @@
   "save_failed": "Failed to save strategy",
   "analysis_coming_soon": "AI Analysis feature coming soon!",
   "rewrite_coming_soon": "AI Rewrite feature coming soon!",
-  "placeholder_name": "e.g., breakout_v2"
+  "placeholder_name": "e.g., breakout_v2",
+  "template_library": "Template Library",
+  "all_categories": "All",
+  "no_templates": "No templates available",
+  "import_template": "Import Template",
+  "import": "Import",
+  "import_failed": "Import failed",
+  "parameters": "Parameters",
+  "new_strategy_name": "New Strategy Name",
+  "name_required": "Please enter a strategy name",
+  "invalid_name_format": "Name must start with a letter and contain only letters, numbers and underscores",
+  "name_hint": "Start with a letter, use only letters, numbers and underscores"
 }
