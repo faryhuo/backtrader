@@ -1,11 +1,42 @@
+"""
+Soft Strategy Sandbox (DEPRECATED)
+
+This module provides a soft sandbox for executing user strategy code.
+It restricts imports and builtins but CANNOT protect against malicious code.
+
+WARNING: This sandbox can be bypassed through:
+- pandas/numpy file I/O operations
+- Python reflection (__class__.__bases__, etc.)
+- Object graph traversal
+
+For secure execution of untrusted code, use IsolatedSandbox instead.
+
+Example:
+    # Secure (recommended):
+    from src.service.isolated_sandbox import IsolatedSandbox
+    sandbox = IsolatedSandbox()
+    result = sandbox.execute_strategy(source, "my_strategy", "my_strategy.py")
+    
+    # Insecure (only for trusted code):
+    from src.service.strategy_sandbox import execute_strategy_code
+    result = execute_strategy_code(source, module_name="my_strategy", filename="my_strategy.py")
+"""
+
 import builtins as py_builtins
 import importlib
 import sys
+import warnings
 from types import ModuleType
 from typing import Any, Dict
 
 import backtrader as bt
 import pandas as pd
+
+# Security warning for soft sandbox mode
+SOFT_SANDBOX_WARNING = (
+    "Using soft sandbox mode which cannot protect against malicious code. "
+    "For untrusted strategy code, use IsolatedSandbox instead (set SANDBOX_MODE=subprocess)."
+)
 
 
 class StrategySandboxError(Exception):

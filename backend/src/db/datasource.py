@@ -5,9 +5,7 @@ from typing import Optional
 import backtrader as bt
 import pandas as pd
 import yfinance as yf
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text, select
 
 from src.config.settings import DATABASE_URL
 from src.db.models import MarketDataModel, init_database, DEFAULT_DB_PATH
@@ -16,6 +14,17 @@ logger = logging.getLogger(__name__)
 
 # Use default local database if DATABASE_URL is not configured
 _DB_URL = DATABASE_URL or DEFAULT_DB_PATH
+
+_ENGINE = None
+_SESSION_LOCAL = None
+
+
+def _get_engine_and_session():
+    global _ENGINE, _SESSION_LOCAL
+    if _ENGINE is None or _SESSION_LOCAL is None:
+        _ENGINE, _SESSION_LOCAL = init_database(_DB_URL)
+    return _ENGINE, _SESSION_LOCAL
+
 
 class DataLoadError(Exception):
     """Raised when market data cannot be loaded."""
@@ -34,56 +43,99 @@ def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> boo
         bool: True if saved successfully, False otherwise
     """
     try:
-        # Initialize database and get session
-        _, SessionLocal = init_database(_DB_URL)
+        _, SessionLocal = _get_engine_and_session()
         session = SessionLocal()
 
-        # Prepare data for insertion
-        saved_count = 0
-        skipped_count = 0
-
-        # Reset index if Date is in the index
         df = data.copy()
-        if df.index.name == 'Date' or 'Date' not in df.columns:
+        if df.index.name == 'Date' or ('Date' not in df.columns and 'date' not in df.columns):
             df = df.reset_index()
 
-        for _, row in df.iterrows():
-            try:
-                # Parse date
-                date_val = row.get('Date') or row.get('date')
-                if pd.isna(date_val):
-                    continue
+        date_col = 'Date' if 'Date' in df.columns else ('date' if 'date' in df.columns else None)
+        if date_col is None:
+            raise ValueError("Missing Date/date column in data")
 
-                date_str = pd.to_datetime(date_val).strftime('%Y-%m-%d')
+        df['_date'] = pd.to_datetime(df[date_col], errors='coerce').dt.strftime('%Y-%m-%d')
+        df = df.dropna(subset=['_date'])
+        if df.empty:
+            session.close()
+            return False
 
-                # Create market data record
-                market_data = MarketDataModel(
-                    ticker=ticker,
-                    date=date_str,
-                    open=float(row.get('Open', row.get('open', 0))),
-                    high=float(row.get('High', row.get('high', 0))),
-                    low=float(row.get('Low', row.get('low', 0))),
-                    close=float(row.get('Close', row.get('close', 0))),
-                    volume=float(row.get('Volume', row.get('volume', 0))),
-                    adj_close=float(row.get('Adj Close', row.get('adj_close', row.get('Close', row.get('close', 0))))),
-                    source=source
-                )
+        def _pick_col(*names: str) -> Optional[str]:
+            for name in names:
+                if name in df.columns:
+                    return name
+            return None
 
-                # Try to add to session
-                session.add(market_data)
-                session.flush()  # Flush to detect constraint violations
-                saved_count += 1
+        open_col = _pick_col('Open', 'open')
+        high_col = _pick_col('High', 'high')
+        low_col = _pick_col('Low', 'low')
+        close_col = _pick_col('Close', 'close')
+        volume_col = _pick_col('Volume', 'volume')
+        adj_close_col = _pick_col('Adj Close', 'adj_close', 'AdjClose', 'adjclose')
 
-            except IntegrityError:
-                # Record already exists, skip it
-                session.rollback()
-                skipped_count += 1
-            except Exception as e:
-                logger.warning(f"Failed to save record for {ticker} on {date_str}: {e}")
-                session.rollback()
+        def _num(series: pd.Series) -> pd.Series:
+            return pd.to_numeric(series, errors='coerce').fillna(0.0)
 
-        # Commit all changes
-        session.commit()
+        df['_open'] = _num(df[open_col]) if open_col else 0.0
+        df['_high'] = _num(df[high_col]) if high_col else 0.0
+        df['_low'] = _num(df[low_col]) if low_col else 0.0
+        df['_close'] = _num(df[close_col]) if close_col else 0.0
+        df['_volume'] = _num(df[volume_col]) if volume_col else 0.0
+        if adj_close_col:
+            df['_adj_close'] = _num(df[adj_close_col])
+        else:
+            df['_adj_close'] = df['_close']
+
+        now = datetime.utcnow()
+        records = [
+            {
+                "ticker": ticker,
+                "date": row._date,
+                "open": float(row._open),
+                "high": float(row._high),
+                "low": float(row._low),
+                "close": float(row._close),
+                "volume": float(row._volume),
+                "adj_close": float(row._adj_close),
+                "source": source,
+                "created_at": now,
+                "updated_at": now,
+            }
+            for row in df[['_date', '_open', '_high', '_low', '_close', '_volume', '_adj_close']].itertuples(index=False)
+        ]
+
+        dialect_name = session.get_bind().dialect.name
+        if dialect_name == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+            stmt = sqlite_insert(MarketDataModel.__table__).on_conflict_do_nothing(
+                index_elements=["ticker", "date"]
+            )
+            with session.begin():
+                result = session.execute(stmt, records)
+            saved_count = result.rowcount if result.rowcount is not None and result.rowcount >= 0 else len(records)
+            skipped_count = max(0, len(records) - saved_count)
+        else:
+            min_date = df['_date'].min()
+            max_date = df['_date'].max()
+            with session.begin():
+                existing_dates = {
+                    date for (date,) in session.execute(
+                        select(MarketDataModel.date).where(
+                            MarketDataModel.ticker == ticker,
+                            MarketDataModel.date >= min_date,
+                            MarketDataModel.date <= max_date,
+                        )
+                    ).all()
+                }
+                new_records = [r for r in records if r["date"] not in existing_dates]
+                skipped_count = len(records) - len(new_records)
+                if new_records:
+                    session.execute(MarketDataModel.__table__.insert(), new_records)
+                    saved_count = len(new_records)
+                else:
+                    saved_count = 0
+
         logger.info(f"Saved {saved_count} records to DB for {ticker} (skipped {skipped_count} existing)")
         session.close()
 
@@ -100,7 +152,7 @@ def get_data_from_db(ticker: str, start: str, end: str) -> Optional[pd.DataFrame
     Returns a DataFrame or None if not found/configured.
     """
     try:
-        engine = create_engine(_DB_URL)
+        engine, _ = _get_engine_and_session()
         # Query from new market_data table
         query = text("""
             SELECT date, open, high, low, close, volume, adj_close

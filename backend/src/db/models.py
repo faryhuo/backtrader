@@ -12,12 +12,31 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import json
+from threading import Lock
+
+from sqlalchemy.engine import Engine
 
 Base = declarative_base()
+
+_DB_CACHE_LOCK = Lock()
+_DB_CACHE: dict[tuple[str, bool], tuple[Engine, sessionmaker]] = {}
+
+
+def _configure_sqlite_engine(engine: Engine) -> None:
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragmas(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA temp_store=MEMORY")
+        finally:
+            cursor.close()
 
 
 class SafeJSON(TypeDecorator):
@@ -239,19 +258,25 @@ def init_database(database_url: str, echo: bool = False):
         # ... use session ...
         session.close()
     """
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
+    cache_key = (database_url, bool(echo))
+    with _DB_CACHE_LOCK:
+        cached = _DB_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
 
-    # Create engine
-    engine = create_engine(database_url, echo=echo)
+        engine_kwargs = {"echo": echo, "pool_pre_ping": True}
+        if database_url.startswith("sqlite"):
+            engine_kwargs["connect_args"] = {"check_same_thread": False}
 
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+        engine = create_engine(database_url, **engine_kwargs)
+        if database_url.startswith("sqlite"):
+            _configure_sqlite_engine(engine)
 
-    # Create session factory
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        Base.metadata.create_all(bind=engine)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    return engine, SessionLocal
+        _DB_CACHE[cache_key] = (engine, SessionLocal)
+        return engine, SessionLocal
 
 
 class BacktestHistoryModel(Base):
