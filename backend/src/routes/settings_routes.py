@@ -182,11 +182,39 @@ def get_credentials(user: dict = Depends(get_current_user)) -> dict:
         storage = get_settings_storage()
         user_id = user.get("sub") if user else None
 
-        credentials = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
+        credentials_nested = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
+
+        # Flatten the structure to match frontend expectations
+        credentials_flat = {
+            "openai_api_key": credentials_nested["openai"]["api_key"],
+            "openai_base_url": credentials_nested["openai"]["base_url"],
+            "logto_issuer": credentials_nested["logto"]["issuer"],
+            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri"],
+            "logto_audience": credentials_nested["logto"]["audience"],
+            "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
+            "enable_login": credentials_nested["logto"]["enable_login"],
+            "http_proxy": credentials_nested["proxies"]["http_proxy"],
+            "https_proxy": credentials_nested["proxies"]["https_proxy"],
+            "ccxt": credentials_nested["exchanges"]
+        }
+
+        # Flatten sources as well
+        sources = {
+            "openai_api_key": credentials_nested["openai"]["api_key_source"],
+            "openai_base_url": credentials_nested["openai"]["base_url_source"],
+            "logto_issuer": credentials_nested["logto"]["issuer_source"],
+            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri_source"],
+            "logto_audience": credentials_nested["logto"]["audience_source"],
+            "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
+            "enable_login": credentials_nested["logto"]["enable_login_source"],
+            "http_proxy": credentials_nested["proxies"]["http_proxy_source"],
+            "https_proxy": credentials_nested["proxies"]["https_proxy_source"],
+        }
 
         return {
             "status": "ok",
-            "credentials": credentials
+            "credentials": credentials_flat,
+            "sources": sources
         }
 
     except Exception as e:

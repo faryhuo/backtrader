@@ -1,74 +1,137 @@
 .settings-page {
-    padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 0;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
 }
 
-.settings-section {
+.settings-header {
+    padding: 1.5rem 2rem;
     background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.settings-layout {
+    flex: 1;
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.settings-sider {
+    background: var(--bg-secondary) !important;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+}
+
+.settings-sider .ant-menu {
+    background: transparent;
+    border: none;
+}
+
+.settings-sider .ant-menu-item {
+    margin: 4px 8px;
+    border-radius: 6px;
+    height: 48px;
+    line-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+.settings-sider .ant-menu-item-selected {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+.settings-sider .ant-menu-item-selected .anticon {
+    color: white !important;
+}
+
+.settings-sider .ant-menu-item:hover:not(.ant-menu-item-selected) {
+    background: var(--bg-primary);
+}
+
+.settings-content {
+    padding: 2rem;
+    overflow-y: auto;
+    background: var(--bg-primary);
+}
+
+.settings-content .ant-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.settings-section h2 {
-    margin-bottom: 1.5rem;
-    color: var(--text-primary);
+.settings-content .ant-card-head {
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
-.settings-form-group {
-    margin-bottom: 1.5rem;
+.settings-content .ant-card-body {
+    color: var(--text-primary);
 }
 
-.settings-form-group label {
+.settings-content label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
     color: var(--text-secondary);
 }
 
-.settings-input,
-.settings-textarea {
-    width: 100%;
-    padding: 0.75rem;
+.settings-content .ant-input,
+.settings-content .ant-input-password,
+.settings-content .ant-select-selector,
+.settings-content .ant-input-affix-wrapper {
     background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-color: var(--border-color);
     color: var(--text-primary);
-    font-size: 1rem;
-    transition: border-color 0.2s;
 }
 
-.settings-input:focus,
-.settings-textarea:focus {
+.settings-content .ant-input:focus,
+.settings-content .ant-input-password:focus,
+.settings-content .ant-input-affix-wrapper-focused {
     border-color: var(--primary-color);
-    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-.settings-textarea {
-    min-height: 120px;
-    resize: vertical;
-    font-family: monospace;
+.settings-content .ant-select-focused .ant-select-selector {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
 }
 
-.settings-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
+.settings-content .ant-tabs-tab {
+    color: var(--text-secondary);
 }
 
-.save-success {
-    color: var(--success-color);
-    margin-left: 1rem;
-    font-weight: 500;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.settings-content .ant-tabs-tab-active {
+    color: var(--primary-color);
 }
 
-.save-success.visible {
-    opacity: 1;
+.settings-content .ant-tabs-ink-bar {
+    background: var(--primary-color);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .settings-layout {
+        flex-direction: column;
+    }
+
+    .settings-sider {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 auto !important;
+    }
+
+    .settings-content {
+        padding: 1rem;
+    }
 }

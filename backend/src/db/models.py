@@ -12,7 +12,7 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import json
