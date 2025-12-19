@@ -2,6 +2,10 @@
 
 交易/券商适配层目录，用于将不同交易所或券商的行情与下单接口统一到系统内部抽象。
 
+## 子目录
+- `ccxt_adapter/`：CCXT 加密货币交易所适配器（Binance、OKX、Bybit 等）。
+- `ibkr_adapter/`：Interactive Brokers 传统证券适配器。
+
 ## 功能职责（Functional）
 - 适配外部交易接口到 Backtrader/内部引擎可消费的统一接口。
 - 提供 `get_broker`、`get_data`、`start/stop` 等一致的调用面，供 `service/live_engine.py` 使用。

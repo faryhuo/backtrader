@@ -4,8 +4,12 @@
 
 ## 功能职责（Functional）
 - `app.py`：FastAPI 应用创建、路由注册与中间件配置。
+- `backtest_engine.py`：回测引擎，支持策略加载、参数解析与回测执行。
 - `live_engine.py`：实盘/模拟盘运行引擎与 broker 选择。
 - `session_manager.py`：回测/实盘会话生命周期管理。
+- `strategy_sandbox.py`：策略代码沙箱执行，安全加载用户策略。
+- `strategy_templates.py`：策略模板库管理，提供内置策略模板。
+- `walkforward_optimizer.py`：Walk-Forward 参数优化器，训练/验证集分离与过拟合检测。
 - `websocket_manager.py`：WebSocket 连接与频道管理。
 
 ## 非功能性要求（Non-Functional）

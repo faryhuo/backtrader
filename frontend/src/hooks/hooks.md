@@ -3,6 +3,8 @@
 自定义 React Hook 目录。
 
 ## 功能职责（Functional）
+- `useAuth.js`：认证状态 Hook，获取当前用户信息与登录状态。
+- `useLiveTrading.js`：实盘交易 Hook，管理交易会话状态、WebSocket 连接与订单操作。
 - 抽取跨组件复用的状态与副作用逻辑。
 - 典型场景：表单、轮询、WebSocket、权限、分页等。
 

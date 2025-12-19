@@ -3,6 +3,8 @@
 全局 Provider/Context 与状态容器目录。
 
 ## 功能职责（Functional）
+- `LogtoProvider.jsx`：Logto 认证 Provider，封装 JWT 认证状态与用户信息。
+- `NotificationProvider.jsx`：全局通知 Provider，提供消息推送与通知中心功能。
 - 提供全局状态、主题、权限、通知等上下文。
 - 封装第三方库的 Provider，统一在应用入口注入。
 

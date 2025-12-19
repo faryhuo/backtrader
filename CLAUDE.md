@@ -4,7 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## **Working Rules**
 
-- Before modifying any file, check whether the file’s current folder contains a `*.md` “directory description” document. If it exists, **read it first** and follow its stated responsibilities, conventions, and non‑functional requirements when making changes.
+- Before modifying any file, check whether the file's current folder contains a `*.md` "directory description" document. If it exists, **read it first** and follow its stated responsibilities, conventions, and non‑functional requirements when making changes.
+if you have been update the code pls remember to update the directory description document.
+
+Directory documentation files exist at:
+- `backend/src/src.md` - Backend source root overview
+- `backend/src/routes/routes.md` - API routing conventions
+- `backend/src/service/service.md` - Business logic layer
+- `backend/src/db/db.md` - Database/persistence layer
+- `backend/src/config/config.md` - Configuration management
+- `backend/src/utils/utils.md` - Utility functions
+- `backend/src/brokers/brokers.md` - Trading adapters overview
+- `backend/src/brokers/ccxt_adapter/ccxt_adapter.md` - CCXT adapter
+- `backend/src/brokers/ibkr_adapter/ibkr_adapter.md` - IBKR adapter
+- `backend/resources/strategy/strategy.md` - Strategy file conventions
 
 ## Project Overview
 
@@ -239,12 +252,26 @@ Controls exchange settings and risk management:
 
 ### Backend
 
-Currently no test suite. To add tests:
-
 ```bash
-cd backend
-pytest tests/  # Create tests/ directory with test_*.py files
+# Run all tests (from project root)
+python -m pytest backend/tests -q
+
+# Run integration tests
+python -m pytest auto_test -q
+
+# Run a single test file
+python -m pytest backend/tests/service/test_backtest_engine.py -v
+
+# Run a specific test function
+python -m pytest backend/tests/service/test_backtest_engine.py::test_function_name -v
+
+# Run tests with coverage
+python -m pytest backend/tests --cov=backend/src --cov-report=html
 ```
+
+Test structure:
+- `backend/tests/` - Unit tests organized by module (db, service, routes, brokers, utils, config)
+- `auto_test/` - Integration tests for live routes and session management
 
 ### Live Trading Testing
 

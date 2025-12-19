@@ -3,12 +3,15 @@
 后端通用工具函数与辅助模块目录。
 
 ## 功能职责（Functional）
-- 提供鉴权、配置加载、格式化、校验等通用能力（如 `auth.py`、`config_loader.py`）。
-- 为路由层与服务层提供无状态复用组件。
+- `auth.py`：JWT 鉴权与用户验证（Logto 集成）。
+- `config_loader.py`：Broker 配置加载与解析（从 `broker_config.json` 与环境变量）。
+- `credential_validator.py`：交易所凭证格式校验与连接测试。
+- `encryption.py`：敏感数据加密/解密工具（Fernet 对称加密）。
 
 ## 非功能性要求（Non-Functional）
 - 纯函数优先：避免隐藏全局状态与副作用。
 - 可测试性：关键工具函数应覆盖正常/异常路径。
+- 安全：加密密钥必须从环境变量获取，不得硬编码。
 
 ## 约定与规范
 - 按功能域拆分文件，接口保持小而清晰。

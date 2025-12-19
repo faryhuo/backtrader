@@ -3,7 +3,8 @@
 配置与环境管理目录，集中维护后端运行所需的环境变量、默认配置与校验逻辑。
 
 ## 功能职责（Functional）
-- `settings.py` 读取 `.env`/环境变量并提供默认值。
+- `settings.py`：读取 `.env`/环境变量并提供默认值（数据库、认证、AI、代理等配置）。
+- `config_manager.py`：运行时配置管理器，支持动态加载与热更新 broker 配置。
 - 对资源路径、外部依赖（broker、AI、DB 等）进行配置校验与集中暴露。
 
 ## 非功能性要求（Non-Functional）

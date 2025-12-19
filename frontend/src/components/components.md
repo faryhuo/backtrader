@@ -2,9 +2,19 @@
 
 组件根目录，包含通用组件与各业务模块组件。
 
+## 子目录
+- `Auth/`：认证相关组件（登录/登出按钮、受保护路由等）。
+- `BacktestHistory/`：回测历史展示组件（列表、详情、图表等）。
+- `DataSource/`：数据源配置组件（符号选择、时间范围等）。
+- `Layout/`：应用布局组件（导航栏、侧边栏、页面框架）。
+- `LiveTrading/`：实盘交易组件（交易面板、订单列表、持仓展示等）。
+- `RunStrategy/`：策略运行组件（参数配置、执行控制等）。
+- `StrategyMaintain/`：策略维护组件（Monaco 编辑器、策略列表、模板选择等）。
+- `WalkForward/`：Walk-Forward 优化组件（参数配置、结果展示等）。
+
 ## 功能职责（Functional）
 - 提供跨页面复用的 UI/业务组件。
-- 按功能域拆分子目录（如 `RunStrategy/`、`LiveTrading/`）。
+- 按功能域拆分子目录，每个子目录独立管理相关组件。
 
 ## 非功能性要求（Non-Functional）
 - 可复用性：组件设计应关注 props API 的稳定与语义清晰。

@@ -2,6 +2,14 @@
 
 策略维护与管理模块组件。
 
+## 组件文件
+- `AnalysisModal.jsx`：AI 分析结果弹窗，展示策略分析建议。
+- `EditorActions.jsx`：编辑器操作按钮组件，保存/运行/分析等操作。
+- `NewStrategyModal.jsx`：新建策略弹窗，输入策略名称与初始代码。
+- `StrategyEditorPanel.jsx`：Monaco 代码编辑器面板，支持语法高亮与自动补全。
+- `StrategySelector.jsx`：策略选择器组件，列表展示与切换。
+- `TemplateLibrary/`：策略模板库子目录，展示与选择内置策略模板。
+
 ## 功能职责（Functional）
 - 策略列表、创建/编辑/删除、代码编辑与版本查看。
 - 提供 AI 辅助分析/重写入口（与 `services/aiAnalysis.js` 交互）。
