@@ -1,12 +1,17 @@
 **/__pycache__
+**/.pytest_cache/
 **/resources/images/*
 frontend/node_modules
 frontend/dist
 .codex
 backend/.env
 backend/.envprod
+backend/.env.prod
 backend/trading_sessions.db
+backend/coverage_html
+backend/coverage.xml
 frontend/.env
 frontend/.envprod
+frontend/.env.prod
 backend/resources/frontend
 backend/venv_new
