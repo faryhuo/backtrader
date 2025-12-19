@@ -1,30 +1,58 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import { api } from '../services/api';
 import CandleStickChart from '../components/DataSource/CandleStickChart';
 import DataSourceConfigForm from '../components/DataSource/DataSourceConfigForm';
 import TickerInfoPanel from '../components/DataSource/TickerInfoPanel';
+import QuickPicks from '../components/DataSource/QuickPicks';
+import ChartToolbar from '../components/DataSource/ChartToolbar';
+import IndicatorsPanel from '../components/DataSource/IndicatorsPanel';
+import { exportToCSV, exportToExcel, exportChartAsImage, generateFilename } from '../utils/exportUtils';
+import './DataSource.css';
+
+// Helper to get default date range (last 1 month)
+const getDefaultDateRange = () => {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setMonth(today.getMonth() - 1);
+    return {
+        start: startDate.toISOString().split('T')[0],
+        end: today.toISOString().split('T')[0]
+    };
+};
 
 function DataSource() {
     const { t } = useTranslation();
+    const defaultRange = getDefaultDateRange();
+
     const [ticker, setTicker] = useState('AAPL');
-    const [startDate, setStartDate] = useState('2023-01-01');
-    const [endDate, setEndDate] = useState('2023-12-31');
+    const [startDate, setStartDate] = useState(defaultRange.start);
+    const [endDate, setEndDate] = useState(defaultRange.end);
     const [chartData, setChartData] = useState([]);
     const [tickerInfo, setTickerInfo] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const handleFetchData = async (e) => {
-        e.preventDefault();
+    // Chart settings
+    const [chartType, setChartType] = useState('candlestick');
+    const [timeRange, setTimeRange] = useState('1m'); // Default to 1 month
+    const [indicators, setIndicators] = useState({
+        volume: false,
+        ma5: false,
+        ma10: false,
+        ma20: false,
+        ma50: false
+    });
+
+    const fetchData = useCallback(async (overrideTicker) => {
+        const tickerToFetch = overrideTicker || ticker;
         setLoading(true);
         setError(null);
-        setChartData([]);
-        setTickerInfo(null);
 
         try {
             const response = await api.fetchMarketData({
-                ticker,
+                ticker: tickerToFetch,
                 start_date: startDate,
                 end_date: endDate
             });
@@ -46,47 +74,143 @@ function DataSource() {
         } finally {
             setLoading(false);
         }
+    }, [ticker, startDate, endDate]);
+
+    const handleFetchData = async (e) => {
+        if (e) e.preventDefault();
+        await fetchData();
+    };
+
+    const handleQuickPickSelect = (selectedTicker) => {
+        setTicker(selectedTicker);
+        // Immediately fetch with the new ticker
+        fetchData(selectedTicker);
+    };
+
+    const handleTimeRangeChange = (range) => {
+        setStartDate(range.start);
+        setEndDate(range.end);
+        setTimeRange(range.range);
+    };
+
+    const handleExportData = async () => {
+        if (!chartData || chartData.length === 0) {
+            message.warning(t('datasource.no_data'));
+            return;
+        }
+
+        try {
+            // Export to Excel (with CSV fallback)
+            const filename = generateFilename(ticker, '.xlsx');
+            await exportToExcel(chartData, filename, tickerInfo);
+            message.success(t('datasource.export_success'));
+        } catch (error) {
+            console.error('Export failed:', error);
+            message.error(t('datasource.export_failed'));
+        }
+    };
+
+    const handleExportImage = async () => {
+        const chartElement = document.querySelector('.chart-card');
+        if (!chartElement) {
+            message.warning('Chart not found');
+            return;
+        }
+
+        try {
+            const filename = generateFilename(ticker, '.png');
+            await exportChartAsImage(chartElement, filename);
+            message.success(t('datasource.export_success'));
+        } catch (error) {
+            console.error('Export image failed:', error);
+            message.error(t('datasource.export_failed'));
+        }
     };
 
     return (
-        <div className="page-container">
-            <DataSourceConfigForm
-                ticker={ticker}
-                setTicker={setTicker}
-                startDate={startDate}
-                setStartDate={setStartDate}
-                endDate={endDate}
-                setEndDate={setEndDate}
-                loading={loading}
-                onSubmit={handleFetchData}
-                error={error}
-            />
+        <div className="page-container datasource-page">
+            {/* Main Layout */}
+            <div className="datasource-layout">
+                {/* Left Sidebar - Configuration */}
+                <aside className="datasource-sidebar">
+                    <DataSourceConfigForm
+                        ticker={ticker}
+                        setTicker={setTicker}
+                        loading={loading}
+                        onSubmit={handleFetchData}
+                        error={error}
+                    />
 
-            {(chartData.length > 0 || tickerInfo) && (
-                <div className="datasource-results-grid">
-                    {/* Left Column: Ticker Info Panel */}
-                    {tickerInfo && (
-                        <div className="ticker-info-column">
-                            <TickerInfoPanel tickerInfo={tickerInfo} />
-                        </div>
-                    )}
+                    <QuickPicks
+                        onSelectTicker={handleQuickPickSelect}
+                        currentTicker={ticker}
+                    />
 
-                    {/* Right Column: Chart */}
                     {chartData.length > 0 && (
-                        <div className="chart-column">
-                            <section className="card results-animate-in">
-                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <h3>{ticker} Price History</h3>
-                                    <span className="muted">{chartData.length} candles</span>
+                        <IndicatorsPanel
+                            indicators={indicators}
+                            onIndicatorsChange={setIndicators}
+                        />
+                    )}
+                </aside>
+
+                {/* Main Content Area */}
+                <main className="datasource-content">
+                    {(chartData.length > 0 || tickerInfo) ? (
+                        <div className="datasource-results">
+                            {/* Ticker Info Panel */}
+                            {tickerInfo && (
+                                <div className="results-section">
+                                    <TickerInfoPanel tickerInfo={tickerInfo} />
                                 </div>
-                                <CandleStickChart data={chartData} />
-                            </section>
+                            )}
+
+                            {/* Chart */}
+                            {chartData.length > 0 && (
+                                <div className="results-section">
+                                    <section className="card chart-card">
+                                        <div className="chart-header">
+                                            <div>
+                                                <h3>{ticker} {t('datasource.price_history')}</h3>
+                                                <span className="chart-meta">
+                                                    {chartData.length} candles · {startDate} to {endDate}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <ChartToolbar
+                                            onTimeRangeChange={handleTimeRangeChange}
+                                            onChartTypeChange={setChartType}
+                                            onExportData={handleExportData}
+                                            onExportImage={handleExportImage}
+                                            onFetchData={fetchData}
+                                            currentChartType={chartType}
+                                            currentTimeRange={timeRange}
+                                            startDate={startDate}
+                                            endDate={endDate}
+                                        />
+
+                                        <CandleStickChart
+                                            data={chartData}
+                                            chartType={chartType}
+                                            indicators={indicators}
+                                        />
+                                    </section>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="empty-state-container">
+                            <div className="empty-state-icon">📊</div>
+                            <h3>{t('datasource.no_data')}</h3>
+                            <p>{t('datasource.empty_state_hint')}</p>
                         </div>
                     )}
-                </div>
-            )}
+                </main>
+            </div>
         </div>
     );
 }
 
 export default DataSource;
+

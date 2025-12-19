@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Tuple, Any
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.attributes import flag_modified
 
 from src.db.models import UserSettingsModel, init_database
 from src.utils.encryption import encrypt_value, decrypt_value, mask_credential, is_encryption_enabled
@@ -663,7 +664,10 @@ class SettingsStorage:
                     # Allow explicit deletion
                     creds[exchange][mode].pop(key, None)
 
+            # JSON fields do not reliably track nested mutations unless using
+            # SQLAlchemy mutable types; explicitly flag as modified.
             settings.ccxt_credentials = creds
+            flag_modified(settings, "ccxt_credentials")
             settings.updated_at = datetime.utcnow()
 
             db.commit()

@@ -44,8 +44,8 @@ def get_encryption_key() -> bytes:
         )
 
     try:
-        # Validate it's proper base64 and correct length
-        decoded = base64.b64decode(key)
+        # Fernet keys are URL-safe base64 encoded 32-byte keys.
+        decoded = base64.urlsafe_b64decode(key)
         if len(decoded) != 32:
             raise ValueError("ENCRYPTION_KEY must be 32 bytes when decoded")
         return key.encode() if isinstance(key, str) else key

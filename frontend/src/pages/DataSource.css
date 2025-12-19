@@ -1,0 +1,181 @@
+/* DataSource Page Specific Styles */
+.datasource-page {
+    max-width: 100%;
+    padding: 0;
+}
+
+.datasource-header {
+    background: linear-gradient(135deg,
+            rgba(14, 165, 233, 0.1) 0%,
+            rgba(59, 130, 246, 0.05) 100%);
+    border-bottom: 1px solid var(--border-color);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.datasource-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 40%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, var(--text-main) 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.page-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Layout */
+.datasource-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1.5rem;
+    padding: 0 1.5rem 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .datasource-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .datasource-sidebar {
+        order: 2;
+    }
+
+    .datasource-content {
+        order: 1;
+    }
+}
+
+/* Sidebar */
+.datasource-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .datasource-sidebar {
+        position: static;
+    }
+}
+
+/* Content Area */
+.datasource-content {
+    min-height: 60vh;
+}
+
+.datasource-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.results-section {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Chart Card */
+.chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.chart-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Empty State */
+.datasource-page .empty-state-container {
+    margin-top: 4rem;
+    min-height: 400px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .datasource-header {
+        padding: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .datasource-layout {
+        padding: 0 1rem 1rem;
+    }
+
+    .chart-card {
+        padding: 1.5rem;
+    }
+}

@@ -5,12 +5,23 @@ import {
     LineChartOutlined,
     DollarOutlined,
     InfoCircleOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    RiseOutlined,
+    FallOutlined,
+    StarOutlined,
+    StarFilled,
+    ShareAltOutlined,
+    DownloadOutlined
 } from '@ant-design/icons';
+import { useState } from 'react';
 import './TickerInfoPanel.css';
 
 function TickerInfoPanel({ tickerInfo }) {
     const { t } = useTranslation();
+    const [isInWatchlist, setIsInWatchlist] = useState(() => {
+        const watchlist = JSON.parse(localStorage.getItem('ticker_watchlist') || '[]');
+        return watchlist.includes(tickerInfo.ticker);
+    });
 
     // Helper: Format large numbers (market cap, volume)
     const formatLargeNumber = (num) => {
@@ -34,14 +45,74 @@ function TickerInfoPanel({ tickerInfo }) {
         return num.toFixed(decimals);
     };
 
+    // Calculate price change
+    const getPriceChange = () => {
+        if (!tickerInfo.current_price || !tickerInfo.previous_close) return null;
+        const change = tickerInfo.current_price - tickerInfo.previous_close;
+        const changePercent = (change / tickerInfo.previous_close) * 100;
+        return {
+            absolute: change,
+            percent: changePercent,
+            isPositive: change >= 0
+        };
+    };
+
+    const priceChange = getPriceChange();
+
+    const toggleWatchlist = () => {
+        const watchlist = JSON.parse(localStorage.getItem('ticker_watchlist') || '[]');
+        const updated = isInWatchlist
+            ? watchlist.filter(t => t !== tickerInfo.ticker)
+            : [...watchlist, tickerInfo.ticker];
+        localStorage.setItem('ticker_watchlist', JSON.stringify(updated));
+        setIsInWatchlist(!isInWatchlist);
+    };
+
     return (
         <div className="ticker-info-panel">
             {/* Company Header Card */}
-            <div className="card ticker-info-card">
+            <div className="card ticker-info-card ticker-header-card">
                 <div className="ticker-header">
-                    <h2>{tickerInfo.long_name || tickerInfo.ticker}</h2>
-                    <span className="ticker-symbol">{tickerInfo.ticker}</span>
+                    <div className="ticker-title-section">
+                        <h2>{tickerInfo.long_name || tickerInfo.ticker}</h2>
+                        <span className="ticker-symbol">{tickerInfo.ticker}</span>
+                    </div>
+                    <div className="ticker-actions">
+                        <button
+                            className={`action-btn ${isInWatchlist ? 'active' : ''}`}
+                            onClick={toggleWatchlist}
+                            title={isInWatchlist ? t('datasource.remove_from_watchlist') : t('datasource.add_to_watchlist')}
+                        >
+                            {isInWatchlist ? <StarFilled /> : <StarOutlined />}
+                        </button>
+                        <button className="action-btn" title={t('datasource.share')}>
+                            <ShareAltOutlined />
+                        </button>
+                        <button className="action-btn" title={t('datasource.export_data')}>
+                            <DownloadOutlined />
+                        </button>
+                    </div>
                 </div>
+
+                {/* Price Section with Change Indicator */}
+                {tickerInfo.current_price && (
+                    <div className="price-section">
+                        <div className="price-main">
+                            <span className="current-price">${formatDecimal(tickerInfo.current_price)}</span>
+                            {priceChange && (
+                                <div className={`price-change ${priceChange.isPositive ? 'positive' : 'negative'}`}>
+                                    {priceChange.isPositive ? <RiseOutlined /> : <FallOutlined />}
+                                    <span className="change-absolute">
+                                        {priceChange.isPositive ? '+' : ''}{formatDecimal(priceChange.absolute)}
+                                    </span>
+                                    <span className="change-percent">
+                                        ({priceChange.isPositive ? '+' : ''}{priceChange.percent.toFixed(2)}%)
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {tickerInfo.sector && (
                     <div className="ticker-basics">
@@ -59,7 +130,7 @@ function TickerInfoPanel({ tickerInfo }) {
                         {tickerInfo.website && (
                             <div className="info-row">
                                 <a href={tickerInfo.website} target="_blank" rel="noopener noreferrer" className="info-link">
-                                    {t('datasource.website')}
+                                    {t('datasource.website')} →
                                 </a>
                             </div>
                         )}
@@ -76,7 +147,7 @@ function TickerInfoPanel({ tickerInfo }) {
             {/* Three Metrics Cards in a Row */}
             <div className="ticker-metrics-row">
                 {/* Market Metrics Card */}
-                <div className="card ticker-info-card">
+                <div className="card ticker-info-card metric-card">
                     <h3><LineChartOutlined /> {t('datasource.market_metrics')}</h3>
                     <div className="metrics-grid">
                         <div className="metric-item">
@@ -103,20 +174,16 @@ function TickerInfoPanel({ tickerInfo }) {
                 </div>
 
                 {/* Trading Statistics Card */}
-                <div className="card ticker-info-card">
+                <div className="card ticker-info-card metric-card">
                     <h3><DollarOutlined /> {t('datasource.trading_stats')}</h3>
                     <div className="metrics-grid">
-                        <div className="metric-item">
-                            <span className="metric-label">{t('datasource.current_price')}</span>
-                            <span className="metric-value metric-price">${formatDecimal(tickerInfo.current_price)}</span>
-                        </div>
                         <div className="metric-item">
                             <span className="metric-label">{t('datasource.previous_close')}</span>
                             <span className="metric-value">${formatDecimal(tickerInfo.previous_close)}</span>
                         </div>
                         <div className="metric-item">
                             <span className="metric-label">{t('datasource.day_range')}</span>
-                            <span className="metric-value">
+                            <span className="metric-value metric-range">
                                 ${formatDecimal(tickerInfo.day_low)} - ${formatDecimal(tickerInfo.day_high)}
                             </span>
                         </div>
@@ -129,7 +196,7 @@ function TickerInfoPanel({ tickerInfo }) {
 
                 {/* Fundamental Data Card */}
                 {(tickerInfo.dividend_yield || tickerInfo.trailing_eps) && (
-                    <div className="card ticker-info-card">
+                    <div className="card ticker-info-card metric-card">
                         <h3><InfoCircleOutlined /> {t('datasource.fundamentals')}</h3>
                         <div className="metrics-grid">
                             {tickerInfo.dividend_yield && (
@@ -154,14 +221,6 @@ function TickerInfoPanel({ tickerInfo }) {
                     </div>
                 )}
             </div>
-
-            {/* Cache Indicator */}
-            {tickerInfo.cached && (
-                <div className="cache-indicator">
-                    <ClockCircleOutlined />
-                    <span>{t('datasource.cached_data')}: {tickerInfo.cache_age_days} {t('datasource.days_old')}</span>
-                </div>
-            )}
         </div>
     );
 }
@@ -180,6 +239,9 @@ TickerInfoPanel.propTypes = {
         fifty_two_week_high: PropTypes.number,
         fifty_two_week_low: PropTypes.number,
         current_price: PropTypes.number,
+        previous_close: PropTypes.number,
+        day_low: PropTypes.number,
+        day_high: PropTypes.number,
         dividend_yield: PropTypes.number,
         trailing_eps: PropTypes.number,
         average_volume: PropTypes.number,

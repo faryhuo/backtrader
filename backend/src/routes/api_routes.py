@@ -65,6 +65,44 @@ def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+# ========== Ticker Data Endpoints (Split API) ==========
+
+@router.get("/ticker/{ticker}/info")
+def get_ticker_info(ticker: str, user: dict = Depends(get_current_user)) -> dict:
+    """Get ticker metadata and validation info."""
+    try:
+        from src.db.datasource import get_ticker_metadata
+        ticker_info = get_ticker_metadata(ticker)
+
+        if not ticker_info.get('is_valid'):
+            raise HTTPException(
+                status_code=400,
+                detail=ticker_info.get('validation_error', 'Invalid ticker symbol')
+            )
+
+        return ticker_info
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/ticker/{ticker}/prices")
+def get_ticker_prices(
+    ticker: str,
+    start_date: str,
+    end_date: str,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """Get OHLCV price data for a ticker within date range."""
+    try:
+        data = get_raw_data_json(ticker, start_date, end_date)
+        return {"data": data}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# Legacy endpoint for backward compatibility
 @router.post("/data")
 def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_user)) -> dict:
     try:

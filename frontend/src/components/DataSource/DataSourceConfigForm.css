@@ -1,0 +1,123 @@
+.datasource-config-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+    transition: all var(--transition-fast);
+}
+
+.datasource-config-card:hover {
+    box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.1), 0 3px 5px -2px rgba(0, 0, 0, 0.05);
+}
+
+.datasource-config-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+            var(--primary-color) 0%,
+            #3b82f6 50%,
+            var(--primary-color) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.config-header {
+    margin-bottom: 0.75rem;
+}
+
+.config-header h2 {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Search Form Row - Inline Layout */
+.search-form-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-form-row .ticker-group {
+    flex: 1;
+}
+
+.search-form-row .input-with-icon {
+    margin: 0;
+}
+
+.search-form-row .input-with-icon input {
+    height: 42px;
+    font-size: 1rem;
+}
+
+/* Search Button */
+.btn-search {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.btn-search:disabled {
+    opacity: 0.7;
+}
+
+/* Error Message Animation */
+.error-animate-in {
+    animation: errorSlideIn 0.3s ease-out;
+}
+
+@keyframes errorSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.error-message-enhanced {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--error-bg);
+    border: 1px solid var(--error-color);
+    border-radius: 8px;
+    color: var(--error-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.error-message-enhanced span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
