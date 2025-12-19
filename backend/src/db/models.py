@@ -306,6 +306,10 @@ class BacktestHistoryModel(Base):
     # Plot image reference
     plot_filename = Column(String(255), nullable=True)  # UUID.png
 
+    # Strategy parameter overrides (JSON format)
+    # e.g., {"fast_period": 10, "slow_period": 30}
+    params = Column(SafeJSON, nullable=True)
+
     def __repr__(self):
         return (
             f"<BacktestHistory(id={self.backtest_id}, "

@@ -25,5 +25,4 @@ def test_ccxtdata_init_rejects_unsupported_timeframe():
             return object()
 
     with pytest.raises(ValueError):
-        CCXTData(store=StubStore(), symbol="BTC/USDT", timeframe="not-supported")
-
+        CCXTData(store=StubStore(), symbol="BTC/USDT", ccxt_timeframe="not-supported")

@@ -14,8 +14,10 @@ def test_get_exchange_raises_when_not_started():
 
 def test_run_coroutine_raises_when_loop_not_running():
     store = CCXTStore(exchange_id="binance", mode="paper")
+    coro = asyncio.sleep(0)
     with pytest.raises(RuntimeError):
-        store.run_coroutine(asyncio.sleep(0))
+        store.run_coroutine(coro)
+    coro.close()
 
 
 def test_load_credentials_uses_config_manager(monkeypatch):
@@ -30,7 +32,7 @@ def test_load_credentials_uses_config_manager(monkeypatch):
             assert mode == "paper"
             return {"api_key": "k", "secret": "s", "passphrase": None}
 
-    monkeypatch.setattr("src.brokers.ccxt_adapter.ccxt_store.ConfigManager", StubConfigManager, raising=False)
+    monkeypatch.setattr("src.config.config_manager.ConfigManager", StubConfigManager)
     store._load_credentials()
     assert store.api_key == "k"
     assert store.secret == "s"
@@ -59,4 +61,3 @@ def test_init_exchange_sets_binance_testnet_urls(monkeypatch):
     assert store._exchange is not None
     assert store._exchange.sandbox is True
     assert store._exchange.urls["api"]["public"].startswith("https://testnet.binance.vision/")
-

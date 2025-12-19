@@ -93,6 +93,7 @@ class BacktestStorage:
                 ai_analysis=ai_analysis,
                 strategy_code=strategy_code,
                 plot_filename=plot_filename,
+                params=config.get("params"),
             )
 
             db.add(record)
@@ -439,5 +440,6 @@ class BacktestStorage:
             result["metrics"] = record.metrics if record.metrics is not None else {}
             result["ai_analysis"] = record.ai_analysis if record.ai_analysis is not None else None
             result["strategy_code"] = record.strategy_code
+            result["params"] = record.params if record.params is not None else None
 
         return result

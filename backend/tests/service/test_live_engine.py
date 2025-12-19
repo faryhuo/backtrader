@@ -102,16 +102,11 @@ def test_build_components_unknown_adapter(monkeypatch):
 
 
 def test_safe_returns_stop_handles_zero_division(monkeypatch):
-    original_stop = live_engine.bt.analyzers.Returns.stop
-
     def raise_zero(self):
         raise ZeroDivisionError()
 
     monkeypatch.setattr(live_engine.bt.analyzers.Returns, "stop", raise_zero)
-    analyzer = live_engine.SafeReturns()
+    analyzer = object.__new__(live_engine.SafeReturns)
     analyzer.rets = {}
-    analyzer.stop()
+    live_engine.SafeReturns.stop(analyzer)
     assert analyzer.rets["rnorm100"] == 0.0
-
-    monkeypatch.setattr(live_engine.bt.analyzers.Returns, "stop", original_stop)
-

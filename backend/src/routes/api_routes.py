@@ -11,6 +11,7 @@ from src.service.backtest_engine import (
     save_user_strategy_code,
     list_strategies,
     StrategyLoadError,
+    extract_strategy_params,
 )
 from src.db.datasource import get_raw_data_json, DataLoadError
 from src.db.backtest_storage import BacktestStorage
@@ -45,6 +46,7 @@ class BacktestRequest(BaseModel):
     commission: float | None = 0.0005
     stake: int | None = 100
     strategy_name: str | None = None
+    params: dict | None = None  # Strategy parameter overrides
 
 
 class DataRequest(BaseModel):
@@ -235,6 +237,7 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
             stake=request.stake if request.stake is not None else 100,
             strategy_name=request.strategy_name,
             save_path=save_path,
+            params=request.params,
         )
 
         if metrics is None:
@@ -260,6 +263,7 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
                 "commission": request.commission if request.commission is not None else 0.0005,
                 "stake": request.stake if request.stake is not None else 100,
                 "strategy_name": request.strategy_name,
+                "params": request.params,
             }
 
             storage.save_backtest(
@@ -317,6 +321,32 @@ def save_strategy(request: StrategyCode, user: dict = Depends(get_current_user))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+
+@router.get("/strategy/{name}/params")
+def get_strategy_params(name: str, user: dict = Depends(get_current_user)) -> dict:
+    """
+    Get parameters defined in a strategy file.
+    Returns a list of parameter objects with name, value, and type.
+    If extraction fails, returns empty params array (no error).
+    
+    Example response:
+    {
+        "name": "grid_trading",
+        "params": [
+            {"name": "grid_count", "value": 10, "type": "int"},
+            {"name": "upper_price", "value": 110.0, "type": "float"},
+            {"name": "lower_price", "value": 90.0, "type": "float"},
+            {"name": "total_investment", "value": 10000.0, "type": "float"}
+        ]
+    }
+    """
+    try:
+        params = extract_strategy_params(name)
+        return {"name": name, "params": params}
+    except Exception as exc:
+        # Log the error but return empty params instead of failing
+        logger.warning(f"Failed to extract params for strategy '{name}': {exc}")
+        return {"name": name, "params": []}
 
 @router.post("/analyze")
 def analyze_results(request: AnalysisRequest, user: dict = Depends(get_current_user)) -> dict:

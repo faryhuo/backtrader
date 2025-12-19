@@ -31,8 +31,10 @@ def parse_timeframe(value: str) -> Tuple[bt.TimeFrame, int]:
         "5m": (bt.TimeFrame.Minutes, 5),
         "15m": (bt.TimeFrame.Minutes, 15),
         "30m": (bt.TimeFrame.Minutes, 30),
-        "1h": (bt.TimeFrame.Hours, 1),
-        "4h": (bt.TimeFrame.Hours, 4),
+        # Backtrader's TimeFrame enum may not expose Hours in all versions;
+        # represent hours as minutes with appropriate compression.
+        "1h": (bt.TimeFrame.Minutes, 60),
+        "4h": (bt.TimeFrame.Minutes, 240),
         "1d": (bt.TimeFrame.Days, 1),
     }
 

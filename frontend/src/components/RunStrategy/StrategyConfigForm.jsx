@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { 
-    CalendarOutlined, 
-    DollarOutlined, 
-    PercentageOutlined, 
-    NumberOutlined, 
-    StockOutlined, 
+import {
+    CalendarOutlined,
+    DollarOutlined,
+    PercentageOutlined,
+    NumberOutlined,
+    StockOutlined,
     SyncOutlined,
-    RocketOutlined 
+    RocketOutlined,
+    SettingOutlined,
+    DownOutlined,
+    RightOutlined
 } from '@ant-design/icons';
 
 function StrategyConfigForm({
@@ -29,9 +33,23 @@ function StrategyConfigForm({
     setStake,
     loading,
     onSubmit,
-    error
+    error,
+    strategyParams = [],
+    paramOverrides = {},
+    setParamOverrides = () => { }
 }) {
     const { t } = useTranslation();
+    const [paramsExpanded, setParamsExpanded] = useState(true);
+
+    const handleParamChange = (name, value, type) => {
+        let parsedValue = value;
+        if (type === 'int') {
+            parsedValue = parseInt(value, 10) || 0;
+        } else if (type === 'float') {
+            parsedValue = parseFloat(value) || 0;
+        }
+        setParamOverrides({ ...paramOverrides, [name]: parsedValue });
+    };
 
     return (
         <section className="card form-card-enhanced">
@@ -148,6 +166,42 @@ function StrategyConfigForm({
                     </div>
                 </div>
 
+                {/* Strategy Parameters Section */}
+                {strategyParams.length > 0 && (
+                    <div className="strategy-params-section">
+                        <div
+                            className="strategy-params-header"
+                            onClick={() => setParamsExpanded(!paramsExpanded)}
+                        >
+                            <span className="params-toggle-icon">
+                                {paramsExpanded ? <DownOutlined /> : <RightOutlined />}
+                            </span>
+                            <SettingOutlined />
+                            <span>{t('config_form.strategy_params', 'Strategy Parameters')}</span>
+                            <span className="params-count">({strategyParams.length})</span>
+                        </div>
+                        {paramsExpanded && (
+                            <div className="strategy-params-grid">
+                                {strategyParams.map((param) => (
+                                    <div key={param.name} className="form-group param-group">
+                                        <label htmlFor={`param-${param.name}`}>
+                                            {param.name}
+                                            <span className="param-type">({param.type})</span>
+                                        </label>
+                                        <input
+                                            id={`param-${param.name}`}
+                                            type="number"
+                                            step={param.type === 'float' ? '0.01' : '1'}
+                                            value={paramOverrides[param.name] ?? param.value}
+                                            onChange={(e) => handleParamChange(param.name, e.target.value, param.type)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="form-actions-enhanced">
                     <button type="submit" className="btn-primary glow-effect" disabled={loading}>
                         {loading ? <span className="spinner-sm"></span> : t('config_form.run_backtest')}
@@ -183,7 +237,11 @@ StrategyConfigForm.propTypes = {
     setStake: PropTypes.func.isRequired,
     loading: PropTypes.bool.isRequired,
     onSubmit: PropTypes.func.isRequired,
-    error: PropTypes.string
+    error: PropTypes.string,
+    strategyParams: PropTypes.array,
+    paramOverrides: PropTypes.object,
+    setParamOverrides: PropTypes.func
 };
 
 export default StrategyConfigForm;
+

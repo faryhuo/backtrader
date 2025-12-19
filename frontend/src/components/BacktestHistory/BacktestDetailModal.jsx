@@ -117,6 +117,17 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                         <Descriptions.Item label={t('config_form.stake')}>
                             {backtest.stake}
                         </Descriptions.Item>
+                        {backtest.params && Object.keys(backtest.params).length > 0 && (
+                            <Descriptions.Item label={t('history.strategy_params', 'Strategy Params')} span={2}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {Object.entries(backtest.params).map(([key, value]) => (
+                                        <Tag key={key} color="purple">
+                                            {key}: {typeof value === 'number' ? value.toLocaleString() : String(value)}
+                                        </Tag>
+                                    ))}
+                                </div>
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
 
                     <div style={{ marginTop: 20 }}>
@@ -200,6 +211,32 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 {backtest.strategy_code && (
                     <Tabs.TabPane tab={t('history.tab_strategy_code', 'Strategy Code')} key="strategy_code">
                         <div style={{ padding: '20px' }}>
+                            {/* Strategy Parameters Override */}
+                            {backtest.params && Object.keys(backtest.params).length > 0 && (
+                                <div style={{
+                                    background: 'rgba(128, 90, 213, 0.15)',
+                                    border: '1px solid rgba(128, 90, 213, 0.3)',
+                                    borderRadius: '8px',
+                                    padding: '12px 16px',
+                                    marginBottom: '16px'
+                                }}>
+                                    <div style={{
+                                        fontSize: '13px',
+                                        color: '#a78bfa',
+                                        marginBottom: '8px',
+                                        fontWeight: 500
+                                    }}>
+                                        {t('history.params_override', 'Parameter Overrides')}
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {Object.entries(backtest.params).map(([key, value]) => (
+                                            <Tag key={key} color="purple">
+                                                {key}: {typeof value === 'number' ? value.toLocaleString() : String(value)}
+                                            </Tag>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <pre style={{
                                 background: 'rgba(22, 27, 34, 0.6)',
                                 padding: '16px',

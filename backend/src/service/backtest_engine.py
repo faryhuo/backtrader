@@ -96,6 +96,60 @@ def load_user_strategy(name: str):
     return strategy_cls
 
 
+def extract_strategy_params(name: str) -> list:
+    """
+    Extract parameters from a strategy file.
+    Returns a list of dicts with name, value, and type info for each parameter.
+    """
+    strategy_cls = load_user_strategy(name)
+    
+    # Get the params from the strategy class
+    # Backtrader stores params in a metaclass where each param is an attribute
+    params_cls = getattr(strategy_cls, 'params', None)
+    
+    if params_cls is None:
+        return []
+    
+    params_list = []
+    
+    # Backtrader's params metaclass stores param names in _getdefaults() or as direct attributes
+    # We need to iterate through non-private attributes that are not methods
+    if hasattr(params_cls, '_getdefaults'):
+        # Get the list of param names from _getdefaults
+        try:
+            defaults = params_cls._getdefaults()
+            if defaults:
+                for param_name in defaults:
+                    param_value = getattr(params_cls, param_name, None)
+                    if param_value is not None:
+                        params_list.append({
+                            "name": param_name,
+                            "value": param_value,
+                            "type": type(param_value).__name__
+                        })
+        except Exception:
+            pass
+    
+    # Fallback: iterate through attributes directly
+    if not params_list:
+        for attr_name in dir(params_cls):
+            if attr_name.startswith('_'):
+                continue
+            attr_value = getattr(params_cls, attr_name, None)
+            # Skip methods and callables
+            if callable(attr_value):
+                continue
+            # Check if it's a simple value type (int, float, str, bool)
+            if isinstance(attr_value, (int, float, str, bool)):
+                params_list.append({
+                    "name": attr_name,
+                    "value": attr_value,
+                    "type": type(attr_value).__name__
+                })
+    
+    return params_list
+
+
 class TradeRecorder(bt.Analyzer):
     """
     自定义分析器，记录每笔交易的详细信息：
@@ -186,6 +240,7 @@ def run_backtest(
     stake=100,
     strategy_name=None,
     save_path: Optional[Path] = None,
+    params: Optional[dict] = None,
 ):
     if not strategy_name:
         available = list_strategies()
@@ -196,7 +251,11 @@ def run_backtest(
     strategy_cls = load_user_strategy(strategy_name)
 
     cerebro = bt.Cerebro()
-    cerebro.addstrategy(strategy_cls)
+    # Pass params to strategy if provided, otherwise use strategy defaults
+    if params:
+        cerebro.addstrategy(strategy_cls, **params)
+    else:
+        cerebro.addstrategy(strategy_cls)
 
     data = get_data(ticker, start_date, end_date)
     cerebro.adddata(data)
@@ -268,4 +327,5 @@ __all__ = [
     "get_strategy_path",
     "IMAGES_DIR",
     "get_raw_data_json",
+    "extract_strategy_params",
 ]

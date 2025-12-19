@@ -349,5 +349,18 @@ export const api = {
             body: JSON.stringify({ credential_type: credentialType, ...params })
         })
         return await parseResponse(res)
+    },
+
+    // Strategy Params API Methods
+
+    async getStrategyParams(name) {
+        try {
+            const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/params`)
+            return await parseResponse(res)
+        } catch (error) {
+            // Return empty params on error, don't throw
+            console.warn(`Failed to get strategy params for ${name}:`, error)
+            return { name, params: [] }
+        }
     }
 }
