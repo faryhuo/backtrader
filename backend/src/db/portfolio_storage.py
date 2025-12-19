@@ -192,12 +192,15 @@ class PortfolioStorage:
         """Convert model to dict."""
         result = {
             "id": model.portfolio_id,
+            "portfolio_id": model.portfolio_id,  # Also include for frontend compatibility
             "user_id": model.user_id,
             "created_at": model.created_at.isoformat() if model.created_at else None,
             "tickers": model.tickers,
             "weights": model.weights,
             "start_date": model.start_date,
             "end_date": model.end_date,
+            "initial_cash": model.initial_cash,
+            "commission": model.commission,
             "strategy_name": model.strategy_name,
             "final_value": model.final_value,
             "total_return": model.total_return,
@@ -206,6 +209,7 @@ class PortfolioStorage:
             "num_assets": model.num_assets,
             "successful_backtests": model.successful_backtests,
             "failed_backtests": model.failed_backtests,
+            "plot_filename": model.plot_filename,
         }
         
         if not summary:
