@@ -13,12 +13,13 @@ This module provides REST API endpoints for managing live/paper trading sessions
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.config.settings import LIVE_TRADING_ENABLED
 from src.service.live_engine import run_live, stop_live, get_session_status
 from src.service.session_manager import SessionStatus, get_session_manager
+from src.utils.auth import get_current_user
 from src.utils.config_loader import list_enabled_exchanges, load_broker_config, validate_symbol, validate_timeframe
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,10 @@ class ExchangeInfo(BaseModel):
 
 
 @router.post("/live/start", response_model=dict, tags=["Live Trading"])
-async def start_live_trading(request: StartLiveRequest):
+async def start_live_trading(
+    request: StartLiveRequest,
+    user: dict = Depends(get_current_user)
+):
     """
     Start a new live/paper trading session.
 
@@ -119,6 +123,8 @@ async def start_live_trading(request: StartLiveRequest):
     - Session ID for tracking
     - Session status and configuration
     """
+    # Extract user ID for credential lookup
+    user_id = user.get("sub") if user else None
     # Check if live trading is enabled
     if not LIVE_TRADING_ENABLED:
         raise HTTPException(
@@ -160,7 +166,8 @@ async def start_live_trading(request: StartLiveRequest):
             mode=request.mode,
             timeframe=request.timeframe,
             initial_cash=request.initial_cash,
-            commission=request.commission
+            commission=request.commission,
+            user_id=user_id  # Pass user_id for database credential lookup
         )
 
         logger.info(f"Session {session['session_id']} started successfully")

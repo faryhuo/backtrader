@@ -3,6 +3,9 @@ Token-based authentication helpers.
 
 The backend no longer relies on the Logto SDK config; instead it validates
 incoming Bearer tokens via Logto's JWKS endpoint using python-jose.
+
+Authentication configuration is loaded from database first, then falls back
+to environment variables for backward compatibility.
 """
 
 from __future__ import annotations
@@ -16,15 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
-from src.config.settings import (
-    ENABLE_LOGIN,
-    HTTP_PROXY,
-    HTTPS_PROXY,
-    LOGTO_AUDIENCE,
-    LOGTO_ISSUER,
-    LOGTO_JWKS_URI,
-    LOGTO_REQUIRED_SCOPES,
-)
+from src.config.config_manager import get_global_config_manager
 
 security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
@@ -57,18 +52,37 @@ def get_auth_token(credentials: Optional[HTTPAuthorizationCredentials]) -> str:
     return token
 
 
+def get_logto_config() -> Dict[str, Any]:
+    """
+    Get Logto configuration from database or environment variables.
+    """
+    config_manager = get_global_config_manager()
+    return config_manager.get_logto_config()
+
+
 @lru_cache(maxsize=1)
 def fetch_jwks() -> Dict[str, Any]:
     """
     Download JWKS metadata from Logto. Cached for efficiency.
+    Configuration loaded from database first, then .env as fallback.
     """
+    config = get_logto_config()
+    proxy_config = get_global_config_manager().get_proxy_config()
+
+    jwks_uri = config.get("jwks_uri")
+    if not jwks_uri:
+        raise HTTPException(status_code=500, detail="LOGTO_JWKS_URI not configured")
+
     proxies = {
         key: value
-        for key, value in {"http": HTTP_PROXY, "https": HTTPS_PROXY}.items()
+        for key, value in {
+            "http": proxy_config.get("http_proxy"),
+            "https": proxy_config.get("https_proxy")
+        }.items()
         if value
     }
     try:
-        response = requests.get(LOGTO_JWKS_URI, timeout=10, proxies=proxies or None)
+        response = requests.get(jwks_uri, timeout=10, proxies=proxies or None)
         response.raise_for_status()
     except requests.RequestException as exc:
         raise HTTPException(status_code=500, detail=f"Unable to fetch JWKS: {exc}") from exc
@@ -108,11 +122,14 @@ def validate_scopes(claims: Dict[str, Any]) -> None:
     """
     Ensure the JWT contains the required scopes if configured.
     """
-    if not LOGTO_REQUIRED_SCOPES:
+    config = get_logto_config()
+    required_scopes_str = config.get("required_scopes", "")
+    if not required_scopes_str:
         return
 
+    required_scopes = required_scopes_str.split()
     token_scopes = set(str(claims.get("scope", "")).split())
-    missing = [scope for scope in LOGTO_REQUIRED_SCOPES if scope not in token_scopes]
+    missing = [scope for scope in required_scopes if scope not in token_scopes]
     if missing:
         raise AuthError(
             "auth.insufficient_scope",
@@ -125,6 +142,7 @@ def verify_token(token: str) -> Dict[str, Any]:
     """
     Decode and validate the JWT using python-jose.
     """
+    config = get_logto_config()
     key = get_signing_key(token)
     header = jwt.get_unverified_header(token)
     algorithm = header.get("alg")
@@ -136,8 +154,8 @@ def verify_token(token: str) -> Dict[str, Any]:
             token,
             key,
             algorithms=[algorithm],
-            audience=LOGTO_AUDIENCE,
-            issuer=LOGTO_ISSUER,
+            audience=config.get("audience"),
+            issuer=config.get("issuer"),
             options={"verify_at_hash": False},
         )
         validate_scopes(claims)
@@ -156,7 +174,8 @@ async def get_current_user(
     """
     FastAPI dependency to require authentication on an endpoint.
     """
-    if not ENABLE_LOGIN:
+    config = get_logto_config()
+    if not config.get("enable_login"):
         # Authentication disabled; allow anonymous access.
         return {"sub": "anonymous"}
 
@@ -170,7 +189,8 @@ async def get_optional_user(
     """
     Optional authentication dependency.
     """
-    if not ENABLE_LOGIN:
+    config = get_logto_config()
+    if not config.get("enable_login"):
         return {"sub": "anonymous"}
 
     if not credentials:

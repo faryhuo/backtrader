@@ -34,7 +34,7 @@ class CCXTStore:
         exchange = store.get_exchange()
     """
 
-    def __init__(self, exchange_id: str = 'binance', mode: str = 'paper', config: Optional[Dict] = None):
+    def __init__(self, exchange_id: str = 'binance', mode: str = 'paper', config: Optional[Dict] = None, user_id: Optional[str] = None):
         """
         Initialize CCXT store.
 
@@ -42,10 +42,12 @@ class CCXTStore:
             exchange_id: CCXT exchange ID (e.g., 'binance', 'okx', 'bybit')
             mode: Trading mode ('paper' for testnet, 'live' for production)
             config: Optional broker configuration dict
+            user_id: Optional user identifier for loading user-specific credentials
         """
         self.exchange_id = exchange_id.lower()
         self.mode = mode.lower()
         self.config = config or {}
+        self.user_id = user_id
 
         self._exchange: Optional[ccxt.Exchange] = None
         self._loop: Optional[asyncio.AbstractEventLoop] = None
@@ -53,7 +55,7 @@ class CCXTStore:
         self._loop_ready = threading.Event()  # Signal when loop is running
         self._running = False
 
-        logger.info(f"Initialized CCXTStore for {exchange_id} in {mode} mode")
+        logger.info(f"Initialized CCXTStore for {exchange_id} in {mode} mode (user_id={user_id})")
 
     def start(self) -> None:
         """
@@ -168,32 +170,36 @@ class CCXTStore:
 
     def _load_credentials(self) -> None:
         """
-        Load API credentials from environment variables.
+        Load API credentials from database or environment variables.
+
+        Uses ConfigManager to load credentials with fallback:
+        1. Database (user-specific encrypted credentials)
+        2. Environment variables (.env file)
         """
-        exchange_upper = self.exchange_id.upper()
-        mode_upper = self.mode.upper()
+        from src.config.config_manager import ConfigManager
 
-        api_key_var = f"CCXT_{exchange_upper}_{mode_upper}_API_KEY"
-        secret_var = f"CCXT_{exchange_upper}_{mode_upper}_SECRET"
-        passphrase_var = f"CCXT_{exchange_upper}_{mode_upper}_PASSPHRASE"
+        config_manager = ConfigManager(user_id=self.user_id)
+        creds = config_manager.get_ccxt_credentials(self.exchange_id, self.mode)
 
-        self.api_key = os.getenv(api_key_var)
-        self.secret = os.getenv(secret_var)
-        self.passphrase = os.getenv(passphrase_var)
+        self.api_key = creds.get("api_key")
+        self.secret = creds.get("secret")
+        self.passphrase = creds.get("passphrase")
 
         # Allow running without credentials ONLY in paper mode if specifically configured
         # But generally paper trading still needs API keys for most exchanges
         if not self.api_key or not self.secret:
-             # Check if we are in a special 'simulation' mode that doesn't need keys? 
+             # Check if we are in a special 'simulation' mode that doesn't need keys?
              # For now, strict check.
             if self.mode == 'live':
                 raise ValueError(
-                    f"Missing API credentials for LIVE mode. Set {api_key_var} and {secret_var}."
+                    f"Missing API credentials for LIVE mode. "
+                    f"Configure them via Settings UI or set CCXT_{self.exchange_id.upper()}_{self.mode.upper()}_API_KEY/SECRET in .env"
                 )
             else:
                  logger.warning(
                      f"No API credentials found for {self.exchange_id} {self.mode}. "
-                     "Some calls may fail if the exchange requires auth even for testnet."
+                     "Some calls may fail if the exchange requires auth even for testnet. "
+                     "Configure credentials via Settings UI or .env file."
                  )
 
     def _init_exchange(self) -> None:

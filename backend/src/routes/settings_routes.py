@@ -1,15 +1,16 @@
 """
-Settings Routes - API endpoints for user settings management.
+Settings Routes - API endpoints for user settings and credentials management.
 """
 
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from src.db.settings_storage import SettingsStorage
 from src.utils.auth import get_current_user
+from src.utils.credential_validator import validate_credential
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -125,3 +126,277 @@ def reset_user_settings(user: dict = Depends(get_current_user)) -> dict:
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== CREDENTIAL MANAGEMENT ENDPOINTS ==========
+
+class CredentialUpdate(BaseModel):
+    """Request model for updating general credentials."""
+    openai_api_key: Optional[str] = None
+    openai_base_url: Optional[str] = None
+    logto_issuer: Optional[str] = None
+    logto_jwks_uri: Optional[str] = None
+    logto_audience: Optional[str] = None
+    logto_required_scopes: Optional[str] = None
+    enable_login: Optional[bool] = None
+    http_proxy: Optional[str] = None
+    https_proxy: Optional[str] = None
+
+
+class CCXTCredentialUpdate(BaseModel):
+    """Request model for updating CCXT exchange credentials."""
+    exchange: str = Field(..., description="Exchange ID (binance, okx, bybit)")
+    mode: str = Field(..., description="Trading mode (paper or live)")
+    api_key: Optional[str] = None
+    secret: Optional[str] = None
+    passphrase: Optional[str] = None
+
+
+class CredentialTestRequest(BaseModel):
+    """Request model for testing credentials."""
+    credential_type: str = Field(..., description="Type: openai, ccxt, logto, proxy")
+    # For OpenAI
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    # For CCXT
+    exchange: Optional[str] = None
+    mode: Optional[str] = None
+    secret: Optional[str] = None
+    passphrase: Optional[str] = None
+    # For Logto
+    issuer: Optional[str] = None
+    jwks_uri: Optional[str] = None
+    # For Proxy
+    proxy_url: Optional[str] = None
+
+
+@router.get("/settings/credentials")
+def get_credentials(user: dict = Depends(get_current_user)) -> dict:
+    """
+    Get all credentials with masked sensitive values.
+
+    Returns credentials from database if found, otherwise falls back to .env.
+    Sensitive values (API keys, secrets) are masked for security.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        credentials_nested = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
+
+        # Flatten the structure to match frontend expectations
+        credentials_flat = {
+            "openai_api_key": credentials_nested["openai"]["api_key"],
+            "openai_base_url": credentials_nested["openai"]["base_url"],
+            "logto_issuer": credentials_nested["logto"]["issuer"],
+            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri"],
+            "logto_audience": credentials_nested["logto"]["audience"],
+            "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
+            "enable_login": credentials_nested["logto"]["enable_login"],
+            "http_proxy": credentials_nested["proxies"]["http_proxy"],
+            "https_proxy": credentials_nested["proxies"]["https_proxy"],
+            "ccxt": credentials_nested["exchanges"]
+        }
+
+        # Flatten sources as well
+        sources = {
+            "openai_api_key": credentials_nested["openai"]["api_key_source"],
+            "openai_base_url": credentials_nested["openai"]["base_url_source"],
+            "logto_issuer": credentials_nested["logto"]["issuer_source"],
+            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri_source"],
+            "logto_audience": credentials_nested["logto"]["audience_source"],
+            "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
+            "enable_login": credentials_nested["logto"]["enable_login_source"],
+            "http_proxy": credentials_nested["proxies"]["http_proxy_source"],
+            "https_proxy": credentials_nested["proxies"]["https_proxy_source"],
+        }
+
+        return {
+            "status": "ok",
+            "credentials": credentials_flat,
+            "sources": sources
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get credentials: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/settings/credentials")
+def update_credentials(
+    request: CredentialUpdate,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """
+    Update general credentials (OpenAI, Logto, Proxies).
+
+    Only updates fields that are explicitly set in the request.
+    Values are encrypted before storage if they are sensitive fields.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        # Update each credential that was provided
+        updated_fields = []
+        for key, value in request.dict(exclude_unset=True).items():
+            if value is not None:  # Allow empty string to clear a value
+                success = storage.save_credential(key, value, user_id)
+                if success:
+                    updated_fields.append(key)
+                else:
+                    logger.warning(f"Failed to update credential: {key}")
+
+        return {
+            "status": "ok",
+            "message": f"Updated {len(updated_fields)} credentials",
+            "updated_fields": updated_fields
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to update credentials: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/settings/credentials/ccxt")
+def update_ccxt_credentials(
+    request: CCXTCredentialUpdate,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """
+    Update CCXT exchange credentials for a specific exchange and mode.
+
+    Credentials are encrypted before storage.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        # Extract credentials dict
+        credentials = {}
+        if request.api_key is not None:
+            credentials["api_key"] = request.api_key
+        if request.secret is not None:
+            credentials["secret"] = request.secret
+        if request.passphrase is not None:
+            credentials["passphrase"] = request.passphrase
+
+        if not credentials:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one credential field must be provided"
+            )
+
+        success = storage.save_ccxt_credentials(
+            exchange=request.exchange,
+            mode=request.mode,
+            credentials=credentials,
+            user_id=user_id
+        )
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save credentials")
+
+        return {
+            "status": "ok",
+            "message": f"Updated {request.exchange} {request.mode} credentials"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update CCXT credentials: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/settings/credentials/{credential_key}")
+def reset_credential(
+    credential_key: str,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """
+    Reset a credential to .env value by deleting it from database.
+
+    After deletion, the credential will fall back to the value in .env file.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        success = storage.delete_credential(credential_key, user_id)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete credential")
+
+        return {
+            "status": "ok",
+            "message": f"Credential '{credential_key}' reset to .env value"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset credential: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/settings/credentials/test")
+def test_credentials(
+    request: CredentialTestRequest,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """
+    Test API credentials by making actual API calls.
+
+    This validates that credentials are correct and have proper permissions.
+    """
+    try:
+        credential_type = request.credential_type.lower()
+
+        # Prepare kwargs based on credential type
+        if credential_type == 'openai':
+            kwargs = {
+                'api_key': request.api_key,
+                'base_url': request.base_url or 'https://api.openai.com/v1'
+            }
+        elif credential_type == 'ccxt':
+            kwargs = {
+                'exchange': request.exchange,
+                'mode': request.mode,
+                'api_key': request.api_key,
+                'secret': request.secret,
+                'passphrase': request.passphrase
+            }
+        elif credential_type == 'logto':
+            kwargs = {
+                'issuer': request.issuer,
+                'jwks_uri': request.jwks_uri
+            }
+        elif credential_type == 'proxy':
+            kwargs = {
+                'proxy_url': request.proxy_url
+            }
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown credential type: {credential_type}"
+            )
+
+        # Validate credentials
+        is_valid, message = validate_credential(credential_type, **kwargs)
+
+        return {
+            "status": "ok",
+            "valid": is_valid,
+            "message": message
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to test credentials: {e}")
+        return {
+            "status": "error",
+            "valid": False,
+            "message": f"Test failed: {str(e)[:200]}"
+        }

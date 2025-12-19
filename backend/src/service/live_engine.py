@@ -56,9 +56,13 @@ def _build_components(
     commission: float,
     session_id: Optional[str],
     config,
+    user_id: Optional[str] = None,
 ):
     """
     Create store/broker/data based on exchange adapter (ccxt/ibkr).
+
+    Args:
+        user_id: User identifier for loading user-specific credentials from database
     """
     ex_config = get_exchange_config(exchange, config)
     adapter = ex_config.adapter.lower()
@@ -71,6 +75,7 @@ def _build_components(
                 'default_market': ex_config.default_market,
                 'markets': ex_config.markets,
             },
+            user_id=user_id,  # Pass user_id for database credential lookup
         )
         store.start()
         broker = CCXTBroker(
@@ -106,7 +111,8 @@ def run_live(
     initial_cash: float = 10000.0,
     commission: float = 0.001,
     session_id: Optional[str] = None,
-    config: Optional[Dict] = None
+    config: Optional[Dict] = None,
+    user_id: Optional[str] = None
 ) -> Dict:
     """
     Start live trading session with SessionManager integration.
@@ -124,6 +130,7 @@ def run_live(
         commission: Commission rate (e.g., 0.001 = 0.1%)
         session_id: Optional session ID (auto-generated if None)
         config: Optional broker configuration dict
+        user_id: Optional user identifier for loading user-specific credentials
 
     Returns:
         dict: Session information
@@ -174,7 +181,8 @@ def run_live(
             initial_cash=initial_cash,
             commission=commission,
             session_id=session_id,
-            config=config
+            config=config,
+            user_id=user_id  # Pass user_id for database credential lookup
         )
         logger.info("Adapter '%s' initialized for exchange %s", adapter, exchange)
 
