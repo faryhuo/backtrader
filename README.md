@@ -2,6 +2,7 @@
 
 <div align="center">
 
+![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.124%2B-green)
 ![React](https://img.shields.io/badge/React-18.3.1-61dafb)
@@ -513,6 +514,24 @@ run_tests_coverage.bat
 cd frontend
 npm run lint
 ```
+
+### 持续集成 (CI)
+
+项目使用 GitHub Actions 自动运行测试和代码检查。配置文件位于 `.github/workflows/ci.yml`。
+
+| 作业 | 环境 | 检查内容 |
+|------|------|----------|
+| `backend-tests` | Python 3.11 | pytest 测试 + 覆盖率报告 |
+| `frontend-lint` | Node.js 20 | ESLint 代码检查 |
+
+**触发条件**：
+- Push 到 `main`/`master` 分支
+- 所有 Pull Request
+
+**查看 CI 状态**：
+- 在 Pull Request 页面查看检查结果
+- GitHub Actions 标签页查看详细日志
+- Badge: ![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
 
 ### 添加新策略
 
