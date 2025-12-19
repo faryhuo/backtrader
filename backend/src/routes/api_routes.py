@@ -277,10 +277,7 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
             )
         except Exception as e:
             # Log error but don't fail the backtest response
-            import traceback
-
-            traceback.print_exc()
-            logger.error(f"Failed to save backtest to history: {e}")
+            logger.error(f"Failed to save backtest to history: {e}", exc_info=True)
 
         return response
 
@@ -288,11 +285,6 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
         raise HTTPException(status_code=400, detail=str(exc))
     except DataLoadError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.get("/strategy")
@@ -398,29 +390,20 @@ def get_backtest_history(
     """
     List backtest history with filtering and sorting.
     """
-    try:
-        storage = get_backtest_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_backtest_storage()
+    user_id = user.get("sub") if user else None
 
-        result = storage.list_backtests(
-            ticker=query.ticker,
-            strategy_name=query.strategy_name,
-            start_date=query.start_date,
-            end_date=query.end_date,
-            sort_by=query.sort_by,
-            sort_order=query.sort_order,
-            limit=query.limit,
-            offset=query.offset,
-            user_id=user_id,
-        )
-
-        return result
-
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(exc))
+    return storage.list_backtests(
+        ticker=query.ticker,
+        strategy_name=query.strategy_name,
+        start_date=query.start_date,
+        end_date=query.end_date,
+        sort_by=query.sort_by,
+        sort_order=query.sort_order,
+        limit=query.limit,
+        offset=query.offset,
+        user_id=user_id,
+    )
 
 
 @router.get("/backtest/history/{backtest_id}")
@@ -428,24 +411,15 @@ def get_backtest_detail(backtest_id: str, user: dict = Depends(get_current_user)
     """
     Get detailed backtest result by ID.
     """
-    try:
-        storage = get_backtest_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_backtest_storage()
+    user_id = user.get("sub") if user else None
 
-        result = storage.get_backtest(backtest_id, user_id=user_id)
+    result = storage.get_backtest(backtest_id, user_id=user_id)
 
-        if not result:
-            raise HTTPException(status_code=404, detail="Backtest not found")
+    if not result:
+        raise HTTPException(status_code=404, detail="Backtest not found")
 
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(exc))
+    return result
 
 
 @router.delete("/backtest/history/{backtest_id}")
@@ -453,24 +427,15 @@ def delete_backtest_record(backtest_id: str, user: dict = Depends(get_current_us
     """
     Delete backtest history record and associated plot file.
     """
-    try:
-        storage = get_backtest_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_backtest_storage()
+    user_id = user.get("sub") if user else None
 
-        deleted = storage.delete_backtest(backtest_id, user_id=user_id)
+    deleted = storage.delete_backtest(backtest_id, user_id=user_id)
 
-        if not deleted:
-            raise HTTPException(status_code=404, detail="Backtest not found")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Backtest not found")
 
-        return {"status": "ok", "message": "Backtest deleted"}
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(exc))
+    return {"status": "ok", "message": "Backtest deleted"}
 
 
 @router.post("/backtest/history/{backtest_id}/ai-analysis")
@@ -481,26 +446,17 @@ def update_ai_analysis(
     Update AI analysis for a backtest (when user runs AI analysis).
     Stores analysis in JSON format: {model_name: analysis_content}
     """
-    try:
-        storage = get_backtest_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_backtest_storage()
+    user_id = user.get("sub") if user else None
 
-        updated = storage.update_ai_analysis(
-            backtest_id=backtest_id,
-            model_name=analysis.model_name,
-            analysis_content=analysis.analysis,
-            user_id=user_id
-        )
+    updated = storage.update_ai_analysis(
+        backtest_id=backtest_id,
+        model_name=analysis.model_name,
+        analysis_content=analysis.analysis,
+        user_id=user_id
+    )
 
-        if not updated:
-            raise HTTPException(status_code=404, detail="Backtest not found")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Backtest not found")
 
-        return {"status": "ok", "message": "AI analysis updated"}
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(exc))
+    return {"status": "ok", "message": "AI analysis updated"}

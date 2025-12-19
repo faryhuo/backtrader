@@ -98,10 +98,8 @@ def update_user_settings(
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        logger.error(f"Failed to update settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Failed to update settings: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update settings")
 
 
 @router.post("/settings/reset")

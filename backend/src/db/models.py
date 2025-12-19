@@ -676,7 +676,3 @@ class UserSettingsModel(Base):
             f"<UserSettings(user_id={self.user_id}, "
             f"models={self.selected_models})>"
         )
-
-
-# Default database path for local development
-DEFAULT_DB_PATH = "sqlite:///trading_sessions.db"

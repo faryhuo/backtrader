@@ -28,8 +28,8 @@ export const getAISettings = () => {
 
 export const getAvailableModels = () => {
     const settings = getAISettings();
-    return settings.selectedModels && settings.selectedModels.length > 0 
-        ? settings.selectedModels 
+    return settings.selectedModels && settings.selectedModels.length > 0
+        ? settings.selectedModels
         : ['gpt-5.1'];
 };
 
@@ -69,11 +69,19 @@ export const performFullStrategyAnalysis = async ({
     let strategyCode = '';
     if (initialStrategyCode) {
         strategyCode = initialStrategyCode;
-    }else{
+    } else {
         try {
             if (strategyName) {
-                const stratData = await fetch(`${API_URL}/strategy?name=${strategyName}`);
-                strategyCode = stratData?.code || 'Code not available';
+                const token = await getAccessToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch(`${API_URL}/strategy?name=${strategyName}`, { headers });
+                if (res.ok) {
+                    const stratData = await res.json();
+                    strategyCode = stratData?.code || 'Code not available';
+                } else {
+                    console.warn(`Failed to fetch strategy code: ${res.status}`);
+                    strategyCode = 'Code not available';
+                }
             }
         } catch (e) {
             console.warn("Could not fetch strategy code", e);
@@ -172,7 +180,7 @@ export const analyzeCode = async (code, model = null) => {
     const settings = getAISettings();
     const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : 'gpt-5.1');
     const prompt = settings.codeAnalysisPrompt.replace('{code}', code);
-    
+
     const data = await analyzeChart(prompt, effectiveModel, null);
     return data.analysis;
 };

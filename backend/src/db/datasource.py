@@ -7,13 +7,13 @@ import pandas as pd
 import yfinance as yf
 from sqlalchemy import text, select
 
-from src.config.settings import DATABASE_URL
-from src.db.models import MarketDataModel, init_database, DEFAULT_DB_PATH
+from src.config.settings import DATABASE_URL, DEFAULT_DB_URL
+from src.db.models import MarketDataModel, init_database
 
 logger = logging.getLogger(__name__)
 
 # Use default local database if DATABASE_URL is not configured
-_DB_URL = DATABASE_URL or DEFAULT_DB_PATH
+_DB_URL = DATABASE_URL or DEFAULT_DB_URL
 
 _ENGINE = None
 _SESSION_LOCAL = None

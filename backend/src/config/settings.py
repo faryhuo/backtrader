@@ -39,6 +39,9 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 HTTP_PROXY = os.getenv("HTTP_PROXY") or os.getenv("http_proxy")
 HTTPS_PROXY = os.getenv("HTTPS_PROXY") or os.getenv("https_proxy")
 
+# Debug mode - when True, detailed error messages and stack traces are returned to clients
+DEBUG = os.getenv("DEBUG", "false").lower() in {"true", "1", "yes", "on"}
+
 # Live Trading Configuration
 LIVE_TRADING_ENABLED = os.getenv("LIVE_TRADING_ENABLED", "false").lower() in {"true", "1", "yes", "on"}
 DEFAULT_EXCHANGE = os.getenv("DEFAULT_EXCHANGE", "binance")
@@ -89,6 +92,7 @@ __all__ = [
     "CORS_ALLOW_ORIGINS",
     "CORS_ALLOW_ORIGIN_REGEX",
     "DATABASE_URL",
+    "DEBUG",
     "DEFAULT_DB_PATH",
     "DEFAULT_DB_URL",
     "DEFAULT_EXCHANGE",
