@@ -6,6 +6,7 @@ import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm'
 import PerformanceOverview from '../components/RunStrategy/PerformanceOverview'
 import TradeLog from '../components/RunStrategy/TradeLog'
 import StrategyPlot from '../components/RunStrategy/StrategyPlot'
+import DeepAnalysis from '../components/DeepAnalysis'
 
 import { RobotOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
@@ -148,7 +149,6 @@ function RunStrategy() {
                 <div className="results-animate-in">
                     <PerformanceOverview result={result} />
 
-
                     <TradeLog trades={tradeList} />
 
                     <StrategyPlot
@@ -158,6 +158,16 @@ function RunStrategy() {
                         endDate={endDate}
                         strategyName={selectedStrategy}
                     />
+
+                    {result.backtest_id && (
+                        <DeepAnalysis backtest={{
+                            backtest_id: result.backtest_id,
+                            ticker,
+                            start_date: startDate,
+                            end_date: endDate,
+                            initial_cash: initialCash
+                        }} />
+                    )}
                 </div>
             ) : (
                 <div className="empty-state-container">

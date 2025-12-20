@@ -27,6 +27,7 @@
   "tab_chart": "Chart",
   "tab_trades": "Trade Log",
   "tab_ai_insight": "AI Insight",
+  "tab_deep_analysis": "Deep Analysis",
   "tab_strategy_code": "Strategy Code",
   "no_history": "No backtest history yet",
   "loading": "Loading history...",

@@ -34,9 +34,19 @@ def api_client(api_base_url):
     """
     Provide API client with authentication.
     Uses real token if available, otherwise mock token.
+    If backend doesn't require auth, sends no token at all.
     Function-scoped so each test gets a fresh client.
     """
-    token = get_auth_token() or create_mock_token(user_id="test_user", username="testuser")
+    from auth_config import is_auth_required
+    
+    # Check if backend requires auth
+    if is_auth_required():
+        # Backend requires auth - use real token or mock
+        token = get_auth_token() or create_mock_token(user_id="test_user", username="testuser")
+    else:
+        # Backend auth disabled - don't send any token!
+        token = None
+    
     client = APIClient(base_url=api_base_url, token=token)
     yield client
     client.close()
@@ -47,7 +57,11 @@ def skip_if_no_auth(request):
     """Skip tests marked with 'requires_auth' if authentication is not configured."""
     if request.node.get_closest_marker('requires_auth'):
         if should_skip_auth_test():
-            pytest.skip("Test requires authentication. Set TEST_AUTH_TOKEN or SKIP_AUTH_TESTS=false")
+            # Import here to avoid circular dependency
+            from auth_config import is_auth_required
+            if is_auth_required():
+                pytest.skip("Backend requires authentication. Set TEST_AUTH_TOKEN or disable backend auth")
+            # If auth is not required, test will run!
 
 
 @pytest.fixture(scope="function")

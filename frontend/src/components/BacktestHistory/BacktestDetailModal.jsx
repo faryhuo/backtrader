@@ -7,6 +7,7 @@ import { api } from '../../services/api'
 import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
+import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
@@ -206,6 +207,10 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                             </div>
                         )}
                     </div>
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab={t('history.tab_deep_analysis', 'Deep Analysis')} key="deep_analysis">
+                    <DeepAnalysis backtest={backtest} />
                 </Tabs.TabPane>
 
                 {backtest.strategy_code && (

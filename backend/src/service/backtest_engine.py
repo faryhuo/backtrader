@@ -339,6 +339,7 @@ def run_backtest(
     cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
     cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturns")  # Daily returns for deep analysis
     cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")  # 添加自定义交易记录器
 
     try:
@@ -351,6 +352,13 @@ def run_backtest(
     # 获取交易详情
     trade_details = strat.analyzers.trade_recorder.get_analysis()
 
+    # Get daily returns for deep analysis (convert datetime keys to strings for JSON serialization)
+    time_returns_raw = strat.analyzers.timereturns.get_analysis()
+    equity_curve = {
+        dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt): float(ret)
+        for dt, ret in time_returns_raw.items()
+    }
+
     metrics = {
         "final_value": cerebro.broker.getvalue(),
         "sharpe": strat.analyzers.sharpe.get_analysis().get("sharperatio", None),
@@ -361,6 +369,7 @@ def run_backtest(
         "trades": strat.analyzers.trades.get_analysis(),
         "time_drawdown": strat.analyzers.timedraw.get_analysis(),
         "trade_details": trade_details,  # 添加详细的交易记录
+        "equity_curve": equity_curve,  # Daily returns for deep analysis
     }
 
     target_path: Optional[Path] = Path(save_path) if save_path else None

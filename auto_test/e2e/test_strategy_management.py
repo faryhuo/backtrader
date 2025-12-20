@@ -9,7 +9,15 @@ Tests cover:
 """
 
 import pytest
+import sys
+from pathlib import Path
+
+# Add libs to path
+libs_path = Path(__file__).parent.parent / "libs"
+sys.path.insert(0, str(libs_path))
+
 from assertions import assert_api_response, assert_api_error, assert_strategy_params
+from response_normalizer import normalize_list_response
 
 
 @pytest.mark.api
@@ -23,7 +31,8 @@ class TestStrategyAPI:
         assert_api_response(response, expected_status=200)
         
         data = response.json()
-        assert isinstance(data, list), "Strategies should be a list"
+        strategies = normalize_list_response(data, 'strategies')
+        assert isinstance(strategies, list), "Strategies should be a list"
 
     def test_create_and_get_strategy(self, api_client, data_fixtures, test_strategy_name):
         """Test creating a new strategy and retrieving it."""
@@ -234,7 +243,8 @@ class TestStrategyAPI:
         response = api_client.get("/api/templates")
         assert_api_response(response, expected_status=200)
         
-        templates = response.json()
+        data = response.json()
+        templates = normalize_list_response(data, 'templates')
         assert isinstance(templates, list)
         # Should have at least one template
         if len(templates) > 0:
@@ -246,7 +256,9 @@ class TestStrategyAPI:
         """Test importing a template as a new strategy."""
         # First get template list
         templates_response = api_client.get("/api/templates")
-        templates = templates_response.json()
+        data = templates_response.json()
+        templates = normalize_list_response(data, 'templates')
+        assert isinstance(templates, list)
         
         if len(templates) == 0:
             pytest.skip("No templates available for testing")

@@ -16,6 +16,7 @@
 - `walkforward_optimizer.py`：Walk-Forward 参数优化器，训练/验证集分离与过拟合检测。
 - `websocket_manager.py`：WebSocket 连接与频道管理。
 - `parameter_analysis.py`：策略参数分析/诊断相关能力（供回测/优化流程使用）。
+- `deep_analysis.py`：回测深度分析服务，计算月度收益热图、滚动Sharpe、收益/回撤分布、连续亏损统计、基准对比（SPY/沪深300）等高级指标。
 
 ## 非功能性要求（Non-Functional）
 - 解耦：服务层通过清晰接口调用 DB/适配层，避免直接依赖路由细节。

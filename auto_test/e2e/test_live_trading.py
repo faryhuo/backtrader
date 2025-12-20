@@ -9,8 +9,18 @@ Tests cover:
 """
 
 import pytest
+import sys
+from pathlib import Path
 import time
+
+# Add libs to path
+libs_path = Path(__file__).parent.parent / "libs"
+sys.path.insert(0, str(libs_path))
+
+from api_client import APIClient
 from assertions import assert_api_response, assert_api_error, assert_session_response
+from data_fixtures import DataFixtures
+from response_normalizer import normalize_list_response
 
 
 @pytest.mark.api
@@ -23,7 +33,8 @@ class TestLiveTradingAPI:
         response = api_client.get("/api/live/exchanges")
         assert_api_response(response, expected_status=200)
         
-        exchanges = response.json()
+        data = response.json()
+        exchanges = normalize_list_response(data, 'exchanges')
         assert isinstance(exchanges, list)
         # Should have at least one exchange configured
         if len(exchanges) > 0:

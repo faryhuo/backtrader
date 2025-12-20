@@ -18,6 +18,11 @@ from src.service.backtest_engine import (
     get_user_strategy_code,
     StrategyLoadError,
 )
+from src.service.deep_analysis import (
+    compute_deep_analysis,
+    DeepAnalysisError,
+    DEFAULT_BENCHMARKS,
+)
 from src.db.storage.market_data import DataLoadError
 from src.db.storage.backtest import BacktestStorage
 from src.utils.auth import get_current_user
@@ -65,6 +70,12 @@ class BacktestHistoryQuery(BaseModel):
 class AIAnalysisUpdate(BaseModel):
     model_name: str
     analysis: str
+
+
+class DeepAnalysisConfig(BaseModel):
+    benchmarks: list[str] | None = None  # Default: ["SPY", "000300.SS"]
+    rolling_window: int = 60
+    risk_free_rate: float = 0.02
 
 
 # ========== Backtest Execution Endpoints ==========
@@ -225,3 +236,89 @@ def update_ai_analysis(
         raise HTTPException(status_code=404, detail="Backtest not found")
 
     return {"status": "ok", "message": "AI analysis updated"}
+
+
+# ========== Deep Analysis Endpoints ==========
+
+
+@router.post("/backtest/history/{backtest_id}/deep-analysis")
+def get_or_compute_deep_analysis(
+    backtest_id: str,
+    config: DeepAnalysisConfig | None = None,
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """
+    Get or compute deep analysis for a backtest.
+
+    Deep analysis includes:
+    - Monthly returns heatmap
+    - Rolling Sharpe ratio (with benchmark comparison)
+    - Returns distribution
+    - Drawdown distribution
+    - Consecutive losing periods
+    - Benchmark comparison (alpha, beta, correlation)
+
+    The analysis is computed on-demand and cached in the database.
+    """
+    storage = get_backtest_storage()
+    user_id = user.get("sub") if user else None
+
+    # Get backtest details
+    backtest = storage.get_backtest(backtest_id, user_id=user_id)
+    if not backtest:
+        raise HTTPException(status_code=404, detail="Backtest not found")
+
+    # Check if analysis already cached
+    cached_analysis = storage.get_deep_analysis(backtest_id, user_id=user_id)
+    if cached_analysis:
+        return {"status": "ok", **cached_analysis}
+
+    # Get equity curve from metrics
+    metrics = backtest.get("metrics", {})
+    equity_curve = metrics.get("equity_curve")
+
+    if not equity_curve:
+        raise HTTPException(
+            status_code=400,
+            detail="Equity curve data not available. Please re-run the backtest to generate deep analysis data.",
+        )
+
+    # Parse config
+    if config is None:
+        config = DeepAnalysisConfig()
+
+    benchmarks = config.benchmarks if config.benchmarks else DEFAULT_BENCHMARKS
+
+    try:
+        # Convert string date keys back to proper format for analysis
+        from datetime import datetime
+
+        equity_curve_parsed = {}
+        for date_str, ret in equity_curve.items():
+            try:
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                equity_curve_parsed[date_obj] = ret
+            except ValueError:
+                continue
+
+        # Compute deep analysis
+        analysis = compute_deep_analysis(
+            equity_curve=equity_curve_parsed,
+            start_date=backtest.get("start_date"),
+            end_date=backtest.get("end_date"),
+            initial_cash=backtest.get("initial_cash", 100000.0),
+            benchmarks=benchmarks,
+            risk_free_rate=config.risk_free_rate,
+            rolling_window=config.rolling_window,
+        )
+
+        # Cache in database
+        storage.update_deep_analysis(backtest_id, analysis, user_id=user_id)
+
+        return {"status": "ok", **analysis}
+
+    except DeepAnalysisError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to compute deep analysis for {backtest_id}")
+        raise HTTPException(status_code=500, detail=f"Failed to compute analysis: {str(e)}")

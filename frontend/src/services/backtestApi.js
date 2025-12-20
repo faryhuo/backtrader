@@ -55,5 +55,17 @@ export const backtestApi = {
             body: JSON.stringify({ metrics })
         })
         return await parseResponse(res)
+    },
+
+    async getDeepAnalysis(backtestId, config = {}) {
+        const res = await buildRequest(`/backtest/history/${backtestId}/deep-analysis`, {
+            method: 'POST',
+            body: JSON.stringify({
+                benchmarks: config.benchmarks || null,
+                rolling_window: config.rolling_window || 60,
+                risk_free_rate: config.risk_free_rate || 0.02
+            })
+        })
+        return await parseResponse(res)
     }
 }

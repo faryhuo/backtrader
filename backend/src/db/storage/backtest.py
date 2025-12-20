@@ -412,6 +412,93 @@ class BacktestStorage(BaseStorage):
             if close_db:
                 db.close()
 
+    def update_deep_analysis(
+        self,
+        backtest_id: str,
+        deep_analysis: Dict[str, Any],
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """
+        Save computed deep analysis to database.
+
+        Args:
+            backtest_id: Backtest ID
+            deep_analysis: Deep analysis results dict
+            user_id: Optional user ID filter
+            db: Optional database session
+
+        Returns:
+            True if updated, False if not found
+        """
+        close_db = False
+        if db is None:
+            db = self.get_db_session()
+            close_db = True
+
+        try:
+            query = db.query(BacktestHistoryModel).filter(
+                BacktestHistoryModel.backtest_id == backtest_id
+            )
+
+            if user_id:
+                query = query.filter(BacktestHistoryModel.user_id == user_id)
+
+            record = query.first()
+
+            if not record:
+                return False
+
+            record.deep_analysis = deep_analysis
+            db.commit()
+
+            logger.info(f"Updated deep analysis for backtest {backtest_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to update deep analysis for {backtest_id}: {e}")
+            db.rollback()
+            return False
+        finally:
+            if close_db:
+                db.close()
+
+    def get_deep_analysis(
+        self,
+        backtest_id: str,
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get cached deep analysis for a backtest.
+
+        Returns:
+            Deep analysis dict if cached, None otherwise
+        """
+        close_db = False
+        if db is None:
+            db = self.get_db_session()
+            close_db = True
+
+        try:
+            query = db.query(BacktestHistoryModel).filter(
+                BacktestHistoryModel.backtest_id == backtest_id
+            )
+
+            if user_id:
+                query = query.filter(BacktestHistoryModel.user_id == user_id)
+
+            record = query.first()
+
+            if not record:
+                return None
+
+            return record.deep_analysis
+
+        finally:
+            if close_db:
+                db.close()
+
     def _record_to_dict(
         self, record: BacktestHistoryModel, include_full_metrics: bool = False
     ) -> Dict[str, Any]:
@@ -441,5 +528,6 @@ class BacktestStorage(BaseStorage):
             result["ai_analysis"] = record.ai_analysis if record.ai_analysis is not None else None
             result["strategy_code"] = record.strategy_code
             result["params"] = record.params if record.params is not None else None
+            result["deep_analysis"] = record.deep_analysis if record.deep_analysis is not None else None
 
         return result

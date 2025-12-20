@@ -70,6 +70,11 @@ class BacktestHistoryModel(Base):
     # e.g., {"fast_period": 10, "slow_period": 30}
     params = Column(SafeJSON, nullable=True)
 
+    # Deep analysis results (computed on-demand, cached)
+    # Contains: monthly_returns, rolling_sharpe, returns_distribution,
+    # drawdown_distribution, consecutive_losses, benchmark_comparison
+    deep_analysis = Column(SafeJSON, nullable=True)
+
     def __repr__(self):
         return (
             f"<BacktestHistory(id={self.backtest_id}, "

@@ -22,6 +22,7 @@ FastAPI 路由与接口层目录，集中维护 HTTP/WebSocket API。
   - `/api/backtest` - 执行回测
   - `/api/backtest/history` - 回测历史管理
   - `/api/backtest/history/{id}/ai-analysis` - AI 分析更新
+  - `/api/backtest/history/{id}/deep-analysis` - 深度分析（月度收益热图、滚动Sharpe、收益分布、回撤分析、连续亏损、基准对比）
 - `market_data_routes.py`：市场数据
   - `/api/ticker/{ticker}/info` - 标的信息
   - `/api/ticker/{ticker}/prices` - 价格数据
