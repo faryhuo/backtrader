@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from src.db.models import WalkForwardOptimizationModel, init_database
 from src.service.walkforward_optimizer import WalkForwardResult
+from src.service.parameter_analysis import get_parameter_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +204,7 @@ class WalkForwardStorage:
                     "best_params": window.best_params,
                     "train_metrics": window.train_metrics,
                     "test_metrics": window.test_metrics,
+                    "all_train_results": window.all_train_results,
                 })
 
             # Update record with results
@@ -415,9 +417,24 @@ class WalkForwardStorage:
         }
 
         if include_full_results:
-            result["windows"] = record.windows if record.windows is not None else []
-            result["overfitting_metrics"] = record.overfitting_metrics if record.overfitting_metrics is not None else {}
+            windows = record.windows if record.windows is not None else []
+            overfitting_metrics = record.overfitting_metrics if record.overfitting_metrics is not None else {}
+            
+            result["windows"] = windows
+            result["overfitting_metrics"] = overfitting_metrics
             result["combined_test_metrics"] = record.combined_test_metrics if record.combined_test_metrics is not None else {}
+            
+            # Compute parameter analysis on-demand from windows data
+            try:
+                result["parameter_analysis"] = get_parameter_analysis(
+                    windows=windows,
+                    param_grid=record.param_grid or {},
+                    optimization_metric=record.optimization_metric or "sharpe_ratio",
+                    overfitting_metrics=overfitting_metrics,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to compute parameter analysis: {e}")
+                result["parameter_analysis"] = {}
 
         return result
 

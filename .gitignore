@@ -1,8 +1,6 @@
 **/__pycache__
 **/.pytest_cache/
 **/resources/images/*
-frontend/node_modules
-frontend/dist
 .codex
 backend/.env
 backend/.envprod
@@ -12,8 +10,12 @@ backend/trading_sessions.db-shm
 backend/trading_sessions.db-wal
 backend/coverage_html
 backend/coverage.xml
+backend/resources/frontend
+backend/venv_new
+
 frontend/.env
 frontend/.envprod
 frontend/.env.prod
-backend/resources/frontend
-backend/venv_new
+frontend/node_modules
+frontend/dist
+

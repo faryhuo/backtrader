@@ -19,8 +19,13 @@ import {
     ExclamationCircleOutlined,
     LineChartOutlined,
     TableOutlined,
-    BarChartOutlined
+    BarChartOutlined,
+    HeatMapOutlined
 } from '@ant-design/icons'
+import OverfittingScoreCard from './OverfittingScoreCard'
+import ParameterHeatmap from './ParameterHeatmap'
+import Parameter3DSurface from './Parameter3DSurface'
+import ParameterSensitivityTable from './ParameterSensitivityTable'
 
 const { TabPane } = Tabs
 const { Title, Text } = Typography
@@ -30,7 +35,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
 
     if (!optimization) return null
 
-    const { windows, overfitting_metrics, combined_test_metrics, param_grid } = optimization
+    const { windows, overfitting_metrics, combined_test_metrics, param_grid, parameter_analysis } = optimization
 
     const windowColumns = [
         {
@@ -367,6 +372,43 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                     key="config"
                 >
                     {renderConfiguration()}
+                </TabPane>
+
+                <TabPane
+                    tab={
+                        <span>
+                            <HeatMapOutlined />
+                            {t('walkforward.detail.parameterAnalysis', 'Parameter Analysis')}
+                        </span>
+                    }
+                    key="analysis"
+                >
+                    {parameter_analysis && (
+                        <>
+                            <OverfittingScoreCard
+                                overfittingScore={parameter_analysis.overfitting_score}
+                            />
+                            <ParameterSensitivityTable
+                                sensitivityRanking={parameter_analysis.sensitivity_ranking}
+                            />
+                            <ParameterHeatmap
+                                heatmapData={parameter_analysis.heatmap}
+                                metricName={optimization.optimization_metric}
+                            />
+                            <Parameter3DSurface
+                                surfaceData={parameter_analysis.surface3d}
+                                metricName={optimization.optimization_metric}
+                            />
+                        </>
+                    )}
+                    {!parameter_analysis && (
+                        <Alert
+                            message={t('walkforward.analysis.noData', 'No Parameter Analysis')}
+                            description={t('walkforward.analysis.noDataDesc', 'Parameter analysis data is not available for this optimization.')}
+                            type="info"
+                            showIcon
+                        />
+                    )}
                 </TabPane>
             </Tabs>
         </Modal>
