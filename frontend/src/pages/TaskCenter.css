@@ -270,6 +270,13 @@
     color: var(--text-secondary);
 }
 
+/* User */
+.task-user {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
 /* Actions */
 .task-actions {
     display: flex;

@@ -19,6 +19,7 @@
     "colProgress": "Progress",
     "colDuration": "Duration",
     "colCreated": "Created",
+    "colUser": "User",
     "colActions": "Actions",
     "cancel": "Cancel",
     "retry": "Retry",

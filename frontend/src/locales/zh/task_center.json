@@ -19,6 +19,7 @@
     "colProgress": "进度",
     "colDuration": "耗时",
     "colCreated": "创建时间",
+    "colUser": "用户",
     "colActions": "操作",
     "cancel": "取消",
     "retry": "重试",

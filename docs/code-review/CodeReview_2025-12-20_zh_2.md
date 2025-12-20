@@ -61,7 +61,7 @@
 4. **前端 Logto token resource 使用同一个变量（易错）**
    - 位置：`frontend/src/services/apiCore.js` 中 `API_RESOURCE` 目前等于 `VITE_API_BASE_URL`。
    - 影响：Logto 的 resource/audience 往往与“请求 base URL（含 /api）”并非同一概念，容易导致拿不到 token 或拿到不匹配的 token。
-   - 建议：引入 `VITE_API_RESOURCE`（或复用后端配置返回），并与 `VITE_API_BASE_URL` 解耦。
+   - 建议：引入 `VITE_API_BASE_URL`（或复用后端配置返回），并与 `VITE_API_BASE_URL` 解耦。
 
 ### P2（体验/长期演进）
 

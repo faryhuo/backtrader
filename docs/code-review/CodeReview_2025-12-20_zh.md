@@ -75,7 +75,7 @@
 
 4. **前端 API 配置存在潜在误配点**
    - 位置：`frontend/src/services/api.js` 与 `frontend/_.env.template`
-   - `API_RESOURCE` 目前等于 `VITE_API_BASE_URL`，但模板里同时有 `VITE_API_RESOURCE`，容易造成 Logto audience/resource 混用。
+   - `API_RESOURCE` 目前等于 `VITE_API_BASE_URL`，但模板里同时有 `VITE_API_BASE_URL`，容易造成 Logto audience/resource 混用。
    - 同时若 `VITE_API_BASE_URL` 未设置，`fetch` 会拼出 `undefined/xxx`。
    - 建议：提供合理默认值（开发用相对路径+Vite proxy，生产用绝对 URL），并让 resource/audience 与 base URL 分离。
 

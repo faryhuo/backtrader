@@ -275,7 +275,11 @@ class TaskStorage(BaseStorage):
             task.status = TaskStatus.CANCELLED.value
             task.completed_at = datetime.now(timezone.utc)
             if task.started_at:
-                task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
+                # Ensure started_at is timezone-aware for duration calculation
+                started = task.started_at
+                if started.tzinfo is None:
+                    started = started.replace(tzinfo=timezone.utc)
+                task.duration_seconds = (task.completed_at - started).total_seconds()
 
             logger.info(f"Cancelled task {task_id}")
             return True

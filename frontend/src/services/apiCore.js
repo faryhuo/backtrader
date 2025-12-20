@@ -6,9 +6,6 @@ import { LOGIN_ENABLED } from '../config/auth'
 // API base URL for HTTP requests (separate from Logto resource identifier)
 export const API_URL = import.meta.env.VITE_API_BASE_URL
 
-// Logto resource/audience for OAuth2 access tokens
-const API_RESOURCE = import.meta.env.VITE_API_BASE_URL
-
 // Token getter function (set by App component)
 let getTokenFn = null
 
@@ -33,7 +30,7 @@ export const buildRequest = async (path, options = {}) => {
     // Inject access token if available
     if (getTokenFn) {
         try {
-            const token = await getTokenFn(API_RESOURCE)
+            const token = await getTokenFn(API_URL)
             if (token) {
                 headers.set('Authorization', `Bearer ${token}`)
             }

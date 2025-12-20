@@ -297,6 +297,7 @@ function TaskCenter() {
                                 <th>{t('taskCenter.colProgress', 'Progress')}</th>
                                 <th>{t('taskCenter.colDuration', 'Duration')}</th>
                                 <th>{t('taskCenter.colCreated', 'Created')}</th>
+                                <th>{t('taskCenter.colUser', 'User')}</th>
                                 <th>{t('taskCenter.colActions', 'Actions')}</th>
                             </tr>
                         </thead>
@@ -339,6 +340,9 @@ function TaskCenter() {
                                     </td>
                                     <td>
                                         {formatDate(task.created_at)}
+                                    </td>
+                                    <td className="task-user">
+                                        {task.user_id ? task.user_id.substring(0, 8) + '...' : '-'}
                                     </td>
                                     <td>
                                         <div className="task-actions">

@@ -57,7 +57,7 @@
    `frontend/vite.config.js` 配置 `sourcemap: true` 且 `minify: false`，不适合生产（体积、加载速度、源码泄露）。建议按 `mode` 区分：dev 开 sourcemap、prod 开 minify 并关闭 sourcemap（或 hidden）。
 
 2. **配置项语义有混用/不一致迹象**  
-   `frontend/src/services/api.js` 里 `API_RESOURCE` 复用 `VITE_API_BASE_URL`；但 `frontend/_.env.template` 同时存在 `VITE_API_RESOURCE`。建议统一：`VITE_API_BASE_URL`（请求基地址）与 `VITE_API_RESOURCE`（OAuth resource/audience）各司其职。
+   `frontend/src/services/api.js` 里 `API_RESOURCE` 复用 `VITE_API_BASE_URL`；但 `frontend/_.env.template` 同时存在 `VITE_API_BASE_URL`。建议统一：`VITE_API_BASE_URL`（请求基地址）与 `VITE_API_BASE_URL`（OAuth resource/audience）各司其职。
 
 3. **错误处理与对外返回不够一致**  
    部分 routes 直接 `detail=str(exc)` 或 `traceback.print_exc()`（例如 `backend/src/routes/api_routes.py`、`backend/src/routes/settings_routes.py`），生产环境可能泄露内部栈信息与实现细节。  
@@ -79,7 +79,7 @@
 ### 1～2 天（高收益）
 - 去掉/脱敏后端启动日志中的 `DATABASE_URL`（或仅打印 DB 类型与路径，不打印凭证）。
 - 前端 WebSocket：禁止打印带 token 的 URL；token 增加短有效期（服务端校验并支持刷新/撤销）。
-- 区分并统一 `VITE_API_BASE_URL` 与 `VITE_API_RESOURCE` 的用途，避免联调踩坑。
+- 区分并统一 `VITE_API_BASE_URL` 与 `VITE_API_BASE_URL` 的用途，避免联调踩坑。
 - 为后端增加统一错误响应结构（code/message/request_id），并统一在日志记录 trace。
 
 ### 1～2 周（安全与可部署）
