@@ -204,38 +204,33 @@ class UserStrategy(bt.Strategy):
         }
     }
 
-    const handleCompare = (versionNumber) => {
-        setSelectedForCompare(prev => {
-            if (prev.includes(versionNumber)) {
-                return prev.filter(v => v !== versionNumber);
-            }
-            if (prev.length >= 2) {
-                return [prev[1], versionNumber];
-            }
-            return [...prev, versionNumber];
-        });
-    }
+    const handleCompare = async (versionNumber) => {
+        // Compare clicked version with the current (latest) version
+        if (versions.length === 0) return;
 
-    useEffect(() => {
-        const compareVersions = async () => {
-            if (selectedForCompare.length === 2) {
-                try {
-                    const [fromVersion, toVersion] = selectedForCompare.sort((a, b) => a - b);
-                    const diff = await api.compareVersions(selectedStrategy, fromVersion, toVersion);
-                    setDiffData({
-                        ...diff,
-                        oldVersion: fromVersion,
-                        newVersion: toVersion
-                    });
-                    setShowDiffViewer(true);
-                } catch (err) {
-                    console.error("Failed to compare versions", err);
-                }
-            }
-        };
-        compareVersions();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedForCompare]);
+        const latestVersion = versions[0].version_number;
+
+        // Can't compare latest with itself
+        if (versionNumber === latestVersion) {
+            return;
+        }
+
+        try {
+            const diff = await api.compareVersions(selectedStrategy, versionNumber, latestVersion);
+            setDiffData({
+                ...diff,
+                oldVersion: versionNumber,
+                newVersion: latestVersion
+            });
+            // Collapse sidebar and show diff viewer
+            setShowVersionPanel(false);
+            setSelectedForCompare([]);
+            setShowDiffViewer(true);
+        } catch (err) {
+            console.error("Failed to compare versions", err);
+            alert('对比失败: ' + err.message);
+        }
+    }
 
     const handleRollback = async (versionNumber) => {
         if (!window.confirm(t('maintain.versions.rollback_confirm', { version: versionNumber }))) {
