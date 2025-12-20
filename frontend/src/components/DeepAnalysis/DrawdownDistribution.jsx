@@ -1,16 +1,17 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react'
-import { Card, Empty, Space, Row, Col, Statistic, Table, Typography } from 'antd'
-import { FallOutlined } from '@ant-design/icons'
+import { Card, Empty, Space, Row, Col, Statistic, Table, Typography, Button, Modal } from 'antd'
+import { FallOutlined, FullscreenOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 
 /**
- * DrawdownDistribution - Shows drawdown histogram and top drawdown periods.
+ * DrawdownDistribution - Shows histogram of daily returns with statistics.
  */
 const DrawdownDistribution = ({ data }) => {
     const { t } = useTranslation()
+    const [isModalVisible, setIsModalVisible] = useState(false)
 
     const histogramOption = useMemo(() => {
         if (!data || !data.bins || !data.counts) {
@@ -66,7 +67,7 @@ const DrawdownDistribution = ({ data }) => {
                 itemStyle: {
                     color: '#ef4444'
                 },
-                barWidth: '80%'
+                barWidth: '90%'
             }]
         }
     }, [data, t])
@@ -131,6 +132,13 @@ const DrawdownDistribution = ({ data }) => {
                     {t('deep_analysis.drawdown_dist')}
                 </Space>
             }
+            extra={
+                <Button
+                    type="text"
+                    icon={<FullscreenOutlined />}
+                    onClick={() => setIsModalVisible(true)}
+                />
+            }
         >
             <Row gutter={24}>
                 <Col xs={24} md={10}>
@@ -171,6 +179,20 @@ const DrawdownDistribution = ({ data }) => {
                     />
                 </Col>
             </Row>
+            <Modal
+                title={t('deep_analysis.drawdown_dist')}
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                width="90%"
+                footer={null}
+                centered
+            >
+                <ReactECharts
+                    option={histogramOption}
+                    style={{ height: 500 }}
+                    opts={{ renderer: 'svg' }}
+                />
+            </Modal>
         </Card>
     )
 }

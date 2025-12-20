@@ -8,6 +8,7 @@ import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
 import StrategyPlot from '../RunStrategy/StrategyPlot'
+import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
@@ -29,6 +30,11 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
     const tradeList = backtest.metrics?.trade_details?.trades || []
 
+    const result = {
+        metrics: backtest.metrics,
+        plot_url: backtest.plot_url
+    }
+
     const handleAIAnalysis = async () => {
         if (!backtest || !backtest.plot_url) {
             return
@@ -37,10 +43,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
         try {
             const data = await performFullStrategyAnalysis({
-                result: {
-                    metrics: backtest.metrics,
-                    plot_url: backtest.plot_url,
-                },
+                result: result,
                 strategyName: backtest.strategy_name,
                 ticker: backtest.ticker,
                 startDate: backtest.start_date,
@@ -133,10 +136,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
                     <div style={{ marginTop: 20 }}>
                         <PerformanceOverview
-                            result={{
-                                metrics: backtest.metrics,
-                                plot_url: backtest.plot_url
-                            }}
+                            result={result}
                         />
                     </div>
                 </Tabs.TabPane>

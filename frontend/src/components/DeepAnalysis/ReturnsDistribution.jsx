@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react'
-import { Card, Empty, Space, Descriptions, Typography } from 'antd'
-import { BarChartOutlined } from '@ant-design/icons'
+import { Card, Empty, Space, Descriptions, Typography, Button, Modal } from 'antd'
+import { BarChartOutlined, FullscreenOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 
@@ -11,6 +11,7 @@ const { Text } = Typography
  */
 const ReturnsDistribution = ({ data }) => {
     const { t } = useTranslation()
+    const [isModalVisible, setIsModalVisible] = useState(false)
 
     const option = useMemo(() => {
         if (!data || !data.bins || !data.strategy_counts) {
@@ -102,6 +103,13 @@ const ReturnsDistribution = ({ data }) => {
                     {t('deep_analysis.returns_dist')}
                 </Space>
             }
+            extra={
+                <Button
+                    type="text"
+                    icon={<FullscreenOutlined />}
+                    onClick={() => setIsModalVisible(true)}
+                />
+            }
         >
             <ReactECharts
                 option={option}
@@ -138,6 +146,20 @@ const ReturnsDistribution = ({ data }) => {
                     </Text>
                 </Descriptions.Item>
             </Descriptions>
+            <Modal
+                title={t('deep_analysis.returns_dist')}
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                width="90%"
+                footer={null}
+                centered
+            >
+                <ReactECharts
+                    option={option}
+                    style={{ height: 500 }}
+                    opts={{ renderer: 'svg' }}
+                />
+            </Modal>
         </Card>
     )
 }

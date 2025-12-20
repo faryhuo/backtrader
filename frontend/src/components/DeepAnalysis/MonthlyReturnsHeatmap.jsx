@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react'
-import { Card, Empty, Space, Typography } from 'antd'
-import { HeatMapOutlined } from '@ant-design/icons'
+import { Card, Empty, Space, Typography, Button, Modal } from 'antd'
+import { HeatMapOutlined, FullscreenOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 
@@ -15,6 +15,7 @@ const { Text } = Typography
  */
 const MonthlyReturnsHeatmap = ({ data }) => {
     const { t } = useTranslation()
+    const [isModalVisible, setIsModalVisible] = useState(false)
 
     const option = useMemo(() => {
         if (!data || !data.years || !data.months || !data.matrix) {
@@ -125,6 +126,13 @@ const MonthlyReturnsHeatmap = ({ data }) => {
                     {t('deep_analysis.monthly_returns')}
                 </Space>
             }
+            extra={
+                <Button
+                    type="text"
+                    icon={<FullscreenOutlined />}
+                    onClick={() => setIsModalVisible(true)}
+                />
+            }
         >
             <ReactECharts
                 option={option}
@@ -136,6 +144,20 @@ const MonthlyReturnsHeatmap = ({ data }) => {
                     {t('deep_analysis.monthly_returns_hint', 'Green indicates positive returns, red indicates negative returns')}
                 </Text>
             </div>
+            <Modal
+                title={t('deep_analysis.monthly_returns')}
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                width="90%"
+                footer={null}
+                centered
+            >
+                <ReactECharts
+                    option={option}
+                    style={{ height: 600 }}
+                    opts={{ renderer: 'svg' }}
+                />
+            </Modal>
         </Card>
     )
 }

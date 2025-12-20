@@ -1,20 +1,20 @@
-# ??? / ??? / ?? ????????
+# 大文件 / 长函数 / 大类 全仓扫描（中文）
 
-- ?????2025-12-21
-- ?????`git ls-files` + ?????? `.py/.js/.jsx/.ts/.tsx`
-- ?????`node_modules/`?`frontend/dist/`?`backend/resources/frontend/`?`.git/`
-- ?????? >= 300 ????? >= 500 ???Python ?? >= 80 ????? >= 150 ???Python ? >= 200 ????? >= 400 ??
+- 生成日期：2025-12-21
+- 统计口径：`git ls-files` + 代码文件后缀 `.py/.js/.jsx/.ts/.tsx`
+- 排除目录：`node_modules/`、`frontend/dist/`、`backend/resources/frontend/`、`.git/`
+- 阈值：大文件 >= 300 行（高风险 >= 500 行）；Python 函数 >= 80 行（高风险 >= 150 行）；Python 类 >= 200 行（高风险 >= 400 行）
 
-## 1. ??
+## 1. 概览
 
-- ???????225
-- ????36?>= 500 ??8?
-- Python ????29?>= 150 ??5?
-- Python ???18?>= 400 ??5?
+- 代码文件总数：225
+- 大文件：38（>= 500 行：8）
+- Python 长函数：29（>= 150 行：5）
+- Python 大类：18（>= 400 行：5）
 
-## 2. ??????>= 300 ????????
+## 2. 大文件清单（>= 300 行，按行数降序）
 
-| ?? | ?? |
+| 行数 | 文件 |
 |---|---|
 | 760 | backend/src/db/storage/settings.py |
 | 639 | backend/src/service/deep_analysis.py |
@@ -36,6 +36,7 @@
 | 401 | backend/src/service/websocket_manager.py |
 | 401 | backend/src/routes/settings_routes.py |
 | 400 | backend/src/routes/walkforward_routes.py |
+| 399 | frontend/src/components/DeepAnalysis/RollingSharpeChart.jsx |
 | 393 | backend/src/service/isolated_sandbox.py |
 | 385 | backend/src/routes/strategy_routes.py |
 | 380 | backend/src/db/storage/session.py |
@@ -50,12 +51,13 @@
 | 330 | backend/src/brokers/ccxt_adapter/ccxt_store.py |
 | 325 | backend/src/routes/backtest_routes.py |
 | 321 | auto_test/e2e/test_strategy_management.py |
+| 316 | frontend/src/components/DeepAnalysis/BenchmarkComparison.jsx |
 | 307 | frontend/src/components/WalkForward/WalkForwardOptimization.jsx |
 | 305 | backend/src/db/storage/ticker_metadata.py |
 
-## 3. Python ??????>= 80 ????????
+## 3. Python 长函数清单（>= 80 行，按行数降序）
 
-| ?? | ?? | ?? |
+| 行数 | 位置 | 函数 |
 |---|---|---|
 | 254 | backend/src/service/strategy_templates.py:59 | _init_templates |
 | 196 | backend/src/routes/websocket_routes.py:22 | websocket_live_updates |
@@ -87,9 +89,9 @@
 | 80 | backend/src/db/storage/walkforward.py:31 | create_optimization |
 | 80 | backend/src/db/storage/backtest.py:37 | save_backtest |
 
-## 4. Python ?????>= 200 ????????
+## 4. Python 大类清单（>= 200 行，按行数降序）
 
-| ?? | ?? | ? |
+| 行数 | 位置 | 类 |
 |---|---|---|
 | 707 | backend/src/db/storage/settings.py:53 | SettingsStorage |
 | 511 | backend/src/db/storage/backtest.py:23 | BacktestStorage |
@@ -110,9 +112,9 @@
 | 203 | auto_test/e2e/test_backtest_workflow.py:18 | TestBacktestAPI |
 | 202 | backend/src/db/storage/portfolio.py:22 | PortfolioStorage |
 
-## 5. ???????
+## 5. 建议（如何拆）
 
-- ???????????/???????routes ?? `models`?Pydantic??`handlers`?????`validators`?`dependencies`?service ?? `orchestration`????? `compute`??????storage ???????? fa?ade ???
-- ?????????`validate -> prepare -> execute -> persist -> format`????????????
-- ?????IO/DB/??/???/?????????????? helper???????????????
-- ?????????????????????? JS/JSX ???????????? >300 ???/??????? `hooks`???/????+ `components`????+ `utils`??????
+- 大文件：优先按“业务域/分层职责”拆；routes 拆为 `models`（Pydantic）、`handlers`（端点）、`validators`、`dependencies`；service 拆为 `orchestration`（编排）与 `compute`（纯计算）；storage 按領域拆分并保留 fa?ade 聚合。
+- 长函数：按阶段拆（`validate -> prepare -> execute -> persist -> format`），每段可独立测试。
+- 大类：把“IO/DB/网络/序列化/计算”从一个类里剖离成组件或 helper；类本身保留协调与少量状态。
+- 前端说明：本报告只统计文件行数，不可靠解析 JS/JSX 函数边界（避免误报）；但 >300 行页面/组件通常应拆为 `hooks`（数据/副作用） + `components`（展示） + `utils`（纯函数）。
