@@ -17,6 +17,12 @@
 
 ## 约定与规范
 - DB 层不写业务流程，只负责数据定义与访问。
-- 跨模块引用模型需通过明确接口，避免循环依赖。
+- 跨模块引用模型需通过明确接口,避免循环依赖。
 - 敏感数据（API Key/Secret）必须使用 `utils/encryption.py` 加密后存储。
+- **数据库路径配置**：
+  - 所有数据库路径常量**仅在** `config/settings.py` 中定义，其他模块不得重复定义
+  - `DEFAULT_DB_PATH`: 绝对路径 Path 对象 (`PROJECT_ROOT / "trading_sessions.db"`)，用于日志记录
+  - `DEFAULT_DB_URL`: SQLite URL 字符串 (`sqlite:///绝对路径`)，用于数据库初始化
+  - `DATABASE_URL`: 最终使用的数据库 URL，优先使用环境变量，否则使用 `DEFAULT_DB_URL`
+  - 所有 Storage 类必须从 `config/settings` 导入 `DATABASE_URL` 和 `DEFAULT_DB_URL`，避免相对路径导致多数据库文件问题
 

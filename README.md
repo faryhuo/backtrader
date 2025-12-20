@@ -2,9 +2,11 @@
 
 <div align="center">
 
+![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.124%2B-green)
-![React](https://img.shields.io/badge/React-18.3-61dafb)
+![React](https://img.shields.io/badge/React-18.3.1-61dafb)
+![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 新一代 AI 驱动的算法交易平台，支持策略回测、实盘/模拟交易、参数优化与智能分析。
@@ -25,6 +27,7 @@
 - [架构设计](#架构设计)
 - [开发指南](#开发指南)
 - [故障排查](#故障排查)
+- [安全性](#安全性)
 - [贡献指南](#贡献指南)
 - [许可协议](#许可协议)
 
@@ -37,12 +40,15 @@
 - ✅ **策略回测系统** - 基于 Backtrader 引擎的完整回测框架
 - ✅ **实盘/模拟交易** - CCXT（加密货币）和 IBKR（传统证券）适配器支持
 - ✅ **Walk-Forward 参数优化** - 训练/验证集分离，过拟合检测
-- ✅ **在线策略编辑器** - Monaco Editor 在线编写和调试策略代码
-- ✅ **多语言支持** - 中文/英文国际化 (i18n)
+- ✅ **在线策略编辑器** - Monaco Editor 在线编写和调试策略代码，支持语法高亮
+- ✅ **策略沙箱安全执行** - 支持 subprocess/docker 隔离模式，防止恶意代码执行
+- ✅ **多语言支持** - 中文/英文国际化 (i18n)，完整的翻译覆盖
 - ✅ **AI 智能分析** - OpenAI 集成，自动分析回测结果并提供优化建议
-- ✅ **WebSocket 实时推送** - 交易状态、订单、持仓实时更新
-- ✅ **多会话管理** - 支持多个策略并发运行
-- ✅ **认证授权** - Logto JWT 认证（可选）
+- ✅ **WebSocket 实时推送** - 交易状态、订单、持仓、日志实时更新
+- ✅ **多会话管理** - 支持多个策略并发运行，独立管理
+- ✅ **认证授权** - 可选的 Logto JWT 认证集成
+- ✅ **凭证加密存储** - 数据库凭证使用 Fernet 加密，支持 UI 配置
+- ✅ **组合回测** - 支持多策略、多品种组合回测分析
 
 ### 支持的交易所
 
@@ -60,28 +66,33 @@
 ## 🛠️ 技术栈
 
 ### 后端
-- **框架**: FastAPI 0.124+ (异步 Web 框架)
-- **回测引擎**: Backtrader 1.9.78+
-- **数据库**: SQLAlchemy 2.0+ (支持 SQLite/PostgreSQL)
-- **服务器**: Daphne (ASGI 服务器，支持 WebSocket)
-- **数据源**: yfinance, CCXT
-- **AI 分析**: OpenAI GPT
-- **交易接口**: CCXT 4.5+, IB API 9.81+
+- **框架**: FastAPI 0.124.4+ (异步 Web 框架)
+- **回测引擎**: Backtrader 1.9.78.123+
+- **数据库**: SQLAlchemy 2.0.45+ (支持 SQLite/PostgreSQL)
+- **服务器**: Daphne 4.2.1+ (ASGI 服务器，支持 WebSocket)
+- **数据源**: yfinance 0.2.66+, CCXT 4.5.28+
+- **AI 分析**: OpenAI 2.11.0+
+- **交易接口**: CCXT 4.5.28+, IB API 9.81.1+
+- **认证**: python-jose 3.3.0+ (JWT)
 
 ### 前端
-- **框架**: React 18.3
-- **构建工具**: Vite 6.0
-- **UI 组件**: Ant Design 6.1
-- **代码编辑器**: Monaco Editor 0.52
-- **图表**: Lightweight Charts 4.2
-- **国际化**: i18next 25.7
-- **路由**: React Router 7.10
-- **认证**: Logto React 4.0
+- **框架**: React 18.3.1
+- **构建工具**: Vite 6.0.5
+- **UI 组件**: Ant Design 6.1.0
+- **代码编辑器**: Monaco Editor 0.52.0
+- **图表**: Lightweight Charts 4.2.2
+- **国际化**: i18next 25.7.2
+- **路由**: React Router 7.10.1
+- **认证**: Logto React 4.0.9
+- **其他**: react-markdown 10.1.0, html2canvas 1.4.1, xlsx 0.18.5
 
-### DevOps
-- **容器化**: Docker + Docker Compose
+### DevOps & 开发工具
+- **容器化**: Docker + Docker Compose 3.9
 - **Python 版本**: 3.11+
-- **Node 版本**: 18+
+- **Node 版本**: 18+ (推荐 20+)
+- **包管理**: pip (Python), npm (Node.js)
+- **代码检查**: ESLint 9.17.0 (前端)
+- **测试框架**: pytest (后端)
 
 ---
 
@@ -177,36 +188,69 @@ chmod +x docker-build-optimized.sh
 ./docker-build-optimized.sh
 ```
 
-#### 2. 配置生产环境变量
+### 2. 配置生产环境变量
 
-编辑 `backend/.env.prod`：
+编辑 `backend/.env`（首次使用请从 `.env.template` 复制）：
 
 ```env
+# ============================================================================
+# 加密密钥（必需）
+# ============================================================================
+# 用于加密数据库中的敏感凭证（API Key、Secret 等）
+# 生成方法：python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ENCRYPTION_KEY=your-generated-encryption-key
+
+# ============================================================================
 # 数据库配置
+# ============================================================================
 DATABASE_URL=sqlite:///./trading_sessions.db
 
+# ============================================================================
 # 认证配置（可选）
+# ============================================================================
 ENABLE_LOGIN=false
 LOGTO_ISSUER=https://your-logto-domain
 LOGTO_JWKS_URI=https://your-logto-domain/oidc/jwks
 
+# ============================================================================
 # OpenAI 配置（可选）
-OPENAI_API_KEY=your-openai-api-key
+# ============================================================================
+OPENAI_API_KEY=
 OPENAI_BASE_URL=https://api.openai.com/v1
 
-# 交易所凭证（根据需要配置）
-# CCXT 格式: CCXT_{交易所}_{模式}_API_KEY/SECRET
-CCXT_BINANCE_PAPER_API_KEY=your-testnet-key
-CCXT_BINANCE_PAPER_SECRET=your-testnet-secret
-CCXT_BINANCE_LIVE_API_KEY=your-production-key
-CCXT_BINANCE_LIVE_SECRET=your-production-secret
+# ============================================================================
+# 策略沙箱安全配置
+# ============================================================================
+# 沙箱模式：soft（不隔离）、subprocess（进程隔离，推荐）、docker（容器隔离）
+SANDBOX_MODE=subprocess
+SANDBOX_TIMEOUT_SECONDS=30.0
+SANDBOX_MAX_MEMORY_MB=512
+SANDBOX_ALLOW_NETWORK=false
+SANDBOX_ALLOW_FILE_WRITE=false
 
+# ============================================================================
+# 交易所凭证（根据需要配置）
+# ============================================================================
+# CCXT 格式: CCXT_{交易所}_{模式}_API_KEY/SECRET
+CCXT_BINANCE_PAPER_API_KEY=
+CCXT_BINANCE_PAPER_SECRET=
+CCXT_BINANCE_LIVE_API_KEY=
+CCXT_BINANCE_LIVE_SECRET=
+
+# ============================================================================
 # IBKR 配置
+# ============================================================================
 IBKR_PAPER_HOST=127.0.0.1
 IBKR_PAPER_PORT=4002
 IBKR_LIVE_HOST=127.0.0.1
 IBKR_LIVE_PORT=4001
 ```
+
+**重要安全提示**：
+1. **必须设置 `ENCRYPTION_KEY`**：用于加密存储在数据库中的交易所 API 凭证
+2. **不要提交 `.env` 文件到版本控制**：`.env` 文件已在 `.gitignore` 中
+3. **凭证可通过 UI 配置**：在"设置"页面配置的凭证会加密后存储在数据库中，优先级高于 `.env`
+4. **建议使用 subprocess 沙箱模式**：防止不受信任的策略代码执行危险操作
 
 #### 3. 配置交易所参数
 
@@ -398,9 +442,10 @@ backtrader/
 
 - **单例模式**: SessionManager, WebSocketManager
 - **适配器模式**: CCXTAdapter, IBKRAdapter 统一接口
-- **沙箱模式**: StrategyySandbox 安全执行用户代码
+- **沙箱模式**: StrategySandbox 安全执行用户代码（支持 subprocess/docker 隔离）
 - **观察者模式**: WebSocket 事件广播
 - **工厂模式**: 动态加载策略类
+- **存储库模式**: 各类 Storage 封装数据访问
 
 ---
 
@@ -458,14 +503,35 @@ test: 测试相关
 ### 测试
 
 ```bash
-# 后端测试
+# 后端测试（带覆盖率报告）
 cd backend
-python -m pytest auto_test -q
+python -m pytest --cov=src --cov-report=html:coverage_html --cov-report=xml:coverage.xml
+
+# 或使用批处理脚本 (Windows)
+run_tests_coverage.bat
 
 # 前端 Lint
 cd frontend
 npm run lint
 ```
+
+### 持续集成 (CI)
+
+项目使用 GitHub Actions 自动运行测试和代码检查。配置文件位于 `.github/workflows/ci.yml`。
+
+| 作业 | 环境 | 检查内容 |
+|------|------|----------|
+| `backend-tests` | Python 3.11 | pytest 测试 + 覆盖率报告 |
+| `frontend-lint` | Node.js 20 | ESLint 代码检查 |
+
+**触发条件**：
+- Push 到 `main`/`master` 分支
+- 所有 Pull Request
+
+**查看 CI 状态**：
+- 在 Pull Request 页面查看检查结果
+- GitHub Actions 标签页查看详细日志
+- Badge: ![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
 
 ### 添加新策略
 
@@ -501,18 +567,25 @@ npm run lint
 
 ### 常见问题
 
-#### 1. `pycares` 导入错误
+#### 1. `pycares` 导入错误（已修复）
 
 **问题**：
 ```
 ImportError: cannot import name 'ares_query_a_result' from 'pycares'
 ```
 
-**原因**：`pycares 5.0.0` 与 `aiodns 3.6.0` 不兼容
+**原因**：`pycares 5.0.0` 与 `aiodns` 不兼容
 
 **解决**：
+项目已在 `requirements.txt` 中设置了版本约束：
 ```bash
-pip install aiodns==3.2.0 pycares==4.4.0
+pycares<5.0.0
+aiodns>=3.6.1
+```
+重新安装依赖即可：
+```bash
+cd backend
+pip install -r requirements.txt
 ```
 
 #### 2. IBKR 连接失败
@@ -520,10 +593,17 @@ pip install aiodns==3.2.0 pycares==4.4.0
 **问题**：无法连接到 Interactive Brokers Gateway
 
 **检查**：
-- IB Gateway 是否运行（Paper: 4002, Live: 4001）
-- `.env` 中 `IBKR_*_HOST/PORT` 配置是否正确
+- IB Gateway/TWS 是否运行（Paper Trading: 端口 4002，Live: 端口 4001）
+- `.env` 文件中 `IBKR_*_HOST/PORT` 配置是否正确
 - 防火墙是否允许连接
-- Client ID 是否唯一
+- Client ID 是否唯一（默认使用 123）
+- API 连接权限是否在 Gateway 中启用
+
+**解决**：
+1. 启动 IB Gateway 并登录
+2. 在 Gateway 设置中启用 "Enable ActiveX and Socket Clients"
+3. 确认 Socket Port 与 `.env` 配置一致
+4. 检查 "Read-Only API" 是否根据需求正确配置
 
 #### 3. WebSocket 连接断开
 
@@ -554,6 +634,29 @@ python main.py  # 控制台输出详细日志
 # Docker 日志
 docker-compose logs -f
 ```
+
+---
+
+## 🔐 安全性
+
+> ⚠️ **重要提示**：当前的策略沙箱设计主要面向**受信任环境**。如需部署在多租户或公网环境，请仔细阅读安全文档。
+
+### 安全文档
+
+详细的安全架构、威胁模型和部署建议，请参阅 **[SECURITY.md](SECURITY.md)**。
+
+### 快速安全检查清单
+
+- [ ] 启用 subprocess 沙箱模式 (`SANDBOX_MODE=subprocess`)
+- [ ] 启用认证 (`ENABLE_LOGIN=true`)
+- [ ] 配置严格的 CORS 策略
+- [ ] 禁止沙箱文件写入 (`SANDBOX_ALLOW_FILE_WRITE=false`)
+- [ ] 禁止沙箱网络访问 (`SANDBOX_ALLOW_NETWORK=false`)
+- [ ] 使用 HTTPS 反向代理
+
+### 报告安全漏洞
+
+如发现安全漏洞，请勿公开披露，直接联系维护者进行负责任的披露。
 
 ---
 
@@ -606,7 +709,5 @@ docker-compose logs -f
 <div align="center">
 
 **⭐ 如果这个项目对你有帮助，请给我们一个 Star！⭐**
-
-Made with ❤️ by Backtrader Team
 
 </div>

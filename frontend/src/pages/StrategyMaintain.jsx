@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PlusOutlined, AppstoreOutlined } from '@ant-design/icons'
+import { PlusOutlined, AppstoreOutlined, HistoryOutlined } from '@ant-design/icons'
 import '../index.css'
 import '../components/StrategyMaintain/StrategyMaintain.css'
 import { api } from '../services/api'
@@ -9,6 +9,8 @@ import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
 import StrategyEditorPanel from '../components/StrategyMaintain/StrategyEditorPanel'
 import AnalysisModal from '../components/StrategyMaintain/AnalysisModal'
 import { TemplateLibrary } from '../components/StrategyMaintain/TemplateLibrary'
+import VersionTimeline from '../components/StrategyMaintain/VersionTimeline'
+import VersionDiffViewer from '../components/StrategyMaintain/VersionDiffViewer'
 
 function StrategyMaintain() {
     const { t } = useTranslation();
@@ -21,6 +23,14 @@ function StrategyMaintain() {
     const [analysisResult, setAnalysisResult] = useState('')
     const [showAnalysisModal, setShowAnalysisModal] = useState(false)
     const [showTemplateLibrary, setShowTemplateLibrary] = useState(false)
+
+    // Version Management State
+    const [showVersionPanel, setShowVersionPanel] = useState(false)
+    const [versions, setVersions] = useState([])
+    const [versionsLoading, setVersionsLoading] = useState(false)
+    const [selectedForCompare, setSelectedForCompare] = useState([])
+    const [showDiffViewer, setShowDiffViewer] = useState(false)
+    const [diffData, setDiffData] = useState(null)
 
     useEffect(() => {
         const init = async () => {
@@ -37,6 +47,12 @@ function StrategyMaintain() {
     useEffect(() => {
         if (selectedStrategy) {
             fetchStrategy(selectedStrategy);
+            // Reset version state when strategy changes
+            setVersions([]);
+            setSelectedForCompare([]);
+            if (showVersionPanel) {
+                fetchVersions(selectedStrategy);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStrategy])
@@ -87,11 +103,29 @@ class UserStrategy(bt.Strategy):
         }
     }
 
+    const fetchVersions = async (name) => {
+        if (!name) return
+        try {
+            setVersionsLoading(true)
+            const data = await api.getStrategyVersions(name)
+            setVersions(data.versions || [])
+        } catch (err) {
+            console.error("Failed to fetch versions", err)
+            setVersions([])
+        } finally {
+            setVersionsLoading(false)
+        }
+    }
+
     const saveStrategy = async () => {
         try {
             setCodeLoading(true);
             await api.saveStrategy(selectedStrategy || 'default', code)
             await fetchStrategies();
+            // Refresh versions after save
+            if (showVersionPanel) {
+                await fetchVersions(selectedStrategy);
+            }
             alert(t('maintain.saved'));
         } catch (err) {
             alert(t('maintain.save_failed'));
@@ -150,11 +184,87 @@ class UserStrategy(bt.Strategy):
         await fetchStrategy(name);
     }
 
+    // Version Management Handlers
+    const toggleVersionPanel = () => {
+        const newState = !showVersionPanel;
+        setShowVersionPanel(newState);
+        if (newState && selectedStrategy) {
+            fetchVersions(selectedStrategy);
+        }
+    }
+
+    const handleVersionSelect = async (versionNumber) => {
+        try {
+            const versionData = await api.getStrategyVersion(selectedStrategy, versionNumber);
+            if (versionData && versionData.code) {
+                setCode(versionData.code);
+            }
+        } catch (err) {
+            console.error("Failed to load version", err);
+        }
+    }
+
+    const handleCompare = async (versionNumber) => {
+        // Compare clicked version with the current (latest) version
+        if (versions.length === 0) return;
+
+        const latestVersion = versions[0].version_number;
+
+        // Can't compare latest with itself
+        if (versionNumber === latestVersion) {
+            return;
+        }
+
+        try {
+            const diff = await api.compareVersions(selectedStrategy, versionNumber, latestVersion);
+            setDiffData({
+                ...diff,
+                oldVersion: versionNumber,
+                newVersion: latestVersion
+            });
+            // Collapse sidebar and show diff viewer
+            setShowVersionPanel(false);
+            setSelectedForCompare([]);
+            setShowDiffViewer(true);
+        } catch (err) {
+            console.error("Failed to compare versions", err);
+            alert('对比失败: ' + err.message);
+        }
+    }
+
+    const handleRollback = async (versionNumber) => {
+        if (!window.confirm(t('maintain.versions.rollback_confirm', { version: versionNumber }))) {
+            return;
+        }
+        try {
+            await api.rollbackVersion(selectedStrategy, versionNumber);
+            alert(t('maintain.versions.rollback_success', { version: versionNumber }));
+            // Refresh strategy and versions
+            await fetchStrategy(selectedStrategy);
+            await fetchVersions(selectedStrategy);
+        } catch (err) {
+            console.error("Rollback failed", err);
+            alert(t('maintain.versions.rollback_failed'));
+        }
+    }
+
+    const closeDiffViewer = () => {
+        setShowDiffViewer(false);
+        setDiffData(null);
+        setSelectedForCompare([]);
+    }
+
     return (
         <div className="strategy-maintain-container">
             <div className="strategy-header">
                 <h1>{t('maintain.title')}</h1>
                 <div className="header-actions">
+                    <button
+                        className={`btn-secondary ${showVersionPanel ? 'active' : ''}`}
+                        onClick={toggleVersionPanel}
+                    >
+                        <HistoryOutlined /> {t('maintain.versions.history')}
+                    </button>
                     <button className="btn-secondary" onClick={() => setShowTemplateLibrary(true)}>
                         <AppstoreOutlined /> {t('maintain.template_library')}
                     </button>
@@ -164,20 +274,36 @@ class UserStrategy(bt.Strategy):
                 </div>
             </div>
 
-            <StrategyEditorPanel
-                strategies={strategies}
-                selectedStrategy={selectedStrategy}
-                setSelectedStrategy={setSelectedStrategy}
-                fetchStrategy={fetchStrategy}
-                fetchStrategies={fetchStrategies}
-                handleAIAnalysis={handleAIAnalysis}
-                handleAIRewrite={handleAIRewrite}
-                codeLoading={codeLoading}
-                code={code}
-                setCode={setCode}
-                saveStrategy={saveStrategy}
-                t={t}
-            />
+            <div className={`strategy-content ${showVersionPanel ? 'with-sidebar' : ''}`}>
+                <StrategyEditorPanel
+                    strategies={strategies}
+                    selectedStrategy={selectedStrategy}
+                    setSelectedStrategy={setSelectedStrategy}
+                    fetchStrategy={fetchStrategy}
+                    fetchStrategies={fetchStrategies}
+                    handleAIAnalysis={handleAIAnalysis}
+                    handleAIRewrite={handleAIRewrite}
+                    codeLoading={codeLoading}
+                    code={code}
+                    setCode={setCode}
+                    saveStrategy={saveStrategy}
+                    t={t}
+                />
+
+                {showVersionPanel && (
+                    <div className="version-sidebar">
+                        <VersionTimeline
+                            versions={versions}
+                            loading={versionsLoading}
+                            onVersionSelect={handleVersionSelect}
+                            onCompare={handleCompare}
+                            onRollback={handleRollback}
+                            selectedForCompare={selectedForCompare}
+                            t={t}
+                        />
+                    </div>
+                )}
+            </div>
 
             <NewStrategyModal
                 isOpen={showNewStrategyModal}
@@ -198,6 +324,20 @@ class UserStrategy(bt.Strategy):
                 <TemplateLibrary
                     onImport={handleTemplateImport}
                     onClose={() => setShowTemplateLibrary(false)}
+                />
+            )}
+
+            {showDiffViewer && diffData && (
+                <VersionDiffViewer
+                    isOpen={showDiffViewer}
+                    onClose={closeDiffViewer}
+                    oldCode={diffData.old_code}
+                    newCode={diffData.new_code}
+                    oldVersion={diffData.oldVersion}
+                    newVersion={diffData.newVersion}
+                    linesAdded={diffData.lines_added}
+                    linesRemoved={diffData.lines_removed}
+                    t={t}
                 />
             )}
         </div>

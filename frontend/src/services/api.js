@@ -1,6 +1,10 @@
 import { LOGIN_ENABLED } from '../config/auth'
 
-export const API_URL = import.meta.env.VITE_API_RESOURCE
+// API base URL for HTTP requests (separate from Logto resource identifier)
+export const API_URL = import.meta.env.VITE_API_BASE_URL
+
+// Logto resource/audience for OAuth2 access tokens
+const API_RESOURCE = import.meta.env.VITE_API_BASE_URL
 
 // Token getter function (set by App component)
 let getTokenFn = null
@@ -26,8 +30,7 @@ const buildRequest = async (path, options = {}) => {
     // Inject access token if available
     if (getTokenFn) {
         try {
-            const resource = import.meta.env.VITE_API_RESOURCE
-            const token = await getTokenFn(resource)
+            const token = await getTokenFn(API_RESOURCE)
             if (token) {
                 headers.set('Authorization', `Bearer ${token}`)
             }
@@ -43,8 +46,7 @@ const buildRequest = async (path, options = {}) => {
 export const getAccessToken = async () => {
     if (getTokenFn) {
         try {
-            const resource = import.meta.env.VITE_API_RESOURCE
-            return await getTokenFn(resource)
+            return await getTokenFn(API_RESOURCE)
         } catch (error) {
             console.error('Failed to get access token:', error)
         }
@@ -53,19 +55,26 @@ export const getAccessToken = async () => {
 }
 
 export const parseResponse = async (response) => {
+    // Handle 401 Unauthorized first (before trying to parse body)
+    if (response.status === 401 && LOGIN_ENABLED) {
+        console.error('Unauthorized - redirecting to login')
+        const loginPath = '/login'
+        if (window.location.pathname !== loginPath) {
+            window.location.href = loginPath
+        }
+        throw new Error('Unauthorized')
+    }
 
+    // Handle 204 No Content (no response body)
+    if (response.status === 204) {
+        return null
+    }
+
+    // Parse response body
     const data = await response.json()
 
-    if (response.status !== 200) {
-        // Handle 401 Unauthorized - redirect to login
-        if (response.status === 401 && LOGIN_ENABLED) {
-            console.error('Unauthorized - redirecting to login')
-            const loginPath = '/login'
-            if (window.location.pathname !== loginPath) {
-                window.location.href = loginPath
-            }
-        }
-
+    // Check if response is successful (status 200-299)
+    if (!response.ok) {
         const message = (data && (data.detail || data.message)) || `HTTP error! status: ${response.status}`
         throw new Error(message)
     }
@@ -86,10 +95,48 @@ export const api = {
         return await parseResponse(res)
     },
 
-    async saveStrategy(name, code) {
+    async saveStrategy(name, code, commitMessage = null) {
         const res = await buildRequest('/strategy', {
             method: 'POST',
-            body: JSON.stringify({ name, code })
+            body: JSON.stringify({ name, code, commit_message: commitMessage })
+        })
+        return await parseResponse(res)
+    },
+
+    // Strategy Version Management API Methods
+
+    async getStrategyVersions(name, limit = 50, offset = 0) {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions?${params}`)
+        return await parseResponse(res)
+    },
+
+    async getStrategyVersion(name, versionNumber) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}`)
+        return await parseResponse(res)
+    },
+
+    async getLatestStrategyVersion(name) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/latest`)
+        return await parseResponse(res)
+    },
+
+    async compareVersions(name, fromVersion, toVersion) {
+        const params = new URLSearchParams({
+            from_version: fromVersion.toString(),
+            to_version: toVersion.toString()
+        });
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/compare?${params}`)
+        return await parseResponse(res)
+    },
+
+    async rollbackVersion(name, versionNumber, commitMessage = null) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}/rollback`, {
+            method: 'POST',
+            body: JSON.stringify({ commit_message: commitMessage })
         })
         return await parseResponse(res)
     },

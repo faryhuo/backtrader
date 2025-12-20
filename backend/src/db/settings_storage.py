@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 
+from src.config.settings import DATABASE_URL
 from src.db.models import UserSettingsModel, init_database
 from src.utils.encryption import encrypt_value, decrypt_value, mask_credential, is_encryption_enabled
 
@@ -55,11 +56,15 @@ class SettingsStorage:
     Manages CRUD operations for user AI configuration and prompt templates.
     """
 
-    def __init__(self, database_url: str = "sqlite:///trading_sessions.db"):
-        """Initialize settings storage."""
-        self.database_url = database_url
-        self._engine, self._SessionLocal = init_database(database_url)
-        logger.info(f"SettingsStorage initialized with database: {database_url}")
+    def __init__(self, database_url: Optional[str] = None):
+        """Initialize settings storage.
+
+        Args:
+            database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
+        """
+        self.database_url = database_url or DATABASE_URL
+        self._engine, self._SessionLocal = init_database(self.database_url)
+        logger.info(f"SettingsStorage initialized with database: {self.database_url}")
 
     def get_db_session(self) -> Session:
         """Get database session."""

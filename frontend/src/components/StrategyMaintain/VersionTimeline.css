@@ -1,0 +1,229 @@
+.version-timeline {
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.version-timeline.loading,
+.version-timeline.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--text-secondary, #888);
+}
+
+.version-timeline.empty .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: var(--text-primary, #fff);
+}
+
+.timeline-header h3 {
+    margin: 0;
+    font-size: 16px;
+    flex: 1;
+}
+
+.version-count {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    background: var(--bg-tertiary, #16213e);
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.timeline-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 12px;
+    transition: background 0.2s;
+}
+
+.timeline-item.selected-for-compare {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+}
+
+.timeline-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20px;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary, #6366f1);
+    border: 2px solid var(--bg-secondary, #1a1a2e);
+    flex-shrink: 0;
+}
+
+.timeline-line {
+    width: 2px;
+    flex: 1;
+    background: var(--border-color, #333);
+    margin: 4px 0;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 16px;
+}
+
+.version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.version-header:hover {
+    background: var(--bg-tertiary, #16213e);
+}
+
+.version-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.version-number {
+    font-weight: 600;
+    color: var(--primary, #6366f1);
+    font-size: 14px;
+}
+
+.version-date {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+
+.version-stats {
+    display: flex;
+    gap: 8px;
+}
+
+.stat {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.stat.added {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.stat.removed {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.commit-message {
+    margin: 4px 0 8px 8px;
+    font-size: 13px;
+    color: var(--text-secondary, #ccc);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.version-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding-left: 8px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn.view {
+    background: var(--bg-tertiary, #16213e);
+    color: var(--text-primary, #fff);
+}
+
+.action-btn.view:hover {
+    background: var(--primary, #6366f1);
+}
+
+.action-btn.compare {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.action-btn.compare:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.action-btn.rollback {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.action-btn.rollback:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+/* Scrollbar styling */
+.version-timeline::-webkit-scrollbar {
+    width: 6px;
+}
+
+.version-timeline::-webkit-scrollbar-track {
+    background: var(--bg-tertiary, #16213e);
+    border-radius: 3px;
+}
+
+.version-timeline::-webkit-scrollbar-thumb {
+    background: var(--border-color, #333);
+    border-radius: 3px;
+}
+
+.version-timeline::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary, #888);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color, #333);
+    border-top-color: var(--primary, #6366f1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

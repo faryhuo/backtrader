@@ -28,5 +28,21 @@
   "new_strategy_name": "New Strategy Name",
   "name_required": "Please enter a strategy name",
   "invalid_name_format": "Name must start with a letter and contain only letters, numbers and underscores",
-  "name_hint": "Start with a letter, use only letters, numbers and underscores"
+  "name_hint": "Start with a letter, use only letters, numbers and underscores",
+  "versions": {
+    "title": "Version History",
+    "versions": "versions",
+    "loading": "Loading versions...",
+    "no_versions": "No versions available",
+    "view": "View",
+    "compare": "Compare",
+    "rollback": "Rollback",
+    "comparing": "Comparing Versions",
+    "added": "Added",
+    "removed": "Removed",
+    "rollback_confirm": "Are you sure you want to rollback to version {{version}}? This will create a new version with the old code.",
+    "rollback_success": "Successfully rolled back to version {{version}}",
+    "rollback_failed": "Failed to rollback",
+    "history": "History"
+  }
 }

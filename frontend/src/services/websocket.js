@@ -29,6 +29,7 @@ export function useWebSocket(sessionId, options = {}) {
     reconnectInterval = 3000,
     maxReconnectAttempts = 5,
     heartbeatInterval = 30000,
+    token = null,  // ws_token for authentication
     onOpen = null,
     onClose = null,
     onError = null,
@@ -45,7 +46,7 @@ export function useWebSocket(sessionId, options = {}) {
   const shouldReconnectRef = useRef(true);
 
   // Get WebSocket URL
-  const getWebSocketUrl = useCallback((sessionId) => {
+  const getWebSocketUrl = useCallback((sessionId, wsToken = null) => {
     if (!sessionId) return null;
 
     // Determine protocol (ws or wss)
@@ -55,7 +56,9 @@ export function useWebSocket(sessionId, options = {}) {
     const isDevelopment = import.meta.env.DEV;
     const host = isDevelopment ? 'localhost:8000' : window.location.host;
 
-    return `${protocol}//${host}/ws/live/${sessionId}`;
+    // Include token as query parameter for authentication
+    const tokenParam = wsToken ? `?token=${encodeURIComponent(wsToken)}` : '';
+    return `${protocol}//${host}/ws/live/${sessionId}${tokenParam}`;
   }, []);
 
   // Send message to WebSocket
@@ -94,15 +97,16 @@ export function useWebSocket(sessionId, options = {}) {
   }, []);
 
   // Connect to WebSocket
-  const connect = useCallback((overrideSessionId = null) => {
+  const connect = useCallback((overrideSessionId = null, overrideToken = null) => {
     const targetSessionId = overrideSessionId || sessionId;
+    const targetToken = overrideToken || token;
 
     if (!targetSessionId) {
       console.warn('Cannot connect: no session ID provided');
       return;
     }
 
-    const url = getWebSocketUrl(targetSessionId);
+    const url = getWebSocketUrl(targetSessionId, targetToken);
     if (!url) {
       console.warn('Cannot connect: invalid WebSocket URL');
       return;
@@ -189,6 +193,7 @@ export function useWebSocket(sessionId, options = {}) {
     }
   }, [
     sessionId,
+    token,
     getWebSocketUrl,
     reconnectAttempts,
     maxReconnectAttempts,

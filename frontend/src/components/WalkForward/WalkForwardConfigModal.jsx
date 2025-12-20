@@ -30,6 +30,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const [form] = Form.useForm()
     const [strategies, setStrategies] = useState([])
     const [loading, setLoading] = useState(false)
+    const [loadingParams, setLoadingParams] = useState(false)
     const [paramFields, setParamFields] = useState([{ name: '', values: '' }])
 
     useEffect(() => {
@@ -46,6 +47,37 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
             setStrategies(data)
         } catch (error) {
             message.error(t('walkforward.config.loadStrategiesError'))
+        }
+    }
+
+    // Fetch strategy params when strategy changes
+    const handleStrategyChange = async (strategyName) => {
+        if (!strategyName) {
+            form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
+            return
+        }
+
+        setLoadingParams(true)
+        try {
+            const data = await api.getStrategyParams(strategyName)
+            const params = data.params || []
+
+            if (params.length > 0) {
+                // Populate parameter grid with strategy params
+                const parameterFields = params.map(p => ({
+                    name: p.name,
+                    values: String(p.value) // Pre-fill with default value as starting point
+                }))
+                form.setFieldsValue({ parameters: parameterFields })
+            } else {
+                // No params found, reset to empty
+                form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
+            }
+        } catch (err) {
+            console.warn('Failed to fetch strategy params:', err)
+            // Keep current params on error
+        } finally {
+            setLoadingParams(false)
         }
     }
 
@@ -132,7 +164,11 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             name="strategy_name"
                             rules={[{ required: true, message: t('walkforward.config.strategyRequired') }]}
                         >
-                            <Select placeholder={t('walkforward.config.selectStrategy')}>
+                            <Select
+                                placeholder={t('walkforward.config.selectStrategy')}
+                                onChange={handleStrategyChange}
+                                loading={loadingParams}
+                            >
                                 {strategies.map(s => (
                                     <Option key={s} value={s}>{s}</Option>
                                 ))}

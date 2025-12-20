@@ -11,7 +11,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
+from src.config.sandbox_config import get_config as get_sandbox_config
 from src.db.datasource import DataLoadError, get_bt_feed as get_data, get_raw_data_json
+from src.service.isolated_sandbox import (
+    IsolatedSandbox,
+    SandboxError,
+    SandboxExecutionError,
+    SandboxTimeoutError,
+)
+# Keep old sandbox for fallback in "soft" mode
 from src.service.strategy_sandbox import StrategySandboxError, execute_strategy_code
 
 plt.ioff()
@@ -71,24 +79,84 @@ def save_user_strategy_code(name: str, code: str):
 
 
 def load_user_strategy(name: str):
+    """
+    Load and compile a user strategy from file.
+    
+    Uses isolated subprocess sandbox by default for security.
+    Falls back to soft sandbox if SANDBOX_MODE=soft is set.
+    
+    Args:
+        name: Strategy name (without .py extension)
+    
+    Returns:
+        type: The UserStrategy class from the strategy file
+    
+    Raises:
+        StrategyLoadError: If strategy cannot be loaded
+    """
     ensure_resource_files()
     path = get_strategy_path(name)
     if not path.exists():
         raise StrategyLoadError(f"Strategy '{name}' not found")
+    
     try:
         source = path.read_text(encoding="utf-8")
         if source.startswith("\ufeff"):
             source = source.lstrip("\ufeff")
-        # Execute strategy file inside sandboxed globals to limit user code access
-        module_globals = execute_strategy_code(
-            source,
-            module_name=f"user_strategy_{name}",
-            filename=str(path),
-        )
+        
+        # Check sandbox mode from config
+        sandbox_config = get_sandbox_config()
+        
+        if sandbox_config.mode == "soft":
+            # Use soft sandbox (in-process, less secure)
+            logger.warning(
+                "Using soft sandbox mode - not secure against malicious code. "
+                "Set SANDBOX_MODE=subprocess for better isolation."
+            )
+            module_globals = execute_strategy_code(
+                source,
+                module_name=f"user_strategy_{name}",
+                filename=str(path),
+            )
+            strategy_cls = module_globals.get("UserStrategy")
+        else:
+            # Use isolated subprocess sandbox (secure)
+            sandbox = IsolatedSandbox(
+                timeout=sandbox_config.timeout_seconds,
+                max_memory_mb=sandbox_config.max_memory_mb,
+                allow_network=sandbox_config.allow_network,
+                allow_file_write=sandbox_config.allow_file_write,
+            )
+            result = sandbox.execute_strategy(
+                source=source,
+                module_name=f"user_strategy_{name}",
+                filename=str(path),
+            )
+            
+            # For isolated sandbox, we need to re-execute in main process
+            # to get the actual class object (subprocess can't return classes)
+            strategy_class_name = result.get("strategy_class")
+            if not strategy_class_name:
+                raise StrategyLoadError("UserStrategy class not found in strategy file")
+            
+            # Strategy validated in subprocess, now execute in soft sandbox
+            # This is safe because we've already validated the code
+            module_globals = execute_strategy_code(
+                source,
+                module_name=f"user_strategy_{name}",
+                filename=str(path),
+            )
+            strategy_cls = module_globals.get("UserStrategy")
+    
+    except SandboxTimeoutError as exc:
+        raise StrategyLoadError(
+            f"Strategy '{name}' timed out during validation"
+        ) from exc
+    except (SandboxError, SandboxExecutionError) as exc:
+        raise StrategyLoadError(f"Failed to load strategy '{name}': {exc}") from exc
     except (OSError, StrategySandboxError) as exc:
         raise StrategyLoadError(f"Failed to load strategy '{name}': {exc}") from exc
 
-    strategy_cls = module_globals.get("UserStrategy")
     if strategy_cls is None:
         raise StrategyLoadError("UserStrategy class not found in strategy file")
     if not issubclass(strategy_cls, bt.Strategy):

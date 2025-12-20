@@ -1,209 +1,118 @@
-# 量化交易系统功能增强规划
+# Feature Plan（基于现状的功能规划）
 
-## 当前技术栈
-FastAPI + Backtrader 后端（/api/data、/api/backtest、/api/strategy、/api/ai_analyze）、前端多语言控制台（运行/维护策略、数据源、AI 分析）
+本文件用于追踪“已经实现的能力”和“下一步要做什么”。避免把已上线功能重复写成 TODO。
 
-## 已实现的核心功能
+## 状态标记
+- `[x]` 已完成（可用）
+- `[~]` 部分完成（已有基础，需要补齐）
+- `[ ]` 规划中（未开始/待排期）
 
-1. ✅ **策略回测系统** - 完整的Backtrader回测引擎
-2. ✅ **实盘/模拟交易** - CCXT和IBKR适配器支持
-3. ✅ **Walk-Forward参数优化** - 训练/验证集分离，过拟合检测
-4. ✅ **策略管理** - Monaco编辑器在线编辑策略代码
-5. ✅ **多语言支持** - 中英文i18n
-6. ✅ **AI分析** - OpenAI集成分析回测结果
-7. ✅ **WebSocket实时推送** - 交易状态实时更新
-8. ✅ **会话管理** - 多会话并发交易支持
-9. ✅ **认证授权** - Logto JWT认证
+## 已上线功能（Done）
 
----
+### 回测与结果管理
+- [x] 单标的回测引擎（Backtrader + 指标/图表输出）：`backend/src/service/backtest_engine.py`
+- [x] 回测历史持久化、筛选/排序、详情/删除：`backend/src/routes/api_routes.py` + `backend/src/db/backtest_storage.py`
+- [x] 回测 AI 分析结果可回写保存：`backend/src/routes/api_routes.py`（`/backtest/history/*/ai-analysis`）
 
-## 功能增强建议（按优先级排序）
+### 策略编写与模板
+- [x] 策略文件加载/保存/列表（带名称净化，防路径穿越）：`backend/src/service/backtest_engine.py`
+- [x] 策略在线维护（Monaco Editor）：`frontend/src/pages/StrategyMaintain.jsx`
+- [x] 策略模板库（分类/难度/详情/一键导入）：`backend/src/service/strategy_templates.py` + `backend/src/routes/api_routes.py`
+- [x] 策略参数提取与覆盖（回测/组合回测复用）：`backend/src/routes/api_routes.py`（`/strategy/{name}/params`）
 
-### 🔥 高优先级（可立即实施）
+### Walk-Forward 参数优化与可视化
+- [x] 后台任务式 Walk-Forward 优化 + 结果持久化：`backend/src/routes/walkforward_routes.py` + `backend/src/db/walkforward_storage.py`
+- [x] 过拟合检测、参数敏感度、2D 热力图数据：`backend/src/service/parameter_analysis.py`
+- [x] 前端热力图可视化（ECharts）：`frontend/src/components/WalkForward/ParameterHeatmap.jsx`
 
-#### 1. 多标的组合回测
-**价值**：支持投资组合策略，分散风险
+### 组合回测（Portfolio）
+- [x] 多标的组合回测（并行回测、相关性矩阵、Markowitz 建议、组合图）：`backend/src/service/portfolio_backtest.py`
+- [x] 组合回测历史/详情/删除：`backend/src/routes/portfolio_routes.py` + `backend/src/db/portfolio_storage.py`
+- [x] 前端组合回测页面：`frontend/src/pages/PortfolioBacktest.jsx`
 
-**实现点**：
-- 后端：修改 `run_backtest` 支持多ticker并行回测
-- 添加组合权重配置、相关性分析
-- 输出组合净值曲线、马科维茨优化建议
-- 前端：多选ticker界面，权重配置表单
+### 实盘/模拟交易与实时推送
+- [x] 实盘/模拟交易会话（启动/停止/状态/列表/订单/健康检查）：`backend/src/routes/live_routes.py`
+- [x] WebSocket 实时推送（基于 `ws_token` 的会话级鉴权）：`backend/src/routes/websocket_routes.py`
+- [x] 会话/订单/持仓持久化模型：`backend/src/db/models.py`
 
-**技术细节**：
-- 新增 `portfolio_backtest.py` 模块
-- 扩展 `api_routes.py` 添加 `/api/portfolio/backtest` 端点
-- 数据库添加 `PortfolioResult` 模型存储组合回测结果
-- 前端添加 `PortfolioBacktest.jsx` 页面组件
+### 设置、凭证与安全
+- [x] 用户设置（模型选择、提示词模板）持久化：`backend/src/routes/settings_routes.py` + `backend/src/db/settings_storage.py`
+- [x] 凭证托管与测试（OpenAI/代理/CCXT/Logto），敏感字段加密存储（Fernet）：`backend/src/db/settings_storage.py`
+- [x] 策略沙箱执行（支持 subprocess 隔离 + 软回退模式）：`backend/src/service/isolated_sandbox.py` + `backend/src/service/backtest_engine.py`
+- [x] 可选的 Logto JWT 鉴权（可开关）：`backend/src/utils/auth.py` + `backend/src/routes/settings_routes.py`
 
----
-
-#### 2. 风控模块增强
-**价值**：提升实盘安全性，防止极端亏损
-
-**实现点**：
-- 添加 `risk_manager.py` 统一风控模块
-- 最大回撤预警、仓位限制、止损止盈
-- 交易时间窗口限制（避免盘前盘后交易）
-- 前端：风险指标实时监控面板
-
-**技术细节**：
-- 新增 `backend/src/service/risk_manager.py`
-- 实现 Backtrader Analyzer 子类监控风险指标
-- WebSocket推送风险预警事件
-- 前端 `LiveTradingDashboard.jsx` 集成风险面板
+### 数据源与缓存
+- [x] 市场数据与标的元数据缓存到数据库（减少重复拉取）：`backend/src/db/datasource.py` + `backend/src/db/models.py`
 
 ---
 
-#### 3. 数据层优化
-**价值**：提升回测速度，降低API调用成本
+## 部分完成（需要补齐）
 
-**实现点**：
-- 利用现有 `DATABASE_URL` 钩子，缓存历史K线到SQLite/PostgreSQL
-- 多周期K线合成（1分钟→5分钟→日线）
-- 数据预热接口（批量下载历史数据）
-- 前端：数据管理页面，显示缓存状态
+### [~] 策略版本管理（Versioning）
+现状：已有 `strategy_versions` 表模型：`backend/src/db/models.py`（`StrategyVersionModel`）。
 
-**技术细节**：
-- 扩展 `backend/src/db/datasource.py` 添加缓存逻辑
-- 新增 `KlineCache` 数据库模型
-- 添加 `/api/data/cache` 管理端点
-- 实现K线重采样算法（OHLCV聚合）
+缺口：缺少写入版本的存储层、API、前端时间线/对比/回滚，以及在保存策略时自动落库。
+
+### [~] 数据管理与预热
+现状：数据会被自动缓存到 DB；但缺少“可视化的缓存状态/清理/预热/重采样”的管理能力。
+
+缺口：需要补齐管理端点与前端入口（例如 DataSource 页补一个缓存面板）。
 
 ---
 
-#### 4. 策略模板库
-**价值**：降低新手门槛，快速启动策略开发
+## Roadmap（按优先级）
 
-**实现点**：
-- 扩展 `resources/strategy/` 增加更多经典策略模板
-- 分类：趋势跟踪、均值回归、统计套利、机器学习等
-- 策略市场/评分系统
-- 前端：策略模板浏览、一键导入
+### P0（建议先做：安全性与可运营性）
 
-**技术细节**：
-- 新增策略模板：MACD、布林带、网格交易、配对交易等
-- 添加策略元数据（描述、参数说明、适用市场）
-- 前端 `StrategyMaintain.jsx` 添加模板选择器
+#### [ ] 风控模块（Live 风控护栏）
+目标：把“能跑”升级为“可安全上线”。
 
----
+验收标准：
+- 在 `paper`/`live` 模式下均可配置：最大仓位、单笔最大亏损、日内最大亏损、最大回撤阈值、交易时间窗口。
+- 触发风控时：阻止下单/强平/停止会话（可配置），并通过 WebSocket 推送事件。
+- 前端在 `frontend/src/pages/LiveTradingDashboard.jsx` 展示风控状态与告警历史。
 
-### ⭐ 中优先级（需要一定开发量）
+落点建议：`backend/src/service/risk_manager.py`（新增）+ `backend/src/service/live_engine.py` 集成。
 
-#### 5. 回测结果深度分析
-**价值**：更全面的策略评估维度
+#### [ ] 策略版本管理（完整闭环）
+验收标准：
+- 保存策略时自动生成版本；支持版本列表、diff、回滚；支持可选 commit message。
+- API：`/api/strategy/{name}/versions`（list/get/diff/rollback）。
+- 前端：策略维护页增加“版本”入口，支持 diff 视图。
 
-**实现点**：
-- 添加更多分析器：月度收益热图、滚动夏普比率、最大连续亏损
-- 交易分布分析（持仓时长、盈亏比分布）
-- 与基准对比（SPY/沪深300）
-- 前端：交互式图表库（ECharts/Plotly）
+#### [ ] 统一错误结构与可观测性基础
+验收标准：
+- 后端统一错误响应结构（code/message/details/request_id），并对关键路径打点日志。
+- 为回测/实盘/优化提供一致的 trace id，便于排障。
 
-**技术细节**：
-- 扩展 `backtest_engine.py` 添加自定义分析器
-- 实现基准收益对比逻辑
-- 前端集成 ECharts 绘制热图和分布图
+### P1（体验与分析能力增强）
 
----
+#### [ ] 回测结果深度分析（含基准对比）
+验收标准：
+- 支持：月度收益热图、滚动 Sharpe、收益分布/回撤分布、最大连续亏损、与基准对比（可选 SPY/沪深300 等）。
+- 前端图表统一在组件层封装（避免页面堆图表逻辑）。
 
-#### 6. 定时任务调度
-**价值**：自动化交易工作流
+#### [ ] 数据管理：预热/清理/重采样
+验收标准：
+- 增加数据预热接口（批量拉取并入库），提供缓存命中率/最近更新时间。
+- 支持 OHLCV 重采样（如 1m→5m→1h→1d），明确数据一致性策略。
 
-**实现点**：
-- 集成 APScheduler 或 Celery
-- 定时回测（每日收盘后自动跑回测）
-- 定时报告（邮件/企业微信推送）
-- 前端：任务调度配置界面
+#### [ ] 定时任务调度（回测/报告）
+验收标准：
+- 以 APScheduler 为主（单机先行），提供任务 CRUD、执行日志、失败重试策略。
+- 支持：定时回测、定时 Walk-Forward、定时生成报告（先落库/文件，通知渠道后续扩展）。
 
-**技术细节**：
-- 新增 `backend/src/service/scheduler.py`
-- 添加 `/api/scheduler/*` 路由管理定时任务
-- 集成邮件服务（SMTP）和企业微信Webhook
-- 前端添加 `Scheduler.jsx` 页面
-
----
-
-#### 7. 策略版本管理
-**价值**：追溯策略演进历史
-
-**实现点**：
-- 策略代码Git集成或自建版本系统
-- 策略变更diff对比
-- 回滚到历史版本
-- 前端：版本时间线展示
-
-**技术细节**：
-- 数据库添加 `StrategyVersion` 模型
-- 每次保存策略创建新版本记录
-- 使用 `difflib` 生成代码diff
-- 前端集成 Monaco Editor diff视图
+### P2（多租户与平台化）
+- [ ] 多用户/团队协作：RBAC、工作空间隔离、策略分享/订阅。
+- [ ] 监控告警：Prometheus/Grafana、关键指标告警、审计日志。
+- [ ] 机器学习工作流：特征管道、训练/回测一体化、可解释性（SHAP）。
+- [ ] 高频能力：Tick 级回测、订单簿、滑点与延迟建模。
 
 ---
 
-#### 8. 参数优化可视化增强
-**价值**：更直观的参数敏感性分析
+## 技术债（持续清理）
+- [ ] 后端/前端关键路径补齐最小测试（pytest + 前端单测视情况）。
+- [ ] 性能基准：回测耗时、数据加载耗时、并发会话上限与压测脚本。
+- [ ] 文档：API 示例、常见故障排查、生产部署 checklist（与 `SECURITY.md` 对齐）。
 
-**实现点**：
-- 参数热力图（2D参数空间映射收益）
-- 3D参数曲面图
-- 过拟合程度评分
-- 前端：参数空间可视化组件
-
-**技术细节**：
-- 扩展 `walkforward_optimizer.py` 输出参数网格结果
-- 前端使用 ECharts 绘制热力图和3D图
-- 添加参数敏感性分析算法
-
----
-
-### 🚀 长期规划（需要架构调整）
-
-#### 9. 多用户/团队协作
-- 基于Logto JWT扩展角色权限（RBAC）
-- 策略分享/订阅机制
-- 团队工作空间隔离
-- 策略评论与评分系统
-
-#### 10. 实时监控告警
-- Grafana/Prometheus集成
-- 关键指标异常告警（短信/Webhook）
-- API访问日志审计
-- 系统健康检查仪表板
-
-#### 11. 机器学习集成
-- 特征工程管道
-- 模型训练/回测一体化
-- SHAP解释性分析
-- 集成常见ML库（scikit-learn、XGBoost）
-
-#### 12. 高频交易支持
-- Tick级数据回测
-- 订单簿（Order Book）数据支持
-- 延迟优化（C++扩展）
-- 滑点模型精细化
-
----
-
-## 推荐实施优先级
-
-如果选择3个功能开始实施，建议：
-
-1. **多标的组合回测** - 快速提升系统差异化竞争力
-2. **风控模块增强** - 保障实盘安全，必备功能
-3. **数据层优化** - 提升性能，降低成本
-
-这3个功能相对独立，可以并行开发，且都基于现有架构扩展，风险可控。
-
----
-
-## 技术债务清理
-
-- 统一错误处理机制（全局异常处理器）
-- API响应格式标准化
-- 单元测试覆盖率提升（目标80%+）
-- 性能基准测试（回测速度、API响应时间）
-- 文档完善（API文档、用户手册）
-
----
-
-*最后更新时间：2025-12-16*
+*最后更新时间：2025-12-20*

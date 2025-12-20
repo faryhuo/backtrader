@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from src.config.settings import DATABASE_URL
 from src.db.models import (
     OrderModel,
     OrderStatusEnum,
@@ -32,16 +33,16 @@ class SessionStorage:
     session data, supporting crash recovery and session history.
     """
 
-    def __init__(self, database_url: str = "sqlite:///trading_sessions.db"):
+    def __init__(self, database_url: Optional[str] = None):
         """
         Initialize session storage.
 
         Args:
-            database_url: SQLAlchemy database URL
+            database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
         """
-        self.database_url = database_url
-        self._engine, self._SessionLocal = init_database(database_url)
-        logger.info(f"SessionStorage initialized with database: {database_url}")
+        self.database_url = database_url or DATABASE_URL
+        self._engine, self._SessionLocal = init_database(self.database_url)
+        logger.info(f"SessionStorage initialized with database: {self.database_url}")
 
     def get_db_session(self) -> Session:
         """

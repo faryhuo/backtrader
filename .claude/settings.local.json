@@ -15,7 +15,8 @@
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(dir:*)"
     ]
   }
 }

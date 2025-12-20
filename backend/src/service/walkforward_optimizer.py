@@ -20,6 +20,7 @@ import pandas as pd
 from src.config.settings import IMAGES_DIR
 from src.db.datasource import get_bt_feed
 from src.service.backtest_engine import load_user_strategy
+from src.service.parameter_analysis import get_parameter_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class WalkForwardResult:
     param_grid: Dict[str, List[Any]]
     overfitting_metrics: Dict[str, float] = field(default_factory=dict)
     combined_test_metrics: Dict[str, Any] = field(default_factory=dict)
+    parameter_analysis: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -399,6 +401,14 @@ class WalkForwardOptimizer:
         # Calculate combined test metrics (performance across all test windows)
         combined_test_metrics = self._calculate_combined_test_metrics(optimization_windows)
 
+        # Calculate parameter analysis for visualization
+        parameter_analysis = get_parameter_analysis(
+            windows=optimization_windows,
+            param_grid=self.param_grid,
+            optimization_metric=optimization_metric,
+            overfitting_metrics=overfitting_metrics,
+        )
+
         result = WalkForwardResult(
             optimization_id=optimization_id,
             strategy_name=self.strategy_name,
@@ -409,6 +419,7 @@ class WalkForwardOptimizer:
             param_grid=self.param_grid,
             overfitting_metrics=overfitting_metrics,
             combined_test_metrics=combined_test_metrics,
+            parameter_analysis=parameter_analysis,
         )
 
         logger.info(f"Walk-forward optimization {optimization_id} completed")

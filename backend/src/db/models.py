@@ -12,12 +12,31 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, JSON, String, Text, TypeDecorator, UniqueConstraint, create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import json
+from threading import Lock
+
+from sqlalchemy.engine import Engine
 
 Base = declarative_base()
+
+_DB_CACHE_LOCK = Lock()
+_DB_CACHE: dict[tuple[str, bool], tuple[Engine, sessionmaker]] = {}
+
+
+def _configure_sqlite_engine(engine: Engine) -> None:
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragmas(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA temp_store=MEMORY")
+        finally:
+            cursor.close()
 
 
 class SafeJSON(TypeDecorator):
@@ -239,19 +258,25 @@ def init_database(database_url: str, echo: bool = False):
         # ... use session ...
         session.close()
     """
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
+    cache_key = (database_url, bool(echo))
+    with _DB_CACHE_LOCK:
+        cached = _DB_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
 
-    # Create engine
-    engine = create_engine(database_url, echo=echo)
+        engine_kwargs = {"echo": echo, "pool_pre_ping": True}
+        if database_url.startswith("sqlite"):
+            engine_kwargs["connect_args"] = {"check_same_thread": False}
 
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+        engine = create_engine(database_url, **engine_kwargs)
+        if database_url.startswith("sqlite"):
+            _configure_sqlite_engine(engine)
 
-    # Create session factory
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        Base.metadata.create_all(bind=engine)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    return engine, SessionLocal
+        _DB_CACHE[cache_key] = (engine, SessionLocal)
+        return engine, SessionLocal
 
 
 class BacktestHistoryModel(Base):
@@ -653,5 +678,49 @@ class UserSettingsModel(Base):
         )
 
 
-# Default database path for local development
-DEFAULT_DB_PATH = "sqlite:///trading_sessions.db"
+class StrategyVersionModel(Base):
+    """
+    Strategy Version Model - Stores versioned snapshots of strategy code.
+
+    Each save creates a new version record, enabling version history,
+    diff comparison, and rollback functionality.
+    """
+    __tablename__ = "strategy_versions"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Version identifier (auto-increment per strategy)
+    version_number = Column(Integer, nullable=False)
+
+    # Strategy identification
+    strategy_name = Column(String(255), nullable=False, index=True)
+
+    # User identification (optional, for multi-user support)
+    user_id = Column(String(255), nullable=True, index=True)
+
+    # Version metadata
+    commit_message = Column(Text, nullable=True)  # Optional commit message
+    code = Column(Text, nullable=False)  # Full code snapshot
+    code_hash = Column(String(64), nullable=False)  # SHA-256 hash for change detection
+
+    # Change statistics
+    lines_added = Column(Integer, default=0)
+    lines_removed = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # Composite unique constraint
+    __table_args__ = (
+        UniqueConstraint('strategy_name', 'version_number', 'user_id',
+                        name='uix_strategy_version'),
+    )
+
+    def __repr__(self):
+        return (
+            f"<StrategyVersion(strategy={self.strategy_name}, "
+            f"version={self.version_number}, "
+            f"created_at={self.created_at})>"
+        )
+

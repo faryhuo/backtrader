@@ -1,0 +1,186 @@
+.version-diff-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.version-diff-modal {
+    background: var(--bg-primary, #0f0f1a);
+    border-radius: 12px;
+    width: 95%;
+    max-width: 1400px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.diff-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color, #333);
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 12px 12px 0 0;
+}
+
+.diff-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary, #fff);
+}
+
+.diff-title h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.diff-versions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.version-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.version-badge.old {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.version-badge.new {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.arrow {
+    color: var(--text-secondary, #888);
+    font-size: 16px;
+}
+
+.diff-stats {
+    display: flex;
+    gap: 8px;
+}
+
+.diff-stats .stat {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.diff-stats .stat.added {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.diff-stats .stat.removed {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.close-btn {
+    background: var(--bg-tertiary, #16213e);
+    border: none;
+    color: var(--text-primary, #fff);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #ef4444;
+}
+
+.diff-legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 20px;
+    background: var(--bg-tertiary, #16213e);
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color.removed {
+    background: rgba(239, 68, 68, 0.3);
+    border-left: 2px solid #ef4444;
+}
+
+.legend-color.added {
+    background: rgba(16, 185, 129, 0.3);
+    border-left: 2px solid #10b981;
+}
+
+.diff-editor-container {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Override Monaco diff editor colors */
+.diff-editor-container .monaco-diff-editor {
+    background: var(--bg-primary, #0f0f1a) !important;
+}
+
+.diff-editor-container .monaco-editor,
+.diff-editor-container .monaco-editor-background {
+    background: var(--bg-primary, #0f0f1a) !important;
+}

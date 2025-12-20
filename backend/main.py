@@ -3,6 +3,7 @@ import logging
 from daphne.server import Server
 
 from src.service.app import app
+from src.config.settings import DATABASE_URL, DEFAULT_DB_PATH
 
 
 def main() -> None:
@@ -12,9 +13,13 @@ def main() -> None:
         level=getattr(logging, log_level, logging.INFO),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
+
+    # Log database configuration
+    logging.info(f"Database URL: {DATABASE_URL}")
+    logging.info(f"Database absolute path: {DEFAULT_DB_PATH.absolute()}")
 
     logging.info(f"Starting server on {host}:{port} with log level {log_level}")
     
