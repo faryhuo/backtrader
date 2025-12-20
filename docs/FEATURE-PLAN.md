@@ -13,12 +13,14 @@
 - [x] 单标的回测引擎（Backtrader + 指标/图表输出）：`backend/src/service/backtest_engine.py`
 - [x] 回测历史持久化、筛选/排序、详情/删除：`backend/src/routes/api_routes.py` + `backend/src/db/backtest_storage.py`
 - [x] 回测 AI 分析结果可回写保存：`backend/src/routes/api_routes.py`（`/backtest/history/*/ai-analysis`）
+- [x] 回测结果深度分析（热图/Sharpe/分布/回撤/基准对比）：`backend/src/service/deep_analysis.py` + `backend/src/routes/backtest_routes.py` + `frontend/src/components/DeepAnalysis/`
 
 ### 策略编写与模板
 - [x] 策略文件加载/保存/列表（带名称净化，防路径穿越）：`backend/src/service/backtest_engine.py`
 - [x] 策略在线维护（Monaco Editor）：`frontend/src/pages/StrategyMaintain.jsx`
 - [x] 策略模板库（分类/难度/详情/一键导入）：`backend/src/service/strategy_templates.py` + `backend/src/routes/api_routes.py`
 - [x] 策略参数提取与覆盖（回测/组合回测复用）：`backend/src/routes/api_routes.py`（`/strategy/{name}/params`）
+- [x] 策略版本管理（自动版本、历史、diff、回滚）：`backend/src/routes/strategy_routes.py` + `backend/src/db/storage/strategy_version.py` + `frontend/src/components/StrategyMaintain/`
 
 ### Walk-Forward 参数优化与可视化
 - [x] 后台任务式 Walk-Forward 优化 + 结果持久化：`backend/src/routes/walkforward_routes.py` + `backend/src/db/walkforward_storage.py`
@@ -48,11 +50,6 @@
 
 ## 部分完成（需要补齐）
 
-### [~] 策略版本管理（Versioning）
-现状：已有 `strategy_versions` 表模型：`backend/src/db/models.py`（`StrategyVersionModel`）。
-
-缺口：缺少写入版本的存储层、API、前端时间线/对比/回滚，以及在保存策略时自动落库。
-
 ### [~] 数据管理与预热
 现状：数据会被自动缓存到 DB；但缺少“可视化的缓存状态/清理/预热/重采样”的管理能力。
 
@@ -74,11 +71,11 @@
 
 落点建议：`backend/src/service/risk_manager.py`（新增）+ `backend/src/service/live_engine.py` 集成。
 
-#### [ ] 策略版本管理（完整闭环）
+#### [ ] 任务中心（后台任务统一管理）
 验收标准：
-- 保存策略时自动生成版本；支持版本列表、diff、回滚；支持可选 commit message。
-- API：`/api/strategy/{name}/versions`（list/get/diff/rollback）。
-- 前端：策略维护页增加“版本”入口，支持 diff 视图。
+- 统一管理：回测 / 组合回测 / Walk-Forward / 深度分析等后台任务（状态、进度、耗时、失败原因）。
+- 支持：取消/重试/并发上限；WebSocket 推送任务事件；前端提供任务列表与详情页。
+- 任务输出可追踪到对应的历史记录（backtest/portfolio/walkforward id）。
 
 #### [ ] 统一错误结构与可观测性基础
 验收标准：
@@ -87,10 +84,11 @@
 
 ### P1（体验与分析能力增强）
 
-#### [ ] 回测结果深度分析（含基准对比）
+#### [ ] 报告中心（导出/分享）
 验收标准：
-- 支持：月度收益热图、滚动 Sharpe、收益分布/回撤分布、最大连续亏损、与基准对比（可选 SPY/沪深300 等）。
-- 前端图表统一在组件层封装（避免页面堆图表逻辑）。
+- 支持对回测/组合回测/Walk-Forward/深度分析生成统一报告（HTML 优先，PDF 可选）。
+- 支持下载与（可选）生成分享链接；报告包含关键指标、图表截图/矢量图、参数与环境信息（可复现）。
+- 报告生成作为后台任务运行，可被缓存与再次查看。
 
 #### [ ] 数据管理：预热/清理/重采样
 验收标准：
@@ -107,6 +105,8 @@
 - [ ] 监控告警：Prometheus/Grafana、关键指标告警、审计日志。
 - [ ] 机器学习工作流：特征管道、训练/回测一体化、可解释性（SHAP）。
 - [ ] 高频能力：Tick 级回测、订单簿、滑点与延迟建模。
+- [ ] 数据源插件化：CSV/Parquet 导入、交易所 K 线、企业数据源（统一 schema + 数据质量校验）。
+- [ ] 回放与调试：逐 bar 回放、断点/变量面板、关键事件时间线（订单/信号/风控）。
 
 ---
 

@@ -11,7 +11,15 @@
 - [.env.template](file://backend/.env.template)
 - [credential_validator.py](file://backend/src/utils/credential_validator.py)
 - [CodeReview_2025-12-19 .md](file://CodeReview_2025-12-19 .md)
+- [RunStrategy.jsx](file://frontend/src/pages/RunStrategy.jsx)
+- [AIInsight.jsx](file://frontend/src/components/RunStrategy/AIInsight.jsx)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 更新了“简介”、“核心组件”、“架构总览”和“详细组件分析”部分，以反映RunStrategy页面集成AI分析功能、支持多模型选择和完整策略分析的变更。
+- 新增了“RunStrategy页面AI分析集成”和“完整策略分析实现机制”两个新章节。
+- 更新了“错误处理与安全注意事项”部分，以反映模型白名单和默认模型的建议。
 
 ## 目录
 1. [简介](#简介)
@@ -34,6 +42,7 @@
 - 错误处理机制（凭证缺失与调用异常统一返回500）
 - 提示词与回测图表图像（base64编码）组合发送，形成上下文感知分析
 - 安全性考虑（API密钥的安全存储、速率限制与成本控制建议）
+- **RunStrategy页面集成AI分析功能，支持多模型选择和完整策略分析**
 
 ## 项目结构
 围绕AI分析API的关键文件分布如下：
@@ -46,6 +55,8 @@
 - 环境变量模板：backend/.env.template
 - 凭据校验工具：backend/src/utils/credential_validator.py
 - 代码评审建议：CodeReview_2025-12-19 .md
+- **RunStrategy页面：frontend/src/pages/RunStrategy.jsx**
+- **AI洞察组件：frontend/src/components/RunStrategy/AIInsight.jsx**
 
 ```mermaid
 graph TB
@@ -79,12 +90,16 @@ OA --> OPENAI["OpenAI 接口"]
 - SettingsStorage：负责从数据库读取/保存加密凭据，支持敏感字段自动加解密。
 - AsyncOpenAI：异步客户端，支持自定义HTTP客户端（含代理与超时）。
 - 前端aiAnalysis.js：封装表单提交、鉴权头注入与响应解析。
+- **RunStrategy.jsx：策略运行页面，集成AI分析功能，支持多模型选择。**
+- **AIInsight.jsx：AI洞察组件，展示多模型分析结果。**
 
 章节来源
 - [ai_routes.py](file://backend/src/routes/ai_routes.py#L17-L92)
 - [config_manager.py](file://backend/src/config/config_manager.py#L110-L131)
 - [settings_storage.py](file://backend/src/db/settings_storage.py#L266-L320)
 - [aiAnalysis.js](file://frontend/src/services/aiAnalysis.js#L36-L57)
+- [RunStrategy.jsx](file://frontend/src/pages/RunStrategy.jsx#L1-L415)
+- [AIInsight.jsx](file://frontend/src/components/RunStrategy/AIInsight.jsx#L1-L99)
 
 ## 架构总览
 下图展示从浏览器到后端API再到OpenAI的完整调用链路，以及关键的配置与安全环节。
@@ -240,6 +255,74 @@ JS-->>UI : "渲染分析结果"
 - [aiAnalysis.js](file://frontend/src/services/aiAnalysis.js#L36-L57)
 - [aiAnalysis.js](file://frontend/src/services/aiAnalysis.js#L59-L169)
 
+### RunStrategy页面AI分析集成
+- **功能描述**：RunStrategy页面集成了AI分析功能，允许用户在完成回测后，对策略进行深入的AI分析。
+- **状态管理**：
+  - `aiLoading`：控制AI分析按钮的加载状态。
+  - `analyses`：存储不同模型的分析结果，键为模型名，值为分析文本。
+  - `activeTab`：记录当前激活的模型标签页。
+  - `availableModels`：通过`getAvailableModels()`获取用户可用的AI模型列表。
+  - `selectedModel`：用户当前选择的模型。
+- **交互流程**：
+  1. 用户点击“Start Analysis”按钮，触发`handleAIAnalysis`函数。
+  2. `handleAIAnalysis`调用`performFullStrategyAnalysis`，传入回测结果、策略信息、用户选择的模型等参数。
+  3. 分析结果返回后，更新`analyses`状态，并将`activeTab`设置为当前模型。
+  4. 结果通过`AIInsight`组件展示，支持多模型标签页切换。
+
+**章节来源**
+- [RunStrategy.jsx](file://frontend/src/pages/RunStrategy.jsx#L35-L415)
+
+### 完整策略分析实现机制
+- **功能描述**：`performFullStrategyAnalysis`函数负责构建完整的策略分析上下文，并调用AI分析API。
+- **实现步骤**：
+  1. **获取策略代码**：优先使用传入的`initialStrategyCode`，否则通过API从后端获取。
+  2. **获取图表图像**：通过`result.plot_url`下载回测图表，转换为File对象。
+  3. **构建上下文文本**：
+     - `contextText`：包含目标、时间范围、策略名称和策略源代码。
+     - `metricsText`：格式化回测指标，如最终价值、收益率、夏普比率等。
+     - `logsText`：格式化最近50笔交易日志为Markdown表格。
+  4. **构建提示词**：使用`fullStrategyAnalysisPrompt`模板，将`contextText`、`metricsText`和`logsText`填充到模板中。
+  5. **调用AI分析**：调用`analyzeChart`函数，发送提示词、模型和图表文件。
+
+**章节来源**
+- [aiAnalysis.js](file://frontend/src/services/aiAnalysis.js#L58-L176)
+
+### AIInsight组件分析
+- **功能描述**：AIInsight组件用于展示AI分析结果，支持多模型标签页和思考过程的展开/收起。
+- **接收参数**：
+  - `analyses`：对象，键为模型名（如gpt-4o、gpt-5.1），值为对应模型返回的分析文本。
+  - `activeTab`：当前激活的模型键。
+  - `onTabChange`：切换模型的回调函数。
+- **内容解析与渲染**：
+  - 使用正则表达式匹配并分离“思考过程”片段（`<think>`标签内），保留主分析内容。
+  - 若存在“思考过程”，提供可展开/收起的交互按钮。
+  - 主分析内容与“思考过程”均通过ReactMarkdown渲染，确保Markdown元素正确显示。
+- **视觉与交互**：
+  - 头部包含机器人图标与标题，底部包含“灯泡”免责声明。
+  - 使用动画效果提升用户体验。
+  - 模型标签页通过`active`类高亮当前模型，点击切换`activeTab`。
+
+```mermaid
+flowchart TD
+Start(["进入 AIInsight 渲染"]) --> CheckAnalyses["检查 analyses 是否为空"]
+CheckAnalyses --> |为空| NullReturn["返回空"]
+CheckAnalyses --> |非空| PickActive["根据 activeTab 获取当前内容"]
+PickActive --> SplitThink["正则匹配并分离 '思考过程' 片段"]
+SplitThink --> HasThink{"是否存在 '思考过程'?"}
+HasThink --> |是| RenderThink["渲染思考过程容器与展开按钮"]
+HasThink --> |否| SkipThink["跳过思考过程渲染"]
+RenderThink --> RenderMain["渲染主分析内容Markdown"]
+SkipThink --> RenderMain
+RenderMain --> Footer["渲染免责声明灯泡图标 + 文案"]
+Footer --> End(["完成渲染"])
+```
+
+**图示来源**
+- [AIInsight.jsx](file://frontend/src/components/RunStrategy/AIInsight.jsx#L8-L99)
+
+**章节来源**
+- [AIInsight.jsx](file://frontend/src/components/RunStrategy/AIInsight.jsx#L8-L99)
+
 ### 错误处理与安全注意事项
 - 凭证缺失
   - 当api_key或base_url为空时，立即返回500错误，提示在设置中配置或在.env中设置
@@ -248,9 +331,9 @@ JS-->>UI : "渲染分析结果"
 - 安全性
   - API密钥通过数据库加密存储（Fernet），优先于.env配置
   - 前端仅通过Bearer Token访问，后端使用JWKS验证JWT
-  - 建议：在后端对model参数做白名单校验，避免用户选择昂贵模型导致成本失控
+  - **建议**：在后端对model参数做白名单校验，避免用户选择昂贵模型导致成本失控；在前端限制可选模型列表与默认模型
 - 速率限制与成本控制
-  - 建议：在后端引入用户级配额、模型白名单与计费统计；前端限制可选模型列表与默认模型
+  - **建议**：在后端引入用户级配额、模型白名单与计费统计；前端限制可选模型列表与默认模型
   - 可参考代码评审建议中关于模型白名单与默认模型的建议
 
 章节来源

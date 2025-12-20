@@ -348,6 +348,58 @@ class WebSocketManager:
             }
         })
 
+    async def broadcast_task_update(
+        self,
+        task_id: str,
+        status: str,
+        progress: int,
+        message: str = None,
+        error: str = None,
+        result_id: str = None,
+    ) -> None:
+        """
+        Broadcast task status/progress update.
+
+        Args:
+            task_id: Task identifier
+            status: Task status (pending, running, completed, failed, cancelled)
+            progress: Progress percentage (0-100)
+            message: Optional progress message
+            error: Optional error message for failed tasks
+            result_id: Optional link to result record
+        """
+        await self.broadcast("tasks", {
+            'type': 'task_update',
+            'data': {
+                'task_id': task_id,
+                'status': status,
+                'progress': progress,
+                'message': message,
+                'error': error,
+                'result_id': result_id,
+            }
+        })
+
+    async def broadcast_task_event(
+        self,
+        task_id: str,
+        event_type: str,
+        data: dict = None,
+    ) -> None:
+        """
+        Broadcast task lifecycle event.
+
+        Args:
+            task_id: Task identifier
+            event_type: Event type (created, started, progress, completed, failed, cancelled)
+            data: Additional event data
+        """
+        await self.broadcast("tasks", {
+            'type': f'task_{event_type}',
+            'task_id': task_id,
+            'data': data or {},
+        })
+
     async def _send_to_client(self, websocket: WebSocket, message: dict) -> None:
         """
         Send message to single WebSocket client.

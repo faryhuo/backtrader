@@ -42,6 +42,18 @@ def get_backtest_storage():
     return _backtest_storage
 
 
+def _get_task_storage():
+    """Lazy import to avoid circular dependency."""
+    from src.db.storage.task import get_task_storage
+    return get_task_storage()
+
+
+def _get_task_status():
+    """Lazy import to avoid circular dependency."""
+    from src.db.models.task import TaskStatus
+    return TaskStatus
+
+
 # ========== Pydantic Models ==========
 
 
@@ -83,11 +95,35 @@ class DeepAnalysisConfig(BaseModel):
 
 @router.post("/backtest")
 async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
+    # Generate unique ID for this backtest
+    backtest_id = str(uuid.uuid4())
+    filename = f"{backtest_id}.png"
+    save_path = IMAGES_DIR / filename
+    user_id = user.get("sub") if user else None
+
+    # Create task record (lazy import to avoid circular dependency)
+    task_storage = _get_task_storage()
+    TaskStatus = _get_task_status()
+
+    task_name = f"Backtest {request.ticker} - {request.strategy_name or 'Default'}"
+    task_config = {
+        "ticker": request.ticker,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "initial_cash": request.initial_cash,
+        "strategy_name": request.strategy_name,
+    }
+    task = task_storage.create_task(
+        task_type="backtest",
+        config=task_config,
+        user_id=user_id,
+        name=task_name,
+    )
+    task_id = task["task_id"]
+
     try:
-        # Generate unique ID for this backtest
-        backtest_id = str(uuid.uuid4())
-        filename = f"{backtest_id}.png"
-        save_path = IMAGES_DIR / filename
+        # Update task to running
+        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=10)
 
         # Get strategy code before running backtest
         strategy_code = None
@@ -96,6 +132,8 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
                 strategy_code = get_user_strategy_code(request.strategy_name)
             except Exception as e:
                 logger.warning(f"Failed to get strategy code for {request.strategy_name}: {e}")
+
+        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=20)
 
         metrics = run_backtest(
             ticker=request.ticker,
@@ -110,18 +148,25 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
         )
 
         if metrics is None:
+            task_storage.update_status(
+                task_id, TaskStatus.FAILED.value,
+                progress=100,
+                error_message="Backtest failed - no metrics returned"
+            )
             raise HTTPException(status_code=500, detail="Backtest failed")
 
+        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=80)
+
         response = {
-            "backtest_id": backtest_id,  # Add backtest_id to response
+            "backtest_id": backtest_id,
+            "task_id": task_id,
             "metrics": metrics,
             "plot_url": f"/images/{filename}",
         }
 
-        # Save to database (non-blocking, errors logged but don't fail request)
+        # Save to database
         try:
             storage = get_backtest_storage()
-            user_id = user.get("sub") if user else None
 
             config = {
                 "ticker": request.ticker,
@@ -140,20 +185,51 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
                 config=config,
                 metrics=metrics,
                 plot_filename=filename,
-                ai_analysis=None,  # Will be updated separately if AI analysis is run
-                strategy_code=strategy_code,  # Save strategy code snapshot
+                ai_analysis=None,
+                strategy_code=strategy_code,
                 user_id=user_id,
             )
+
+            # Update task to completed with result link
+            task_storage.update_status(
+                task_id,
+                TaskStatus.COMPLETED.value,
+                progress=100,
+                result_id=backtest_id,
+                result_type="backtest",
+            )
+
         except Exception as e:
-            # Log error but don't fail the backtest response
             logger.error(f"Failed to save backtest to history: {e}", exc_info=True)
+            # Still mark task as completed since backtest ran successfully
+            task_storage.update_status(task_id, TaskStatus.COMPLETED.value, progress=100)
 
         return response
 
     except StrategyLoadError as exc:
+        task_storage.update_status(
+            task_id, TaskStatus.FAILED.value,
+            progress=100,
+            error_message=str(exc)
+        )
         raise HTTPException(status_code=400, detail=str(exc))
     except DataLoadError as exc:
+        task_storage.update_status(
+            task_id, TaskStatus.FAILED.value,
+            progress=100,
+            error_message=str(exc)
+        )
         raise HTTPException(status_code=502, detail=str(exc))
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as exc:
+        task_storage.update_status(
+            task_id, TaskStatus.FAILED.value,
+            progress=100,
+            error_message=str(exc)
+        )
+        raise
 
 
 # ========== Backtest History Endpoints ==========

@@ -12,6 +12,7 @@ from src.db.storage.settings import SettingsStorage
 from src.db.storage.walkforward import WalkForwardStorage
 from src.db.storage.portfolio import PortfolioStorage, get_portfolio_storage
 from src.db.storage.strategy_version import StrategyVersionStorage
+from src.db.storage.task import TaskStorage, get_task_storage
 
 # Market data functions
 from src.db.storage.market_data import (
@@ -38,6 +39,8 @@ __all__ = [
     "PortfolioStorage",
     "get_portfolio_storage",
     "StrategyVersionStorage",
+    "TaskStorage",
+    "get_task_storage",
     # Market data
     "DataLoadError",
     "save_to_db",

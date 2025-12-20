@@ -27,6 +27,18 @@ router = APIRouter()
 storage = WalkForwardStorage()
 
 
+def _get_task_storage():
+    """Lazy import to avoid circular dependency."""
+    from src.db.storage.task import get_task_storage
+    return get_task_storage()
+
+
+def _get_task_status():
+    """Lazy import to avoid circular dependency."""
+    from src.db.models.task import TaskStatus
+    return TaskStatus
+
+
 # Request/Response Models
 
 class WalkForwardOptimizationRequest(BaseModel):
@@ -53,6 +65,7 @@ class WalkForwardOptimizationResponse(BaseModel):
     optimization_id: str
     status: str
     message: str
+    task_id: Optional[str] = None
 
 
 class WalkForwardListResponse(BaseModel):
@@ -65,6 +78,7 @@ class WalkForwardListResponse(BaseModel):
 
 def run_optimization_task(
     optimization_id: str,
+    task_id: str,
     strategy_name: str,
     ticker: str,
     start_date: str,
@@ -83,9 +97,13 @@ def run_optimization_task(
 
     Updates database with progress and results.
     """
+    task_storage = _get_task_storage()
+    task_status_enum = _get_task_status()
+
     try:
         # Update status to running
         storage.update_optimization_status(optimization_id, "running")
+        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=10)
 
         logger.info(f"Starting walk-forward optimization {optimization_id}")
 
@@ -104,14 +122,26 @@ def run_optimization_task(
             anchored=anchored,
         )
 
+        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=30)
+
         # Run walk-forward analysis
         result = optimizer.run_walkforward(
             optimization_metric=optimization_metric,
             optimization_id=optimization_id,
         )
 
+        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=90)
+
         # Save results to database
         storage.save_optimization_result(result)
+
+        # Mark task as completed
+        task_storage.update_status(
+            task_id, task_status_enum.COMPLETED.value,
+            progress=100,
+            result_id=optimization_id,
+            result_type="walkforward",
+        )
 
         logger.info(f"Walk-forward optimization {optimization_id} completed successfully")
 
@@ -120,6 +150,11 @@ def run_optimization_task(
         storage.update_optimization_status(
             optimization_id,
             "failed",
+            error_message=str(e),
+        )
+        task_storage.update_status(
+            task_id, task_status_enum.FAILED.value,
+            progress=100,
             error_message=str(e),
         )
 
@@ -182,6 +217,26 @@ async def start_walkforward_optimization(
         # Get user ID if authenticated
         user_id = user.get("sub") if user else None
 
+        # Create task record
+        task_storage = _get_task_storage()
+        task_name = f"Walk-Forward: {request.strategy_name} on {request.ticker}"
+        task_config = {
+            "strategy_name": request.strategy_name,
+            "ticker": request.ticker,
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "param_grid": request.param_grid,
+            "train_period_days": request.train_period_days,
+            "test_period_days": request.test_period_days,
+        }
+        task = task_storage.create_task(
+            task_type="walkforward",
+            config=task_config,
+            user_id=user_id,
+            name=task_name,
+        )
+        task_id = task["task_id"]
+
         # Create optimization record in database
         storage.create_optimization(
             optimization_id=optimization_id,
@@ -204,6 +259,7 @@ async def start_walkforward_optimization(
         background_tasks.add_task(
             run_optimization_task,
             optimization_id=optimization_id,
+            task_id=task_id,
             strategy_name=request.strategy_name,
             ticker=request.ticker,
             start_date=request.start_date,
@@ -223,7 +279,8 @@ async def start_walkforward_optimization(
         return WalkForwardOptimizationResponse(
             optimization_id=optimization_id,
             status="pending",
-            message="Walk-forward optimization started successfully"
+            message="Walk-forward optimization started successfully",
+            task_id=task_id,
         )
 
     except Exception as e:

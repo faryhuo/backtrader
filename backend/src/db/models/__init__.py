@@ -40,6 +40,13 @@ from src.db.models.user import (
     StrategyVersionModel,
 )
 
+# Task models
+from src.db.models.task import (
+    TaskModel,
+    TaskType,
+    TaskStatus,
+)
+
 
 __all__ = [
     # Base utilities
@@ -62,4 +69,8 @@ __all__ = [
     # User
     "UserSettingsModel",
     "StrategyVersionModel",
+    # Task
+    "TaskModel",
+    "TaskType",
+    "TaskStatus",
 ]

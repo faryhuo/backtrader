@@ -15,6 +15,8 @@ from src.db.storage import (
     PortfolioStorage,
     get_portfolio_storage,
     StrategyVersionStorage,
+    TaskStorage,
+    get_task_storage,
     # Market data
     DataLoadError,
     save_to_db,
@@ -48,6 +50,10 @@ from src.db.models import (
     # User models
     UserSettingsModel,
     StrategyVersionModel,
+    # Task models
+    TaskModel,
+    TaskType,
+    TaskStatus,
 )
 
 
@@ -82,6 +88,12 @@ __all__ = [
     "PortfolioStorage",
     "get_portfolio_storage",
     "StrategyVersionStorage",
+    "TaskStorage",
+    "get_task_storage",
+    # Task models
+    "TaskModel",
+    "TaskType",
+    "TaskStatus",
     # Market data
     "DataLoadError",
     "save_to_db",

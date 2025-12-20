@@ -8,6 +8,7 @@ import {
     ExperimentOutlined,
     PieChartOutlined,
     ThunderboltOutlined,
+    UnorderedListOutlined,
     SettingOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
@@ -84,6 +85,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><ThunderboltOutlined /></span>
                     {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                </Link>
+                <Link
+                    to="/tasks"
+                    className={getNavClass('/tasks')}
+                    title={t('nav.task_center', 'Task Center')}
+                >
+                    <span className="icon"><UnorderedListOutlined /></span>
+                    {!collapsed && <span>{t('nav.task_center', 'Task Center')}</span>}
                 </Link>
                 <Link
                     to="/settings"
