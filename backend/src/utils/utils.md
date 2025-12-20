@@ -7,6 +7,7 @@
 - `config_loader.py`：Broker 配置加载与解析（从 `broker_config.json` 与环境变量）。
 - `credential_validator.py`：交易所凭证格式校验与连接测试。
 - `encryption.py`：敏感数据加密/解密工具（Fernet 对称加密）。
+- `exception_handlers.py`：统一异常处理器注册与错误响应结构（供 FastAPI 全局使用）。
 
 ## 非功能性要求（Non-Functional）
 - 纯函数优先：避免隐藏全局状态与副作用。

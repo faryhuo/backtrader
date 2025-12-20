@@ -6,6 +6,7 @@
 - `settings.py`：读取 `.env`/环境变量并提供默认值（数据库、认证、AI、代理等配置）。
   - **数据库配置**：统一提供 `DATABASE_URL`（优先使用环境变量，否则使用绝对路径 `DEFAULT_DB_URL`），以及 `DEFAULT_DB_PATH`（绝对路径），避免相对路径导致的多数据库文件问题。
 - `config_manager.py`：运行时配置管理器，支持动态加载与热更新 broker 配置。
+- `sandbox_config.py`：策略沙箱配置（隔离模式/超时/资源限制等），从 `SANDBOX_*` 环境变量加载。
 - 对资源路径、外部依赖（broker、AI、DB 等）进行配置校验与集中暴露。
 
 ## 非功能性要求（Non-Functional）

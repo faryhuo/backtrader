@@ -2,12 +2,11 @@
 
 <div align="center">
 
-![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
-![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.124%2B-green)
-![React](https://img.shields.io/badge/React-18.3.1-61dafb)
-![Vite](https://img.shields.io/badge/Vite-6.0-646CFF)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.124%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.3.1-61dafb?logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 新一代 AI 驱动的算法交易平台，支持策略回测、实盘/模拟交易、参数优化与智能分析。
 
@@ -531,7 +530,7 @@ npm run lint
 **查看 CI 状态**：
 - 在 Pull Request 页面查看检查结果
 - GitHub Actions 标签页查看详细日志
-- Badge: ![CI](https://github.com/YOUR_USERNAME/backtrader/actions/workflows/ci.yml/badge.svg)
+- 如需启用 CI Badge，请在 GitHub Actions 中配置工作流后，替换 README 顶部的 CI badge URL
 
 ### 添加新策略
 
