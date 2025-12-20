@@ -2,7 +2,7 @@ import os
 import logging
 from daphne.server import Server
 
-from src.service.app import app
+from api import app
 from src.config.settings import DATABASE_URL, DEFAULT_DB_PATH
 
 

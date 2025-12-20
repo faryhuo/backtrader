@@ -60,8 +60,10 @@ def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> boo
         if date_col is None:
             raise ValueError("Missing Date/date column in data")
 
-        df['_date'] = pd.to_datetime(df[date_col], errors='coerce').dt.strftime('%Y-%m-%d')
-        df = df.dropna(subset=['_date'])
+        # Use 'tmp_' prefix instead of '_' prefix for temp columns
+        # because pandas itertuples() cannot create named attributes for underscore-prefixed names
+        df['tmp_date'] = pd.to_datetime(df[date_col], errors='coerce').dt.strftime('%Y-%m-%d')
+        df = df.dropna(subset=['tmp_date'])
         if df.empty:
             session.close()
             return False
@@ -82,32 +84,32 @@ def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> boo
         def _num(series: pd.Series) -> pd.Series:
             return pd.to_numeric(series, errors='coerce').fillna(0.0)
 
-        df['_open'] = _num(df[open_col]) if open_col else 0.0
-        df['_high'] = _num(df[high_col]) if high_col else 0.0
-        df['_low'] = _num(df[low_col]) if low_col else 0.0
-        df['_close'] = _num(df[close_col]) if close_col else 0.0
-        df['_volume'] = _num(df[volume_col]) if volume_col else 0.0
+        df['tmp_open'] = _num(df[open_col]) if open_col else 0.0
+        df['tmp_high'] = _num(df[high_col]) if high_col else 0.0
+        df['tmp_low'] = _num(df[low_col]) if low_col else 0.0
+        df['tmp_close'] = _num(df[close_col]) if close_col else 0.0
+        df['tmp_volume'] = _num(df[volume_col]) if volume_col else 0.0
         if adj_close_col:
-            df['_adj_close'] = _num(df[adj_close_col])
+            df['tmp_adj_close'] = _num(df[adj_close_col])
         else:
-            df['_adj_close'] = df['_close']
+            df['tmp_adj_close'] = df['tmp_close']
 
         now = datetime.utcnow()
         records = [
             {
                 "ticker": ticker,
-                "date": row._date,
-                "open": float(row._open),
-                "high": float(row._high),
-                "low": float(row._low),
-                "close": float(row._close),
-                "volume": float(row._volume),
-                "adj_close": float(row._adj_close),
+                "date": row.tmp_date,
+                "open": float(row.tmp_open),
+                "high": float(row.tmp_high),
+                "low": float(row.tmp_low),
+                "close": float(row.tmp_close),
+                "volume": float(row.tmp_volume),
+                "adj_close": float(row.tmp_adj_close),
                 "source": source,
                 "created_at": now,
                 "updated_at": now,
             }
-            for row in df[['_date', '_open', '_high', '_low', '_close', '_volume', '_adj_close']].itertuples(index=False)
+            for row in df[['tmp_date', 'tmp_open', 'tmp_high', 'tmp_low', 'tmp_close', 'tmp_volume', 'tmp_adj_close']].itertuples(index=False)
         ]
 
         dialect_name = session.get_bind().dialect.name
