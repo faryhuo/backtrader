@@ -12,7 +12,7 @@ import pandas as pd
 
 from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
 from src.config.sandbox_config import get_config as get_sandbox_config
-from src.db.datasource import DataLoadError, get_bt_feed as get_data, get_raw_data_json
+from src.db.storage.market_data import DataLoadError, get_bt_feed as get_data, get_raw_data_json
 from src.service.isolated_sandbox import (
     IsolatedSandbox,
     SandboxError,

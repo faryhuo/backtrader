@@ -3,7 +3,7 @@ import os
 import pytest
 from cryptography.fernet import Fernet
 
-from src.db.settings_storage import SettingsStorage
+from src.db.storage.settings import SettingsStorage
 from src.db.models import UserSettingsModel
 
 

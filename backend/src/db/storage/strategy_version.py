@@ -13,8 +13,9 @@ from typing import Optional
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError
 
-from src.db.models import StrategyVersionModel, init_database
 from src.config.settings import DATABASE_URL
+from src.db.storage.base import BaseStorage
+from src.db.models import StrategyVersionModel, init_database
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +36,15 @@ def count_line_changes(old_code: str, new_code: str) -> tuple[int, int]:
     return lines_added, lines_removed
 
 
-class StrategyVersionStorage:
+class StrategyVersionStorage(BaseStorage):
     """Storage layer for strategy version management."""
 
     def __init__(self, database_url: str = None):
         """Initialize storage with database connection."""
-        url = database_url or DATABASE_URL
-        self.engine, self.session_local = init_database(url)
+        super().__init__(database_url)
+        # Alias for backward compatibility with existing code
+        self.engine = self._engine
+        self.session_local = self._SessionLocal
 
     def _get_next_version_number(self, session, strategy_name: str, 
                                   user_id: str = None) -> int:

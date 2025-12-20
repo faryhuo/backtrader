@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
+from src.config.settings import DATABASE_URL
+from src.db.storage.base import BaseStorage
 from src.db.models import WalkForwardOptimizationModel, init_database
 from src.service.walkforward_optimizer import WalkForwardResult
 from src.service.parameter_analysis import get_parameter_analysis
@@ -18,18 +20,13 @@ from src.service.parameter_analysis import get_parameter_analysis
 logger = logging.getLogger(__name__)
 
 
-class WalkForwardStorage:
+class WalkForwardStorage(BaseStorage):
     """Storage layer for walk-forward optimization results."""
 
     def __init__(self, database_url: str = "sqlite:///trading_sessions.db"):
         """Initialize walk-forward storage."""
-        self.database_url = database_url
-        self._engine, self._SessionLocal = init_database(database_url)
-        logger.info(f"WalkForwardStorage initialized with database: {database_url}")
-
-    def get_db_session(self) -> Session:
-        """Get database session."""
-        return self._SessionLocal()
+        super().__init__(database_url)
+        logger.info(f"WalkForwardStorage initialized with database: {self.database_url}")
 
     def create_optimization(
         self,

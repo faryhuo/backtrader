@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 from src.config.settings import DATABASE_URL, DEFAULT_DB_URL
+from src.db.storage.base import BaseStorage
 from src.db.models import PortfolioResultModel, init_database
 
 logger = logging.getLogger(__name__)
@@ -18,20 +19,16 @@ logger = logging.getLogger(__name__)
 _DB_URL = DATABASE_URL or DEFAULT_DB_URL
 
 
-class PortfolioStorage:
+class PortfolioStorage(BaseStorage):
     """Storage class for portfolio backtest results."""
 
     def __init__(self, database_url: str = None):
         """Initialize storage with database connection."""
-        self.db_url = database_url or _DB_URL
-        self._engine = None
-        self._session_local = None
+        super().__init__(database_url or _DB_URL)
 
     def _get_session(self):
-        """Get database session, initializing if needed."""
-        if self._engine is None:
-            self._engine, self._session_local = init_database(self.db_url)
-        return self._session_local()
+        """Get database session (alias for backward compatibility)."""
+        return self.get_db_session()
 
     def save_result(self, result: dict, user_id: Optional[str] = None) -> str:
         """

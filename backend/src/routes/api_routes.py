@@ -13,9 +13,9 @@ from src.service.backtest_engine import (
     StrategyLoadError,
     extract_strategy_params,
 )
-from src.db.datasource import get_raw_data_json, DataLoadError
-from src.db.backtest_storage import BacktestStorage
-from src.db.strategy_version_storage import StrategyVersionStorage
+from src.db.storage.market_data import get_raw_data_json, DataLoadError
+from src.db.storage.backtest import BacktestStorage
+from src.db.storage.strategy_version import StrategyVersionStorage
 from src.service.version_service import compare_versions
 from src.utils.auth import get_current_user
 from src.service.strategy_templates import (
@@ -163,7 +163,7 @@ def import_template(request: TemplateImportRequest, user: dict = Depends(get_cur
 def get_ticker_info(ticker: str, user: dict = Depends(get_current_user)) -> dict:
     """Get ticker metadata and validation info."""
     try:
-        from src.db.datasource import get_ticker_metadata
+        from src.db.storage.ticker_metadata import get_ticker_metadata
         ticker_info = get_ticker_metadata(ticker)
 
         if not ticker_info.get('is_valid'):
@@ -199,7 +199,7 @@ def get_ticker_prices(
 def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_user)) -> dict:
     try:
         # Step 1: Get ticker metadata (validates ticker)
-        from src.db.datasource import get_ticker_metadata
+        from src.db.storage.ticker_metadata import get_ticker_metadata
         ticker_info = get_ticker_metadata(request.ticker)
 
         # Step 2: Validate ticker

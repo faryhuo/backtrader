@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 
 from src.config.settings import DATABASE_URL
+from src.db.storage.base import BaseStorage
 from src.db.models import UserSettingsModel, init_database
 from src.utils.encryption import encrypt_value, decrypt_value, mask_credential, is_encryption_enabled
 
@@ -49,7 +50,7 @@ DEFAULT_SETTINGS = {
 }
 
 
-class SettingsStorage:
+class SettingsStorage(BaseStorage):
     """
     Storage layer for user settings.
 
@@ -62,13 +63,8 @@ class SettingsStorage:
         Args:
             database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
         """
-        self.database_url = database_url or DATABASE_URL
-        self._engine, self._SessionLocal = init_database(self.database_url)
+        super().__init__(database_url)
         logger.info(f"SettingsStorage initialized with database: {self.database_url}")
-
-    def get_db_session(self) -> Session:
-        """Get database session."""
-        return self._SessionLocal()
 
     def get_settings(
         self,

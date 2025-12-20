@@ -14,12 +14,13 @@ from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
 from src.config.settings import DATABASE_URL, IMAGES_DIR
+from src.db.storage.base import BaseStorage
 from src.db.models import BacktestHistoryModel, init_database
 
 logger = logging.getLogger(__name__)
 
 
-class BacktestStorage:
+class BacktestStorage(BaseStorage):
     """Storage layer for backtest history with auto-cleanup."""
 
     MAX_RECORDS = 100  # Keep last 100 backtests
@@ -30,13 +31,8 @@ class BacktestStorage:
         Args:
             database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
         """
-        self.database_url = database_url or DATABASE_URL
-        self._engine, self._SessionLocal = init_database(self.database_url)
+        super().__init__(database_url)
         logger.info(f"BacktestStorage initialized with database: {self.database_url}")
-
-    def get_db_session(self) -> Session:
-        """Get database session."""
-        return self._SessionLocal()
 
     def save_backtest(
         self,

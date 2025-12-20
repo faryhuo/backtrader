@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-from src.db.settings_storage import SettingsStorage
+from src.db import SettingsStorage
 from src.utils.auth import get_current_user
 from src.utils.credential_validator import validate_credential
 

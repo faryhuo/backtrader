@@ -20,7 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from src.db.datasource import get_data, DataLoadError
+from src.db.storage.market_data import get_data, DataLoadError
 from src.service.backtest_engine import (
     run_backtest,
     load_user_strategy,

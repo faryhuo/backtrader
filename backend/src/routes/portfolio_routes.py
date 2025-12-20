@@ -19,7 +19,7 @@ from src.service.portfolio_backtest import (
     run_portfolio_backtest,
     PortfolioBacktestError,
 )
-from src.db.portfolio_storage import get_portfolio_storage
+from src.db import get_portfolio_storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])

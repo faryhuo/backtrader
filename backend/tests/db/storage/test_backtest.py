@@ -1,13 +1,13 @@
 import os
 from datetime import datetime, timedelta
 
-from src.db.backtest_storage import BacktestStorage
+from src.db.storage.backtest import BacktestStorage
 
 
 def test_save_and_list_backtests_with_cleanup(tmp_path, monkeypatch):
     images_dir = tmp_path / "images"
     images_dir.mkdir()
-    monkeypatch.setattr("src.db.backtest_storage.IMAGES_DIR", images_dir, raising=False)
+    monkeypatch.setattr("src.db.storage.backtest.IMAGES_DIR", images_dir, raising=False)
 
     db_path = (tmp_path / "backtests.sqlite").as_posix()
     storage = BacktestStorage(f"sqlite:///{db_path}")

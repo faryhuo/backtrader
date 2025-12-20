@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 
-from src.db.walkforward_storage import WalkForwardStorage
+from src.db import WalkForwardStorage
 from src.service.walkforward_optimizer import WalkForwardOptimizer
 from src.utils.auth import get_current_user, get_optional_user
 

@@ -1,4 +1,4 @@
-from src.db.walkforward_storage import WalkForwardStorage
+from src.db.storage.walkforward import WalkForwardStorage
 from src.service.walkforward_optimizer import OptimizationWindow, WalkForwardResult
 
 

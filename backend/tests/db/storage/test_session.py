@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.db.session_storage import SessionStorage
+from src.db.storage.session import SessionStorage
 from src.service.session_manager import SessionStatus, TradingSession
 
 

@@ -18,7 +18,7 @@ import backtrader as bt
 import pandas as pd
 
 from src.config.settings import IMAGES_DIR
-from src.db.datasource import get_bt_feed
+from src.db.storage.market_data import get_bt_feed
 from src.service.backtest_engine import load_user_strategy
 from src.service.parameter_analysis import get_parameter_analysis
 

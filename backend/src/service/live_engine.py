@@ -16,7 +16,7 @@ import backtrader as bt
 
 from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
 from src.brokers.ibkr_adapter import IBKRStore
-from src.db.session_storage import SessionStorage
+from src.db import SessionStorage
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.session_manager import SessionStatus, get_session_manager
 from src.utils.config_loader import get_exchange_config, load_broker_config

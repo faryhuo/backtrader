@@ -12,6 +12,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from src.config.settings import DATABASE_URL
+from src.db.storage.base import BaseStorage
 from src.db.models import (
     OrderModel,
     OrderStatusEnum,
@@ -25,7 +26,7 @@ from src.service.session_manager import SessionStatus, TradingSession
 logger = logging.getLogger(__name__)
 
 
-class SessionStorage:
+class SessionStorage(BaseStorage):
     """
     Storage layer for trading sessions.
 
@@ -40,22 +41,8 @@ class SessionStorage:
         Args:
             database_url: SQLAlchemy database URL (defaults to DATABASE_URL from settings)
         """
-        self.database_url = database_url or DATABASE_URL
-        self._engine, self._SessionLocal = init_database(self.database_url)
+        super().__init__(database_url)
         logger.info(f"SessionStorage initialized with database: {self.database_url}")
-
-    def get_db_session(self) -> Session:
-        """
-        Get database session.
-
-        Returns:
-            SQLAlchemy session
-
-        Usage:
-            with storage.get_db_session() as db:
-                # ... use db ...
-        """
-        return self._SessionLocal()
 
     def save_session(self, session: TradingSession, db: Optional[Session] = None) -> None:
         """
