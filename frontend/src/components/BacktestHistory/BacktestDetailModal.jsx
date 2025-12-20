@@ -7,7 +7,7 @@ import { api } from '../../services/api'
 import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
-import DeepAnalysis from '../DeepAnalysis'
+import StrategyPlot from '../RunStrategy/StrategyPlot'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
@@ -142,17 +142,11 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab={t('history.tab_chart')} key="chart">
-                    {backtest.plot_url && (
-                        <div style={{ padding: '20px' }}>
-                            <div style={{ textAlign: 'center' }}>
-                                <img
-                                    src={backtest.plot_url}
-                                    alt="Strategy Plot"
-                                    style={{ maxWidth: '100%', height: 'auto' }}
-                                />
-                            </div>
-                        </div>
-                    )}
+                    <div style={{ padding: '20px 0' }}>
+                        <StrategyPlot
+                            result={result}
+                        />
+                    </div>
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab={t('history.tab_trades')} key="trades">

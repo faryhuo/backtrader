@@ -254,10 +254,6 @@ function RunStrategy() {
                             <div style={{ padding: '20px 0' }}>
                                 <StrategyPlot
                                     result={result}
-                                    ticker={ticker}
-                                    startDate={startDate}
-                                    endDate={endDate}
-                                    strategyName={selectedStrategy}
                                 />
                             </div>
                         </Tabs.TabPane>

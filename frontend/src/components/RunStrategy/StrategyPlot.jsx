@@ -1,9 +1,7 @@
 import PropTypes from 'prop-types';
-import { useTranslation } from 'react-i18next';
 
 
-function StrategyPlot({ result, ticker, startDate, endDate, strategyName }) {
-    const { t } = useTranslation();
+function StrategyPlot({ result }) {
 
     if (!result || !result.plot_url) {
         return null;
@@ -26,10 +24,6 @@ StrategyPlot.propTypes = {
         plot_url: PropTypes.string,
         metrics: PropTypes.object
     }),
-    ticker: PropTypes.string,
-    startDate: PropTypes.string,
-    endDate: PropTypes.string,
-    strategyName: PropTypes.string
 };
 
 export default StrategyPlot;
