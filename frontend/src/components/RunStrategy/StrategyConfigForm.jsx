@@ -11,7 +11,8 @@ import {
     RocketOutlined,
     SettingOutlined,
     DownOutlined,
-    RightOutlined
+    RightOutlined,
+    ExpandAltOutlined
 } from '@ant-design/icons';
 
 function StrategyConfigForm({
@@ -53,7 +54,17 @@ function StrategyConfigForm({
 
     return (
         <section className="card form-card-enhanced">
-            <h2><RocketOutlined /> {t('config_form.title')}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ margin: 0 }}><RocketOutlined /> {t('config_form.title')}</h2>
+                <button
+                    type="button"
+                    className="icon-btn"
+                    style={{ width: '32px', height: '32px', border: 'none', background: 'transparent' }}
+                    title={t('common.maximize', 'Maximize')}
+                >
+                    <ExpandAltOutlined style={{ fontSize: '1.2rem', color: '#94a3b8' }} />
+                </button>
+            </div>
             <form onSubmit={onSubmit}>
                 <div className="form-grid">
                     <div className="form-group strategy-select-group">
