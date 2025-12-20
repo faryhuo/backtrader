@@ -28,5 +28,21 @@
   "new_strategy_name": "新策略名称",
   "name_required": "请输入策略名称",
   "invalid_name_format": "名称必须以字母开头，只能包含字母、数字和下划线",
-  "name_hint": "名称以字母开头，只能包含字母、数字和下划线"
+  "name_hint": "名称以字母开头，只能包含字母、数字和下划线",
+  "versions": {
+    "title": "版本历史",
+    "versions": "个版本",
+    "loading": "加载版本中...",
+    "no_versions": "暂无版本记录",
+    "view": "查看",
+    "compare": "对比",
+    "rollback": "回滚",
+    "comparing": "版本对比",
+    "added": "新增",
+    "removed": "删除",
+    "rollback_confirm": "确定要回滚到版本 {{version}} 吗？这将创建一个包含旧代码的新版本。",
+    "rollback_success": "成功回滚到版本 {{version}}",
+    "rollback_failed": "回滚失败",
+    "history": "历史"
+  }
 }

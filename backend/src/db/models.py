@@ -676,3 +676,51 @@ class UserSettingsModel(Base):
             f"<UserSettings(user_id={self.user_id}, "
             f"models={self.selected_models})>"
         )
+
+
+class StrategyVersionModel(Base):
+    """
+    Strategy Version Model - Stores versioned snapshots of strategy code.
+
+    Each save creates a new version record, enabling version history,
+    diff comparison, and rollback functionality.
+    """
+    __tablename__ = "strategy_versions"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Version identifier (auto-increment per strategy)
+    version_number = Column(Integer, nullable=False)
+
+    # Strategy identification
+    strategy_name = Column(String(255), nullable=False, index=True)
+
+    # User identification (optional, for multi-user support)
+    user_id = Column(String(255), nullable=True, index=True)
+
+    # Version metadata
+    commit_message = Column(Text, nullable=True)  # Optional commit message
+    code = Column(Text, nullable=False)  # Full code snapshot
+    code_hash = Column(String(64), nullable=False)  # SHA-256 hash for change detection
+
+    # Change statistics
+    lines_added = Column(Integer, default=0)
+    lines_removed = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # Composite unique constraint
+    __table_args__ = (
+        UniqueConstraint('strategy_name', 'version_number', 'user_id',
+                        name='uix_strategy_version'),
+    )
+
+    def __repr__(self):
+        return (
+            f"<StrategyVersion(strategy={self.strategy_name}, "
+            f"version={self.version_number}, "
+            f"created_at={self.created_at})>"
+        )
+

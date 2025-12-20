@@ -95,10 +95,48 @@ export const api = {
         return await parseResponse(res)
     },
 
-    async saveStrategy(name, code) {
+    async saveStrategy(name, code, commitMessage = null) {
         const res = await buildRequest('/strategy', {
             method: 'POST',
-            body: JSON.stringify({ name, code })
+            body: JSON.stringify({ name, code, commit_message: commitMessage })
+        })
+        return await parseResponse(res)
+    },
+
+    // Strategy Version Management API Methods
+
+    async getStrategyVersions(name, limit = 50, offset = 0) {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions?${params}`)
+        return await parseResponse(res)
+    },
+
+    async getStrategyVersion(name, versionNumber) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}`)
+        return await parseResponse(res)
+    },
+
+    async getLatestStrategyVersion(name) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/latest`)
+        return await parseResponse(res)
+    },
+
+    async compareVersions(name, fromVersion, toVersion) {
+        const params = new URLSearchParams({
+            from_version: fromVersion.toString(),
+            to_version: toVersion.toString()
+        });
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/compare?${params}`)
+        return await parseResponse(res)
+    },
+
+    async rollbackVersion(name, versionNumber, commitMessage = null) {
+        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}/rollback`, {
+            method: 'POST',
+            body: JSON.stringify({ commit_message: commitMessage })
         })
         return await parseResponse(res)
     },
