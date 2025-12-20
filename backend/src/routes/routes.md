@@ -46,5 +46,5 @@ FastAPI 路由与接口层目录，集中维护 HTTP/WebSocket API。
 - 新路由文件命名为 `{feature}_routes.py`，对外暴露 `router`。
 - 路由注册统一在 `backend/api.py` 完成（该文件负责 `include_router(...)` 与 CORS/异常处理配置）。
 - 接口变更需同步更新前端 `frontend/src/services/api.js` 及文档示例。
-- 大型路由文件应按领域拆分为子模块，通过聚合器统一导出。
+- 大型路由文件应按领域拆分为子模块，避免单文件过大与跨域耦合。
 
