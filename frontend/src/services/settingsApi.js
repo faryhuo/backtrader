@@ -62,5 +62,28 @@ export const settingsApi = {
             body: JSON.stringify({ credential_type: credentialType, ...params })
         })
         return await parseResponse(res)
+    },
+
+    // Data Source Settings
+
+    async getDataSourceSettings() {
+        const res = await buildRequest('/settings/data-source')
+        return await parseResponse(res)
+    },
+
+    async updateDataSourceSettings(settings) {
+        const res = await buildRequest('/settings/data-source', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        })
+        return await parseResponse(res)
+    },
+
+    async resetDataSourceSettings() {
+        const res = await buildRequest('/settings/data-source/reset', {
+            method: 'POST'
+        })
+        return await parseResponse(res)
     }
 }
+

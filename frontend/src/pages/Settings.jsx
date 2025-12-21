@@ -71,7 +71,7 @@ function Settings() {
     const loadDataSourceSettings = useCallback(async () => {
         try {
             setDataSourceLoading(true);
-            const response = await api.get('/settings/data-source');
+            const response = await api.getDataSourceSettings();
             if (response.settings) {
                 setDataSourceSettings(response.settings);
             }
@@ -90,7 +90,7 @@ function Settings() {
     const handleDataSourceSave = useCallback(async (data) => {
         try {
             setDataSourceLoading(true);
-            await api.put('/settings/data-source', data);
+            await api.updateDataSourceSettings(data);
             message.success(t('settings.saved'));
             setDataSourceSaved(true);
             await loadDataSourceSettings();
@@ -105,7 +105,7 @@ function Settings() {
     const handleDataSourceReset = useCallback(async () => {
         try {
             setDataSourceLoading(true);
-            await api.post('/settings/data-source/reset');
+            await api.resetDataSourceSettings();
             message.success(t('settings.reset_success'));
             await loadDataSourceSettings();
         } catch (err) {
