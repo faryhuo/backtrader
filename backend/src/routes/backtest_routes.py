@@ -26,6 +26,7 @@ from src.service.deep_analysis import (
 from src.db.storage.market_data import DataLoadError
 from src.db.storage.backtest import BacktestStorage
 from src.utils.auth import get_current_user
+from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -97,6 +98,13 @@ class DeepAnalysisConfig(BaseModel):
 async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
     # Generate unique ID for this backtest
     backtest_id = str(uuid.uuid4())
+    set_trace_id(backtest_id)  # Set trace ID for logging correlation
+    
+    request_id = get_request_id()
+    logger.info(
+        f"[{request_id}] Starting backtest trace_id={backtest_id} ticker={request.ticker}"
+    )
+    
     filename = f"{backtest_id}.png"
     save_path = IMAGES_DIR / filename
     user_id = user.get("sub") if user else None

@@ -21,6 +21,7 @@ from src.service.live_engine import run_live, stop_live, get_session_status
 from src.service.session_manager import SessionStatus, get_session_manager
 from src.utils.auth import get_current_user
 from src.utils.config_loader import list_enabled_exchanges, load_broker_config, validate_symbol, validate_timeframe
+from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +157,9 @@ async def start_live_trading(
         validate_timeframe(request.timeframe, config)
 
         # Start live trading session
+        request_id = get_request_id()
         logger.info(
-            f"Starting {request.mode} trading: {request.strategy_name} on "
+            f"[{request_id}] Starting {request.mode} trading: {request.strategy_name} on "
             f"{request.symbol} ({request.exchange})"
         )
 
@@ -172,7 +174,12 @@ async def start_live_trading(
             user_id=user_id  # Pass user_id for database credential lookup
         )
 
-        logger.info(f"Session {session['session_id']} started successfully")
+        logger.info(f"[{request_id}] Session {session['session_id']} started successfully")
+        
+        # Set trace ID for any subsequent logging in this request
+        session_id = session.get('session_id')
+        if session_id:
+            set_trace_id(session_id)
 
         return session
 

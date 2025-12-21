@@ -21,10 +21,14 @@ from src.routes.task_routes import router as task_router
 from src.routes.site_config_routes import router as site_config_router
 from src.routes.frontend_routes import mount_frontend
 from src.utils.exception_handlers import create_exception_handlers
+from src.utils.request_context import RequestContextMiddleware
 
 ensure_resource_dirs()
 
 app = FastAPI()
+
+# Request context middleware (must be added first for proper request_id propagation)
+app.add_middleware(RequestContextMiddleware)
 
 # Register global exception handlers
 for exc_class, handler in create_exception_handlers(debug=DEBUG).items():
