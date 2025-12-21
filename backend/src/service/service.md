@@ -33,6 +33,32 @@
 - 安全性：用户策略代码在 Worker 进程中隔离执行，支持资源限制（内存、超时）。
 - 可测试性：业务用例应可在 mock 外部依赖下运行。
 
+## 编码规范（Tech Requirements）
+
+### 类型注解
+- 所有公开函数/方法必须使用 Python 类型注解（Type Hints）。
+- 复杂类型使用 `typing` 模块（如 `Optional`, `List`, `Dict`, `Union`）。
+- 返回值类型必须明确标注，避免使用 `Any`。
+
+### 文档字符串
+- 公开 API 使用 Google 风格 docstring。
+- 包含：功能描述、参数说明（`Args`）、返回值（`Returns`）、异常（`Raises`）。
+
+### 异常处理
+- 使用自定义异常类（定义于 `backend/src/utils/exceptions.py`）。
+- 禁止裸 `except:`，必须捕获具体异常类型。
+- 异常信息应包含上下文，便于问题定位。
+
+### 日志规范
+- 使用 `backend/src/utils/logger.py` 提供的 logger。
+- 日志级别：`DEBUG`（调试）、`INFO`（关键流程）、`WARNING`（潜在问题）、`ERROR`（错误）。
+- 敏感信息（密码、token）禁止明文记录。
+
+### 异步编程
+- I/O 密集型操作使用 `async/await`。
+- CPU 密集型任务委托给 Worker Pool。
+- 避免在异步上下文中使用阻塞调用。
+
 ## 约定与规范
 - 服务层不定义路由；路由放 `backend/src/routes`。
 - 读取配置统一来自 `backend/src/config/settings.py`。
