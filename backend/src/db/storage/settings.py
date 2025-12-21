@@ -757,3 +757,196 @@ class SettingsStorage(BaseStorage):
             # CCXT credentials are encrypted separately in JSON
         }
         return field_name in encrypted_fields
+
+    # ========== SITE CONFIGURATION METHODS ==========
+
+    SITE_CONFIG_FIELDS = [
+        "site_title", "site_description",
+        "site_docs_url", "site_github_url", "site_twitter_url", "site_email",
+        "site_stats_strategies", "site_stats_backtests", "site_stats_users"
+    ]
+
+    SITE_CONFIG_ENV_MAPPING = {
+        "site_title": "SITE_TITLE",
+        "site_description": "SITE_DESCRIPTION",
+        "site_docs_url": "SITE_DOCS_URL",
+        "site_github_url": "SITE_GITHUB_URL",
+        "site_twitter_url": "SITE_TWITTER_URL",
+        "site_email": "SITE_EMAIL",
+        "site_stats_strategies": "SITE_STATS_STRATEGIES",
+        "site_stats_backtests": "SITE_STATS_BACKTESTS",
+        "site_stats_users": "SITE_STATS_USERS",
+    }
+
+    SITE_CONFIG_DEFAULTS = {
+        "site_title": "Backtrader Pro",
+        "site_description": "Professional quantitative trading platform",
+        "site_docs_url": "",
+        "site_github_url": "",
+        "site_twitter_url": "",
+        "site_email": "",
+        "site_stats_strategies": "50+",
+        "site_stats_backtests": "10K+",
+        "site_stats_users": "1K+",
+    }
+
+    def get_site_config(
+        self,
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None
+    ) -> Dict[str, Any]:
+        """
+        Get site configuration with DB-first, env fallback.
+
+        Args:
+            user_id: User identifier (typically None for site-wide config)
+            db: Optional database session
+
+        Returns:
+            Dict with site configuration and sources
+        """
+        close_db = False
+        if db is None:
+            db = self.get_db_session()
+            close_db = True
+
+        try:
+            normalized_user_id = self._normalize_user_id(user_id)
+            
+            settings = db.query(UserSettingsModel).filter(
+                UserSettingsModel.user_id == normalized_user_id
+            ).first()
+
+            result = {}
+            sources = {}
+
+            for field in self.SITE_CONFIG_FIELDS:
+                # Try database first
+                db_value = getattr(settings, field, None) if settings else None
+                
+                if db_value is not None:
+                    result[field] = db_value
+                    sources[field] = "database"
+                else:
+                    # Fall back to environment variable
+                    env_key = self.SITE_CONFIG_ENV_MAPPING.get(field, field.upper())
+                    env_value = os.getenv(env_key)
+                    
+                    if env_value:
+                        result[field] = env_value
+                        sources[field] = "env"
+                    else:
+                        # Use default
+                        result[field] = self.SITE_CONFIG_DEFAULTS.get(field, "")
+                        sources[field] = "default"
+
+            return {"config": result, "sources": sources}
+
+        finally:
+            if close_db:
+                db.close()
+
+    def save_site_config(
+        self,
+        config: Dict[str, str],
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None
+    ) -> bool:
+        """
+        Save site configuration to database.
+
+        Args:
+            config: Dict with site config fields
+            user_id: User identifier (typically None for site-wide config)
+            db: Optional database session
+
+        Returns:
+            True if successful, False otherwise
+        """
+        close_db = False
+        if db is None:
+            db = self.get_db_session()
+            close_db = True
+
+        try:
+            normalized_user_id = self._normalize_user_id(user_id)
+
+            # Get or create settings
+            settings = db.query(UserSettingsModel).filter(
+                UserSettingsModel.user_id == normalized_user_id
+            ).first()
+
+            if not settings:
+                settings = UserSettingsModel(
+                    user_id=normalized_user_id,
+                    selected_models=DEFAULT_SETTINGS["selected_models"],
+                    code_analysis_prompt=DEFAULT_SETTINGS["code_analysis_prompt"],
+                    code_rewrite_prompt=DEFAULT_SETTINGS["code_rewrite_prompt"],
+                    full_strategy_analysis_prompt=DEFAULT_SETTINGS["full_strategy_analysis_prompt"],
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                db.add(settings)
+
+            # Update only valid site config fields
+            for field in self.SITE_CONFIG_FIELDS:
+                if field in config:
+                    setattr(settings, field, config[field])
+
+            settings.updated_at = datetime.utcnow()
+            db.commit()
+            
+            logger.info(f"Saved site config for user {normalized_user_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to save site config: {e}")
+            db.rollback()
+            return False
+        finally:
+            if close_db:
+                db.close()
+
+    def reset_site_config(
+        self,
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None
+    ) -> bool:
+        """
+        Reset site configuration to defaults (removes DB values).
+
+        Args:
+            user_id: User identifier
+            db: Optional database session
+
+        Returns:
+            True if successful, False otherwise
+        """
+        close_db = False
+        if db is None:
+            db = self.get_db_session()
+            close_db = True
+
+        try:
+            normalized_user_id = self._normalize_user_id(user_id)
+
+            settings = db.query(UserSettingsModel).filter(
+                UserSettingsModel.user_id == normalized_user_id
+            ).first()
+
+            if settings:
+                for field in self.SITE_CONFIG_FIELDS:
+                    setattr(settings, field, None)
+                settings.updated_at = datetime.utcnow()
+                db.commit()
+                logger.info(f"Reset site config for user {normalized_user_id}")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to reset site config: {e}")
+            db.rollback()
+            return False
+        finally:
+            if close_db:
+                db.close()

@@ -2,7 +2,7 @@
  * Site Configuration API
  * 
  * Public API for fetching site-level configuration.
- * No authentication required.
+ * No authentication required for GET, requires auth for PUT.
  */
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -45,6 +45,81 @@ export async function getSiteConfig() {
     }
 }
 
+/**
+ * Fetch site configuration for admin editing (includes sources)
+ * @returns {Promise<Object>} Site configuration with sources
+ */
+export async function getSiteConfigAdmin() {
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/site/config/admin`, { headers });
+    if (!response.ok) {
+        throw new Error(`Failed to fetch site config: ${response.status}`);
+    }
+    return await response.json();
+}
+
+/**
+ * Update site configuration
+ * @param {Object} config - Configuration fields to update
+ * @returns {Promise<Object>} Update result
+ */
+export async function updateSiteConfig(config) {
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/site/config`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(config)
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || `Failed to update site config: ${response.status}`);
+    }
+    return await response.json();
+}
+
+/**
+ * Reset site configuration to defaults
+ * @returns {Promise<Object>} Reset result
+ */
+export async function resetSiteConfig() {
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/site/config/reset`, {
+        method: 'POST',
+        headers
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || `Failed to reset site config: ${response.status}`);
+    }
+    return await response.json();
+}
+
 export const siteApi = {
-    getSiteConfig
+    getSiteConfig,
+    getSiteConfigAdmin,
+    updateSiteConfig,
+    resetSiteConfig
 };

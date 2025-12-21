@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingOutlined, ApiOutlined, SafetyOutlined, CloudOutlined, DollarOutlined } from '@ant-design/icons';
+import { SettingOutlined, ApiOutlined, SafetyOutlined, CloudOutlined, DollarOutlined, GlobalOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { useSettings } from '../hooks/useSettings';
 import { useCredentials } from '../hooks/useCredentials';
+import { useSiteConfig } from '../hooks/useSiteConfig';
 import {
     AISettingsSection,
     OpenAISettingsSection,
     AuthSettingsSection,
     ProxySettingsSection,
-    ExchangeSettingsSection
+    ExchangeSettingsSection,
+    SiteSettingsSection
 } from '../components/Settings';
 import './Settings.css';
 
@@ -44,14 +46,26 @@ function Settings() {
         handleResetCredential
     } = useCredentials();
 
+    const {
+        config: siteConfig,
+        sources: siteConfigSources,
+        loading: siteConfigLoading,
+        saved: siteConfigSaved,
+        loadConfig: loadSiteConfig,
+        handleChange: handleSiteConfigChange,
+        handleSave: handleSaveSiteConfig,
+        handleReset: handleResetSiteConfig
+    } = useSiteConfig();
+
     // Load data on mount
     useEffect(() => {
         loadSettings();
         loadCredentials();
-    }, [loadSettings, loadCredentials]);
+        loadSiteConfig();
+    }, [loadSettings, loadCredentials, loadSiteConfig]);
 
     // Combined loading state
-    const loading = settingsLoading || credentialsLoading;
+    const loading = settingsLoading || credentialsLoading || siteConfigLoading;
 
     // Menu items for sidebar navigation
     const menuItems = [
@@ -79,6 +93,11 @@ function Settings() {
             key: 'exchange',
             icon: <DollarOutlined />,
             label: t('settings.exchange_credentials', 'Exchange Credentials')
+        },
+        {
+            key: 'site',
+            icon: <GlobalOutlined />,
+            label: t('settings.site_configuration', 'Site Configuration')
         }
     ];
 
@@ -145,6 +164,18 @@ function Settings() {
                         onTest={handleTestCredential}
                     />
                 );
+            case 'site':
+                return (
+                    <SiteSettingsSection
+                        config={siteConfig}
+                        sources={siteConfigSources}
+                        loading={siteConfigLoading}
+                        saved={siteConfigSaved}
+                        onChange={handleSiteConfigChange}
+                        onSave={handleSaveSiteConfig}
+                        onReset={handleResetSiteConfig}
+                    />
+                );
             default:
                 return (
                     <AISettingsSection
@@ -183,3 +214,4 @@ function Settings() {
 }
 
 export default Settings;
+

@@ -46,7 +46,7 @@ export const buildRequest = async (path, options = {}) => {
 export const getAccessToken = async () => {
     if (getTokenFn) {
         try {
-            return await getTokenFn(API_RESOURCE)
+            return await getTokenFn(API_URL)
         } catch (error) {
             console.error('Failed to get access token:', error)
         }

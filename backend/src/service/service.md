@@ -21,11 +21,15 @@
 
 ## 安全架构
 
-> **重要**：主进程（API 进程）**不再直接执行**用户策略代码。
-> 所有 `exec/compile` 操作都在隔离的 Worker 进程中进行。
+> [!CAUTION]
+> **策略代码最终仍在主进程执行**。Worker 进程仅用于**验证阶段**（检测危险模式、资源限制等）。
+> 由于 Python 类对象无法跨进程序列化，验证通过后策略代码会在主进程重新执行。
+> 
+> **此架构仅适用于受信任的策略代码**。公网/多用户场景需要额外的容器隔离层。
+> 详见 [docs/SECURITY.md](../../../docs/SECURITY.md)
 
-- 启用方式：`WORKER_POOL_ENABLED=true`（默认启用）
-- 禁用方式：`WORKER_POOL_ENABLED=false`（仅用于开发/测试）
+- 验证隔离：`WORKER_POOL_ENABLED=true`（默认启用）- 在 Worker 进程验证代码安全性
+- 跳过验证：`WORKER_POOL_ENABLED=false`（仅用于开发/测试 - **不推荐**）
 
 ## 非功能性要求（Non-Functional）
 - 解耦：服务层通过清晰接口调用 DB/适配层，避免直接依赖路由细节。

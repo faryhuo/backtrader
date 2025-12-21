@@ -43,6 +43,43 @@ FastAPI 路由与接口层目录，集中维护 HTTP/WebSocket API。
 - 安全：在路由层做鉴权与权限检查，避免未授权访问。
 - 可维护性：路由只做编排，不直接操作 DB 或外部 broker。
 
+## 编码规范（Tech Requirements）
+
+### 类型注解
+- 所有路由函数必须使用 Python 类型注解（Type Hints）。
+- 请求体使用 Pydantic 模型定义，确保自动验证与文档生成。
+- 返回值类型必须明确标注，推荐使用 `Response` 或具体 Pydantic 模型。
+
+### 请求验证
+- 使用 Pydantic 模型进行请求体验证（`Body`, `Query`, `Path`）。
+- 路径参数和查询参数使用 FastAPI 的类型注解自动验证。
+- 复杂验证逻辑使用 Pydantic 的 `validator` 或 `field_validator`。
+
+### 响应格式
+- 统一响应结构：`{"success": bool, "data": any, "error": str | null}`。
+- 错误响应使用 `HTTPException`，包含明确的 `status_code` 和 `detail`。
+- 分页响应使用统一格式：`{"items": [], "total": int, "page": int, "page_size": int}`。
+
+### 异常处理
+- 路由层异常由全局异常处理器捕获（配置于 `backend/api.py`）。
+- 业务异常使用 `backend/src/utils/exceptions.py` 中的自定义异常类。
+- 禁止在路由中暴露内部错误堆栈，生产环境返回通用错误信息。
+
+### 日志规范
+- 使用 `backend/src/utils/logger.py` 提供的 logger。
+- 记录关键请求信息：端点、用户、耗时、状态码。
+- 敏感信息（密码、token、API Key）禁止明文记录。
+
+### 安全要求
+- 需要认证的端点使用 `Depends(get_current_user)` 依赖注入。
+- 敏感操作（删除、修改配置）需额外权限检查。
+- 用户输入必须验证和清理，防止注入攻击。
+
+### 异步编程
+- 路由函数使用 `async def` 定义，充分利用 FastAPI 异步能力。
+- 调用服务层时使用 `await`，避免阻塞事件循环。
+- 长耗时操作使用后台任务（`BackgroundTasks`）或 Worker Pool。
+
 ## 约定与规范
 - 新路由文件命名为 `{feature}_routes.py`，对外暴露 `router`。
 - 路由注册统一在 `backend/api.py` 完成（该文件负责 `include_router(...)` 与 CORS/异常处理配置）。

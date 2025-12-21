@@ -59,6 +59,19 @@ class UserSettingsModel(Base):
     http_proxy = Column(String(500), nullable=True)
     https_proxy = Column(String(500), nullable=True)
 
+    # Site Configuration (Landing Page)
+    # These settings control the content displayed on the landing page
+    # Values here take precedence over .env file settings
+    site_title = Column(String(255), nullable=True)
+    site_description = Column(String(500), nullable=True)
+    site_docs_url = Column(String(500), nullable=True)
+    site_github_url = Column(String(500), nullable=True)
+    site_twitter_url = Column(String(500), nullable=True)
+    site_email = Column(String(255), nullable=True)
+    site_stats_strategies = Column(String(50), nullable=True)
+    site_stats_backtests = Column(String(50), nullable=True)
+    site_stats_users = Column(String(50), nullable=True)
+
     # CCXT Exchange Credentials (JSON field for flexible structure)
     # Structure: {
     #   "binance": {

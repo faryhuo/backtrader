@@ -84,8 +84,16 @@ def load_user_strategy(name: str):
     """
     Load and compile a user strategy from file.
     
-    Uses isolated subprocess sandbox by default for security.
-    Falls back to soft sandbox if SANDBOX_MODE=soft is set.
+    Security Model:
+        - Subprocess mode (default): Code is first validated in an isolated subprocess
+          with resource limits and blocked dangerous patterns. After validation,
+          the code is RE-EXECUTED in the main process to obtain the class object.
+        - Soft mode: Code executes directly in main process with minimal restrictions.
+    
+    IMPORTANT: Both modes ultimately execute user code in the main process.
+    This is suitable ONLY for trusted strategy code. For untrusted code in
+    multi-tenant deployments, use container-level isolation.
+    See docs/SECURITY.md for threat model and known bypass techniques.
     
     Args:
         name: Strategy name (without .py extension)
@@ -141,8 +149,10 @@ def load_user_strategy(name: str):
             if not strategy_class_name:
                 raise StrategyLoadError("UserStrategy class not found in strategy file")
             
-            # Strategy validated in subprocess, now execute in soft sandbox
-            # This is safe because we've already validated the code
+            # WARNING: Strategy execution occurs in main process after subprocess validation.
+            # Subprocess validation catches basic threats (blocked imports, dangerous builtins),
+            # but cannot prevent all attacks (object graph traversal, pandas file I/O, etc.)
+            # This is ONLY suitable for trusted strategy code. See docs/SECURITY.md for details.
             module_globals = execute_strategy_code(
                 source,
                 module_name=f"user_strategy_{name}",
