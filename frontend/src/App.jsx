@@ -13,6 +13,7 @@ import WalkForward from './pages/WalkForward'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
 import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
+import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
 import TaskCenter from './pages/TaskCenter'
@@ -76,6 +77,7 @@ function AppContent() {
                         <Route path="walkforward" element={<WalkForward />} />
                         <Route path="portfolio" element={<PortfolioBacktest />} />
                         <Route path="live" element={<LiveTradingDashboard />} />
+                        <Route path="data_management" element={<DataManagement />} />
                         <Route path="tasks" element={<TaskCenter />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>

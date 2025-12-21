@@ -45,15 +45,24 @@
 
 ### 数据源与缓存
 - [x] 市场数据与标的元数据缓存到数据库（减少重复拉取）：`backend/src/db/datasource.py` + `backend/src/db/models.py`
+- [x] 数据缓存管理（统计/预热/清理）：`backend/src/db/storage/data_cache.py` + `backend/src/routes/market_data_routes.py`
+- [x] OHLCV 重采样（1m→5m→1h→1d）：`backend/src/db/storage/resampler.py`
 
 ---
 
 ## 部分完成（需要补齐）
 
-### [~] 数据管理与预热
-现状：数据会被自动缓存到 DB；但缺少“可视化的缓存状态/清理/预热/重采样”的管理能力。
+### [~] 数据管理前端入口
+现状：数据管理后端 API 已完成；缺少前端可视化入口。
 
-缺口：需要补齐管理端点与前端入口（例如 DataSource 页补一个缓存面板）。
+缺口：需要在 DataSource 页面补一个缓存面板，调用 `/api/data/cache/*` 接口。
+
+### [~] Live 风控配置已存在，但缺少统一执行护栏
+现状：配置层已经有 `risk_management`（如事件订阅里也包含 `risk_alert`）；前端也已有 Live 仪表盘与“风控”文案入口。
+
+缺口：需要在 live 下单链路里形成“统一可插拔的风控护栏”，并把触发事件通过 WebSocket 回传给前端。
+
+参考落点：`backend/src/utils/config_loader.py` + `backend/src/service/live_engine.py` + `frontend/src/pages/LiveTradingDashboard.jsx`
 
 ---
 
@@ -61,23 +70,33 @@
 
 ### P0（建议先做：安全性与可运营性）
 
-#### [ ] 风控模块（Live 风控护栏）
+#### [~] 风控模块（Live 风控护栏）
 目标：把“能跑”升级为“可安全上线”。
 
 验收标准：
 - 在 `paper`/`live` 模式下均可配置：最大仓位、单笔最大亏损、日内最大亏损、最大回撤阈值、交易时间窗口。
-- 触发风控时：阻止下单/强平/停止会话（可配置），并通过 WebSocket 推送事件。
+- 触发风控时：阻止下单/强平/停止会话（可配置），并通过 WebSocket 推送事件（建议 event type：`risk_alert`）。
 - 前端在 `frontend/src/pages/LiveTradingDashboard.jsx` 展示风控状态与告警历史。
 
-落点建议：`backend/src/service/risk_manager.py`（新增）+ `backend/src/service/live_engine.py` 集成。
+落点建议：`backend/src/service/risk_manager.py`（新增）+ `backend/src/service/live_engine.py` 集成；配置读取沿用 `backend/src/utils/config_loader.py`。
 
-#### [ ] 任务中心（后台任务统一管理）
+#### [ ] 策略执行隔离升级（面向多用户/高风险部署）
+目标：降低策略代码对主进程/主机的攻击面（与 `docs/SECURITY.md` 的威胁模型对齐）。
+
+验收标准：
+- Backtest/Walk-Forward/Live（至少 Backtest）支持在独立 worker 进程/容器中运行，主进程只负责调度与结果入库。
+- worker 默认禁网（或等效策略）+ 策略目录只读挂载；结果通过消息/文件回传。
+- 失败可观测：可定位到具体任务、策略版本与 trace id。
+
+备注：这是 P2 多租户前的前置地基，先做最小闭环即可。
+
+#### [x] 任务中心（后台任务统一管理）
 验收标准：
 - 统一管理：回测 / 组合回测 / Walk-Forward / 深度分析等后台任务（状态、进度、耗时、失败原因）。
 - 支持：取消/重试/并发上限；WebSocket 推送任务事件；前端提供任务列表与详情页。
 - 任务输出可追踪到对应的历史记录（backtest/portfolio/walkforward id）。
 
-#### [ ] 统一错误结构与可观测性基础
+#### [x] 统一错误结构与可观测性基础
 验收标准：
 - 后端统一错误响应结构（code/message/details/request_id），并对关键路径打点日志。
 - 为回测/实盘/优化提供一致的 trace id，便于排障。
@@ -90,10 +109,12 @@
 - 支持下载与（可选）生成分享链接；报告包含关键指标、图表截图/矢量图、参数与环境信息（可复现）。
 - 报告生成作为后台任务运行，可被缓存与再次查看。
 
-#### [ ] 数据管理：预热/清理/重采样
+#### [x] 数据管理：预热/清理/重采样（已完成）
 验收标准：
 - 增加数据预热接口（批量拉取并入库），提供缓存命中率/最近更新时间。
 - 支持 OHLCV 重采样（如 1m→5m→1h→1d），明确数据一致性策略。
+
+
 
 #### [ ] 定时任务调度（回测/报告）
 验收标准：
@@ -115,4 +136,4 @@
 - [ ] 性能基准：回测耗时、数据加载耗时、并发会话上限与压测脚本。
 - [ ] 文档：API 示例、常见故障排查、生产部署 checklist（与 `SECURITY.md` 对齐）。
 
-*最后更新时间：2025-12-20*
+*最后更新时间：2025-12-21*

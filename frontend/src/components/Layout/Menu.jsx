@@ -8,6 +8,7 @@ import {
     ExperimentOutlined,
     PieChartOutlined,
     ThunderboltOutlined,
+    CloudServerOutlined,
     UnorderedListOutlined,
     SettingOutlined,
     MenuFoldOutlined,
@@ -93,6 +94,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><ThunderboltOutlined /></span>
                     {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                </Link>
+                <Link
+                    to="/data_management"
+                    className={getNavClass('/data_management')}
+                    title={t('nav.data_management', 'Data Management')}
+                >
+                    <span className="icon"><CloudServerOutlined /></span>
+                    {!collapsed && <span>{t('nav.data_management', 'Data Management')}</span>}
                 </Link>
                 <Link
                     to="/tasks"

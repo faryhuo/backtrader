@@ -1,5 +1,5 @@
 /**
- * Market Data API - ticker info and prices
+ * Market Data API - ticker info, prices, cache management, and resampling
  */
 import { buildRequest, parseResponse } from './apiCore'
 
@@ -29,5 +29,72 @@ export const marketDataApi = {
         });
         const res = await buildRequest(`/ticker/${encodeURIComponent(ticker)}/prices?${params}`);
         return await parseResponse(res);
+    },
+
+    // ========== Cache Management APIs ==========
+
+    async getCacheStats() {
+        const res = await buildRequest('/cache/stats');
+        return await parseResponse(res);
+    },
+
+    async getCachedTickers() {
+        const res = await buildRequest('/cache/tickers');
+        return await parseResponse(res);
+    },
+
+    async getTickerCacheInfo(ticker) {
+        const res = await buildRequest(`/cache/${encodeURIComponent(ticker)}`);
+        return await parseResponse(res);
+    },
+
+    async warmupCache(params) {
+        const res = await buildRequest('/cache/warmup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return await parseResponse(res);
+    },
+
+    async cleanupCache(params) {
+        const searchParams = new URLSearchParams();
+        if (params.before_date) searchParams.set('before_date', params.before_date);
+        if (params.tickers) searchParams.set('tickers', params.tickers);
+        if (params.older_than_days) searchParams.set('older_than_days', params.older_than_days);
+
+        const res = await buildRequest(`/cache/cleanup?${searchParams}`, {
+            method: 'DELETE'
+        });
+        return await parseResponse(res);
+    },
+
+    async deleteTickerCache(ticker) {
+        const res = await buildRequest(`/cache/${encodeURIComponent(ticker)}`, {
+            method: 'DELETE'
+        });
+        return await parseResponse(res);
+    },
+
+    // ========== Resample APIs ==========
+
+    async getSupportedTimeframes() {
+        const res = await buildRequest('/resample/timeframes');
+        return await parseResponse(res);
+    },
+
+    async getResampleTargets(sourceTimeframe) {
+        const res = await buildRequest(`/resample/targets/${encodeURIComponent(sourceTimeframe)}`);
+        return await parseResponse(res);
+    },
+
+    async resampleData(params) {
+        const res = await buildRequest('/resample', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return await parseResponse(res);
     }
 }
+

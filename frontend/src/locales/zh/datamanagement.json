@@ -1,0 +1,83 @@
+{
+    "title": "数据管理",
+    "description": "管理市场数据缓存、预热和重采样",
+    "stats": {
+        "title": "缓存统计",
+        "total_tickers": "标的数量",
+        "total_records": "总数据条数",
+        "cache_hit_rate": "缓存命中率",
+        "last_updated": "最近更新时间",
+        "date_range": "日期范围",
+        "loading": "正在加载缓存统计..."
+    },
+    "warmup": {
+        "title": "数据预热",
+        "description": "批量获取并缓存多个标的的市场数据",
+        "tickers_label": "标的代码",
+        "tickers_placeholder": "输入标的代码，用逗号分隔（如 AAPL, MSFT, GOOGL）",
+        "start_date": "开始日期",
+        "end_date": "结束日期",
+        "submit": "开始预热",
+        "loading": "正在预热数据...",
+        "success": "预热完成",
+        "failed": "预热失败"
+    },
+    "resample": {
+        "title": "OHLCV 重采样",
+        "description": "将低频数据转换为高频数据",
+        "ticker_label": "标的代码",
+        "start_date": "开始日期",
+        "end_date": "结束日期",
+        "target_timeframe": "目标周期",
+        "include_incomplete": "包含不完整区间",
+        "submit": "重采样数据",
+        "loading": "正在重采样...",
+        "success": "重采样完成",
+        "failed": "重采样失败",
+        "result_count": "生成了 {{count}} 条数据",
+        "strategy": {
+            "title": "聚合规则",
+            "open": "开盘价：取区间首条",
+            "high": "最高价：取区间最大值",
+            "low": "最低价：取区间最小值",
+            "close": "收盘价：取区间末条",
+            "volume": "成交量：累加计算",
+            "boundary": "时间戳对齐至周期边界"
+        }
+    },
+    "cleanup": {
+        "title": "缓存清理",
+        "description": "删除旧的或不需要的缓存数据",
+        "before_date": "删除此日期之前的数据",
+        "older_than_days": "删除超过（天）的数据",
+        "tickers_filter": "按标的筛选（可选）",
+        "submit": "清理缓存",
+        "confirm_title": "确认清理",
+        "confirm_message": "这将永久删除缓存数据，是否继续？",
+        "success": "清理完成：删除了 {{count}} 条记录",
+        "failed": "清理失败"
+    },
+    "cached_data": {
+        "title": "已缓存数据",
+        "refresh": "刷新",
+        "ticker": "标的",
+        "records": "记录数",
+        "date_range": "日期范围",
+        "last_updated": "最近更新",
+        "actions": "操作",
+        "delete": "删除",
+        "delete_confirm": "确定删除 {{ticker}} 的所有缓存数据？",
+        "delete_success": "已删除 {{ticker}} 的缓存",
+        "empty": "暂无缓存数据"
+    },
+    "timeframes": {
+        "1m": "1 分钟",
+        "5m": "5 分钟",
+        "15m": "15 分钟",
+        "30m": "30 分钟",
+        "1h": "1 小时",
+        "4h": "4 小时",
+        "1d": "1 天",
+        "1w": "1 周"
+    }
+}

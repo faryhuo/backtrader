@@ -1,0 +1,83 @@
+{
+    "title": "Data Management",
+    "description": "Manage market data cache, warmup, and resampling",
+    "stats": {
+        "title": "Cache Statistics",
+        "total_tickers": "Total Tickers",
+        "total_records": "Total Records",
+        "cache_hit_rate": "Cache Hit Rate",
+        "last_updated": "Last Updated",
+        "date_range": "Date Range",
+        "loading": "Loading cache statistics..."
+    },
+    "warmup": {
+        "title": "Data Warmup",
+        "description": "Batch fetch and cache market data for multiple tickers",
+        "tickers_label": "Ticker Symbols",
+        "tickers_placeholder": "Enter tickers separated by commas (e.g., AAPL, MSFT, GOOGL)",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "submit": "Start Warmup",
+        "loading": "Warming up data...",
+        "success": "Warmup completed successfully",
+        "failed": "Warmup failed"
+    },
+    "resample": {
+        "title": "OHLCV Resampling",
+        "description": "Convert data from lower to higher timeframes",
+        "ticker_label": "Ticker Symbol",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "target_timeframe": "Target Timeframe",
+        "include_incomplete": "Include Incomplete Intervals",
+        "submit": "Resample Data",
+        "loading": "Resampling...",
+        "success": "Resampling completed",
+        "failed": "Resampling failed",
+        "result_count": "{{count}} bars generated",
+        "strategy": {
+            "title": "Aggregation Rules",
+            "open": "Open: First value in interval",
+            "high": "High: Maximum value in interval",
+            "low": "Low: Minimum value in interval",
+            "close": "Close: Last value in interval",
+            "volume": "Volume: Sum of all values",
+            "boundary": "Timestamps aligned to interval boundaries"
+        }
+    },
+    "cleanup": {
+        "title": "Cache Cleanup",
+        "description": "Remove old or unwanted cached data",
+        "before_date": "Delete Before Date",
+        "older_than_days": "Delete Older Than (Days)",
+        "tickers_filter": "Filter by Tickers (optional)",
+        "submit": "Cleanup Cache",
+        "confirm_title": "Confirm Cleanup",
+        "confirm_message": "This will permanently delete cached data. Continue?",
+        "success": "Cleanup completed: {{count}} records deleted",
+        "failed": "Cleanup failed"
+    },
+    "cached_data": {
+        "title": "Cached Data",
+        "refresh": "Refresh",
+        "ticker": "Ticker",
+        "records": "Records",
+        "date_range": "Date Range",
+        "last_updated": "Last Updated",
+        "actions": "Actions",
+        "delete": "Delete",
+        "delete_confirm": "Delete all cached data for {{ticker}}?",
+        "delete_success": "Cache for {{ticker}} deleted",
+        "empty": "No cached data found"
+    },
+    "timeframes": {
+        "1m": "1 Minute",
+        "5m": "5 Minutes",
+        "15m": "15 Minutes",
+        "30m": "30 Minutes",
+        "1h": "1 Hour",
+        "4h": "4 Hours",
+        "1d": "1 Day",
+        "1w": "1 Week"
+    }
+}
