@@ -24,16 +24,40 @@
 }
 
 .code-viewer-container.expanded {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    background: #0d1117;
+}
+
+/* Fullscreen overlay for Portal mode */
+.code-viewer-fullscreen-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
-    border-radius: 0;
-    border: none;
-    margin: 0;
-    background: #0d1117;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.code-viewer-fullscreen-overlay .code-viewer-container.expanded {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* Header */

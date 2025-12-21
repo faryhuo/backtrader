@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, message, Tag } from 'antd';
 import { CopyOutlined, CheckOutlined, ExpandOutlined, CompressOutlined, CodeOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
@@ -48,8 +49,9 @@ function CodeViewer({
     // Calculate line count for display
     const lineCount = code.split('\n').length;
 
-    return (
-        <div className={`code-viewer-container ${isExpanded ? 'expanded' : ''}`}>
+    // Content that is shared between normal and expanded mode
+    const renderContent = (expanded) => (
+        <>
             {/* Header */}
             <div className="code-viewer-header">
                 <div className="code-viewer-title">
@@ -62,10 +64,10 @@ function CodeViewer({
                 <div className="code-viewer-actions">
                     <Button
                         type="text"
-                        icon={isExpanded ? <CompressOutlined /> : <ExpandOutlined />}
+                        icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
                         onClick={toggleExpand}
                         className="code-action-btn"
-                        title={isExpanded ? t('common.code_viewer.collapse', 'Collapse') : t('common.code_viewer.expand', 'Expand')}
+                        title={expanded ? t('common.code_viewer.collapse', 'Collapse') : t('common.code_viewer.expand', 'Expand')}
                     />
                     <Button
                         type="text"
@@ -99,7 +101,7 @@ function CodeViewer({
             {/* Code Editor */}
             <div
                 className="code-viewer-editor"
-                style={{ height: isExpanded ? '80vh' : `${maxHeight}px` }}
+                style={{ height: expanded ? 'calc(100vh - 120px)' : `${maxHeight}px` }}
             >
                 <Editor
                     height="100%"
@@ -109,7 +111,7 @@ function CodeViewer({
                     onMount={handleEditorDidMount}
                     options={{
                         readOnly: true,
-                        minimap: { enabled: isExpanded },
+                        minimap: { enabled: expanded },
                         scrollBeyondLastLine: false,
                         fontSize: 13,
                         lineHeight: 20,
@@ -140,8 +142,8 @@ function CodeViewer({
                 />
             </div>
 
-            {/* Footer */}
-            {!isExpanded && (
+            {/* Footer - only show when not expanded */}
+            {!expanded && (
                 <div className="code-viewer-footer">
                     <Button
                         type="text"
@@ -152,9 +154,35 @@ function CodeViewer({
                     </Button>
                 </div>
             )}
-        </div>
+        </>
+    );
+
+    // Render expanded view using Portal to escape stacking context
+    const expandedPortal = isExpanded ? createPortal(
+        <div className="code-viewer-fullscreen-overlay" onClick={toggleExpand}>
+            <div
+                className="code-viewer-container expanded"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {renderContent(true)}
+            </div>
+        </div>,
+        document.body
+    ) : null;
+
+    return (
+        <>
+            {/* Normal inline view */}
+            <div className="code-viewer-container">
+                {renderContent(false)}
+            </div>
+
+            {/* Expanded fullscreen view via Portal */}
+            {expandedPortal}
+        </>
     );
 }
 
 export default CodeViewer;
+
 
