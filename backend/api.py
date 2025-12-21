@@ -18,6 +18,7 @@ from src.routes.settings_routes import router as settings_router
 from src.routes.walkforward_routes import router as walkforward_router
 from src.routes.websocket_routes import router as websocket_router
 from src.routes.task_routes import router as task_router
+from src.routes.site_config_routes import router as site_config_router
 from src.routes.frontend_routes import mount_frontend
 from src.utils.exception_handlers import create_exception_handlers
 
@@ -53,6 +54,7 @@ app.include_router(settings_router, prefix="/api")
 app.include_router(walkforward_router)  # Walk-forward routes (includes /api prefix)
 app.include_router(websocket_router)  # WebSocket routes (no prefix)
 app.include_router(task_router)  # Task routes (includes /api/tasks prefix)
+app.include_router(site_config_router, prefix="/api")  # Site config (public, no auth)
 mount_frontend(app)
 
 __all__ = ["app"]

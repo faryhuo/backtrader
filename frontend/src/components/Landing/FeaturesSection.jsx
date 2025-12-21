@@ -1,0 +1,133 @@
+import { useTranslation } from 'react-i18next';
+import {
+    LineChart,
+    Brain,
+    Layers,
+    Zap,
+    Shield,
+    GitBranch,
+    BarChart3,
+    Radio
+} from 'lucide-react';
+
+/**
+ * Features section with grid of feature cards
+ */
+export function FeaturesSection() {
+    const { t, i18n } = useTranslation();
+
+    const features = [
+        {
+            icon: LineChart,
+            titleKey: 'landing.features.backtest.title',
+            descriptionKey: 'landing.features.backtest.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: Brain,
+            titleKey: 'landing.features.ai.title',
+            descriptionKey: 'landing.features.ai.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: Layers,
+            titleKey: 'landing.features.portfolio.title',
+            descriptionKey: 'landing.features.portfolio.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: BarChart3,
+            titleKey: 'landing.features.optimization.title',
+            descriptionKey: 'landing.features.optimization.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: Radio,
+            titleKey: 'landing.features.live.title',
+            descriptionKey: 'landing.features.live.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: Zap,
+            titleKey: 'landing.features.realtime.title',
+            descriptionKey: 'landing.features.realtime.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: Shield,
+            titleKey: 'landing.features.security.title',
+            descriptionKey: 'landing.features.security.description',
+            status: i18n.language === 'zh' ? '已上线' : 'Live',
+            statusType: 'live'
+        },
+        {
+            icon: GitBranch,
+            titleKey: 'landing.features.versioning.title',
+            descriptionKey: 'landing.features.versioning.description',
+            status: i18n.language === 'zh' ? '开发中' : 'In Dev',
+            statusType: 'dev'
+        },
+    ];
+
+    return (
+        <section id="features" className="landing-section">
+            {/* Background */}
+            <div className="landing-hero-bg landing-grid-pattern" style={{ opacity: 0.2 }} />
+
+            <div className="landing-container">
+                {/* Section Header */}
+                <div className="landing-section-header">
+                    <span className="landing-section-badge">
+                        {t('landing.features.badge')}
+                    </span>
+                    <h2 className="landing-section-title">
+                        {t('landing.features.title')}
+                    </h2>
+                    <p className="landing-section-description">
+                        {t('landing.features.description')}
+                    </p>
+                </div>
+
+                {/* Features Grid */}
+                <div className="landing-features-grid">
+                    {features.map((feature, index) => {
+                        const Icon = feature.icon;
+                        return (
+                            <div
+                                key={feature.titleKey}
+                                className="landing-feature-card landing-animate-fade-in"
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                                {/* Status Badge */}
+                                <div className={`landing-feature-status landing-feature-status-${feature.statusType}`}>
+                                    {feature.status}
+                                </div>
+
+                                {/* Icon */}
+                                <div className="landing-feature-icon">
+                                    <Icon />
+                                </div>
+
+                                {/* Content */}
+                                <h3 className="landing-feature-title">
+                                    {t(feature.titleKey)}
+                                </h3>
+                                <p className="landing-feature-description">
+                                    {t(feature.descriptionKey)}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export default FeaturesSection;
