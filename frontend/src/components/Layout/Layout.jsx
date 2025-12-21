@@ -19,8 +19,8 @@ function Layout() {
     const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
     const isZh = i18n.language.startsWith('zh');
     const [userInfo, setUserInfo] = useState({
-        email: 'Guest',
-        name: 'Guest',
+        email: null,
+        name: null,
     })
 
     const toggleLanguage = () => {
@@ -33,8 +33,8 @@ function Layout() {
         if (loginEnabled && isAuthenticated) {
             getIdTokenClaims().then((claims) => {
                 setUserInfo({
-                    email: claims?.email || 'User',
-                    name: claims?.name || claims?.email || 'User',
+                    email: claims?.email || null,
+                    name: claims?.name || claims?.email || null,
                     username: claims?.username,
                 })
             }).catch((error) => {
@@ -42,8 +42,8 @@ function Layout() {
             })
         } else {
             setUserInfo({
-                email: 'Guest',
-                name: 'Guest',
+                email: null,
+                name: null,
             })
         }
     }, [isAuthenticated, getIdTokenClaims, loginEnabled])
@@ -62,7 +62,7 @@ function Layout() {
         ? [
             {
                 key: 'profile',
-                label: userInfo?.email || 'User',
+                label: userInfo?.email || t('common.user', 'User'),
                 icon: <UserOutlined />,
                 disabled: true,
             },
@@ -80,7 +80,7 @@ function Layout() {
         : [
             {
                 key: 'profile',
-                label: userInfo?.email || 'Guest',
+                label: userInfo?.email || t('common.guest', 'Guest'),
                 icon: <UserOutlined />,
                 disabled: true,
             },

@@ -40,6 +40,7 @@
   "custom_range": "自定义范围",
   "apply": "应用",
   "price_history": "历史价格",
+  "chart_meta": "{{count}} 根K线 · {{start}} 至 {{end}}",
   "empty_state_hint": "输入股票代码并点击搜索开始",
   "clear_history": "清除历史",
   "add_to_watchlist": "添加到监控列表",
@@ -60,6 +61,7 @@
   "export_chart": "导出图表",
   "export_success": "导出成功",
   "export_failed": "导出失败",
+  "chart_not_found": "未找到图表",
   "ma5": "5日均线",
   "ma10": "10日均线",
   "ma20": "20日均线",
@@ -69,5 +71,9 @@
   "add_stock": "添加股票",
   "remove_stock": "移除",
   "normalized_view": "归一化视图",
-  "absolute_view": "绝对值视图"
+  "absolute_view": "绝对值视图",
+  "errors": {
+    "no_data_found": "在给定参数下未找到数据。",
+    "fetch_failed": "获取数据失败。"
+  }
 }

@@ -34,6 +34,7 @@
   "no_ai_analysis": "暂无AI分析。点击上方按钮生成分析。",
   "ai_analysis_saved": "AI分析已成功保存",
   "ai_analysis_save_error": "保存AI分析失败",
+  "ai_analysis_failed": "执行AI分析失败：{{error}}",
   "type_strategy": "策略回测",
   "type_portfolio": "组合回测",
   "tickers": "代码",

@@ -34,6 +34,7 @@
   "no_ai_analysis": "No AI analysis available. Click the button above to generate one.",
   "ai_analysis_saved": "AI analysis saved successfully",
   "ai_analysis_save_error": "Failed to save AI analysis",
+  "ai_analysis_failed": "Failed to perform AI analysis: {{error}}",
   "type_strategy": "Strategy",
   "type_portfolio": "Portfolio",
   "tickers": "Tickers",
