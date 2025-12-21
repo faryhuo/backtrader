@@ -6,7 +6,7 @@ Provides database operations for saving and retrieving walk-forward analysis res
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
@@ -14,8 +14,10 @@ from sqlalchemy.orm import Session
 from src.config.settings import DATABASE_URL
 from src.db.storage.base import BaseStorage
 from src.db.models import WalkForwardOptimizationModel, init_database
-from src.service.walkforward_optimizer import WalkForwardResult
-from src.service.parameter_analysis import get_parameter_analysis
+
+# Use TYPE_CHECKING to avoid circular import
+if TYPE_CHECKING:
+    from src.service.walkforward_optimizer import WalkForwardResult
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +163,7 @@ class WalkForwardStorage(BaseStorage):
 
     def save_optimization_result(
         self,
-        result: WalkForwardResult,
+        result: "WalkForwardResult",
         user_id: Optional[str] = None,
         db: Optional[Session] = None,
     ) -> WalkForwardOptimizationModel:
@@ -423,6 +425,7 @@ class WalkForwardStorage(BaseStorage):
             
             # Compute parameter analysis on-demand from windows data
             try:
+                from src.service.parameter_analysis import get_parameter_analysis
                 result["parameter_analysis"] = get_parameter_analysis(
                     windows=windows,
                     param_grid=record.param_grid or {},

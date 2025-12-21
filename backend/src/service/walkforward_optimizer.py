@@ -6,6 +6,9 @@ Implements walk-forward analysis with train/validation split for detecting overf
 - Validation on out-of-sample test window
 - Rolling window analysis across entire dataset
 - Overfitting detection metrics
+
+NOTE: All backtests are executed through run_backtest() which uses the Worker Pool
+for isolated execution of user strategy code.
 """
 
 import logging
@@ -14,12 +17,9 @@ from datetime import datetime, timedelta
 from itertools import product
 from typing import Any, Dict, List, Optional, Tuple
 
-import backtrader as bt
 import pandas as pd
 
 from src.config.settings import IMAGES_DIR
-from src.db.storage.market_data import get_bt_feed
-from src.service.backtest_engine import load_user_strategy
 from src.service.parameter_analysis import get_parameter_analysis
 
 logger = logging.getLogger(__name__)
@@ -107,8 +107,8 @@ class WalkForwardOptimizer:
         self.test_period_days = test_period_days
         self.anchored = anchored
 
-        # Load strategy class once
-        self.strategy_cls = load_user_strategy(strategy_name)
+        # Strategy is loaded in worker processes, not here
+        # This ensures user code never runs in the main API process
 
         logger.info(
             f"Initialized WalkForwardOptimizer: {strategy_name} on {ticker} "
@@ -189,6 +189,9 @@ class WalkForwardOptimizer:
         """
         Run a single backtest with given parameters and date range.
 
+        Uses run_backtest() which executes user strategy code in an
+        isolated worker process (when worker pool is enabled).
+
         Args:
             start_date: Backtest start date
             end_date: Backtest end date
@@ -198,39 +201,23 @@ class WalkForwardOptimizer:
             Dictionary of metrics
         """
         try:
-            cerebro = bt.Cerebro()
+            # Import here to avoid circular import
+            from src.service.backtest_engine import run_backtest
 
-            # Add strategy with parameters
-            cerebro.addstrategy(self.strategy_cls, **params)
+            # Run backtest through worker pool (isolated execution)
+            metrics = run_backtest(
+                ticker=self.ticker,
+                start_date=start_date,
+                end_date=end_date,
+                initial_cash=self.initial_cash,
+                commission=self.commission,
+                stake=self.stake,
+                strategy_name=self.strategy_name,
+                params=params,
+            )
 
-            # Add data feed
-            data = get_bt_feed(self.ticker, start_date, end_date)
-            cerebro.adddata(data)
-
-            # Configure broker
-            cerebro.broker.setcash(self.initial_cash)
-            cerebro.broker.setcommission(commission=self.commission)
-            cerebro.addsizer(bt.sizers.FixedSize, stake=self.stake)
-
-            # Add analyzers
-            cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
-            cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
-            cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-            cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
-            cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
-
-            # Run backtest
-            results = cerebro.run()
-            strat = results[0]
-
-            # Extract metrics
-            final_value = cerebro.broker.getvalue()
-            sharpe = strat.analyzers.sharpe.get_analysis().get("sharperatio", None)
-            drawdown = strat.analyzers.drawdown.get_analysis().get("max", {}).get("drawdown", 0.0)
-            returns = strat.analyzers.returns.get_analysis().get("rnorm100", 0.0)
-            sqn = strat.analyzers.sqn.get_analysis().get("sqn", None)
-            trades_analysis = strat.analyzers.trades.get_analysis()
-
+            # Extract and normalize metrics from result
+            trades_analysis = metrics.get("trades", {})
             total_trades = trades_analysis.get("total", {}).get("total", 0)
             won_trades = trades_analysis.get("won", {}).get("total", 0)
             lost_trades = trades_analysis.get("lost", {}).get("total", 0)
@@ -240,21 +227,19 @@ class WalkForwardOptimizer:
             gross_lost = abs(trades_analysis.get("lost", {}).get("pnl", {}).get("total", 0.0))
             profit_factor = gross_won / gross_lost if gross_lost > 0 else 0.0
 
-            metrics = {
+            return {
                 "params": params,
-                "final_value": final_value,
-                "total_return": returns,
-                "sharpe_ratio": sharpe if sharpe is not None else 0.0,
-                "max_drawdown": drawdown,
-                "sqn": sqn if sqn is not None else 0.0,
+                "final_value": metrics.get("final_value", self.initial_cash),
+                "total_return": metrics.get("returns", 0.0),
+                "sharpe_ratio": metrics.get("sharpe") or 0.0,
+                "max_drawdown": metrics.get("drawdown", 0.0),
+                "sqn": metrics.get("sqn") or 0.0,
                 "total_trades": total_trades,
                 "winning_trades": won_trades,
                 "losing_trades": lost_trades,
                 "win_rate": (won_trades / total_trades * 100) if total_trades > 0 else 0.0,
                 "profit_factor": profit_factor,
             }
-
-            return metrics
 
         except Exception as e:
             logger.error(f"Backtest failed for params {params}: {e}")

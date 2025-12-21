@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 from src.db.storage.market_data import get_data, DataLoadError
 from src.service.backtest_engine import (
     run_backtest,
-    load_user_strategy,
     list_strategies,
     StrategyLoadError,
 )
