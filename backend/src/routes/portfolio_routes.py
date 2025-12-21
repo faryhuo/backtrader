@@ -8,6 +8,7 @@ This module provides REST API endpoints for:
 """
 
 import logging
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -19,10 +20,22 @@ from src.service.portfolio_backtest import (
     run_portfolio_backtest,
     PortfolioBacktestError,
 )
-from src.db.portfolio_storage import get_portfolio_storage
+from src.db import get_portfolio_storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
+
+
+def _get_task_storage():
+    """Lazy import to avoid circular dependency."""
+    from src.db.storage.task import get_task_storage
+    return get_task_storage()
+
+
+def _get_task_status():
+    """Lazy import to avoid circular dependency."""
+    from src.db.models.task import TaskStatus
+    return TaskStatus
 
 
 # Request/Response Models
@@ -57,24 +70,50 @@ async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Dep
     - Calculates correlation matrix between assets
     - Provides Markowitz optimization suggestions
     """
+    # Validate inputs first
+    if len(request.tickers) != len(request.weights):
+        raise HTTPException(
+            status_code=400,
+            detail="Number of tickers must match number of weights"
+        )
+    
+    if len(request.tickers) < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one ticker is required"
+        )
+
+    user_id = user.get("sub") if user else None
+    plot_filename = f"portfolio_{uuid.uuid4()}.png"
+    save_path = IMAGES_DIR / plot_filename
+
+    # Create task record
+    task_storage = _get_task_storage()
+    TaskStatus = _get_task_status()
+    
+    tickers_str = ", ".join(request.tickers[:3])
+    if len(request.tickers) > 3:
+        tickers_str += f" +{len(request.tickers) - 3}"
+    task_name = f"Portfolio Backtest: {tickers_str}"
+    
+    task_config = {
+        "tickers": request.tickers,
+        "weights": request.weights,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "initial_cash": request.initial_cash,
+        "strategy_name": request.strategy_name,
+    }
+    task = task_storage.create_task(
+        task_type="portfolio",
+        config=task_config,
+        user_id=user_id,
+        name=task_name,
+    )
+    task_id = task["task_id"]
+
     try:
-        # Validate inputs
-        if len(request.tickers) != len(request.weights):
-            raise HTTPException(
-                status_code=400,
-                detail="Number of tickers must match number of weights"
-            )
-        
-        if len(request.tickers) < 1:
-            raise HTTPException(
-                status_code=400,
-                detail="At least one ticker is required"
-            )
-        
-        # Generate save path for portfolio chart
-        import uuid
-        plot_filename = f"portfolio_{uuid.uuid4()}.png"
-        save_path = IMAGES_DIR / plot_filename
+        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=10)
         
         # Run portfolio backtest
         result = run_portfolio_backtest(
@@ -90,20 +129,43 @@ async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Dep
             save_path=save_path,
         )
         
-        # Save to database (include plot_filename)
-        user_id = user.get("sub") if user else None
-        result["plot_filename"] = plot_filename  # Add plot filename for storage
-        storage = get_portfolio_storage()
-        storage.save_result(result, user_id=user_id)
+        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=80)
         
-        # Add plot URL to result
+        # Save to database - save_result returns the portfolio_id
+        result["plot_filename"] = plot_filename
+        storage = get_portfolio_storage()
+        portfolio_id = storage.save_result(result, user_id=user_id)
+        
+        # Update task to completed with the portfolio_id
+        task_storage.update_status(
+            task_id, TaskStatus.COMPLETED.value,
+            progress=100,
+            result_id=portfolio_id,
+            result_type="portfolio",
+        )
+        
+        # Add plot URL, task_id, and portfolio_id to result
         result["plot_url"] = f"/images/{plot_filename}"
+        result["task_id"] = task_id
+        result["portfolio_id"] = portfolio_id
         
         return result
     
     except PortfolioBacktestError as e:
+        task_storage.update_status(
+            task_id, TaskStatus.FAILED.value,
+            progress=100,
+            error_message=str(e)
+        )
         raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
+        task_storage.update_status(
+            task_id, TaskStatus.FAILED.value,
+            progress=100,
+            error_message=str(e)
+        )
         logger.exception(f"Portfolio backtest failed: {e}")
         raise HTTPException(status_code=500, detail=f"Portfolio backtest failed: {str(e)}")
 

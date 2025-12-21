@@ -20,6 +20,8 @@ import walkforwardEn from './locales/en/walkforward.json';
 import liveEn from './locales/en/live.json';
 import settingsEn from './locales/en/settings.json';
 import portfolioEn from './locales/en/portfolio.json';
+import deepAnalysisEn from './locales/en/deep_analysis.json';
+import landingEn from './locales/en/landing.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -39,6 +41,8 @@ import walkforwardZh from './locales/zh/walkforward.json';
 import liveZh from './locales/zh/live.json';
 import settingsZh from './locales/zh/settings.json';
 import portfolioZh from './locales/zh/portfolio.json';
+import deepAnalysisZh from './locales/zh/deep_analysis.json';
+import landingZh from './locales/zh/landing.json';
 
 const en = {
   app: appEn,
@@ -57,7 +61,9 @@ const en = {
   walkforward: walkforwardEn ?? walkforwardEn,
   live: liveEn,
   settings: settingsEn,
-  portfolio: portfolioEn
+  portfolio: portfolioEn,
+  deep_analysis: deepAnalysisEn,
+  landing: landingEn
 };
 
 const zh = {
@@ -77,7 +83,9 @@ const zh = {
   walkforward: walkforwardZh ?? walkforwardZh,
   live: liveZh,
   settings: settingsZh,
-  portfolio: portfolioZh
+  portfolio: portfolioZh,
+  deep_analysis: deepAnalysisZh,
+  landing: landingZh
 };
 
 i18n

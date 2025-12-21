@@ -114,7 +114,8 @@ async def start_live_trading(
     4. Returns session information
 
     **Permissions:**
-    - Live mode (mode='live') requires LIVE_TRADING_ENABLED=true
+    - Paper mode (mode='paper') is always available
+    - Live mode (mode='live') requires LIVE_TRADING_ENABLED=true in .env
 
     **Rate Limits:**
     - Maximum 5 concurrent sessions per user (Phase 3+)
@@ -125,18 +126,19 @@ async def start_live_trading(
     """
     # Extract user ID for credential lookup
     user_id = user.get("sub") if user else None
-    # Check if live trading is enabled
-    if not LIVE_TRADING_ENABLED:
-        raise HTTPException(
-            status_code=403,
-            detail="Live trading is disabled. Set LIVE_TRADING_ENABLED=true in .env"
-        )
-
-    # Validate mode
+    
+    # Validate mode first
     if request.mode not in ['paper', 'live']:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid mode: '{request.mode}'. Must be 'paper' or 'live'"
+        )
+    
+    # Check if live trading is enabled (only required for 'live' mode, paper mode is always allowed)
+    if request.mode == 'live' and not LIVE_TRADING_ENABLED:
+        raise HTTPException(
+            status_code=403,
+            detail="Live trading is disabled. Set LIVE_TRADING_ENABLED=true in .env to enable real trading."
         )
 
     try:

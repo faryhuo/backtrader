@@ -7,6 +7,8 @@ import { api } from '../../services/api'
 import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
+import StrategyPlot from '../RunStrategy/StrategyPlot'
+import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
@@ -28,6 +30,11 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
     const tradeList = backtest.metrics?.trade_details?.trades || []
 
+    const result = {
+        metrics: backtest.metrics,
+        plot_url: backtest.plot_url
+    }
+
     const handleAIAnalysis = async () => {
         if (!backtest || !backtest.plot_url) {
             return
@@ -36,10 +43,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
         try {
             const data = await performFullStrategyAnalysis({
-                result: {
-                    metrics: backtest.metrics,
-                    plot_url: backtest.plot_url,
-                },
+                result: result,
                 strategyName: backtest.strategy_name,
                 ticker: backtest.ticker,
                 startDate: backtest.start_date,
@@ -132,26 +136,17 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
                     <div style={{ marginTop: 20 }}>
                         <PerformanceOverview
-                            result={{
-                                metrics: backtest.metrics,
-                                plot_url: backtest.plot_url
-                            }}
+                            result={result}
                         />
                     </div>
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab={t('history.tab_chart')} key="chart">
-                    {backtest.plot_url && (
-                        <div style={{ padding: '20px' }}>
-                            <div style={{ textAlign: 'center' }}>
-                                <img
-                                    src={backtest.plot_url}
-                                    alt="Strategy Plot"
-                                    style={{ maxWidth: '100%', height: 'auto' }}
-                                />
-                            </div>
-                        </div>
-                    )}
+                    <div style={{ padding: '20px 0' }}>
+                        <StrategyPlot
+                            result={result}
+                        />
+                    </div>
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab={t('history.tab_trades')} key="trades">
@@ -206,6 +201,10 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                             </div>
                         )}
                     </div>
+                </Tabs.TabPane>
+
+                <Tabs.TabPane tab={t('history.tab_deep_analysis', 'Deep Analysis')} key="deep_analysis">
+                    <DeepAnalysis backtest={backtest} />
                 </Tabs.TabPane>
 
                 {backtest.strategy_code && (

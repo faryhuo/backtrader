@@ -1,5 +1,6 @@
 import logging
 import re
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -12,7 +13,8 @@ import pandas as pd
 
 from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
 from src.config.sandbox_config import get_config as get_sandbox_config
-from src.db.datasource import DataLoadError, get_bt_feed as get_data, get_raw_data_json
+from src.config.worker_config import get_config as get_worker_config
+from src.db.storage.market_data import DataLoadError, get_bt_feed as get_data, get_raw_data_json
 from src.service.isolated_sandbox import (
     IsolatedSandbox,
     SandboxError,
@@ -82,8 +84,16 @@ def load_user_strategy(name: str):
     """
     Load and compile a user strategy from file.
     
-    Uses isolated subprocess sandbox by default for security.
-    Falls back to soft sandbox if SANDBOX_MODE=soft is set.
+    Security Model:
+        - Subprocess mode (default): Code is first validated in an isolated subprocess
+          with resource limits and blocked dangerous patterns. After validation,
+          the code is RE-EXECUTED in the main process to obtain the class object.
+        - Soft mode: Code executes directly in main process with minimal restrictions.
+    
+    IMPORTANT: Both modes ultimately execute user code in the main process.
+    This is suitable ONLY for trusted strategy code. For untrusted code in
+    multi-tenant deployments, use container-level isolation.
+    See docs/SECURITY.md for threat model and known bypass techniques.
     
     Args:
         name: Strategy name (without .py extension)
@@ -139,8 +149,10 @@ def load_user_strategy(name: str):
             if not strategy_class_name:
                 raise StrategyLoadError("UserStrategy class not found in strategy file")
             
-            # Strategy validated in subprocess, now execute in soft sandbox
-            # This is safe because we've already validated the code
+            # WARNING: Strategy execution occurs in main process after subprocess validation.
+            # Subprocess validation catches basic threats (blocked imports, dangerous builtins),
+            # but cannot prevent all attacks (object graph traversal, pandas file I/O, etc.)
+            # This is ONLY suitable for trusted strategy code. See docs/SECURITY.md for details.
             module_globals = execute_strategy_code(
                 source,
                 module_name=f"user_strategy_{name}",
@@ -166,54 +178,95 @@ def load_user_strategy(name: str):
 
 def extract_strategy_params(name: str) -> list:
     """
-    Extract parameters from a strategy file.
+    Extract parameters from a strategy file safely.
+    
+    Uses IsolatedSandbox to extract parameters in a subprocess,
+    so user code never executes in the main API process.
+    
     Returns a list of dicts with name, value, and type info for each parameter.
     """
-    strategy_cls = load_user_strategy(name)
+    path = get_strategy_path(name)
+    if not path.exists():
+        return []
     
-    # Get the params from the strategy class
-    # Backtrader stores params in a metaclass where each param is an attribute
-    params_cls = getattr(strategy_cls, 'params', None)
+    source = path.read_text(encoding="utf-8")
+    if source.startswith("\ufeff"):
+        source = source.lstrip("\ufeff")
     
-    if params_cls is None:
+    # Use IsolatedSandbox to safely extract strategy params
+    # This runs the code in a subprocess, not in the API process
+    sandbox_config = get_sandbox_config()
+    
+    # Use subprocess mode for isolated execution
+    if sandbox_config.mode == "subprocess":
+        try:
+            sandbox = IsolatedSandbox()
+            result = sandbox.execute_strategy(
+                source=source,
+                module_name=f"user_strategy_{name}",
+                filename=str(path),
+            )
+            
+            # Extract params from sandbox result
+            strategy_params = result.get("strategy_params", [])
+            if strategy_params:
+                return strategy_params
+        except (SandboxError, SandboxExecutionError, SandboxTimeoutError) as e:
+            logger.warning(f"Isolated sandbox param extraction failed: {e}")
+            # Fall through to safe AST-based extraction
+    
+    # Fallback: Use static AST analysis (no code execution)
+    return _extract_params_from_source_ast(source)
+
+
+def _extract_params_from_source_ast(source: str) -> list:
+    """
+    Extract strategy parameters using AST parsing (no code execution).
+    
+    This is a safe fallback that parses the source code without executing it.
+    It looks for the `params` tuple in the UserStrategy class.
+    """
+    import ast
+    
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
         return []
     
     params_list = []
     
-    # Backtrader's params metaclass stores param names in _getdefaults() or as direct attributes
-    # We need to iterate through non-private attributes that are not methods
-    if hasattr(params_cls, '_getdefaults'):
-        # Get the list of param names from _getdefaults
-        try:
-            defaults = params_cls._getdefaults()
-            if defaults:
-                for param_name in defaults:
-                    param_value = getattr(params_cls, param_name, None)
-                    if param_value is not None:
-                        params_list.append({
-                            "name": param_name,
-                            "value": param_value,
-                            "type": type(param_value).__name__
-                        })
-        except Exception:
-            pass
-    
-    # Fallback: iterate through attributes directly
-    if not params_list:
-        for attr_name in dir(params_cls):
-            if attr_name.startswith('_'):
-                continue
-            attr_value = getattr(params_cls, attr_name, None)
-            # Skip methods and callables
-            if callable(attr_value):
-                continue
-            # Check if it's a simple value type (int, float, str, bool)
-            if isinstance(attr_value, (int, float, str, bool)):
-                params_list.append({
-                    "name": attr_name,
-                    "value": attr_value,
-                    "type": type(attr_value).__name__
-                })
+    for node in ast.walk(tree):
+        # Look for UserStrategy class
+        if isinstance(node, ast.ClassDef) and node.name == "UserStrategy":
+            for item in node.body:
+                # Look for params = (...)
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name) and target.id == "params":
+                            if isinstance(item.value, ast.Tuple):
+                                # Parse tuple of (name, value) pairs
+                                for elt in item.value.elts:
+                                    if isinstance(elt, ast.Tuple) and len(elt.elts) >= 2:
+                                        name_node, value_node = elt.elts[0], elt.elts[1]
+                                        if isinstance(name_node, ast.Constant):
+                                            param_name = name_node.value
+                                            param_value = None
+                                            param_type = "unknown"
+                                            
+                                            if isinstance(value_node, ast.Constant):
+                                                param_value = value_node.value
+                                                param_type = type(param_value).__name__
+                                            elif isinstance(value_node, ast.UnaryOp) and isinstance(value_node.op, ast.USub):
+                                                if isinstance(value_node.operand, ast.Constant):
+                                                    param_value = -value_node.operand.value
+                                                    param_type = type(param_value).__name__
+                                            
+                                            if param_name:
+                                                params_list.append({
+                                                    "name": param_name,
+                                                    "value": param_value,
+                                                    "type": param_type
+                                                })
     
     return params_list
 
@@ -309,17 +362,156 @@ def run_backtest(
     strategy_name=None,
     save_path: Optional[Path] = None,
     params: Optional[dict] = None,
+    use_worker: Optional[bool] = None,
 ):
+    """
+    Run a backtest with the specified parameters.
+    
+    When worker pool is enabled (default), strategy code executes in an
+    isolated worker process for security. The API process never executes
+    user strategy code.
+    
+    Args:
+        ticker: Stock/crypto ticker symbol
+        start_date: Backtest start date (YYYY-MM-DD)
+        end_date: Backtest end date (YYYY-MM-DD)
+        initial_cash: Starting cash amount
+        commission: Commission rate per trade
+        stake: Position size per trade
+        strategy_name: Name of strategy file (without .py)
+        save_path: Optional path to save chart image
+        params: Optional strategy parameters
+        use_worker: Force worker pool on/off (None = use config)
+    
+    Returns:
+        dict: Backtest metrics including final_value, sharpe, drawdown, etc.
+    
+    Raises:
+        StrategyLoadError: If strategy cannot be loaded
+    """
     if not strategy_name:
         available = list_strategies()
         if not available:
             raise StrategyLoadError("No strategies available; please add one in /resources/strategy")
         strategy_name = available[0]
+    
+    # Determine whether to use worker pool
+    worker_config = get_worker_config()
+    should_use_worker = use_worker if use_worker is not None else worker_config.enabled
+    
+    if should_use_worker:
+        return _run_backtest_worker(
+            ticker=ticker,
+            start_date=start_date,
+            end_date=end_date,
+            initial_cash=initial_cash,
+            commission=commission,
+            stake=stake,
+            strategy_name=strategy_name,
+            save_path=save_path,
+            params=params,
+        )
+    else:
+        # Legacy in-process execution (not secure for untrusted code!)
+        logger.warning(
+            "Running backtest in-process (worker pool disabled). "
+            "This is NOT secure for untrusted strategy code!"
+        )
+        return _run_backtest_legacy(
+            ticker=ticker,
+            start_date=start_date,
+            end_date=end_date,
+            initial_cash=initial_cash,
+            commission=commission,
+            stake=stake,
+            strategy_name=strategy_name,
+            save_path=save_path,
+            params=params,
+        )
 
+
+def _run_backtest_worker(
+    ticker: str,
+    start_date: str,
+    end_date: str,
+    initial_cash: float,
+    commission: float,
+    stake: int,
+    strategy_name: str,
+    save_path: Optional[Path],
+    params: Optional[dict],
+) -> dict:
+    """
+    Run backtest in isolated worker process (secure).
+    
+    The API process NEVER executes user strategy code - all execution
+    happens in the worker process.
+    """
+    from src.service.worker.task_models import BacktestTask, TaskStatus
+    from src.service.worker.worker_pool import get_worker_pool, WorkerPoolError, WorkerTimeoutError
+    
+    # Create task
+    task = BacktestTask(
+        task_id=str(uuid.uuid4()),
+        strategy_name=strategy_name,
+        ticker=ticker,
+        start_date=start_date,
+        end_date=end_date,
+        initial_cash=initial_cash,
+        commission=commission,
+        stake=stake,
+        params=params,
+        generate_chart=save_path is not None,
+        chart_save_path=str(save_path) if save_path else None,
+    )
+    
+    # Submit to worker pool and wait (synchronous)
+    pool = get_worker_pool()
+    
+    try:
+        result = pool.submit_backtest_sync(task)
+    except WorkerTimeoutError as e:
+        raise StrategyLoadError(f"Backtest timed out: {e}") from e
+    except WorkerPoolError as e:
+        raise StrategyLoadError(f"Worker pool error: {e}") from e
+    
+    # Check result status
+    if result.status != TaskStatus.COMPLETED:
+        error_msg = result.error or "Unknown error"
+        raise StrategyLoadError(f"Backtest failed: {error_msg}")
+    
+    # Return metrics in same format as legacy function
+    return result.metrics or {
+        "final_value": result.final_value,
+        "sharpe": result.sharpe_ratio,
+        "drawdown": result.max_drawdown,
+        "returns": result.total_return,
+        "trade_details": result.trade_details,
+        "equity_curve": result.equity_curve,
+        "annual_returns": result.annual_returns,
+    }
+
+
+def _run_backtest_legacy(
+    ticker: str,
+    start_date: str,
+    end_date: str,
+    initial_cash: float,
+    commission: float,
+    stake: int,
+    strategy_name: str,
+    save_path: Optional[Path],
+    params: Optional[dict],
+) -> dict:
+    """
+    Legacy in-process backtest execution.
+    
+    WARNING: This executes user strategy code in the API process!
+    Only use when worker pool is explicitly disabled.
+    """
     strategy_cls = load_user_strategy(strategy_name)
 
     cerebro = bt.Cerebro()
-    # Pass params to strategy if provided, otherwise use strategy defaults
     if params:
         cerebro.addstrategy(strategy_cls, **params)
     else:
@@ -339,7 +531,8 @@ def run_backtest(
     cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
     cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
-    cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")  # 添加自定义交易记录器
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturns")
+    cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")
 
     try:
         results = cerebro.run()
@@ -348,8 +541,12 @@ def run_backtest(
         raise
     strat = results[0]
 
-    # 获取交易详情
     trade_details = strat.analyzers.trade_recorder.get_analysis()
+    time_returns_raw = strat.analyzers.timereturns.get_analysis()
+    equity_curve = {
+        dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt): float(ret)
+        for dt, ret in time_returns_raw.items()
+    }
 
     metrics = {
         "final_value": cerebro.broker.getvalue(),
@@ -360,7 +557,8 @@ def run_backtest(
         "sqn": strat.analyzers.sqn.get_analysis().get("sqn", None),
         "trades": strat.analyzers.trades.get_analysis(),
         "time_drawdown": strat.analyzers.timedraw.get_analysis(),
-        "trade_details": trade_details,  # 添加详细的交易记录
+        "trade_details": trade_details,
+        "equity_curve": equity_curve,
     }
 
     target_path: Optional[Path] = Path(save_path) if save_path else None
@@ -371,7 +569,7 @@ def run_backtest(
             figures = cerebro.plot(style="candlestick", iplot=False)
             first_fig = figures[0][0] if figures and figures[0] else None
             if first_fig:
-                first_fig.set_size_inches(18, 10)  # enlarge output
+                first_fig.set_size_inches(18, 10)
                 first_fig.savefig(target_path, bbox_inches="tight", dpi=150)
                 plt.close(first_fig)
             plt.close("all")

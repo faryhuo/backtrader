@@ -27,6 +27,7 @@
   "tab_chart": "图表",
   "tab_trades": "交易记录",
   "tab_ai_insight": "AI洞察",
+  "tab_deep_analysis": "深度分析",
   "tab_strategy_code": "策略代码",
   "no_history": "暂无回测历史",
   "loading": "正在加载历史记录...",
@@ -54,5 +55,7 @@
   "optimal_weights": "最优权重",
   "current_weights": "当前权重",
   "expected_return": "预期收益",
-  "expected_volatility": "预期波动率"
+  "expected_volatility": "预期波动率",
+  "strategy_params": "策略参数",
+  "params_override": "参数覆盖"
 }

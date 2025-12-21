@@ -1,0 +1,147 @@
+{
+    "nav": {
+        "features": "Features",
+        "workflow": "Workflow",
+        "roadmap": "Roadmap",
+        "docs": "Docs",
+        "login": "Login",
+        "getStarted": "Get Started"
+    },
+    "hero": {
+        "badge": "Professional Quantitative Trading Platform",
+        "title1": "Make Quantitative Trading",
+        "title2": "Simpler & More Efficient",
+        "description": "From strategy development to live trading, an all-in-one solution. Backtesting, parameter optimization, portfolio management - bring your trading strategies to life.",
+        "cta": {
+            "start": "Get Started",
+            "docs": "View Docs"
+        },
+        "stats": {
+            "strategies": "Strategy Templates",
+            "backtests": "Backtests Run",
+            "users": "Active Users"
+        }
+    },
+    "features": {
+        "badge": "Core Features",
+        "title": "Powerful Quant Trading Tools",
+        "description": "Full support from strategy development to live deployment",
+        "backtest": {
+            "title": "Strategy Backtesting",
+            "description": "Backtrader-powered engine supporting multi-asset, multi-timeframe backtesting with detailed metrics and visualizations."
+        },
+        "ai": {
+            "title": "AI Analysis",
+            "description": "Intelligent backtest analysis, strategy improvement suggestions, customizable prompt templates."
+        },
+        "portfolio": {
+            "title": "Portfolio Management",
+            "description": "Multi-asset portfolio backtesting, correlation matrix, Markowitz optimization for scientific allocation."
+        },
+        "optimization": {
+            "title": "Parameter Optimization",
+            "description": "Walk-Forward optimization, overfitting detection, sensitivity analysis with heatmap visualization."
+        },
+        "live": {
+            "title": "Live Trading",
+            "description": "Paper/live trading support, WebSocket real-time updates, order and position management."
+        },
+        "realtime": {
+            "title": "Real-time Updates",
+            "description": "WebSocket push notifications, live market data, instant order execution feedback."
+        },
+        "security": {
+            "title": "Secure & Reliable",
+            "description": "Encrypted credentials, sandboxed execution, optional JWT auth for trading security."
+        },
+        "versioning": {
+            "title": "Strategy Versioning",
+            "description": "Version history, diff comparison, one-click rollback for strategy management."
+        }
+    },
+    "workflow": {
+        "badge": "Workflow",
+        "title": "Complete Path from Strategy to Profit",
+        "description": "Streamlined quant trading workflow for easier strategy development",
+        "step1": {
+            "title": "Write Strategy",
+            "description": "Use the online editor or pick from ready-made templates"
+        },
+        "step2": {
+            "title": "Backtest",
+            "description": "Historical data backtesting with multi-dimensional performance analysis"
+        },
+        "step3": {
+            "title": "Optimize",
+            "description": "Walk-Forward optimization to avoid overfitting and find optimal parameters"
+        },
+        "step4": {
+            "title": "Deploy Live",
+            "description": "One-click deploy to paper or live environment with real-time monitoring"
+        }
+    },
+    "roadmap": {
+        "badge": "Roadmap",
+        "title": "Continuously Evolving Platform",
+        "description": "We're constantly improving. Here's what's coming",
+        "item1": {
+            "title": "Core Backtest Engine",
+            "description": "Single-asset backtesting, strategy templates, result persistence"
+        },
+        "item2": {
+            "title": "Parameter Optimization",
+            "description": "Walk-Forward, heatmaps, overfitting detection"
+        },
+        "item3": {
+            "title": "Portfolio Backtesting",
+            "description": "Multi-asset portfolios, correlation analysis, Markowitz optimization"
+        },
+        "item4": {
+            "title": "Live Trading",
+            "description": "Paper/live sessions, WebSocket updates, order management"
+        },
+        "item5": {
+            "title": "Risk Management",
+            "description": "Position limits, stop-loss guards, risk alerts"
+        },
+        "item6": {
+            "title": "Strategy Versioning",
+            "description": "Version history, diff comparison, one-click rollback"
+        },
+        "item7": {
+            "title": "Scheduled Tasks",
+            "description": "Scheduled backtests, report generation, task scheduling"
+        },
+        "item8": {
+            "title": "Team Collaboration",
+            "description": "Team workspaces, strategy sharing, permission management"
+        }
+    },
+    "cta": {
+        "title": "Ready to Get Started?",
+        "description": "Experience professional quantitative trading and take your strategies to the next level",
+        "button": "Start for Free",
+        "note": "No credit card required · Quick setup"
+    },
+    "footer": {
+        "description": "Professional quantitative trading platform helping traders automate strategies and improve efficiency.",
+        "product": "Product",
+        "product.features": "Features",
+        "product.pricing": "Pricing",
+        "product.roadmap": "Roadmap",
+        "product.changelog": "Changelog",
+        "resources": "Resources",
+        "resources.docs": "Documentation",
+        "resources.api": "API Reference",
+        "resources.templates": "Strategy Templates",
+        "resources.tutorials": "Tutorials",
+        "company": "Company",
+        "company.about": "About Us",
+        "company.blog": "Blog",
+        "company.contact": "Contact",
+        "company.careers": "Careers",
+        "copyright": "© 2024 Backtrader Pro. All rights reserved.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service"
+    }
+}

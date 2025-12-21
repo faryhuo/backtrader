@@ -217,6 +217,120 @@ async def websocket_live_updates(
         await ws_manager.disconnect(websocket, session_id)
 
 
+@router.websocket("/ws/tasks")
+async def websocket_task_updates(
+    websocket: WebSocket,
+    token: Optional[str] = Query(None, description="Optional auth token")
+):
+    """
+    WebSocket endpoint for real-time task updates.
+
+    **Connection:**
+    ```javascript
+    const ws = new WebSocket('ws://localhost:8000/ws/tasks');
+    ```
+
+    **Message Types Received:**
+
+    1. **Task Created**
+    ```json
+    {
+      "type": "task_created",
+      "task_id": "abc123",
+      "data": {
+        "task_id": "abc123",
+        "task_type": "backtest",
+        "status": "pending",
+        "name": "Backtest AAPL"
+      }
+    }
+    ```
+
+    2. **Task Started**
+    ```json
+    {
+      "type": "task_started",
+      "task_id": "abc123",
+      "data": {"status": "running", "progress": 0}
+    }
+    ```
+
+    3. **Task Progress**
+    ```json
+    {
+      "type": "task_progress",
+      "task_id": "abc123",
+      "data": {"progress": 50, "message": "Processing..."}
+    }
+    ```
+
+    4. **Task Completed**
+    ```json
+    {
+      "type": "task_completed",
+      "task_id": "abc123",
+      "data": {"status": "completed", "progress": 100, "result_id": "xyz789"}
+    }
+    ```
+
+    5. **Task Failed**
+    ```json
+    {
+      "type": "task_failed",
+      "task_id": "abc123",
+      "data": {"status": "failed", "error": "Connection timeout"}
+    }
+    ```
+
+    6. **Task Cancelled**
+    ```json
+    {
+      "type": "task_cancelled",
+      "task_id": "abc123",
+      "data": {"status": "cancelled"}
+    }
+    ```
+
+    **Client Messages (send to server):**
+    - Ping (keep-alive): `{"type": "ping"}`
+    """
+    ws_manager = get_websocket_manager()
+
+    # Connect to "tasks" channel
+    await ws_manager.connect(websocket, "tasks")
+
+    try:
+        while True:
+            message = await websocket.receive_text()
+
+            # Handle ping/pong
+            if message == "ping" or message == '{"type":"ping"}':
+                await websocket.send_json({"type": "pong"})
+                continue
+
+            try:
+                import json
+                data = json.loads(message)
+                msg_type = data.get('type')
+
+                if msg_type == 'ping':
+                    await websocket.send_json({"type": "pong"})
+                else:
+                    logger.debug(f"Task WS message: {msg_type}")
+
+            except json.JSONDecodeError:
+                logger.debug(f"Non-JSON task message: {message}")
+
+    except WebSocketDisconnect:
+        logger.info("WebSocket client disconnected from tasks channel")
+
+    except Exception as e:
+        logger.exception(f"WebSocket error for tasks: {e}")
+
+    finally:
+        await ws_manager.disconnect(websocket, "tasks")
+
+
 @router.get("/ws/info", tags=["WebSocket"])
 async def websocket_info():
     """
@@ -230,13 +344,17 @@ async def websocket_info():
     ws_manager = get_websocket_manager()
 
     return {
-        'endpoint': '/ws/live/{session_id}',
+        'endpoints': {
+            'live': '/ws/live/{session_id}',
+            'tasks': '/ws/tasks',
+        },
         'protocol': 'ws' if not hasattr(router, 'https') else 'wss',
         'active_connections': ws_manager.get_connection_count(),
         'connected_sessions': ws_manager.get_connected_sessions(),
-        'message_types': [
-            'connected', 'position', 'order', 'pnl', 'trade', 'log', 'error', 'status'
-        ],
+        'message_types': {
+            'live': ['connected', 'position', 'order', 'pnl', 'trade', 'log', 'error', 'status'],
+            'tasks': ['task_created', 'task_started', 'task_progress', 'task_completed', 'task_failed', 'task_cancelled'],
+        },
         'client_messages': ['ping'],
-        'description': 'Real-time updates for live trading sessions'
+        'description': 'Real-time updates for live trading and task management'
     }

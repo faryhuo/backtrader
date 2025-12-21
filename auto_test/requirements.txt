@@ -1,0 +1,19 @@
+# Auto Test Suite Dependencies
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-timeout>=2.2.0
+
+# Browser automation
+playwright>=1.40.0
+pytest-playwright>=0.4.3
+
+# HTTP client
+httpx>=0.25.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Fake data generation (optional, for future use)
+faker>=20.0.0

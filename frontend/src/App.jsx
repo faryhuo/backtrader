@@ -15,6 +15,7 @@ import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
+import TaskCenter from './pages/TaskCenter'
 import { setTokenGetter } from './services/api'
 import { useAuth } from './hooks/useAuth'
 import { LOGIN_ENABLED } from './config/auth'
@@ -75,6 +76,7 @@ function AppContent() {
                         <Route path="walkforward" element={<WalkForward />} />
                         <Route path="portfolio" element={<PortfolioBacktest />} />
                         <Route path="live" element={<LiveTradingDashboard />} />
+                        <Route path="tasks" element={<TaskCenter />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>
 

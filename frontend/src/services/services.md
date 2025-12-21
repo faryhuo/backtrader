@@ -3,7 +3,19 @@
 前端服务层目录，负责与后端 API、WebSocket 及外部 AI 服务交互，对上层组件提供稳定、可复用的调用接口。
 
 ## 功能职责（Functional）
-- `api.js`：API 基础配置与通用请求封装（API_URL、鉴权 token 管理、`buildRequest`/`parseResponse`、标准 CRUD 与交易相关调用）。
+
+### API 模块（按域拆分）
+- `apiCore.js`：核心工具函数（`API_URL`、`buildRequest`、`parseResponse`、鉴权 token 管理）。
+- `api.js`：聚合导出层，合并所有域 API 为统一 `api` 对象，保持向后兼容。
+- `strategyApi.js`：策略 CRUD、版本管理、模板导入、参数获取。
+- `backtestApi.js`：回测执行、历史记录、AI 分析更新。
+- `marketDataApi.js`：行情数据获取（ticker info、prices）。
+- `liveApi.js`：实盘交易 session 管理、订单、交易所。
+- `walkforwardApi.js`：Walk-Forward 优化任务管理。
+- `settingsApi.js`：系统设置与凭证管理。
+- `portfolioApi.js`：组合回测。
+
+### 其他服务
 - `aiAnalysis.js`：AI 分析服务封装（获取 AI 设置/模型、策略全量分析、代码分析/重写、多模态图表分析等工作流）。
 - `websocket.js`：实时数据 WebSocket 连接管理、订阅与消息分发。
 

@@ -1,22 +1,16 @@
-"""
-Live Trading Engine - Orchestrates live/paper trading with CCXT.
-
-This module provides the main entry point for live trading, similar to
-backtest_engine.py but using real-time data feeds and CCXT broker.
-"""
-
 import logging
 import threading
 import uuid
 import warnings
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 import backtrader as bt
 
 from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
 from src.brokers.ibkr_adapter import IBKRStore
-from src.db.session_storage import SessionStorage
+from src.config.worker_config import get_config as get_worker_config
+from src.db import SessionStorage
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.session_manager import SessionStatus, get_session_manager
 from src.utils.config_loader import get_exchange_config, load_broker_config
@@ -112,13 +106,16 @@ def run_live(
     commission: float = 0.001,
     session_id: Optional[str] = None,
     config: Optional[Dict] = None,
-    user_id: Optional[str] = None
+    user_id: Optional[str] = None,
+    use_worker: Optional[bool] = None,
+    event_callback: Optional[Callable] = None,
 ) -> Dict:
     """
-    Start live trading session with SessionManager integration.
+    Start live trading session with worker isolation.
 
-    This function orchestrates a live trading session similar to run_backtest(),
-    but uses real-time data feeds and CCXT broker for order execution.
+    When worker pool is enabled (default), strategy code executes in an
+    isolated worker process for security. The API process never executes
+    user strategy code.
 
     Args:
         strategy_name: Name of strategy file (without .py)
@@ -131,6 +128,8 @@ def run_live(
         session_id: Optional session ID (auto-generated if None)
         config: Optional broker configuration dict
         user_id: Optional user identifier for loading user-specific credentials
+        use_worker: Force worker pool on/off (None = use config)
+        event_callback: Optional callback for receiving live trading events
 
     Returns:
         dict: Session information
@@ -147,7 +146,174 @@ def run_live(
         f"{strategy_name} on {symbol} ({exchange} {mode})"
     )
 
-    # Get session manager
+    # Determine whether to use worker pool
+    worker_config = get_worker_config()
+    should_use_worker = use_worker if use_worker is not None else worker_config.enabled
+
+    if should_use_worker:
+        return _run_live_worker(
+            strategy_name=strategy_name,
+            symbol=symbol,
+            exchange=exchange,
+            mode=mode,
+            timeframe=timeframe,
+            initial_cash=initial_cash,
+            commission=commission,
+            session_id=session_id,
+            config=config,
+            user_id=user_id,
+            event_callback=event_callback,
+        )
+    else:
+        # Legacy in-process execution (not secure for untrusted code!)
+        logger.warning(
+            "Running live trading in-process (worker pool disabled). "
+            "This is NOT secure for untrusted strategy code!"
+        )
+        return _run_live_legacy(
+            strategy_name=strategy_name,
+            symbol=symbol,
+            exchange=exchange,
+            mode=mode,
+            timeframe=timeframe,
+            initial_cash=initial_cash,
+            commission=commission,
+            session_id=session_id,
+            config=config,
+            user_id=user_id,
+        )
+
+
+def _run_live_worker(
+    strategy_name: str,
+    symbol: str,
+    exchange: str,
+    mode: str,
+    timeframe: str,
+    initial_cash: float,
+    commission: float,
+    session_id: str,
+    config: Optional[Dict],
+    user_id: Optional[str],
+    event_callback: Optional[Callable] = None,
+) -> Dict:
+    """
+    Run live trading in isolated worker process (secure).
+
+    The API process NEVER executes user strategy code - all execution
+    happens in the worker process.
+    """
+    from src.service.worker.task_models import LiveTradingTask
+    from src.service.worker.worker_pool import get_worker_pool, WorkerPoolError
+
+    # Load broker config if not provided
+    if config is None:
+        config = load_broker_config()
+
+    # Create task
+    task = LiveTradingTask(
+        task_id=str(uuid.uuid4()),
+        session_id=session_id,
+        strategy_name=strategy_name,
+        symbol=symbol,
+        exchange=exchange,
+        mode=mode,
+        timeframe=timeframe,
+        initial_cash=initial_cash,
+        commission=commission,
+        user_id=user_id,
+        broker_config=config,
+    )
+
+    # Start session in worker pool
+    pool = get_worker_pool()
+
+    # Setup event forwarding to session manager
+    session_manager = get_session_manager()
+
+    # Create session entry in manager
+    session = session_manager.create_session(
+        session_id=session_id,
+        strategy_name=strategy_name,
+        symbol=symbol,
+        exchange=exchange,
+        mode=mode,
+        timeframe=timeframe,
+        initial_cash=initial_cash,
+        commission=commission,
+        user_id=user_id,
+    )
+
+    def handle_worker_event(event):
+        """Forward worker events to session manager and callback."""
+        from src.service.worker.task_models import LiveEventType
+
+        event_type = event.event_type
+        data = event.data or {}
+
+        if event_type == LiveEventType.STATUS_UPDATE:
+            status_str = data.get("status", "")
+            if status_str == "running":
+                session_manager.update_session(session_id, status=SessionStatus.RUNNING)
+            elif status_str == "error":
+                session_manager.update_session(
+                    session_id,
+                    status=SessionStatus.ERROR,
+                    error_message=data.get("error", "Unknown error")
+                )
+        elif event_type == LiveEventType.PNL_UPDATE:
+            session.current_pnl = data.get("pnl", 0.0)
+        elif event_type == LiveEventType.STOPPED:
+            session_manager.update_session(
+                session_id,
+                status=SessionStatus.STOPPED,
+                end_time=datetime.now()
+            )
+        elif event_type == LiveEventType.ERROR:
+            session_manager.update_session(
+                session_id,
+                status=SessionStatus.ERROR,
+                error_message=data.get("error", "Unknown error")
+            )
+
+        # Forward to user callback if provided
+        if event_callback:
+            try:
+                event_callback(event)
+            except Exception as e:
+                logger.warning(f"Event callback error: {e}")
+
+    try:
+        pool.start_live_session(task, event_callback=handle_worker_event)
+    except WorkerPoolError as e:
+        session_manager.remove_session(session_id)
+        raise LiveTradingError(f"Failed to start worker session: {e}") from e
+
+    # Save session to database
+    _session_storage.save_session(session)
+
+    logger.info(f"Session {session_id} started in worker pool")
+    return session.to_dict()
+
+
+def _run_live_legacy(
+    strategy_name: str,
+    symbol: str,
+    exchange: str,
+    mode: str,
+    timeframe: str,
+    initial_cash: float,
+    commission: float,
+    session_id: str,
+    config: Optional[Dict],
+    user_id: Optional[str],
+) -> Dict:
+    """
+    Legacy in-process live trading execution.
+
+    WARNING: This executes user strategy code in the API process!
+    Only use when worker pool is explicitly disabled.
+    """
     session_manager = get_session_manager()
     store = None
 
@@ -162,10 +328,10 @@ def run_live(
             timeframe=timeframe,
             initial_cash=initial_cash,
             commission=commission,
-            user_id=user_id  # Pass user_id for WebSocket auth
+            user_id=user_id
         )
 
-        # 2. Load strategy class
+        # 2. Load strategy class (executes user code - NOT SECURE!)
         strategy_cls = load_user_strategy(strategy_name)
         logger.info(f"Loaded strategy: {strategy_name}")
 
@@ -183,7 +349,7 @@ def run_live(
             commission=commission,
             session_id=session_id,
             config=config,
-            user_id=user_id  # Pass user_id for database credential lookup
+            user_id=user_id
         )
         logger.info("Adapter '%s' initialized for exchange %s", adapter, exchange)
 
@@ -211,17 +377,13 @@ def run_live(
         def run_cerebro():
             """Background thread function that runs Cerebro."""
             try:
-                # Update status
                 session.status = SessionStatus.RUNNING
                 session_manager.update_session(session_id, status=SessionStatus.RUNNING)
                 _session_storage.save_session(session)
 
                 logger.info(f"Cerebro started for session {session_id}")
+                cerebro.run()
 
-                # Run cerebro (this will loop until stopped)
-                results = cerebro.run()
-
-                # Update status on successful completion
                 session.status = SessionStatus.STOPPED
                 session.end_time = datetime.now()
                 session_manager.update_session(
@@ -234,7 +396,6 @@ def run_live(
                 logger.info(f"Cerebro stopped normally for session {session_id}")
 
             except Exception as e:
-                # Update status on error
                 session.status = SessionStatus.ERROR
                 session.error_message = str(e)
                 session.end_time = datetime.now()
@@ -250,7 +411,6 @@ def run_live(
                 logger.exception(f"Error in session {session_id}: {e}")
 
             finally:
-                # Clean up store
                 if store:
                     store.stop()
 
@@ -263,23 +423,21 @@ def run_live(
         session.thread = thread
 
         logger.info(f"Session {session_id} started successfully")
-
-        # Return session info
         return session.to_dict()
 
     except Exception as e:
-        # Clean up on error
         session_manager.remove_session(session_id)
         logger.exception(f"Failed to start live trading session: {e}")
         raise LiveTradingError(f"Failed to start session: {e}") from e
 
 
-def stop_live(session_id: str) -> Dict:
+def stop_live(session_id: str, use_worker: Optional[bool] = None) -> Dict:
     """
     Stop live trading session gracefully.
 
     Args:
         session_id: Session ID to stop
+        use_worker: Force worker pool on/off (None = use config)
 
     Returns:
         dict: Session stop information
@@ -289,20 +447,49 @@ def stop_live(session_id: str) -> Dict:
     """
     logger.info(f"Stopping session {session_id}")
 
+    # Check if using worker pool
+    worker_config = get_worker_config()
+    should_use_worker = use_worker if use_worker is not None else worker_config.enabled
+
+    if should_use_worker:
+        from src.service.worker.worker_pool import get_worker_pool
+        pool = get_worker_pool()
+        
+        # Check if session exists in worker pool
+        if session_id in pool.get_live_session_ids():
+            success = pool.stop_live_session(session_id)
+            if not success:
+                raise LiveTradingError(f"Failed to stop worker session {session_id}")
+            
+            # Update session manager
+            session_manager = get_session_manager()
+            session = session_manager.get_session(session_id)
+            if session:
+                session_manager.update_session(
+                    session_id,
+                    status=SessionStatus.STOPPED,
+                    end_time=datetime.now()
+                )
+                _session_storage.save_session(session)
+            
+            return {
+                'session_id': session_id,
+                'status': SessionStatus.STOPPED.value,
+                'end_time': datetime.now().isoformat()
+            }
+
+    # Legacy session manager stop
     session_manager = get_session_manager()
 
-    # Get session
     session = session_manager.get_session(session_id)
     if not session:
         raise LiveTradingError(f"Session {session_id} not found")
 
-    # Stop session
     success = session_manager.stop_session(session_id, timeout=10.0)
 
     if not success:
         raise LiveTradingError(f"Failed to stop session {session_id}")
 
-    # Save final state
     _session_storage.save_session(session)
 
     return {

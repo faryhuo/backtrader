@@ -1,28 +1,75 @@
-# db 目录说明
+# Database Layer (`db`)
 
-持久化与数据模型目录，基于 SQLAlchemy/SQLite 管理交易会话、订单、持仓等数据。
+This directory contains all database-related code including SQLAlchemy models, storage classes, and data fetching modules.
 
-## 功能职责（Functional）
-- `models.py`：定义会话/订单/持仓/凭证等数据模型（TradingSession, Order, Position, UserCredential 等）。
-- `backtest_storage.py`：回测历史存取，支持结果持久化与查询。
-- `datasource.py`：数据源管理与市场数据获取（yfinance/CCXT）。
-- `session_storage.py`：实盘/模拟盘会话 CRUD 与状态查询。
-- `settings_storage.py`：用户设置与凭证存储，支持加密凭证管理。
-- `walkforward_storage.py`：Walk-Forward 优化结果持久化与查询。
+## Directory Structure
 
-## 非功能性要求（Non-Functional）
-- 数据安全：破坏性变更前需备份；测试使用内存库或临时 SQLite；凭证需加密存储。
-- 兼容性：字段与表结构变更需考虑向后兼容或提供迁移脚本。
-- 可维护性：模型与交易域语义保持一致，避免"万能表"。
+```
+db/
+|-- __init__.py              # Package exports - re-exports all models and storage classes
+|-- db.md                    # This documentation file
+|-- models/                  # SQLAlchemy model definitions
+|   |-- __init__.py          # Exports all models for backward compatibility
+|   |-- base.py              # Base class, SafeJSON, Enums, init_database
+|   |-- trading.py           # TradingSessionModel, OrderModel, PositionModel
+|   |-- backtest.py          # BacktestHistoryModel, PortfolioResultModel, WalkForwardOptimizationModel
+|   |-- market.py            # MarketDataModel, TickerMetadataModel
+|   `-- user.py              # UserSettingsModel, StrategyVersionModel
+`-- storage/                 # Storage classes and data modules
+    |-- __init__.py          # Exports all storage classes and data functions
+    |-- base.py              # BaseStorage class with common database session management
+    |-- backtest.py          # BacktestStorage - CRUD for backtest history
+    |-- session.py           # SessionStorage - trading session persistence
+    |-- settings.py          # SettingsStorage - user settings and credentials
+    |-- walkforward.py       # WalkForwardStorage - walk-forward optimization results
+    |-- portfolio.py         # PortfolioStorage - portfolio backtest results
+    |-- strategy_version.py  # StrategyVersionStorage - strategy version control
+    |-- market_data.py       # Market data fetching (yfinance) with DB caching
+    `-- ticker_metadata.py   # Ticker info fetching and validation
+```
 
-## 约定与规范
-- DB 层不写业务流程，只负责数据定义与访问。
-- 跨模块引用模型需通过明确接口,避免循环依赖。
-- 敏感数据（API Key/Secret）必须使用 `utils/encryption.py` 加密后存储。
-- **数据库路径配置**：
-  - 所有数据库路径常量**仅在** `config/settings.py` 中定义，其他模块不得重复定义
-  - `DEFAULT_DB_PATH`: 绝对路径 Path 对象 (`PROJECT_ROOT / "trading_sessions.db"`)，用于日志记录
-  - `DEFAULT_DB_URL`: SQLite URL 字符串 (`sqlite:///绝对路径`)，用于数据库初始化
-  - `DATABASE_URL`: 最终使用的数据库 URL，优先使用环境变量，否则使用 `DEFAULT_DB_URL`
-  - 所有 Storage 类必须从 `config/settings` 导入 `DATABASE_URL` 和 `DEFAULT_DB_URL`，避免相对路径导致多数据库文件问题
+## Key Components
 
+### Models (`models/`)
+- **base.py**: Contains `Base`, `SafeJSON` type decorator, `SessionStatusEnum`, `OrderStatusEnum`, and `init_database` function
+- **trading.py**: Models for live trading sessions, orders, and positions
+- **backtest.py**: Models for backtest history, portfolio results, and walk-forward optimizations
+- **market.py**: Models for market data (OHLCV) and ticker metadata caching
+- **user.py**: Models for user settings and strategy version tracking
+
+### Storage (`storage/`)
+- **BaseStorage**: Common base class with database initialization and session management
+- **BacktestStorage**: Manages backtest history with auto-cleanup and AI analysis storage
+- **SessionStorage**: Handles trading session persistence and order tracking
+- **SettingsStorage**: Encrypted credential storage with environment variable fallback
+- **WalkForwardStorage**: Stores walk-forward optimization results
+- **PortfolioStorage**: Persists portfolio backtest results
+- **StrategyVersionStorage**: Version control for strategy code
+- **market_data.py**: Fetches OHLCV data from yfinance with database caching
+- **ticker_metadata.py**: Fetches and validates ticker information with caching
+
+## Usage
+
+Import from the package directly:
+
+```python
+# Import storage classes
+from src.db import BacktestStorage, SessionStorage, SettingsStorage
+
+# Import models
+from src.db import TradingSessionModel, BacktestHistoryModel
+
+# Import data functions
+from src.db import get_data, get_bt_feed, get_ticker_metadata
+
+# Or import from subpackages
+from src.db.models import Base, init_database
+from src.db.storage import BacktestStorage, get_raw_data_json
+```
+
+## Conventions
+
+1. **Database URL Configuration**: Always import `DATABASE_URL` and `DEFAULT_DB_URL` from `src.config.settings`
+2. **Session Management**: Use `BaseStorage.session_scope()` context manager for automatic commit/rollback
+3. **Model Naming**: Models end with `Model` suffix (e.g., `TradingSessionModel`)
+4. **Storage Naming**: Storage classes end with `Storage` suffix (e.g., `BacktestStorage`)

@@ -1,449 +1,64 @@
-import { LOGIN_ENABLED } from '../config/auth'
+/**
+ * Aggregated API exports for backward compatibility
+ * 
+ * This file re-exports all domain-specific APIs as a single unified `api` object.
+ * New code should import directly from the domain-specific modules.
+ * 
+ * Domain modules:
+ * - apiCore.js - Core utilities (buildRequest, parseResponse, auth)
+ * - strategyApi.js - Strategy CRUD, versions, templates
+ * - backtestApi.js - Backtest run, history, analysis
+ * - marketDataApi.js - Ticker info and prices
+ * - liveApi.js - Live trading sessions
+ * - walkforwardApi.js - Walk-forward optimization
+ * - settingsApi.js - Settings and credentials
+ * - portfolioApi.js - Portfolio backtesting
+ */
 
-// API base URL for HTTP requests (separate from Logto resource identifier)
-export const API_URL = import.meta.env.VITE_API_BASE_URL
+// Re-export core utilities
+export { API_URL, setTokenGetter, getAccessToken, parseResponse, buildRequest } from './apiCore'
 
-// Logto resource/audience for OAuth2 access tokens
-const API_RESOURCE = import.meta.env.VITE_API_BASE_URL
+// Import domain APIs
+import { strategyApi } from './strategyApi'
+import { backtestApi } from './backtestApi'
+import { marketDataApi } from './marketDataApi'
+import { liveApi } from './liveApi'
+import { walkforwardApi } from './walkforwardApi'
+import { settingsApi } from './settingsApi'
+import { portfolioApi } from './portfolioApi'
 
-// Token getter function (set by App component)
-let getTokenFn = null
+// Re-export domain APIs for direct import
+export { strategyApi } from './strategyApi'
+export { backtestApi } from './backtestApi'
+export { marketDataApi } from './marketDataApi'
+export { liveApi } from './liveApi'
+export { walkforwardApi } from './walkforwardApi'
+export { settingsApi } from './settingsApi'
+export { portfolioApi } from './portfolioApi'
 
 /**
- * Set the token getter function
- * This is called by the App component to provide access to Logto's getAccessToken
+ * Unified API object for backward compatibility
+ * All methods from domain-specific modules are merged here
  */
-export function setTokenGetter(fn) {
-    getTokenFn = fn
-}
-
-/**
- * Build a request with authentication token
- */
-const buildRequest = async (path, options = {}) => {
-    const headers = new Headers(options.headers || {})
-
-    if (options.body && !headers.has('Content-Type')) {
-        headers.set('Content-Type', 'application/json')
-    }
-
-    // Inject access token if available
-    if (getTokenFn) {
-        try {
-            const token = await getTokenFn(API_RESOURCE)
-            if (token) {
-                headers.set('Authorization', `Bearer ${token}`)
-            }
-        } catch (error) {
-            console.error('Failed to get access token:', error)
-            // Continue without token - API will return 401 if auth is required
-        }
-    }
-
-    return fetch(`${API_URL}${path}`, { ...options, headers })
-}
-
-export const getAccessToken = async () => {
-    if (getTokenFn) {
-        try {
-            return await getTokenFn(API_RESOURCE)
-        } catch (error) {
-            console.error('Failed to get access token:', error)
-        }
-    }
-    return null
-}
-
-export const parseResponse = async (response) => {
-    // Handle 401 Unauthorized first (before trying to parse body)
-    if (response.status === 401 && LOGIN_ENABLED) {
-        console.error('Unauthorized - redirecting to login')
-        const loginPath = '/login'
-        if (window.location.pathname !== loginPath) {
-            window.location.href = loginPath
-        }
-        throw new Error('Unauthorized')
-    }
-
-    // Handle 204 No Content (no response body)
-    if (response.status === 204) {
-        return null
-    }
-
-    // Parse response body
-    const data = await response.json()
-
-    // Check if response is successful (status 200-299)
-    if (!response.ok) {
-        const message = (data && (data.detail || data.message)) || `HTTP error! status: ${response.status}`
-        throw new Error(message)
-    }
-
-    return data
-}
-
 export const api = {
-    async getStrategies() {
-        const res = await buildRequest('/strategies')
-        const data = await parseResponse(res)
-        return data?.strategies || []
-    },
+    // Strategy API
+    ...strategyApi,
 
-    async getStrategy(name) {
-        if (!name) return null
-        const res = await buildRequest(`/strategy?name=${encodeURIComponent(name)}`)
-        return await parseResponse(res)
-    },
+    // Backtest API
+    ...backtestApi,
 
-    async saveStrategy(name, code, commitMessage = null) {
-        const res = await buildRequest('/strategy', {
-            method: 'POST',
-            body: JSON.stringify({ name, code, commit_message: commitMessage })
-        })
-        return await parseResponse(res)
-    },
+    // Market Data API
+    ...marketDataApi,
 
-    // Strategy Version Management API Methods
+    // Live Trading API
+    ...liveApi,
 
-    async getStrategyVersions(name, limit = 50, offset = 0) {
-        const params = new URLSearchParams({
-            limit: limit.toString(),
-            offset: offset.toString()
-        });
-        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions?${params}`)
-        return await parseResponse(res)
-    },
+    // Walk-Forward API
+    ...walkforwardApi,
 
-    async getStrategyVersion(name, versionNumber) {
-        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}`)
-        return await parseResponse(res)
-    },
+    // Settings API
+    ...settingsApi,
 
-    async getLatestStrategyVersion(name) {
-        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/latest`)
-        return await parseResponse(res)
-    },
-
-    async compareVersions(name, fromVersion, toVersion) {
-        const params = new URLSearchParams({
-            from_version: fromVersion.toString(),
-            to_version: toVersion.toString()
-        });
-        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/compare?${params}`)
-        return await parseResponse(res)
-    },
-
-    async rollbackVersion(name, versionNumber, commitMessage = null) {
-        const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/versions/${versionNumber}/rollback`, {
-            method: 'POST',
-            body: JSON.stringify({ commit_message: commitMessage })
-        })
-        return await parseResponse(res)
-    },
-
-    async runBacktest(params) {
-        const res = await buildRequest('/backtest', {
-            method: 'POST',
-            body: JSON.stringify(params)
-        })
-        return await parseResponse(res)
-    },
-
-    async fetchMarketData(params) {
-        // Call both APIs in parallel
-        const [tickerInfo, pricesData] = await Promise.all([
-            this.getTickerInfo(params.ticker),
-            this.getTickerPrices(params.ticker, params.start_date, params.end_date)
-        ]);
-
-        return {
-            ticker_info: tickerInfo,
-            data: pricesData.data
-        };
-    },
-
-    async getTickerInfo(ticker) {
-        const res = await buildRequest(`/ticker/${encodeURIComponent(ticker)}/info`);
-        return await parseResponse(res);
-    },
-
-    async getTickerPrices(ticker, startDate, endDate) {
-        const params = new URLSearchParams({
-            start_date: startDate,
-            end_date: endDate
-        });
-        const res = await buildRequest(`/ticker/${encodeURIComponent(ticker)}/prices?${params}`);
-        return await parseResponse(res);
-    },
-
-    async analyzeResults(metrics) {
-        const res = await buildRequest('/analyze', {
-            method: 'POST',
-            body: JSON.stringify({ metrics })
-        })
-        return await parseResponse(res)
-    },
-
-    // Strategy Template API Methods
-
-    async getTemplates() {
-        const res = await buildRequest('/templates')
-        return await parseResponse(res)
-    },
-
-    async getTemplateDetail(templateId) {
-        const res = await buildRequest(`/templates/${encodeURIComponent(templateId)}`)
-        return await parseResponse(res)
-    },
-
-    async importTemplate(templateId, name) {
-        const res = await buildRequest('/templates/import', {
-            method: 'POST',
-            body: JSON.stringify({ template_id: templateId, name })
-        })
-        return await parseResponse(res)
-    },
-
-    // Backtest History API Methods
-
-    async getBacktestHistory(params = {}) {
-        const res = await buildRequest('/backtest/history', {
-            method: 'POST',
-            body: JSON.stringify({
-                ticker: params.ticker || null,
-                strategy_name: params.strategy_name || null,
-                start_date: params.start_date || null,
-                end_date: params.end_date || null,
-                sort_by: params.sort_by || 'created_at',
-                sort_order: params.sort_order || 'desc',
-                limit: params.limit || 50,
-                offset: params.offset || 0
-            })
-        })
-        return await parseResponse(res)
-    },
-
-    async getBacktestDetail(backtestId) {
-        const res = await buildRequest(`/backtest/history/${backtestId}`)
-        return await parseResponse(res)
-    },
-
-    async deleteBacktest(backtestId) {
-        const res = await buildRequest(`/backtest/history/${backtestId}`, {
-            method: 'DELETE'
-        })
-        return await parseResponse(res)
-    },
-
-    async updateBacktestAiAnalysis(backtestId, modelName, analysis) {
-        const res = await buildRequest(`/backtest/history/${backtestId}/ai-analysis`, {
-            method: 'POST',
-            body: JSON.stringify({ model_name: modelName, analysis })
-        })
-        return await parseResponse(res)
-    },
-
-    // Live Trading API Methods
-
-    async startLiveTrading(params) {
-        const res = await buildRequest('/live/start', {
-            method: 'POST',
-            body: JSON.stringify(params)
-        })
-        return await parseResponse(res)
-    },
-
-    async stopLiveTrading(sessionId) {
-        const res = await buildRequest('/live/stop', {
-            method: 'POST',
-            body: JSON.stringify({ session_id: sessionId })
-        })
-        return await parseResponse(res)
-    },
-
-    async getLiveStatus(sessionId) {
-        const res = await buildRequest(`/live/status/${sessionId}`)
-        return await parseResponse(res)
-    },
-
-    async listLiveSessions(params = {}) {
-        const queryParams = new URLSearchParams()
-        if (params.status) queryParams.append('status', params.status)
-        if (params.active_only) queryParams.append('active_only', 'true')
-        if (params.limit) queryParams.append('limit', params.limit.toString())
-
-        const query = queryParams.toString()
-        const path = query ? `/live/sessions?${query}` : '/live/sessions'
-
-        const res = await buildRequest(path)
-        return await parseResponse(res)
-    },
-
-    async getSessionOrders(sessionId) {
-        const res = await buildRequest(`/live/orders/${sessionId}`)
-        return await parseResponse(res)
-    },
-
-    async getExchanges() {
-        const res = await buildRequest('/live/exchanges')
-        return await parseResponse(res)
-    },
-
-    async getLiveHealth() {
-        const res = await buildRequest('/live/health')
-        return await parseResponse(res)
-    },
-
-    // Walk-Forward Optimization API Methods
-
-    async startWalkForward(params) {
-        const res = await buildRequest('/walkforward/start', {
-            method: 'POST',
-            body: JSON.stringify(params)
-        })
-        return await parseResponse(res)
-    },
-
-    async listWalkForward(params = {}) {
-        const queryParams = new URLSearchParams()
-        if (params.ticker) queryParams.append('ticker', params.ticker)
-        if (params.strategy_name) queryParams.append('strategy_name', params.strategy_name)
-        if (params.status) queryParams.append('status', params.status)
-        if (params.sort_by) queryParams.append('sort_by', params.sort_by)
-        if (params.sort_order) queryParams.append('sort_order', params.sort_order)
-        if (params.limit) queryParams.append('limit', params.limit.toString())
-        if (params.offset) queryParams.append('offset', params.offset.toString())
-
-        const query = queryParams.toString()
-        const path = query ? `/walkforward/list?${query}` : '/walkforward/list'
-
-        const res = await buildRequest(path)
-        return await parseResponse(res)
-    },
-
-    async getWalkForward(optimizationId) {
-        const res = await buildRequest(`/walkforward/${optimizationId}`)
-        return await parseResponse(res)
-    },
-
-    async getWalkForwardStatus(optimizationId) {
-        const res = await buildRequest(`/walkforward/${optimizationId}/status`)
-        return await parseResponse(res)
-    },
-
-    async deleteWalkForward(optimizationId) {
-        const res = await buildRequest(`/walkforward/${optimizationId}`, {
-            method: 'DELETE'
-        })
-        return await parseResponse(res)
-    },
-
-    // Settings API Methods
-
-    async getSettings() {
-        const res = await buildRequest('/settings')
-        return await parseResponse(res)
-    },
-
-    async updateSettings(settings) {
-        const res = await buildRequest('/settings', {
-            method: 'PUT',
-            body: JSON.stringify(settings)
-        })
-        return await parseResponse(res)
-    },
-
-    async resetSettings() {
-        const res = await buildRequest('/settings/reset', {
-            method: 'POST'
-        })
-        return await parseResponse(res)
-    },
-
-    // Credential API Methods
-
-    async getCredentials() {
-        const res = await buildRequest('/settings/credentials')
-        return await parseResponse(res)
-    },
-
-    async updateCredentials(credentials) {
-        const res = await buildRequest('/settings/credentials', {
-            method: 'PUT',
-            body: JSON.stringify(credentials)
-        })
-        return await parseResponse(res)
-    },
-
-    async updateCCXTCredentials(exchange, mode, credentials) {
-        const res = await buildRequest('/settings/credentials/ccxt', {
-            method: 'PUT',
-            body: JSON.stringify({ exchange, mode, ...credentials })
-        })
-        return await parseResponse(res)
-    },
-
-    async resetCredential(credentialKey) {
-        const res = await buildRequest(`/settings/credentials/${credentialKey}`, {
-            method: 'DELETE'
-        })
-        return await parseResponse(res)
-    },
-
-    async testCredential(credentialType, params) {
-        const res = await buildRequest('/settings/credentials/test', {
-            method: 'POST',
-            body: JSON.stringify({ credential_type: credentialType, ...params })
-        })
-        return await parseResponse(res)
-    },
-
-    // Strategy Params API Methods
-
-    async getStrategyParams(name) {
-        try {
-            const res = await buildRequest(`/strategy/${encodeURIComponent(name)}/params`)
-            return await parseResponse(res)
-        } catch (error) {
-            // Return empty params on error, don't throw
-            console.warn(`Failed to get strategy params for ${name}:`, error)
-            return { name, params: [] }
-        }
-    },
-
-    // Portfolio Backtest API Methods
-
-    async runPortfolioBacktest(params) {
-        const res = await buildRequest('/portfolio/backtest', {
-            method: 'POST',
-            body: JSON.stringify(params)
-        })
-        return await parseResponse(res)
-    },
-
-    async getPortfolioHistory(params = {}) {
-        const queryParams = new URLSearchParams()
-        if (params.sort_by) queryParams.append('sort_by', params.sort_by)
-        if (params.sort_order) queryParams.append('sort_order', params.sort_order)
-        if (params.limit) queryParams.append('limit', params.limit.toString())
-        if (params.offset) queryParams.append('offset', params.offset.toString())
-
-        const query = queryParams.toString()
-        const path = query ? `/portfolio/history?${query}` : '/portfolio/history'
-
-        const res = await buildRequest(path)
-        return await parseResponse(res)
-    },
-
-    async getPortfolioDetail(portfolioId) {
-        const res = await buildRequest(`/portfolio/${portfolioId}`)
-        return await parseResponse(res)
-    },
-
-    async deletePortfolio(portfolioId) {
-        const res = await buildRequest(`/portfolio/${portfolioId}`, {
-            method: 'DELETE'
-        })
-        return await parseResponse(res)
-    }
+    // Portfolio API
+    ...portfolioApi
 }

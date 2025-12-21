@@ -1,0 +1,147 @@
+{
+    "nav": {
+        "features": "功能",
+        "workflow": "工作流程",
+        "roadmap": "路线图",
+        "docs": "文档",
+        "login": "登录",
+        "getStarted": "开始使用"
+    },
+    "hero": {
+        "badge": "专业级量化交易平台",
+        "title1": "让量化交易",
+        "title2": "更简单、更高效",
+        "description": "从策略编写到实盘交易，一站式解决方案。支持回测优化、参数调优、组合管理，助力你的交易策略精准落地。",
+        "cta": {
+            "start": "立即开始",
+            "docs": "查看文档"
+        },
+        "stats": {
+            "strategies": "策略模板",
+            "backtests": "回测次数",
+            "users": "活跃用户"
+        }
+    },
+    "features": {
+        "badge": "核心功能",
+        "title": "强大的量化交易工具",
+        "description": "从策略开发到实盘部署，提供全流程支持",
+        "backtest": {
+            "title": "策略回测",
+            "description": "基于 Backtrader 引擎，支持多标的、多周期回测，提供详细的绩效指标和可视化图表。"
+        },
+        "ai": {
+            "title": "AI 分析",
+            "description": "智能分析回测结果，提供策略改进建议，支持自定义提示词模板。"
+        },
+        "portfolio": {
+            "title": "组合管理",
+            "description": "多资产组合回测，相关性矩阵分析，Markowitz 优化建议，科学配置投资组合。"
+        },
+        "optimization": {
+            "title": "参数优化",
+            "description": "Walk-Forward 优化、过拟合检测、参数敏感度分析，热力图可视化助力精准调参。"
+        },
+        "live": {
+            "title": "实盘交易",
+            "description": "支持模拟/实盘交易，WebSocket 实时推送，订单与持仓管理，安全稳定。"
+        },
+        "realtime": {
+            "title": "实时推送",
+            "description": "WebSocket 实时通知，实时行情数据，订单执行实时反馈。"
+        },
+        "security": {
+            "title": "安全可靠",
+            "description": "凭证加密存储、策略沙箱执行、可选 JWT 鉴权，保障交易安全。"
+        },
+        "versioning": {
+            "title": "策略版本管理",
+            "description": "版本历史、Diff 对比、一键回滚，策略版本管理更轻松。"
+        }
+    },
+    "workflow": {
+        "badge": "工作流程",
+        "title": "从策略到收益的完整路径",
+        "description": "简洁高效的量化交易工作流，让策略开发更轻松",
+        "step1": {
+            "title": "编写策略",
+            "description": "使用在线编辑器编写策略代码，或从模板库选择现成方案"
+        },
+        "step2": {
+            "title": "回测验证",
+            "description": "历史数据回测，多维度绩效分析，验证策略有效性"
+        },
+        "step3": {
+            "title": "参数优化",
+            "description": "Walk-Forward 优化，避免过拟合，找到最佳参数组合"
+        },
+        "step4": {
+            "title": "实盘部署",
+            "description": "一键部署到模拟或实盘环境，实时监控交易状态"
+        }
+    },
+    "roadmap": {
+        "badge": "发展路线",
+        "title": "持续进化的平台",
+        "description": "我们正在不断完善平台功能，以下是近期规划",
+        "item1": {
+            "title": "核心回测引擎",
+            "description": "单标的回测、策略模板、结果持久化"
+        },
+        "item2": {
+            "title": "参数优化系统",
+            "description": "Walk-Forward、热力图、过拟合检测"
+        },
+        "item3": {
+            "title": "组合回测",
+            "description": "多标的组合、相关性分析、Markowitz 优化"
+        },
+        "item4": {
+            "title": "实盘交易",
+            "description": "模拟/实盘会话、WebSocket 推送、订单管理"
+        },
+        "item5": {
+            "title": "风控模块",
+            "description": "仓位限制、止损护栏、风险告警"
+        },
+        "item6": {
+            "title": "策略版本管理",
+            "description": "版本历史、Diff 对比、一键回滚"
+        },
+        "item7": {
+            "title": "定时任务",
+            "description": "定时回测、报告生成、任务调度"
+        },
+        "item8": {
+            "title": "多用户协作",
+            "description": "团队工作空间、策略分享、权限管理"
+        }
+    },
+    "cta": {
+        "title": "准备好开始了吗？",
+        "description": "立即体验专业级量化交易平台，让你的交易策略更上一层楼",
+        "button": "免费开始使用",
+        "note": "无需信用卡 · 快速上手"
+    },
+    "footer": {
+        "description": "专业的量化交易平台，助力交易者实现策略自动化，提升交易效率。",
+        "product": "产品",
+        "product.features": "功能介绍",
+        "product.pricing": "定价",
+        "product.roadmap": "路线图",
+        "product.changelog": "更新日志",
+        "resources": "资源",
+        "resources.docs": "文档",
+        "resources.api": "API 参考",
+        "resources.templates": "策略模板",
+        "resources.tutorials": "教程",
+        "company": "公司",
+        "company.about": "关于我们",
+        "company.blog": "博客",
+        "company.contact": "联系我们",
+        "company.careers": "加入团队",
+        "copyright": "© 2024 Backtrader Pro. 保留所有权利。",
+        "privacy": "隐私政策",
+        "terms": "服务条款"
+    }
+}

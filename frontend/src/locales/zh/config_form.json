@@ -10,5 +10,8 @@
   "order_size": "下单数量 (股/手)",
   "run_backtest": "运行回测",
   "ready_to_run": "准备回测",
-  "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。"
+  "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。",
+  "initial_cash": "初始资金",
+  "stake": "交易单位",
+  "ticker": "标的代码"
 }

@@ -5,5 +5,6 @@
   "history": "Backtest History",
   "walkforward": "Walk-Forward Optimization",
   "live_trading": "Live Trading",
+  "task_center": "Task Center",
   "settings": "Settings"
 }

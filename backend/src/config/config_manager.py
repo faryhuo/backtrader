@@ -25,7 +25,7 @@ import os
 import logging
 from typing import Dict, Optional, Any, Tuple
 
-from src.db.settings_storage import SettingsStorage
+from src.db import SettingsStorage
 
 logger = logging.getLogger(__name__)
 
