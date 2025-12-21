@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingOutlined, ApiOutlined, SafetyOutlined, CloudOutlined, DollarOutlined, GlobalOutlined } from '@ant-design/icons';
-import { Layout, Menu } from 'antd';
+import { SettingOutlined, ApiOutlined, SafetyOutlined, CloudOutlined, DollarOutlined, GlobalOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { Layout, Menu, message } from 'antd';
 import { useSettings } from '../hooks/useSettings';
 import { useCredentials } from '../hooks/useCredentials';
 import { useSiteConfig } from '../hooks/useSiteConfig';
+import { api } from '../services/api';
 import {
     AISettingsSection,
     OpenAISettingsSection,
     AuthSettingsSection,
     ProxySettingsSection,
     ExchangeSettingsSection,
-    SiteSettingsSection
+    SiteSettingsSection,
+    DataSourceSettingsSection
 } from '../components/Settings';
 import './Settings.css';
 
@@ -57,12 +59,70 @@ function Settings() {
         handleReset: handleResetSiteConfig
     } = useSiteConfig();
 
+    // Data source settings state
+    const [dataSourceSettings, setDataSourceSettings] = useState({
+        data_source_priority: ['yahoo', 'database'],
+        eodhd_api_key: null,
+        eodhd_api_key_source: 'none'
+    });
+    const [dataSourceLoading, setDataSourceLoading] = useState(false);
+    const [dataSourceSaved, setDataSourceSaved] = useState(false);
+
+    const loadDataSourceSettings = useCallback(async () => {
+        try {
+            setDataSourceLoading(true);
+            const response = await api.get('/settings/data-source');
+            if (response.settings) {
+                setDataSourceSettings(response.settings);
+            }
+        } catch (err) {
+            console.error('Failed to load data source settings:', err);
+        } finally {
+            setDataSourceLoading(false);
+        }
+    }, []);
+
+    const handleDataSourceChange = useCallback((changes) => {
+        setDataSourceSettings(prev => ({ ...prev, ...changes }));
+        setDataSourceSaved(false);
+    }, []);
+
+    const handleDataSourceSave = useCallback(async (data) => {
+        try {
+            setDataSourceLoading(true);
+            await api.put('/settings/data-source', data);
+            message.success(t('settings.saved'));
+            setDataSourceSaved(true);
+            await loadDataSourceSettings();
+        } catch (err) {
+            message.error(t('settings.save_error'));
+            console.error('Failed to save data source settings:', err);
+        } finally {
+            setDataSourceLoading(false);
+        }
+    }, [t, loadDataSourceSettings]);
+
+    const handleDataSourceReset = useCallback(async () => {
+        try {
+            setDataSourceLoading(true);
+            await api.post('/settings/data-source/reset');
+            message.success(t('settings.reset_success'));
+            await loadDataSourceSettings();
+        } catch (err) {
+            message.error(t('settings.reset_error'));
+            console.error('Failed to reset data source settings:', err);
+        } finally {
+            setDataSourceLoading(false);
+        }
+    }, [t, loadDataSourceSettings]);
+
     // Load data on mount
     useEffect(() => {
         loadSettings();
         loadCredentials();
         loadSiteConfig();
-    }, [loadSettings, loadCredentials, loadSiteConfig]);
+        loadDataSourceSettings();
+    }, [loadSettings, loadCredentials, loadSiteConfig, loadDataSourceSettings]);
 
     // Combined loading state
     const loading = settingsLoading || credentialsLoading || siteConfigLoading;
@@ -78,6 +138,11 @@ function Settings() {
             key: 'openai',
             icon: <ApiOutlined />,
             label: t('settings.openai_credentials', 'OpenAI Credentials')
+        },
+        {
+            key: 'datasource',
+            icon: <DatabaseOutlined />,
+            label: t('settings.datasource_configuration', 'Data Source')
         },
         {
             key: 'auth',
@@ -127,6 +192,17 @@ function Settings() {
                         onSave={handleSaveCredentials}
                         onTest={handleTestCredential}
                         onReset={handleResetCredential}
+                    />
+                );
+            case 'datasource':
+                return (
+                    <DataSourceSettingsSection
+                        settings={dataSourceSettings}
+                        loading={dataSourceLoading}
+                        saved={dataSourceSaved}
+                        onChange={handleDataSourceChange}
+                        onSave={handleDataSourceSave}
+                        onReset={handleDataSourceReset}
                     />
                 );
             case 'auth':
@@ -214,4 +290,3 @@ function Settings() {
 }
 
 export default Settings;
-

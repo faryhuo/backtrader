@@ -6,6 +6,7 @@
     "proxy_configuration": "Proxy",
     "exchange_credentials": "Exchange Credentials",
     "site_configuration": "Site Configuration",
+    "datasource_configuration": "Data Source",
     "default_model": "Enabled AI Models (Select or Type to Add)",
     "code_analysis_prompt": "Code Analysis Prompt",
     "code_rewrite_prompt": "Code Rewrite Prompt",
@@ -48,5 +49,23 @@
     "stats_users": "Users Count",
     "load_error": "Failed to load site configuration",
     "save_error": "Failed to save site configuration",
-    "reset_error": "Failed to reset site configuration"
+    "reset_error": "Failed to reset site configuration",
+    "datasource": {
+        "title": "Data Source Priority",
+        "priority_help": "Drag to reorder. Data will be fetched from sources in order until successful.",
+        "enabled_sources": "Enabled Sources",
+        "priority_order": "Priority Order",
+        "min_source_warning": "At least one data source is required",
+        "eodhd_api_key": "EODHD API Key",
+        "enter_api_key": "Enter EODHD API Key",
+        "eodhd_requires_key": "Requires API key",
+        "sources": {
+            "yahoo": "Yahoo Finance",
+            "yahoo_desc": "Free, supports major global markets",
+            "eodhd": "EODHD",
+            "eodhd_desc": "Premium data source, requires API key",
+            "database": "Local Database",
+            "database_desc": "Cached data from previous fetches"
+        }
+    }
 }

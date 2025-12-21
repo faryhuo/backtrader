@@ -6,6 +6,7 @@
     "proxy_configuration": "代理配置",
     "exchange_credentials": "交易所凭证",
     "site_configuration": "站点配置",
+    "datasource_configuration": "数据源",
     "default_model": "启用的 AI 模型（选择或输入添加）",
     "code_analysis_prompt": "代码分析提示词",
     "code_rewrite_prompt": "代码重写提示词",
@@ -48,5 +49,23 @@
     "stats_users": "用户数量",
     "load_error": "加载站点配置失败",
     "save_error": "保存站点配置失败",
-    "reset_error": "重置站点配置失败"
+    "reset_error": "重置站点配置失败",
+    "datasource": {
+        "title": "数据源优先级",
+        "priority_help": "拖拽调整顺序。系统将按顺序尝试获取数据，直到成功。",
+        "enabled_sources": "已启用的数据源",
+        "priority_order": "优先级顺序",
+        "min_source_warning": "至少需要一个数据源",
+        "eodhd_api_key": "EODHD API 密钥",
+        "enter_api_key": "请输入 EODHD API 密钥",
+        "eodhd_requires_key": "需要 API 密钥",
+        "sources": {
+            "yahoo": "Yahoo Finance",
+            "yahoo_desc": "免费，支持全球主要市场",
+            "eodhd": "EODHD",
+            "eodhd_desc": "高级数据源，需要 API 密钥",
+            "database": "本地数据库",
+            "database_desc": "之前获取的缓存数据"
+        }
+    }
 }
