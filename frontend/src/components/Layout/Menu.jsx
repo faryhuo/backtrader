@@ -14,6 +14,7 @@ import {
     MenuUnfoldOutlined
 } from '@ant-design/icons'
 import './Menu.css'
+import { TrendingUp } from 'lucide-react'
 
 const Menu = ({ collapsed, setCollapsed }) => {
     const { t } = useTranslation()
@@ -31,7 +32,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
     return (
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
-                {!collapsed && <h2>{t('app.title')}</h2>}
+                <div className="header-logo-icon">
+                    <TrendingUp size={20} />
+                </div>
+                {!collapsed && <div className="header-title">
+                    <a href="/" className="header-logo-link">
+                        <h1>{t('app.title')}<span className="text-gradient">Pro</span></h1>
+                    </a>
+                </div>}
             </div>
             <nav className="sidebar-nav">
                 <Link to="/strategy" className={getNavClass('/strategy')} title={t('nav.run_strategy')}>

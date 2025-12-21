@@ -44,11 +44,11 @@ function AppContent() {
             theme={{
                 algorithm: theme.darkAlgorithm,
                 token: {
-                    colorPrimary: '#0ea5e9',
-                    colorBgBase: '#0b0e14',
-                    colorBgContainer: '#161b22',
+                    colorPrimary: '#22d3ee',
+                    colorBgBase: '#0a0b10',
+                    colorBgContainer: '#1a1b23',
                     colorBorder: '#1e293b',
-                    borderRadius: 8,
+                    borderRadius: 12,
                     fontFamily: 'Inter, system-ui, sans-serif',
                 },
             }}

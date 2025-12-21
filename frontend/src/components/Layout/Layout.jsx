@@ -88,19 +88,18 @@ function Layout() {
     return (
         <div className={`layout-container ${collapsed ? 'collapsed' : ''}`}>
             <div className="functional-bg-grid"></div>
-            
+
             <Menu collapsed={collapsed} setCollapsed={setCollapsed} />
 
             <div className={`main-wrapper ${collapsed ? 'collapsed' : ''}`}>
                 <header className="top-header">
                     <div className="header-title">
-                        <h1>{t('app.pro_title')}</h1>
                     </div>
-                    
+
                     <div className="header-actions">
                         <Space size="small">
                             <NotificationCenter />
-                            
+
                             <button
                                 className="btn-ghost"
                                 onClick={toggleLanguage}
@@ -114,7 +113,7 @@ function Layout() {
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                                 <Avatar
                                     icon={<UserOutlined />}
-                                    style={{ cursor: 'pointer', backgroundColor: '#0ea5e9' }}
+                                    style={{ cursor: 'pointer', backgroundColor: '#22d3ee' }}
                                 />
                             </Dropdown>
                         </Space>
