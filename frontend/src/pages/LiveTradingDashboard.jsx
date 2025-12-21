@@ -1,5 +1,4 @@
-import React from 'react';
-import { Layout, Row, Col, Card, Statistic, Space, Divider, Tabs, Typography, Badge } from 'antd';
+import { Layout, Row, Col, Card, Statistic, Space, Typography, Badge } from 'antd';
 import { DollarOutlined, RiseOutlined, FallOutlined, ThunderboltOutlined, DashboardOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import LiveConfigForm from '../components/LiveTrading/LiveConfigForm';
@@ -145,9 +144,9 @@ const LiveTradingDashboard = () => {
               {/* Left Column: Chart & Positions */}
               <Col xs={24} xl={16}>
                 <Card className="dashboard-card" title={t('live.performance')}>
-                   <PnLChart pnlHistory={pnlHistory} currentPnl={currentPnl} />
+                  <PnLChart pnlHistory={pnlHistory} currentPnl={currentPnl} />
                 </Card>
-                
+
                 <Card className="dashboard-card" title={t('live.open_positions')}>
                   <PositionTable positions={positions} loading={false} />
                 </Card>
@@ -157,7 +156,7 @@ const LiveTradingDashboard = () => {
               <Col xs={24} xl={8}>
                 <Card className="dashboard-card" title={t('live.order_history')} bodyStyle={{ padding: 0 }}>
                   <div style={{ height: '600px', overflowY: 'auto' }}>
-                     <OrderLog orders={orders} loading={false} />
+                    <OrderLog orders={orders} loading={false} />
                   </div>
                 </Card>
               </Col>

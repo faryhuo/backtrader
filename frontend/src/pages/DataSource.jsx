@@ -8,7 +8,7 @@ import TickerInfoPanel from '../components/DataSource/TickerInfoPanel';
 import QuickPicks from '../components/DataSource/QuickPicks';
 import ChartToolbar from '../components/DataSource/ChartToolbar';
 import IndicatorsPanel from '../components/DataSource/IndicatorsPanel';
-import { exportToCSV, exportToExcel, exportChartAsImage, generateFilename } from '../utils/exportUtils';
+import { exportToExcel, exportChartAsImage, generateFilename } from '../utils/exportUtils';
 import './DataSource.css';
 
 // Helper to get default date range (last 1 month)
@@ -66,15 +66,15 @@ function DataSource() {
             if (response.data && response.data.length > 0) {
                 setChartData(response.data);
             } else {
-                setError('No data found for the given parameters.');
+                setError(t('datasource.errors.no_data_found', 'No data found for the given parameters.'));
             }
         } catch (err) {
             console.error(err);
-            setError(err.message || 'Failed to fetch data.');
+            setError(err.message || t('datasource.errors.fetch_failed', 'Failed to fetch data.'));
         } finally {
             setLoading(false);
         }
-    }, [ticker, startDate, endDate]);
+    }, [ticker, startDate, endDate, t]);
 
     const handleFetchData = async (e) => {
         if (e) e.preventDefault();
@@ -113,7 +113,7 @@ function DataSource() {
     const handleExportImage = async () => {
         const chartElement = document.querySelector('.chart-card');
         if (!chartElement) {
-            message.warning('Chart not found');
+            message.warning(t('datasource.chart_not_found', 'Chart not found'));
             return;
         }
 
@@ -173,7 +173,7 @@ function DataSource() {
                                             <div>
                                                 <h3>{ticker} {t('datasource.price_history')}</h3>
                                                 <span className="chart-meta">
-                                                    {chartData.length} candles · {startDate} to {endDate}
+                                                    {t('datasource.chart_meta', { count: chartData.length, start: startDate, end: endDate })}
                                                 </span>
                                             </div>
                                         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Modal,
@@ -31,7 +31,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const [strategies, setStrategies] = useState([])
     const [loading, setLoading] = useState(false)
     const [loadingParams, setLoadingParams] = useState(false)
-    const [paramFields, setParamFields] = useState([{ name: '', values: '' }])
+    const [_paramFields, setParamFields] = useState([{ name: '', values: '' }])
 
     useEffect(() => {
         if (visible) {
@@ -39,13 +39,14 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
             form.resetFields()
             setParamFields([{ name: '', values: '' }])
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible])
 
     const loadStrategies = async () => {
         try {
             const data = await api.getStrategies()
             setStrategies(data)
-        } catch (error) {
+        } catch (_error) {
             message.error(t('walkforward.config.loadStrategiesError'))
         }
     }

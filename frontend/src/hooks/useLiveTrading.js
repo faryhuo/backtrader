@@ -63,7 +63,7 @@ export const useLiveTrading = () => {
                 });
                 break;
 
-            case WS_MESSAGE_TYPES.PNL:
+            case WS_MESSAGE_TYPES.PNL: {
                 const data = msg.data;
                 setCurrentPnl(data.current_pnl || 0);
                 setPortfolioValue(data.portfolio_value || 0);
@@ -89,8 +89,9 @@ export const useLiveTrading = () => {
                     }));
                 }
                 break;
+            }
 
-            case WS_MESSAGE_TYPES.TRADE:
+            case WS_MESSAGE_TYPES.TRADE: {
                 const trade = msg.data;
                 const sideLabel = trade.side === 'buy'
                     ? t('live.trade.side.buy', 'Bought')
@@ -108,16 +109,18 @@ export const useLiveTrading = () => {
                     totalTrades: prev.totalTrades + 1
                 }));
                 break;
+            }
 
             case WS_MESSAGE_TYPES.LOG:
                 console.log('[Live Trading]', msg.data.message);
                 break;
 
-            case WS_MESSAGE_TYPES.ERROR:
+            case WS_MESSAGE_TYPES.ERROR: {
                 const errorMsg = t('live.notifications.trading_error', { error: msg.data.message });
                 message.error(errorMsg);
                 addNotification(errorMsg, 'error');
                 break;
+            }
 
             case WS_MESSAGE_TYPES.STATUS:
                 if (msg.data.status) {
@@ -128,7 +131,7 @@ export const useLiveTrading = () => {
             default:
                 console.log('Unknown WebSocket message type:', msg.type);
         }
-    }, [addNotification]);
+    }, [addNotification, t]);
 
     // WebSocket connection - initialized at top level per React Hook rules
     // autoConnect: false prevents automatic connection, we manually connect after session starts
@@ -235,8 +238,9 @@ export const useLiveTrading = () => {
 
         } catch (error) {
             console.error('Failed to refresh session:', error);
-            message.error('Failed to refresh session status');
-            addNotification('Failed to refresh session status', 'error');
+            const refreshFailedMsg = t('live.notifications.session_refresh_failed', 'Failed to refresh session status');
+            message.error(refreshFailedMsg);
+            addNotification(refreshFailedMsg, 'error');
         } finally {
             setLoading(false);
         }

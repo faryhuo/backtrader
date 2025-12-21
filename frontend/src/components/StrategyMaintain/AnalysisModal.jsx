@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 const AnalysisModal = ({ isOpen, onClose, content, title, t }) => {

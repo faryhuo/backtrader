@@ -82,7 +82,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
         } catch (err) {
             console.error(err)
-            message.error("Failed to perform AI analysis: " + err.message)
+            message.error(t('history.ai_analysis_failed', { error: err.message }))
         } finally {
             setAiLoading(false)
         }

@@ -110,7 +110,7 @@ function RunStrategy() {
     const handleBacktest = async (e) => {
         e.preventDefault()
         if (!selectedStrategy) {
-            setError('Please select or create a strategy first.')
+            setError(t('config_form.select_strategy_required', 'Please select or create a strategy first.'))
             return
         }
         setLoading(true)
@@ -135,7 +135,7 @@ function RunStrategy() {
             setResult(data)
         } catch (err) {
             console.error(err)
-            setError(err.message || 'An error occurred')
+            setError(err.message || t('common.error_occurred', 'An error occurred'))
         } finally {
             setLoading(false)
         }
@@ -168,7 +168,7 @@ function RunStrategy() {
             setActiveTab(selectedModel)
         } catch (err) {
             console.error(err)
-            message.error("Failed to perform AI analysis: " + err.message)
+            message.error(t('history.ai_analysis_failed', { error: err.message }))
         } finally {
             setAiLoading(false)
         }

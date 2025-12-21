@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Card,
-    Row,
-    Col,
     Button,
     Table,
     Tag,
     Space,
     Modal,
-    Spin,
     Empty,
     message,
     Tooltip
@@ -76,7 +73,7 @@ const WalkForwardOptimization = () => {
 
     const handleConfigSubmit = async (values) => {
         try {
-            const response = await api.startWalkForward(values)
+            const _response = await api.startWalkForward(values)
             message.success(t('walkforward.startSuccess'))
             setConfigModalVisible(false)
             loadOptimizations()

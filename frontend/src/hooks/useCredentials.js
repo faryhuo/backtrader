@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { DEFAULT_CREDENTIALS } from '../constants/settingsConstants';
 
@@ -7,6 +8,7 @@ import { DEFAULT_CREDENTIALS } from '../constants/settingsConstants';
  * Custom hook for managing credentials state and operations
  */
 export function useCredentials() {
+    const { t } = useTranslation();
     const [credentials, setCredentials] = useState(DEFAULT_CREDENTIALS);
     const [credentialSources, setCredentialSources] = useState({});
     const [testingCredential, setTestingCredential] = useState(null);
@@ -21,9 +23,9 @@ export function useCredentials() {
             }
         } catch (error) {
             console.error('Failed to load credentials:', error);
-            message.error('Failed to load credentials');
+            message.error(t('settings.credentials.load_failed', 'Failed to load credentials'));
         }
-    }, []);
+    }, [t]);
 
     const handleCredentialChange = useCallback((key, value) => {
         setCredentials(prev => ({ ...prev, [key]: value }));
@@ -75,16 +77,16 @@ export function useCredentials() {
             }
 
             if (response.status === 'ok') {
-                message.success('Credentials saved successfully');
+                message.success(t('settings.credentials.saved', 'Credentials saved successfully'));
                 await loadCredentials();
             }
         } catch (error) {
             console.error('Failed to save credentials:', error);
-            message.error(error.message || 'Failed to save credentials');
+            message.error(error.message || t('settings.credentials.save_failed', 'Failed to save credentials'));
         } finally {
             setLoading(false);
         }
-    }, [credentials, loadCredentials]);
+    }, [credentials, loadCredentials, t]);
 
     const handleTestCredential = useCallback(async (credentialType) => {
         try {
@@ -119,17 +121,17 @@ export function useCredentials() {
             const response = await api.testCredential(params.credential_type, params);
 
             if (response.valid) {
-                message.success(response.message || 'Credentials are valid');
+                message.success(response.message || t('settings.credentials.valid', 'Credentials are valid'));
             } else {
-                message.error(response.message || 'Credentials are invalid');
+                message.error(response.message || t('settings.credentials.invalid', 'Credentials are invalid'));
             }
         } catch (error) {
             console.error('Failed to test credentials:', error);
-            message.error(error.message || 'Failed to test credentials');
+            message.error(error.message || t('settings.credentials.test_failed', 'Failed to test credentials'));
         } finally {
             setTestingCredential(null);
         }
-    }, [credentials]);
+    }, [credentials, t]);
 
     const handleResetCredential = useCallback(async (credentialKey) => {
         try {
@@ -137,16 +139,16 @@ export function useCredentials() {
             const response = await api.resetCredential(credentialKey);
 
             if (response.status === 'ok') {
-                message.success(`Reset ${credentialKey} to .env value`);
+                message.success(t('settings.credentials.reset_to_env', { key: credentialKey }));
                 await loadCredentials();
             }
         } catch (error) {
             console.error('Failed to reset credential:', error);
-            message.error(error.message || 'Failed to reset credential');
+            message.error(error.message || t('settings.credentials.reset_failed', 'Failed to reset credential'));
         } finally {
             setLoading(false);
         }
-    }, [loadCredentials]);
+    }, [loadCredentials, t]);
 
     return {
         credentials,
