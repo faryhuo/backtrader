@@ -1,15 +1,17 @@
 
 import { useState, useEffect } from 'react'
-import { Select, Button, Space, message, Tabs, Tag } from 'antd'
+import { Select, Button, Space, message, Tabs } from 'antd'
 import '../components/RunStrategy/RunStrategy.css'
 import { api } from '../services/api'
-import { performFullStrategyAnalysis, getAvailableModels } from '../services/aiAnalysis'
+import { performFullStrategyAnalysis } from '../services/aiAnalysis'
+import { useSettingsContext } from '../contexts/SettingsContext'
 import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm'
 import PerformanceOverview from '../components/RunStrategy/PerformanceOverview'
 import TradeLog from '../components/RunStrategy/TradeLog'
 import StrategyPlot from '../components/RunStrategy/StrategyPlot'
 import DeepAnalysis from '../components/DeepAnalysis'
 import AIInsight from '../components/RunStrategy/AIInsight'
+import CodeViewer from '../components/RunStrategy/CodeViewer'
 
 import {
     RobotOutlined,
@@ -27,6 +29,7 @@ import { useTranslation } from 'react-i18next'
 
 function RunStrategy() {
     const { t } = useTranslation();
+    const { getAvailableModels } = useSettingsContext();
     // Backtest State
     const [ticker, setTicker] = useState('AAPL')
     const [startDate, setStartDate] = useState('2022-01-01')
@@ -299,44 +302,12 @@ function RunStrategy() {
             label: <span><CodeOutlined className="tab-icon" /> {t('history.tab_strategy_code', 'Strategy Code')}</span>,
             children: (
                 <div style={{ padding: '20px' }}>
-                    {paramOverrides && Object.keys(paramOverrides).length > 0 && (
-                        <div style={{
-                            background: 'rgba(34, 211, 238, 0.1)',
-                            border: '1px solid rgba(34, 211, 238, 0.3)',
-                            borderRadius: '8px',
-                            padding: '12px 16px',
-                            marginBottom: '16px'
-                        }}>
-                            <div style={{
-                                fontSize: '13px',
-                                color: '#22d3ee',
-                                marginBottom: '8px',
-                                fontWeight: 500
-                            }}>
-                                {t('history.params_override', 'Parameter Overrides')}
-                            </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                {Object.entries(paramOverrides).map(([key, value]) => (
-                                    <Tag key={key} color="cyan">
-                                        {key}: {typeof value === 'number' ? value.toLocaleString() : String(value)}
-                                    </Tag>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    <pre style={{
-                        background: 'rgba(22, 27, 34, 0.6)',
-                        padding: '16px',
-                        borderRadius: '8px',
-                        overflow: 'auto',
-                        maxHeight: '600px',
-                        whiteSpace: 'pre',
-                        fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-                        fontSize: '13px',
-                        lineHeight: '1.5'
-                    }}>
-                        {strategyCode}
-                    </pre>
+                    <CodeViewer
+                        code={strategyCode}
+                        language="python"
+                        params={paramOverrides}
+                        maxHeight={500}
+                    />
                 </div>
             )
         });

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import { LogtoProvider } from './providers/LogtoProvider'
 import { NotificationProvider } from './providers/NotificationProvider'
+import { SettingsProvider } from './contexts/SettingsContext'
 import { PrivateRoute } from './components/Auth/PrivateRoute'
 import Layout from './components/Layout/Layout'
 import RunStrategy from './pages/RunStrategy'
@@ -54,46 +55,48 @@ function AppContent() {
                 },
             }}
         >
-            <NotificationProvider>
-                <Routes>
-                    {/* Landing Page - Accessible to everyone */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/welcome" element={<Home />} />
+            <SettingsProvider>
+                <NotificationProvider>
+                    <Routes>
+                        {/* Landing Page - Accessible to everyone */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/welcome" element={<Home />} />
 
-                    {/* Auth Routes */}
-                    {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
-                    {loginEnabled && <Route path="/callback" element={<Callback />} />}
+                        {/* Auth Routes */}
+                        {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
+                        {loginEnabled && <Route path="/callback" element={<Callback />} />}
 
-                    {/* Protected Application Routes */}
-                    <Route element={loginEnabled ? (
-                        <PrivateRoute>
-                            <Layout />
-                        </PrivateRoute>
-                    ) : <Layout />}>
-                        <Route path="strategy" element={<RunStrategy />} />
-                        <Route path="maintain" element={<StrategyMaintain />} />
-                        <Route path="datasource" element={<DataSource />} />
-                        <Route path="history" element={<BacktestHistory />} />
-                        <Route path="walkforward" element={<WalkForward />} />
-                        <Route path="portfolio" element={<PortfolioBacktest />} />
-                        <Route path="live" element={<LiveTradingDashboard />} />
-                        <Route path="data_management" element={<DataManagement />} />
-                        <Route path="tasks" element={<TaskCenter />} />
-                        <Route path="settings" element={<Settings />} />
-                    </Route>
+                        {/* Protected Application Routes */}
+                        <Route element={loginEnabled ? (
+                            <PrivateRoute>
+                                <Layout />
+                            </PrivateRoute>
+                        ) : <Layout />}>
+                            <Route path="strategy" element={<RunStrategy />} />
+                            <Route path="maintain" element={<StrategyMaintain />} />
+                            <Route path="datasource" element={<DataSource />} />
+                            <Route path="history" element={<BacktestHistory />} />
+                            <Route path="walkforward" element={<WalkForward />} />
+                            <Route path="portfolio" element={<PortfolioBacktest />} />
+                            <Route path="live" element={<LiveTradingDashboard />} />
+                            <Route path="data_management" element={<DataManagement />} />
+                            <Route path="tasks" element={<TaskCenter />} />
+                            <Route path="settings" element={<Settings />} />
+                        </Route>
 
-                    {/* Redirects for Auth Disabled */}
-                    {!loginEnabled && (
-                        <>
-                            <Route path="/login" element={<Navigate to="/" replace />} />
-                            <Route path="/callback" element={<Navigate to="/" replace />} />
-                        </>
-                    )}
+                        {/* Redirects for Auth Disabled */}
+                        {!loginEnabled && (
+                            <>
+                                <Route path="/login" element={<Navigate to="/" replace />} />
+                                <Route path="/callback" element={<Navigate to="/" replace />} />
+                            </>
+                        )}
 
-                    {/* Catch-all redirect */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </NotificationProvider>
+                        {/* Catch-all redirect */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </NotificationProvider>
+            </SettingsProvider>
         </ConfigProvider>
     )
 }

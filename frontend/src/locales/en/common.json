@@ -10,5 +10,14 @@
   "filter": "Filter",
   "reset": "Reset",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "code_viewer": {
+    "copied": "Copied to clipboard!",
+    "copy_failed": "Failed to copy",
+    "lines": "lines",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "copy": "Copy code",
+    "click_expand": "Click to expand"
+  }
 }

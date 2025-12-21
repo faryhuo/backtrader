@@ -17,13 +17,14 @@ function Layout() {
     const { t, i18n } = useTranslation();
     const [collapsed, setCollapsed] = useState(false)
     const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
+    const isZh = i18n.language.startsWith('zh');
     const [userInfo, setUserInfo] = useState({
         email: 'Guest',
         name: 'Guest',
     })
 
     const toggleLanguage = () => {
-        const newLang = i18n.language.startsWith('zh') ? 'en' : 'zh';
+        const newLang = isZh ? 'en' : 'zh';
         i18n.changeLanguage(newLang);
     };
 
@@ -103,11 +104,11 @@ function Layout() {
                             <button
                                 className="btn-ghost"
                                 onClick={toggleLanguage}
-                                title="Switch Language"
+                                title={t('common.language.switch_title', 'Switch Language')}
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                             >
                                 <GlobalOutlined />
-                                {i18n.language.startsWith('zh') ? 'English' : '中文'}
+                                {isZh ? t('common.language.switch_to_en', 'English') : t('common.language.switch_to_zh', '中文')}
                             </button>
 
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">

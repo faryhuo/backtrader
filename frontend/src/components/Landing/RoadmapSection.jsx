@@ -5,7 +5,7 @@ import { Shield, GitBranch, BarChart3, Calendar, Users, Activity, Cpu, Zap } fro
  * Roadmap section with priority-based feature cards
  */
 export function RoadmapSection() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     const roadmapItems = [
         {
@@ -13,64 +13,64 @@ export function RoadmapSection() {
             titleKey: 'landing.roadmap.item5.title',
             descriptionKey: 'landing.roadmap.item5.description',
             icon: Shield,
-            status: i18n.language === 'zh' ? '规划中' : 'Planned',
-            statusType: 'planned'
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
         },
         {
             priority: 'P0',
             titleKey: 'landing.roadmap.item6.title',
             descriptionKey: 'landing.roadmap.item6.description',
             icon: GitBranch,
-            status: i18n.language === 'zh' ? '开发中' : 'In Dev',
-            statusType: 'dev'
+            statusKey: 'landing.status.in_dev',
+            statusType: 'dev',
         },
         {
             priority: 'P1',
             titleKey: 'landing.roadmap.item1.title',
             descriptionKey: 'landing.roadmap.item1.description',
             icon: BarChart3,
-            status: i18n.language === 'zh' ? '已完成' : 'Done',
-            statusType: 'done'
+            statusKey: 'landing.status.done',
+            statusType: 'done',
         },
         {
             priority: 'P1',
             titleKey: 'landing.roadmap.item7.title',
             descriptionKey: 'landing.roadmap.item7.description',
             icon: Calendar,
-            status: i18n.language === 'zh' ? '规划中' : 'Planned',
-            statusType: 'planned'
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
         },
         {
             priority: 'P2',
             titleKey: 'landing.roadmap.item8.title',
             descriptionKey: 'landing.roadmap.item8.description',
             icon: Users,
-            status: i18n.language === 'zh' ? '规划中' : 'Planned',
-            statusType: 'planned'
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
         },
         {
             priority: 'P2',
             titleKey: 'landing.roadmap.item2.title',
             descriptionKey: 'landing.roadmap.item2.description',
             icon: Activity,
-            status: i18n.language === 'zh' ? '已完成' : 'Done',
-            statusType: 'done'
+            statusKey: 'landing.status.done',
+            statusType: 'done',
         },
         {
             priority: 'P2',
             titleKey: 'landing.roadmap.item3.title',
             descriptionKey: 'landing.roadmap.item3.description',
             icon: Cpu,
-            status: i18n.language === 'zh' ? '已完成' : 'Done',
-            statusType: 'done'
+            statusKey: 'landing.status.done',
+            statusType: 'done',
         },
         {
             priority: 'P2',
             titleKey: 'landing.roadmap.item4.title',
             descriptionKey: 'landing.roadmap.item4.description',
             icon: Zap,
-            status: i18n.language === 'zh' ? '已完成' : 'Done',
-            statusType: 'done'
+            statusKey: 'landing.status.done',
+            statusType: 'done',
         },
     ];
 
@@ -98,19 +98,19 @@ export function RoadmapSection() {
                     <div className="landing-roadmap-legend-item">
                         <div className="landing-roadmap-legend-dot landing-roadmap-legend-dot-p0" />
                         <span className="landing-roadmap-legend-text">
-                            P0 - {i18n.language === 'zh' ? '优先开发' : 'Priority'}
+                            P0 - {t('landing.priority.p0')}
                         </span>
                     </div>
                     <div className="landing-roadmap-legend-item">
                         <div className="landing-roadmap-legend-dot landing-roadmap-legend-dot-p1" />
                         <span className="landing-roadmap-legend-text">
-                            P1 - {i18n.language === 'zh' ? '体验增强' : 'Enhancement'}
+                            P1 - {t('landing.priority.p1')}
                         </span>
                     </div>
                     <div className="landing-roadmap-legend-item">
                         <div className="landing-roadmap-legend-dot landing-roadmap-legend-dot-p2" />
                         <span className="landing-roadmap-legend-text">
-                            P2 - {i18n.language === 'zh' ? '平台化' : 'Platform'}
+                            P2 - {t('landing.priority.p2')}
                         </span>
                     </div>
                 </div>
@@ -144,7 +144,7 @@ export function RoadmapSection() {
 
                                 {/* Status */}
                                 <div className={`landing-roadmap-status landing-roadmap-status-${item.statusType}`}>
-                                    {item.status}
+                                    {t(item.statusKey)}
                                 </div>
                             </div>
                         );

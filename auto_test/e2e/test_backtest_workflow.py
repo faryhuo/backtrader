@@ -196,8 +196,8 @@ class TestBacktestAPI:
         """Test backtest with invalid date range."""
         config = {
             "ticker": "AAPL",
-            "start_date": "2025-01-01",  # Future date
-            "end_date": "2025-12-31",
+            "start_date": "2030-01-01",  # Future date
+            "end_date": "2030-12-31",
             "initial_cash": 10000.0,
             "commission": 0.001,
             "stake": 100

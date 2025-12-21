@@ -5,6 +5,7 @@ from daphne.server import Server
 
 from api import app
 from src.config.settings import DATABASE_URL, DEFAULT_DB_PATH
+from src.utils.logger import setup_logging
 
 
 def mask_database_url(url: str) -> str:
@@ -38,12 +39,9 @@ def mask_database_url(url: str) -> str:
 
 
 def main() -> None:
-    # Configure logging
+    # Configure logging from config file
+    setup_logging()
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-    logging.basicConfig(
-        level=getattr(logging, log_level, logging.INFO),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
 
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))

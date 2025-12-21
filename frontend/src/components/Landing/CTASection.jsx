@@ -8,7 +8,7 @@ import { ArrowRight, Github, BookOpen } from 'lucide-react';
  * Call-to-action section with buttons and trust badges
  */
 export function CTASection() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { config } = useSiteConfig();
     const { signIn, loginEnabled } = useAuth();
     const navigate = useNavigate();
@@ -62,7 +62,7 @@ export function CTASection() {
                         {config.links.docs && (
                             <button className="landing-btn landing-btn-glass landing-btn-xl" onClick={handleDocsClick}>
                                 <BookOpen />
-                                {i18n.language === 'zh' ? '查看文档' : 'View Docs'}
+                                {t('landing.cta.docs', 'View Docs')}
                             </button>
                         )}
                         {config.links.github && (
@@ -71,7 +71,7 @@ export function CTASection() {
                                 onClick={handleGithubClick}
                             >
                                 <Github />
-                                GitHub
+                                {t('landing.cta.github', 'GitHub')}
                             </button>
                         )}
                     </div>

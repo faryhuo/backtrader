@@ -134,38 +134,59 @@ class ParamStrategy(bt.Strategy):
     @staticmethod
     def portfolio_config(
         tickers: Optional[List[str]] = None,
+        weights: Optional[List[float]] = None,
         days_back: int = 365,
         initial_cash: float = 100000.0,
+        strategy_name: Optional[str] = None,
+        params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Generate portfolio backtest configuration.
 
         Args:
             tickers: List of ticker symbols
+            weights: Portfolio weights (normalized to sum to 1)
             days_back: Number of days to backtest
             initial_cash: Initial cash amount
+            strategy_name: Optional strategy name
+            params: Optional strategy parameters
 
         Returns:
             Portfolio configuration dictionary
         """
         if tickers is None:
             tickers = ["AAPL", "MSFT", "GOOGL"]
-        
+
+        if weights is None:
+            # Equal weights by default
+            weights = [1.0 / len(tickers)] * len(tickers)
+
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days_back)
-        
-        return {
+
+        config = {
             "tickers": tickers,
+            "weights": weights,
             "start_date": start_date.strftime("%Y-%m-%d"),
             "end_date": end_date.strftime("%Y-%m-%d"),
             "initial_cash": initial_cash,
-            "commission": 0.001,
+            "commission": 0.0005,
+            "stake": 100,
         }
+
+        if strategy_name:
+            config["strategy_name"] = strategy_name
+
+        if params:
+            config["params"] = params
+
+        return config
 
     @staticmethod
     def walkforward_config(
         ticker: str = "AAPL",
         strategy_name: str = "TestStrategy",
+        days_back: int = 730,
     ) -> Dict[str, Any]:
         """
         Generate walk-forward optimization configuration.
@@ -173,26 +194,28 @@ class ParamStrategy(bt.Strategy):
         Args:
             ticker: Stock ticker symbol
             strategy_name: Strategy name
+            days_back: Number of days of data to use
 
         Returns:
             Walk-forward configuration dictionary
         """
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=730)  # 2 years
-        
+        start_date = end_date - timedelta(days=days_back)
+
         return {
             "ticker": ticker,
             "strategy_name": strategy_name,
             "start_date": start_date.strftime("%Y-%m-%d"),
             "end_date": end_date.strftime("%Y-%m-%d"),
-            "initial_cash": 10000.0,
-            "commission": 0.001,
-            "param_ranges": {
-                "period": {"start": 10, "end": 50, "step": 10},
-                "threshold": {"start": 0.01, "end": 0.05, "step": 0.01},
+            "initial_cash": 100000.0,
+            "commission": 0.0005,
+            "stake": 100,
+            "param_grid": {
+                "period": [10, 20, 30],
             },
-            "train_period_days": 180,
+            "train_period_days": 365,
             "test_period_days": 90,
+            "anchored": False,
             "optimization_metric": "sharpe_ratio",
         }
 
@@ -283,3 +306,127 @@ class ParamStrategy(bt.Strategy):
             start_date.strftime("%Y-%m-%d"),
             end_date.strftime("%Y-%m-%d"),
         )
+
+    @staticmethod
+    def settings_config(
+        selected_models: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate user settings configuration.
+
+        Args:
+            selected_models: List of AI model names
+
+        Returns:
+            Settings configuration dictionary
+        """
+        if selected_models is None:
+            selected_models = ["gpt-4o", "gpt-4o-mini"]
+
+        return {
+            "selected_models": selected_models,
+            "code_analysis_prompt": "Analyze this trading strategy code and provide insights.",
+            "code_rewrite_prompt": "Rewrite this code to improve performance.",
+            "full_strategy_analysis_prompt": "Provide a comprehensive analysis of the strategy.",
+        }
+
+    @staticmethod
+    def data_source_config(
+        priority: Optional[List[str]] = None,
+        eodhd_api_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate data source configuration.
+
+        Args:
+            priority: List of data sources in priority order
+            eodhd_api_key: Optional EODHD API key
+
+        Returns:
+            Data source configuration dictionary
+        """
+        config = {}
+        if priority is not None:
+            config["data_source_priority"] = priority
+        if eodhd_api_key is not None:
+            config["eodhd_api_key"] = eodhd_api_key
+        return config
+
+    @staticmethod
+    def market_data_request(
+        ticker: str = "AAPL",
+        days_back: int = 30,
+    ) -> Dict[str, Any]:
+        """
+        Generate market data request configuration.
+
+        Args:
+            ticker: Stock ticker symbol
+            days_back: Number of days to fetch
+
+        Returns:
+            Market data request dictionary
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        return {
+            "ticker": ticker,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d"),
+        }
+
+    @staticmethod
+    def resample_request(
+        ticker: str = "AAPL",
+        target_timeframe: str = "1d",
+        days_back: int = 30,
+    ) -> Dict[str, Any]:
+        """
+        Generate resample request configuration.
+
+        Args:
+            ticker: Stock ticker symbol
+            target_timeframe: Target timeframe for resampling
+            days_back: Number of days to fetch
+
+        Returns:
+            Resample request dictionary
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        return {
+            "ticker": ticker,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d"),
+            "target_timeframe": target_timeframe,
+            "include_incomplete": False,
+        }
+
+    @staticmethod
+    def warmup_request(
+        tickers: Optional[List[str]] = None,
+        days_back: int = 30,
+    ) -> Dict[str, Any]:
+        """
+        Generate cache warmup request configuration.
+
+        Args:
+            tickers: List of tickers to warmup
+            days_back: Number of days to fetch
+
+        Returns:
+            Warmup request dictionary
+        """
+        if tickers is None:
+            tickers = ["AAPL", "MSFT"]
+
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        return {
+            "tickers": tickers,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d"),
+        }
