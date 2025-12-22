@@ -14,7 +14,7 @@ import './Callback.css';
 export function Callback() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isLoading, error } = useHandleSignInCallback(() => {
+  const { isLoading: _isLoading, error } = useHandleSignInCallback(() => {
     // Redirect to main app after successful sign-in
     navigate('/', { replace: true });
   });

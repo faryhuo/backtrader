@@ -29,6 +29,22 @@ from src.db.storage.ticker_metadata import (
     get_ticker_metadata,
 )
 
+# Data cache management
+from src.db.storage.data_cache import (
+    DataCacheStorage,
+    get_data_cache_storage,
+)
+
+# OHLCV resampling
+from src.db.storage.resampler import (
+    resample_ohlcv,
+    resample_to_daily,
+    resample_to_hourly,
+    validate_resample_path,
+    get_supported_timeframes,
+    get_resample_targets,
+)
+
 __all__ = [
     # Storage classes
     "BaseStorage",
@@ -50,4 +66,14 @@ __all__ = [
     "get_raw_data_json",
     # Ticker metadata
     "get_ticker_metadata",
+    # Data cache management
+    "DataCacheStorage",
+    "get_data_cache_storage",
+    # OHLCV resampling
+    "resample_ohlcv",
+    "resample_to_daily",
+    "resample_to_hourly",
+    "validate_resample_path",
+    "get_supported_timeframes",
+    "get_resample_targets",
 ]

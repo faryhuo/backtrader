@@ -1,4 +1,3 @@
-import React from 'react';
 import { Table, Tag, Typography, Tooltip } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';

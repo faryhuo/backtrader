@@ -115,7 +115,7 @@ export function useSettings() {
                 setTimeout(() => setSaved(false), 3000);
             } catch (error) {
                 console.error('Database save failed, falling back to localStorage:', error);
-                message.warning('Saved to local storage (database unavailable)');
+                message.warning(t('settings.saved_local', 'Saved to local storage (database unavailable)'));
                 localStorage.setItem('userSettings', JSON.stringify(settings));
                 setSaved(true);
                 setTimeout(() => setSaved(false), 3000);

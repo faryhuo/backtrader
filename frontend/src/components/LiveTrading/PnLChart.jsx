@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { createChart } from 'lightweight-charts';
-import { Card, Empty } from 'antd';
+import { Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 /**

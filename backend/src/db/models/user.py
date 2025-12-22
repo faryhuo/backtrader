@@ -85,6 +85,12 @@ class UserSettingsModel(Base):
     # }
     ccxt_credentials = Column(JSON, nullable=True)
 
+    # Data Source Configuration
+    # Priority order for fetching market data (JSON array)
+    # Default: ["yahoo", "database"], can include "eodhd"
+    data_source_priority = Column(JSON, nullable=True)
+    eodhd_api_key = Column(Text, nullable=True)  # Encrypted API key
+
     # Timestamps for auditing
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

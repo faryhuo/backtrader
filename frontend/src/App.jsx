@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import { LogtoProvider } from './providers/LogtoProvider'
 import { NotificationProvider } from './providers/NotificationProvider'
+import { SettingsProvider } from './contexts/SettingsContext'
 import { PrivateRoute } from './components/Auth/PrivateRoute'
 import Layout from './components/Layout/Layout'
 import RunStrategy from './pages/RunStrategy'
@@ -13,6 +14,7 @@ import WalkForward from './pages/WalkForward'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
 import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
+import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
 import TaskCenter from './pages/TaskCenter'
@@ -44,54 +46,57 @@ function AppContent() {
             theme={{
                 algorithm: theme.darkAlgorithm,
                 token: {
-                    colorPrimary: '#0ea5e9',
-                    colorBgBase: '#0b0e14',
-                    colorBgContainer: '#161b22',
+                    colorPrimary: '#22d3ee',
+                    colorBgBase: '#0a0b10',
+                    colorBgContainer: '#1a1b23',
                     colorBorder: '#1e293b',
-                    borderRadius: 8,
+                    borderRadius: 12,
                     fontFamily: 'Inter, system-ui, sans-serif',
                 },
             }}
         >
-            <NotificationProvider>
-                <Routes>
-                    {/* Landing Page - Accessible to everyone */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/welcome" element={<Home />} />
+            <SettingsProvider>
+                <NotificationProvider>
+                    <Routes>
+                        {/* Landing Page - Accessible to everyone */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/welcome" element={<Home />} />
 
-                    {/* Auth Routes */}
-                    {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
-                    {loginEnabled && <Route path="/callback" element={<Callback />} />}
+                        {/* Auth Routes */}
+                        {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
+                        {loginEnabled && <Route path="/callback" element={<Callback />} />}
 
-                    {/* Protected Application Routes */}
-                    <Route element={loginEnabled ? (
-                        <PrivateRoute>
-                            <Layout />
-                        </PrivateRoute>
-                    ) : <Layout />}>
-                        <Route path="strategy" element={<RunStrategy />} />
-                        <Route path="maintain" element={<StrategyMaintain />} />
-                        <Route path="datasource" element={<DataSource />} />
-                        <Route path="history" element={<BacktestHistory />} />
-                        <Route path="walkforward" element={<WalkForward />} />
-                        <Route path="portfolio" element={<PortfolioBacktest />} />
-                        <Route path="live" element={<LiveTradingDashboard />} />
-                        <Route path="tasks" element={<TaskCenter />} />
-                        <Route path="settings" element={<Settings />} />
-                    </Route>
+                        {/* Protected Application Routes */}
+                        <Route element={loginEnabled ? (
+                            <PrivateRoute>
+                                <Layout />
+                            </PrivateRoute>
+                        ) : <Layout />}>
+                            <Route path="strategy" element={<RunStrategy />} />
+                            <Route path="maintain" element={<StrategyMaintain />} />
+                            <Route path="datasource" element={<DataSource />} />
+                            <Route path="history" element={<BacktestHistory />} />
+                            <Route path="walkforward" element={<WalkForward />} />
+                            <Route path="portfolio" element={<PortfolioBacktest />} />
+                            <Route path="live" element={<LiveTradingDashboard />} />
+                            <Route path="data_management" element={<DataManagement />} />
+                            <Route path="tasks" element={<TaskCenter />} />
+                            <Route path="settings" element={<Settings />} />
+                        </Route>
 
-                    {/* Redirects for Auth Disabled */}
-                    {!loginEnabled && (
-                        <>
-                            <Route path="/login" element={<Navigate to="/" replace />} />
-                            <Route path="/callback" element={<Navigate to="/" replace />} />
-                        </>
-                    )}
+                        {/* Redirects for Auth Disabled */}
+                        {!loginEnabled && (
+                            <>
+                                <Route path="/login" element={<Navigate to="/" replace />} />
+                                <Route path="/callback" element={<Navigate to="/" replace />} />
+                            </>
+                        )}
 
-                    {/* Catch-all redirect */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </NotificationProvider>
+                        {/* Catch-all redirect */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </NotificationProvider>
+            </SettingsProvider>
         </ConfigProvider>
     )
 }

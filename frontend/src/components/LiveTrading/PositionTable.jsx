@@ -1,4 +1,3 @@
-import React from 'react';
 import { Table, Tag, Typography } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';

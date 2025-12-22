@@ -44,7 +44,7 @@ class TestLiveTradingAPI:
 
     def test_health_check(self, api_client):
         """Test live trading health check endpoint."""
-        response = api_client.get ("/api/live/health")
+        response = api_client.get("/api/live/health")
         assert_api_response(response, expected_status=200)
         
         data = response.json()

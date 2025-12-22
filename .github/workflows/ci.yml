@@ -52,6 +52,9 @@ jobs:
       - name: Run tests with coverage
         run: pytest --cov=src --cov-report=term-missing --cov-report=xml
 
+      - name: Run smoke tests
+        run: python -m pytest ../auto_test/smoke -q
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:

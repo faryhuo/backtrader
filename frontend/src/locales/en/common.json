@@ -1,14 +1,35 @@
 {
   "loading": "Loading...",
   "error": "Error",
+  "error_occurred": "An error occurred",
   "save": "Save",
   "cancel": "Cancel",
   "expand_sidebar": "Expand Sidebar",
   "collapse_sidebar": "Collapse Sidebar",
+  "guest": "Guest",
+  "user": "User",
   "na": "N/A",
   "view": "View",
   "filter": "Filter",
   "reset": "Reset",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "language": {
+    "switch_title": "Switch Language",
+    "switch_to_en": "English",
+    "switch_to_zh": "中文",
+    "short": {
+      "en": "EN",
+      "zh": "中"
+    }
+  },
+  "code_viewer": {
+    "copied": "Copied to clipboard!",
+    "copy_failed": "Failed to copy",
+    "lines": "lines",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "copy": "Copy code",
+    "click_expand": "Click to expand"
+  }
 }

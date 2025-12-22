@@ -19,7 +19,7 @@ function BacktestHistory() {
     // State
     const [backtests, setBacktests] = useState([])
     const [portfolios, setPortfolios] = useState([])
-    const [total, setTotal] = useState(0)
+    const [_total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [selectedBacktest, setSelectedBacktest] = useState(null)
     const [selectedPortfolio, setSelectedPortfolio] = useState(null)

@@ -121,7 +121,20 @@
         "title": "Ready to Get Started?",
         "description": "Experience professional quantitative trading and take your strategies to the next level",
         "button": "Start for Free",
-        "note": "No credit card required · Quick setup"
+        "note": "No credit card required · Quick setup",
+        "docs": "View Docs",
+        "github": "GitHub"
+    },
+    "status": {
+        "live": "Live",
+        "in_dev": "In Dev",
+        "planned": "Planned",
+        "done": "Done"
+    },
+    "priority": {
+        "p0": "Priority",
+        "p1": "Enhancement",
+        "p2": "Platform"
     },
     "footer": {
         "description": "Professional quantitative trading platform helping traders automate strategies and improve efficiency.",

@@ -61,5 +61,20 @@
   "no_orders": "No orders yet",
   "pnl_chart": "P&L Chart",
   "break_even": "Break Even",
-  "no_pnl_data": "No P&L data yet. Start trading to see real-time performance."
+  "no_pnl_data": "No P&L data yet. Start trading to see real-time performance.",
+  "trade": {
+    "side": {
+      "buy": "Bought",
+      "sell": "Sold"
+    }
+  },
+  "notifications": {
+    "trade": "{{side}} {{size}} {{symbol}} @ ${{price}}",
+    "trading_error": "Trading error: {{error}}",
+    "session_started": "Trading session started successfully",
+    "session_start_failed": "Failed to start session: {{error}}",
+    "session_stopped": "Trading session stopped",
+    "session_stop_failed": "Failed to stop session: {{error}}",
+    "session_refresh_failed": "Failed to refresh session status"
+  }
 }

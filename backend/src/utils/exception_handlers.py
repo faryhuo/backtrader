@@ -11,6 +11,8 @@ import logging
 import traceback
 from typing import Optional
 
+from src.utils.request_context import get_request_id
+
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -97,10 +99,15 @@ def build_error_response(
     trace: Optional[str] = None
 ) -> JSONResponse:
     """Build a standardized error response."""
+    request_id = get_request_id()
+    
     content = {
         "detail": message,
         "error_code": error_code,
     }
+    
+    if request_id:
+        content["request_id"] = request_id
     
     if details:
         content["details"] = details
@@ -115,9 +122,10 @@ def build_error_response(
 
 def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     """Handle custom AppError exceptions."""
+    request_id = get_request_id()
     logger.warning(
-        f"AppError: {exc.error_code} - {exc.message}",
-        extra={"path": request.url.path, "error_code": exc.error_code}
+        f"[{request_id}] AppError: {exc.error_code} - {exc.message}",
+        extra={"path": request.url.path, "error_code": exc.error_code, "request_id": request_id}
     )
     
     return build_error_response(
@@ -178,11 +186,12 @@ def unhandled_exception_handler(
     tb_str = traceback.format_exception(type(exc), exc, exc.__traceback__)
     full_trace = "".join(tb_str)
     
-    # Always log the full error
+    # Always log the full error with request context
+    request_id = get_request_id()
     logger.error(
-        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        f"[{request_id}] Unhandled exception on {request.method} {request.url.path}: {exc}",
         exc_info=True,
-        extra={"path": request.url.path, "traceback": full_trace}
+        extra={"path": request.url.path, "traceback": full_trace, "request_id": request_id}
     )
     
     if debug:

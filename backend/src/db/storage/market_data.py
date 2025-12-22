@@ -208,28 +208,145 @@ def get_data_from_db(ticker: str, start: str, end: str) -> Optional[pd.DataFrame
         return None
 
 
-def get_data(ticker: str, start: str, end: str) -> pd.DataFrame:
+def get_data_from_yahoo(ticker: str, start: str, end: str) -> Optional[pd.DataFrame]:
     """
-    Download data as a pandas DataFrame.
+    Fetch data from Yahoo Finance (yfinance).
+    
+    Args:
+        ticker: Symbol ticker
+        start: Start date string (YYYY-MM-DD)
+        end: End date string (YYYY-MM-DD)
+        
+    Returns:
+        DataFrame with OHLCV data, or None if fetch fails
     """
+    try:
+        data = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns = data.columns.get_level_values(0)
+        
+        if data is None or data.empty:
+            logger.warning(f"Yahoo Finance returned no data for {ticker}")
+            return None
+            
+        logger.info(f"Loaded {len(data)} records from Yahoo Finance for {ticker}")
+        
+        # Save to database for future use
+        save_to_db(ticker, data, source="yfinance")
+        
+        return data
+    except Exception as e:
+        logger.warning(f"Yahoo Finance fetch failed for {ticker}: {e}")
+        return None
 
-    data = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-    if data is None or data.empty:
-        db_data = get_data_from_db(ticker, start, end)
-        if db_data is not None and not db_data.empty:
-            logger.info(f"Loaded data for {ticker} from database.")
-            return db_data
-        else:
-            raise DataLoadError("No data returned")
 
-    logger.info(f"Loaded data for {ticker} from yfinance.")
+def get_data_from_eodhd(ticker: str, start: str, end: str, api_key: Optional[str] = None) -> Optional[pd.DataFrame]:
+    """
+    Fetch data from EODHD API.
+    
+    Args:
+        ticker: Symbol ticker
+        start: Start date string (YYYY-MM-DD)
+        end: End date string (YYYY-MM-DD)
+        api_key: EODHD API key (if None, will try to get from settings)
+        
+    Returns:
+        DataFrame with OHLCV data, or None if fetch fails
+    """
+    try:
+        # Import here to avoid circular imports
+        from src.db.storage.eodhd_data import fetch_from_eodhd
+        
+        # Get API key if not provided
+        if api_key is None:
+            from src.db.storage.settings import SettingsStorage
+            settings_storage = SettingsStorage()
+            api_key = settings_storage.get_eodhd_api_key()
+        
+        if not api_key:
+            logger.debug("EODHD API key not configured, skipping EODHD source")
+            return None
+            
+        data = fetch_from_eodhd(ticker, start, end, api_key)
+        
+        if data is not None and not data.empty:
+            # Save to database for future use
+            save_to_db(ticker, data, source="eodhd")
+            
+        return data
+    except Exception as e:
+        logger.warning(f"EODHD fetch failed for {ticker}: {e}")
+        return None
 
-    # Save to database for future use
-    save_to_db(ticker, data, source="yfinance")
 
-    return data
+def get_data(
+    ticker: str, 
+    start: str, 
+    end: str,
+    priority: Optional[list] = None
+) -> pd.DataFrame:
+    """
+    Download data as a pandas DataFrame using configured data source priority.
+    
+    The function tries each data source in the configured priority order.
+    If all sources fail, raises DataLoadError.
+    
+    Args:
+        ticker: Symbol ticker
+        start: Start date string (YYYY-MM-DD)
+        end: End date string (YYYY-MM-DD)
+        priority: Optional list of data sources to try (overrides settings)
+                  Valid values: "yahoo", "eodhd", "database"
+    
+    Returns:
+        DataFrame with OHLCV data
+        
+    Raises:
+        DataLoadError: If no data source returns valid data
+    """
+    # Get priority from settings if not provided
+    if priority is None:
+        try:
+            from src.db.storage.settings import SettingsStorage
+            settings_storage = SettingsStorage()
+            priority = settings_storage.get_data_source_priority()
+        except Exception as e:
+            logger.warning(f"Failed to load data source priority: {e}")
+            priority = ["yahoo", "database"]  # Default fallback
+    
+    # Map source names to fetcher functions
+    source_fetchers = {
+        "yahoo": lambda: get_data_from_yahoo(ticker, start, end),
+        "eodhd": lambda: get_data_from_eodhd(ticker, start, end),
+        "database": lambda: get_data_from_db(ticker, start, end),
+    }
+    
+    errors = []
+    
+    for source in priority:
+        if source not in source_fetchers:
+            logger.warning(f"Unknown data source: {source}, skipping")
+            continue
+            
+        logger.debug(f"Trying data source: {source} for {ticker}")
+        
+        try:
+            fetcher = source_fetchers[source]
+            data = fetcher()
+            
+            if data is not None and not data.empty:
+                logger.info(f"Successfully loaded data for {ticker} from {source}")
+                return data
+            else:
+                errors.append(f"{source}: No data returned")
+        except Exception as e:
+            errors.append(f"{source}: {str(e)}")
+            logger.warning(f"Data source {source} failed for {ticker}: {e}")
+    
+    # All sources failed
+    error_msg = f"All data sources failed for {ticker}: {'; '.join(errors)}"
+    logger.error(error_msg)
+    raise DataLoadError(error_msg)
 
 
 def get_bt_feed(ticker: str, start: str, end: str) -> bt.feeds.PandasData:
@@ -281,7 +398,10 @@ __all__ = [
     "DataLoadError",
     "save_to_db",
     "get_data_from_db",
+    "get_data_from_yahoo",
+    "get_data_from_eodhd",
     "get_data",
     "get_bt_feed",
     "get_raw_data_json",
 ]
+

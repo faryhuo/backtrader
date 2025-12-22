@@ -10,6 +10,7 @@ import { TrendingUp, Menu, X, Globe } from 'lucide-react';
 export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const { t, i18n } = useTranslation();
+    const isZh = i18n.language?.startsWith('zh');
     const { signIn, loginEnabled } = useAuth();
     const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ export function Navbar() {
     ];
 
     const toggleLanguage = () => {
-        i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh');
+        i18n.changeLanguage(isZh ? 'en' : 'zh');
     };
 
     const handleLogin = () => {
@@ -86,7 +87,7 @@ export function Navbar() {
                             onClick={toggleLanguage}
                         >
                             <Globe />
-                            <span>{i18n.language === 'zh' ? 'EN' : '中'}</span>
+                            <span>{isZh ? t('common.language.short.en', 'EN') : t('common.language.short.zh', '中')}</span>
                         </button>
                         <button
                             className="landing-btn landing-btn-ghost landing-btn-sm"
@@ -131,7 +132,7 @@ export function Navbar() {
                             onClick={toggleLanguage}
                         >
                             <Globe />
-                            <span>{i18n.language === 'zh' ? 'EN' : '中'}</span>
+                            <span>{isZh ? t('common.language.short.en', 'EN') : t('common.language.short.zh', '中')}</span>
                         </button>
                         <button
                             className="landing-btn landing-btn-ghost landing-btn-sm"

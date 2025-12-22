@@ -1,0 +1,274 @@
+/* ============================================
+   Code Viewer Component Styles
+   ============================================ */
+
+.code-viewer-container {
+    background: linear-gradient(145deg, rgba(22, 27, 34, 0.95), rgba(13, 17, 23, 0.98));
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.3),
+        0 2px 4px -2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.code-viewer-container:hover {
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow:
+        0 8px 25px -5px rgba(0, 0, 0, 0.4),
+        0 4px 6px -4px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.code-viewer-container.expanded {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    background: #0d1117;
+}
+
+/* Fullscreen overlay for Portal mode */
+.code-viewer-fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.code-viewer-fullscreen-overlay .code-viewer-container.expanded {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Header */
+.code-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border-bottom: 1px solid rgba(48, 54, 61, 0.6);
+}
+
+.code-viewer-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.code-icon {
+    font-size: 18px;
+    color: #67e8f9;
+    filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.3));
+}
+
+.code-language-badge {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(8, 145, 178, 0.25) 100%);
+    color: #67e8f9;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+
+.code-line-count {
+    color: #a1a7ae;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.code-viewer-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.code-action-btn.ant-btn-text {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #a1a7ae;
+    transition: all 0.2s ease;
+}
+
+.code-action-btn.ant-btn-text:hover {
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Parameters Section */
+.code-viewer-params {
+    padding: 14px 18px;
+    background: rgba(34, 211, 238, 0.08);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+}
+
+.params-label {
+    font-size: 12px;
+    color: #67e8f9;
+    margin-bottom: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.params-label::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #67e8f9;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
+}
+
+.params-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.param-tag.ant-tag {
+    margin: 0;
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.param-tag.ant-tag:hover {
+    border-color: rgba(34, 211, 238, 0.4);
+    background: rgba(34, 211, 238, 0.1);
+}
+
+.param-key {
+    color: #86efac;
+    margin-right: 4px;
+}
+
+.param-value {
+    color: #fbbf24;
+}
+
+/* Editor Container */
+.code-viewer-editor {
+    position: relative;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Monaco Editor Customizations */
+.code-viewer-editor .monaco-editor {
+    border-radius: 0;
+}
+
+.code-viewer-editor .monaco-editor .margin {
+    background: rgba(22, 27, 34, 0.5) !important;
+}
+
+.code-viewer-editor .monaco-editor .line-numbers {
+    color: rgba(139, 148, 158, 0.6) !important;
+    font-size: 12px !important;
+}
+
+.code-viewer-editor .monaco-editor .current-line~.line-numbers {
+    color: rgba(34, 211, 238, 0.9) !important;
+}
+
+/* Scrollbar Styling */
+.code-viewer-editor .monaco-editor .monaco-scrollable-element>.scrollbar>.slider {
+    background: rgba(139, 148, 158, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+.code-viewer-editor .monaco-editor .monaco-scrollable-element>.scrollbar>.slider:hover {
+    background: rgba(139, 148, 158, 0.5) !important;
+}
+
+/* Footer */
+.code-viewer-footer {
+    padding: 10px 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border-top: 1px solid rgba(48, 54, 61, 0.4);
+    text-align: center;
+}
+
+.expand-hint.ant-btn-text {
+    color: #9ca3af;
+    font-size: 12px;
+    height: 28px;
+    transition: all 0.2s ease;
+}
+
+.expand-hint.ant-btn-text:hover {
+    color: #67e8f9;
+    background: transparent;
+}
+
+/* Expanded state no longer needs overlay - using solid background */
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .code-viewer-header {
+        padding: 12px 14px;
+    }
+
+    .code-viewer-title {
+        gap: 8px;
+    }
+
+    .code-language-badge {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .code-line-count {
+        display: none;
+    }
+
+    .code-viewer-params {
+        padding: 12px 14px;
+    }
+
+    /* Expanded state is always fullscreen */
+}

@@ -2,12 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## **Working Rules**
+## Working Rules
 
 - Before modifying any file, check whether the file's current folder contains a `*.md` "directory description" document. If it exists, **read it first** and follow its stated responsibilities, conventions, and non‑functional requirements when making changes.
-if you have been update the code pls remember to update the directory description document.
+- After updating code, update the corresponding directory description document if relevant.
 
-Directory documentation files exist at:
+Directory documentation files:
 - `backend/src/src.md` - Backend source root overview
 - `backend/src/routes/routes.md` - API routing conventions
 - `backend/src/service/service.md` - Business logic layer
@@ -250,28 +250,60 @@ Controls exchange settings and risk management:
 
 ## Testing
 
-### Backend
+### Commands
 
 ```bash
-# Run all tests (from project root)
-python -m pytest backend/tests -q
+# Run all backend unit tests with coverage
+cd backend
+pytest --cov=src --cov-report=term-missing
 
-# Run integration tests
-python -m pytest auto_test -q
+# Run smoke tests (critical health checks, fast)
+python -m pytest auto_test/smoke -q
 
-# Run a single test file
-python -m pytest backend/tests/service/test_backtest_engine.py -v
+# Run e2e tests
+python -m pytest auto_test/e2e -q
 
-# Run a specific test function
-python -m pytest backend/tests/service/test_backtest_engine.py::test_function_name -v
+# Run tests by marker
+python -m pytest auto_test -m api -q      # API tests only
+python -m pytest auto_test -m ui -q       # UI tests only
+python -m pytest auto_test -m slow -q     # Slow tests only
 
-# Run tests with coverage
-python -m pytest backend/tests --cov=backend/src --cov-report=html
+# Run specific test file
+python -m pytest auto_test/e2e/test_strategy_management.py -v
+
+# Frontend lint
+cd frontend && npm run lint
 ```
 
-Test structure:
+### Test Structure
+
 - `backend/tests/` - Unit tests organized by module (db, service, routes, brokers, utils, config)
-- `auto_test/` - Integration tests for live routes and session management
+- `auto_test/smoke/` - Critical API and UI health checks (fastest, run first)
+- `auto_test/e2e/` - End-to-end workflow tests (backtest, live trading, walk-forward, settings)
+- `auto_test/libs/` - Reusable test utilities (api_client, assertions, data_fixtures)
+
+### Test Markers
+
+- `@pytest.mark.api` - API endpoint tests
+- `@pytest.mark.ui` - Browser/UI tests (requires Playwright)
+- `@pytest.mark.slow` - Tests taking >10 seconds
+- `@pytest.mark.smoke` - Critical fast tests for health checks
+- `@pytest.mark.requires_auth` - Tests requiring authentication
+
+### Authenticated Testing
+
+Tests auto-detect if backend requires auth. For authenticated testing:
+```bash
+set TEST_AUTH_TOKEN=your_jwt_token_here  # Windows
+export TEST_AUTH_TOKEN=your_jwt_token_here  # Linux/Mac
+python -m pytest auto_test -q
+```
+
+### CI Pipeline
+
+GitHub Actions runs on push to main/master and all PRs:
+- `backend-tests`: pytest + coverage + smoke tests (Python 3.11)
+- `frontend-lint`: ESLint (Node.js 20)
 
 ### Live Trading Testing
 
@@ -387,62 +419,9 @@ See `backend/README_LIVE_TRADING.md` for detailed live trading guide.
 
 ## Security Notes
 
-### Live Trading
-
 - **NEVER** enable withdrawal permissions on exchange API keys
-- Use IP whitelist restrictions when possible
-- Start with small position sizes and test extensively with paper trading
-- Monitor risk limits in `broker_config.json`
-- Enable 2FA on exchange accounts
-
-### Authentication
-
-- **NEVER** commit `.env` to version control (already in `.gitignore`)
-- Rotate API keys periodically
-- Use separate credentials for testnet vs production
-- Validate `LOGTO_JWKS_URI` signature in production
-
-### Code Execution
-
-- User strategies run in sandboxed environment (`strategy_sandbox.py`)
-- Only allow trusted users to upload strategies
-- Review strategy code before running with real money
-
-## Dependencies
-
-### Backend Key Dependencies
-
-- `fastapi` - Web framework
-- `daphne` - ASGI server
-- `backtrader` - Trading/backtesting engine
-- `ccxt>=4.2.0` - Crypto exchange connectivity
-- `ibapi>=9.81.1` - Interactive Brokers API
-- `sqlalchemy>=2.0.0` - Database ORM
-- `python-jose` - JWT handling
-- `openai>=1.0.0` - AI analysis
-- `yfinance` - Market data (backtest)
-- `pandas`, `matplotlib` - Data processing/charting
-
-### Frontend Key Dependencies
-
-- `react` + `react-dom` - UI framework
-- `react-router-dom` - Routing
-- `antd` - UI component library
-- `@monaco-editor/react` - Code editor
-- `i18next` + `react-i18next` - Internationalization
-- `@logto/react` - Authentication
-- `lightweight-charts` - Financial charts
-- `vite` - Build tool
-
-## Future Development Notes
-
-Per `feature.md`, planned enhancements include:
-- Parameter optimization (grid search, walk-forward analysis)
-- Multi-symbol portfolio backtesting
-- Advanced risk management modules
-- Task scheduling (Celery/APScheduler) for automated backtests
-- Grafana/Metabase dashboards for monitoring
-- Multi-user role-based access control
+- User strategies run in sandboxed environment (`strategy_sandbox.py`) - configure `SANDBOX_MODE` in `.env`
+- `.env` is in `.gitignore` - never commit credentials
 
 ## Special Considerations
 
@@ -450,7 +429,6 @@ Per `feature.md`, planned enhancements include:
 
 - Use `start_dev.bat` to launch both servers
 - Path separators handled by `pathlib.Path`
-- Docker uses Linux base image (Debian Bookworm)
 
 ### Aliyun Mirrors (China-based Development)
 

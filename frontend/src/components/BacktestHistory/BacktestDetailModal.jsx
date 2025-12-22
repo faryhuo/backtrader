@@ -2,21 +2,24 @@ import { useState } from 'react'
 import { Modal, Tabs, Descriptions, Tag, Button, Select, message } from 'antd'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
-import { performFullStrategyAnalysis, getAvailableModels } from '../../services/aiAnalysis'
+import { performFullStrategyAnalysis } from '../../services/aiAnalysis'
+import { useSettingsContext } from '../../contexts/SettingsContext'
 import { api } from '../../services/api'
 import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
 import StrategyPlot from '../RunStrategy/StrategyPlot'
+import CodeViewer from '../RunStrategy/CodeViewer'
 import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
+    const { getAvailableModels } = useSettingsContext()
     const [aiLoading, setAiLoading] = useState(false)
     const [analyses, setAnalyses] = useState({})
     const [activeTab, setActiveTab] = useState(null)
 
-    // Initialize available models from settings
+    // Initialize available models from settings context
     const availableModels = getAvailableModels()
     const [selectedModel, setSelectedModel] = useState(availableModels[0] || 'gpt-4o')
 
@@ -79,7 +82,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
         } catch (err) {
             console.error(err)
-            message.error("Failed to perform AI analysis: " + err.message)
+            message.error(t('history.ai_analysis_failed', { error: err.message }))
         } finally {
             setAiLoading(false)
         }
@@ -210,45 +213,12 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 {backtest.strategy_code && (
                     <Tabs.TabPane tab={t('history.tab_strategy_code', 'Strategy Code')} key="strategy_code">
                         <div style={{ padding: '20px' }}>
-                            {/* Strategy Parameters Override */}
-                            {backtest.params && Object.keys(backtest.params).length > 0 && (
-                                <div style={{
-                                    background: 'rgba(128, 90, 213, 0.15)',
-                                    border: '1px solid rgba(128, 90, 213, 0.3)',
-                                    borderRadius: '8px',
-                                    padding: '12px 16px',
-                                    marginBottom: '16px'
-                                }}>
-                                    <div style={{
-                                        fontSize: '13px',
-                                        color: '#a78bfa',
-                                        marginBottom: '8px',
-                                        fontWeight: 500
-                                    }}>
-                                        {t('history.params_override', 'Parameter Overrides')}
-                                    </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                        {Object.entries(backtest.params).map(([key, value]) => (
-                                            <Tag key={key} color="purple">
-                                                {key}: {typeof value === 'number' ? value.toLocaleString() : String(value)}
-                                            </Tag>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            <pre style={{
-                                background: 'rgba(22, 27, 34, 0.6)',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                overflow: 'auto',
-                                maxHeight: '600px',
-                                whiteSpace: 'pre',
-                                fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-                                fontSize: '13px',
-                                lineHeight: '1.5'
-                            }}>
-                                {backtest.strategy_code}
-                            </pre>
+                            <CodeViewer
+                                code={backtest.strategy_code}
+                                language="python"
+                                params={backtest.params}
+                                maxHeight={500}
+                            />
                         </div>
                     </Tabs.TabPane>
                 )}

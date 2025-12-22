@@ -22,6 +22,7 @@ import settingsEn from './locales/en/settings.json';
 import portfolioEn from './locales/en/portfolio.json';
 import deepAnalysisEn from './locales/en/deep_analysis.json';
 import landingEn from './locales/en/landing.json';
+import datamanagementEn from './locales/en/datamanagement.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -43,6 +44,7 @@ import settingsZh from './locales/zh/settings.json';
 import portfolioZh from './locales/zh/portfolio.json';
 import deepAnalysisZh from './locales/zh/deep_analysis.json';
 import landingZh from './locales/zh/landing.json';
+import datamanagementZh from './locales/zh/datamanagement.json';
 
 const en = {
   app: appEn,
@@ -63,7 +65,8 @@ const en = {
   settings: settingsEn,
   portfolio: portfolioEn,
   deep_analysis: deepAnalysisEn,
-  landing: landingEn
+  landing: landingEn,
+  datamanagement: datamanagementEn
 };
 
 const zh = {
@@ -85,7 +88,8 @@ const zh = {
   settings: settingsZh,
   portfolio: portfolioZh,
   deep_analysis: deepAnalysisZh,
-  landing: landingZh
+  landing: landingZh,
+  datamanagement: datamanagementZh
 };
 
 i18n

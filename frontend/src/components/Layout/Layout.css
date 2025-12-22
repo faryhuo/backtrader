@@ -3,6 +3,37 @@
     display: flex;
     min-height: 100vh;
     background: var(--bg-color);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background Effects - matching reference */
+.layout-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25%;
+    width: 400px;
+    height: 400px;
+    background: rgba(34, 211, 238, 0.08);
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.layout-container::after {
+    content: '';
+    position: absolute;
+    bottom: 25%;
+    right: 25%;
+    width: 350px;
+    height: 350px;
+    background: rgba(139, 92, 246, 0.06);
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* Main Content Wrapper */
@@ -13,66 +44,142 @@
     flex-direction: column;
     min-width: 0;
     transition: margin-left var(--transition-normal);
+    position: relative;
+    z-index: 1;
 }
 
 .main-wrapper.collapsed {
     margin-left: 72px;
 }
 
-/* Header */
+/* Header - enhanced styling */
 .top-header {
     height: 72px;
-    background-color: var(--header-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-color);
+    background: rgba(10, 11, 16, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 2rem;
+    padding: 0 2.5rem;
     position: sticky;
     top: 0;
     z-index: 40;
 }
 
 .header-title h1 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     color: var(--text-main);
     margin: 0;
     font-weight: 700;
     letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-title h1 .brand-accent {
+    background: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Header Logo Link */
+.header-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.header-logo-link:hover {
+    transform: scale(1.02);
+}
+
+/* Header Logo Icon */
+.header-logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    margin-right: 0.5rem;
+    background: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+    transition: all 0.3s ease;
+}
+
+.header-logo-link:hover .header-logo-icon {
+    box-shadow: 0 0 30px rgba(34, 211, 238, 0.5);
+    transform: scale(1.05);
+}
+
+.header-logo-icon svg {
+    color: #0a0b10;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .btn-ghost {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 0.5rem 1rem;
     cursor: pointer;
     transition: all var(--transition-fast);
     font-weight: 500;
+    font-size: 0.9rem;
 }
 
 .btn-ghost:hover {
     color: var(--text-main);
     background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Content Area */
+/* Content Area - improved spacing and centering */
 .content-area {
-    padding: 2.5rem;
+    padding: 2rem 3rem;
     flex: 1;
-    max-width: 1600px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
     position: relative;
     z-index: 1;
+}
+
+/* Page Container inside content area */
+.page-container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .content-area {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .main-wrapper {
+        margin-left: 0;
+    }
+
+    .main-wrapper.collapsed {
+        margin-left: 0;
+    }
+
+    .content-area {
+        padding: 1.5rem;
+    }
 }

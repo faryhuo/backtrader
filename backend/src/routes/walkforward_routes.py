@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from src.db import WalkForwardStorage
 from src.service.walkforward_optimizer import WalkForwardOptimizer
 from src.utils.auth import get_current_user, get_optional_user
+from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,13 @@ async def start_walkforward_optimization(
     try:
         # Generate optimization ID
         optimization_id = str(uuid.uuid4())
+        set_trace_id(optimization_id)  # Set trace ID for logging correlation
+        
+        request_id = get_request_id()
+        logger.info(
+            f"[{request_id}] Starting walk-forward optimization trace_id={optimization_id} "
+            f"strategy={request.strategy_name} ticker={request.ticker}"
+        )
 
         # Get user ID if authenticated
         user_id = user.get("sub") if user else None

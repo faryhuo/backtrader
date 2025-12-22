@@ -398,3 +398,116 @@ def test_credentials(
             "valid": False,
             "message": f"Test failed: {str(e)[:200]}"
         }
+
+
+# ========== DATA SOURCE CONFIGURATION ENDPOINTS ==========
+
+class DataSourceSettingsRequest(BaseModel):
+    """Request model for updating data source settings."""
+    data_source_priority: Optional[List[str]] = Field(
+        None, description="List of data sources in priority order (yahoo, eodhd, database)"
+    )
+    eodhd_api_key: Optional[str] = Field(
+        None, description="EODHD API key (will be encrypted)"
+    )
+
+
+@router.get("/settings/data-source")
+def get_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
+    """
+    Get data source configuration.
+
+    Returns the priority order for fetching market data and EODHD API key status.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        settings = storage.get_data_source_settings(user_id=user_id)
+
+        return {
+            "status": "ok",
+            "settings": settings
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get data source settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/settings/data-source")
+def update_data_source_settings(
+    request: DataSourceSettingsRequest,
+    user: dict = Depends(get_current_user)
+) -> dict:
+    """
+    Update data source configuration.
+
+    Sets the priority order for fetching market data and/or EODHD API key.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        # Validate priority if provided
+        valid_sources = {"yahoo", "eodhd", "database"}
+        if request.data_source_priority:
+            invalid = [s for s in request.data_source_priority if s not in valid_sources]
+            if invalid:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid data sources: {invalid}. Valid options: {list(valid_sources)}"
+                )
+
+        success = storage.save_data_source_settings(
+            data_source_priority=request.data_source_priority,
+            eodhd_api_key=request.eodhd_api_key,
+            user_id=user_id
+        )
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save data source settings")
+
+        return {
+            "status": "ok",
+            "message": "Data source settings saved successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update data source settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/settings/data-source/reset")
+def reset_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
+    """
+    Reset data source settings to defaults.
+
+    Removes custom priority and EODHD API key from database.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        success = storage.reset_data_source_settings(user_id=user_id)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to reset data source settings")
+
+        # Return new settings (defaults)
+        settings = storage.get_data_source_settings(user_id=user_id)
+
+        return {
+            "status": "ok",
+            "message": "Data source settings reset to defaults",
+            "settings": settings
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset data source settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

@@ -61,5 +61,20 @@
   "no_orders": "暂无订单",
   "pnl_chart": "盈亏曲线",
   "break_even": "盈亏平衡线",
-  "no_pnl_data": "暂无盈亏数据。开始交易以查看实时表现。"
+  "no_pnl_data": "暂无盈亏数据。开始交易以查看实时表现。",
+  "trade": {
+    "side": {
+      "buy": "买入",
+      "sell": "卖出"
+    }
+  },
+  "notifications": {
+    "trade": "{{side}} {{size}} {{symbol}} @ ${{price}}",
+    "trading_error": "交易错误：{{error}}",
+    "session_started": "交易会话启动成功",
+    "session_start_failed": "启动会话失败：{{error}}",
+    "session_stopped": "交易会话已停止",
+    "session_stop_failed": "停止会话失败：{{error}}",
+    "session_refresh_failed": "刷新会话状态失败"
+  }
 }

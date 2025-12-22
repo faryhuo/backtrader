@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Button, InputNumber, Table, Spin, Alert, Tag, Select, DatePicker, Space, Empty, Tooltip, Progress } from 'antd'
+import { Card, Button, InputNumber, Table, Spin, Alert, Tag, Select, DatePicker, Space, Empty, Progress } from 'antd'
 import {
     PieChartOutlined,
     LineChartOutlined,
@@ -26,7 +26,7 @@ function PortfolioBacktest() {
     const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')])
     const [initialCash, setInitialCash] = useState(100000)
     const [commission, setCommission] = useState(0.0005)
-    const [stake, setStake] = useState(100)
+    const [stake] = useState(100)
     const [strategies, setStrategies] = useState([])
     const [selectedStrategy, setSelectedStrategy] = useState('')
 

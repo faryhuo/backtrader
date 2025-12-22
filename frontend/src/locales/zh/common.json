@@ -1,14 +1,35 @@
 {
   "loading": "加载中...",
   "error": "错误",
+  "error_occurred": "发生错误",
   "save": "保存",
   "cancel": "取消",
   "expand_sidebar": "展开侧边栏",
   "collapse_sidebar": "收起侧边栏",
+  "guest": "访客",
+  "user": "用户",
   "na": "N/A",
   "view": "查看",
   "filter": "筛选",
   "reset": "重置",
   "yes": "是",
-  "no": "否"
+  "no": "否",
+  "language": {
+    "switch_title": "切换语言",
+    "switch_to_en": "English",
+    "switch_to_zh": "中文",
+    "short": {
+      "en": "EN",
+      "zh": "中"
+    }
+  },
+  "code_viewer": {
+    "copied": "已复制到剪贴板！",
+    "copy_failed": "复制失败",
+    "lines": "行",
+    "collapse": "收起",
+    "expand": "展开",
+    "copy": "复制代码",
+    "click_expand": "点击展开"
+  }
 }

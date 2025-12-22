@@ -17,13 +17,14 @@ function Layout() {
     const { t, i18n } = useTranslation();
     const [collapsed, setCollapsed] = useState(false)
     const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
+    const isZh = i18n.language.startsWith('zh');
     const [userInfo, setUserInfo] = useState({
-        email: 'Guest',
-        name: 'Guest',
+        email: null,
+        name: null,
     })
 
     const toggleLanguage = () => {
-        const newLang = i18n.language.startsWith('zh') ? 'en' : 'zh';
+        const newLang = isZh ? 'en' : 'zh';
         i18n.changeLanguage(newLang);
     };
 
@@ -32,8 +33,8 @@ function Layout() {
         if (loginEnabled && isAuthenticated) {
             getIdTokenClaims().then((claims) => {
                 setUserInfo({
-                    email: claims?.email || 'User',
-                    name: claims?.name || claims?.email || 'User',
+                    email: claims?.email || null,
+                    name: claims?.name || claims?.email || null,
                     username: claims?.username,
                 })
             }).catch((error) => {
@@ -41,8 +42,8 @@ function Layout() {
             })
         } else {
             setUserInfo({
-                email: 'Guest',
-                name: 'Guest',
+                email: null,
+                name: null,
             })
         }
     }, [isAuthenticated, getIdTokenClaims, loginEnabled])
@@ -61,7 +62,7 @@ function Layout() {
         ? [
             {
                 key: 'profile',
-                label: userInfo?.email || 'User',
+                label: userInfo?.email || t('common.user', 'User'),
                 icon: <UserOutlined />,
                 disabled: true,
             },
@@ -79,7 +80,7 @@ function Layout() {
         : [
             {
                 key: 'profile',
-                label: userInfo?.email || 'Guest',
+                label: userInfo?.email || t('common.guest', 'Guest'),
                 icon: <UserOutlined />,
                 disabled: true,
             },
@@ -88,33 +89,32 @@ function Layout() {
     return (
         <div className={`layout-container ${collapsed ? 'collapsed' : ''}`}>
             <div className="functional-bg-grid"></div>
-            
+
             <Menu collapsed={collapsed} setCollapsed={setCollapsed} />
 
             <div className={`main-wrapper ${collapsed ? 'collapsed' : ''}`}>
                 <header className="top-header">
                     <div className="header-title">
-                        <h1>{t('app.pro_title')}</h1>
                     </div>
-                    
+
                     <div className="header-actions">
                         <Space size="small">
                             <NotificationCenter />
-                            
+
                             <button
                                 className="btn-ghost"
                                 onClick={toggleLanguage}
-                                title="Switch Language"
+                                title={t('common.language.switch_title', 'Switch Language')}
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                             >
                                 <GlobalOutlined />
-                                {i18n.language.startsWith('zh') ? 'English' : '中文'}
+                                {isZh ? t('common.language.switch_to_en', 'English') : t('common.language.switch_to_zh', '中文')}
                             </button>
 
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                                 <Avatar
                                     icon={<UserOutlined />}
-                                    style={{ cursor: 'pointer', backgroundColor: '#0ea5e9' }}
+                                    style={{ cursor: 'pointer', backgroundColor: '#22d3ee' }}
                                 />
                             </Dropdown>
                         </Space>

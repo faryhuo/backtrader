@@ -1,46 +1,63 @@
 :root {
-    /* Base Color Palette (Slate/Blue-Grey Theme) */
-    --bg-color: #0b0e14;
+    /* Base Color Palette (Dark Theme matching alpha-canvas) */
+    --bg-color: #0a0b10;
     --sidebar-bg: #11141c;
-    --header-bg: rgba(17, 20, 28, 0.85);
-    
+    --header-bg: rgba(10, 11, 16, 0.85);
+
     /* Modern Glassy Card */
-    --card-bg: rgba(22, 27, 34, 0.6);
+    --card-bg: rgba(26, 27, 35, 0.6);
     --card-border: rgba(255, 255, 255, 0.08);
-    --card-bg-hover: rgba(22, 27, 34, 0.8);
-    
+    --card-bg-hover: rgba(26, 27, 35, 0.8);
+
     /* Text Colors */
     --text-main: #e2e8f0;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    --text-primary: #38bdf8; /* Light Blue */
-    
+    --text-primary: #22d3ee;
+
+    /* Teal Accent Colors */
+    --teal-400: #2dd4bf;
+    --teal-500: #22d3ee;
+    --teal-600: #0891b2;
+
     /* Borders & Accents */
     --border-color: #1e293b;
     --border-highlight: #334155;
-    
+
     /* Action Colors */
-    --primary-color: #0ea5e9;
-    --primary-hover: #0284c7;
-    --primary-light: rgba(14, 165, 233, 0.1);
-    
+    --primary-color: #22d3ee;
+    --primary-hover: #0891b2;
+    --primary-light: rgba(34, 211, 238, 0.1);
+
     --success-color: #22c55e;
     --success-bg: rgba(34, 197, 94, 0.1);
     --warning-color: #f59e0b;
     --error-color: #ef4444;
     --error-bg: rgba(239, 68, 68, 0.1);
-    
+
     /* Typography */
     --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    
-    /* Effects */
+    --font-mono: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+
+    /* Premium Gradients (alpha-canvas inspired) */
+    --gradient-primary: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    --gradient-card: linear-gradient(145deg, rgba(26, 27, 35, 0.9) 0%, rgba(10, 11, 16, 0.9) 100%);
+    --gradient-glow: radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.15) 0%, transparent 50%);
+
+    /* Glow Effects */
+    --glow-primary: 0 0 40px rgba(34, 211, 238, 0.3);
+    --glow-accent: 0 0 60px rgba(34, 211, 238, 0.15);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-glow: 0 0 15px rgba(14, 165, 233, 0.15);
-    
+    --shadow-glow: 0 0 20px rgba(34, 211, 238, 0.2);
+
+    /* Transitions */
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Grid Pattern */
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
 
 body {
@@ -64,7 +81,7 @@ body {
 .functional-bg-grid {
     position: fixed;
     inset: 0;
-    background-image: 
+    background-image:
         linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 50px 50px;
@@ -93,23 +110,80 @@ body {
     background: var(--text-muted);
 }
 
-/* Cards (Enhanced) */
+/* Cards (Enhanced with glass morphism) */
 .card {
-    background-color: var(--card-bg);
+    background: var(--gradient-card);
     border: 1px solid var(--card-border);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.3), transparent);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
 }
 
 .card:hover {
-    border-color: rgba(56, 189, 248, 0.2);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    border-color: rgba(34, 211, 238, 0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), var(--shadow-glow);
     transform: translateY(-2px);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+/* Glass Morphism Utility */
+.glass {
+    background: rgba(26, 27, 35, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+}
+
+.glass-strong {
+    background: rgba(26, 27, 35, 0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+/* Glow Animation */
+.glow-primary {
+    box-shadow: var(--glow-primary);
+}
+
+.glow-primary-hover:hover {
+    box-shadow: var(--glow-primary);
+}
+
+/* Text Gradient */
+.text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Premium Background Gradient Effect */
+.bg-gradient-glow {
+    background: var(--gradient-glow);
 }
 
 .card h2 {
@@ -143,7 +217,8 @@ body {
     font-weight: 500;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     background-color: rgba(11, 14, 20, 0.6);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -155,7 +230,8 @@ body {
     box-sizing: border-box;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-light);
@@ -181,7 +257,7 @@ body {
     padding-left: 2.75rem !important;
 }
 
-.input-with-icon input:focus + .input-icon,
+.input-with-icon input:focus+.input-icon,
 .input-with-icon:focus-within .input-icon {
     color: var(--primary-color);
 }
@@ -199,7 +275,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
     opacity: 0;
     transform: scale(0.5);
     transition: opacity 0.5s, transform 0.5s;
@@ -258,28 +334,52 @@ body {
 
 /* Animations */
 @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Buttons */
 .btn-primary {
-    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -288,7 +388,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);
+    box-shadow: 0 4px 6px rgba(34, 211, 238, 0.2);
     min-width: 140px;
     display: inline-flex;
     justify-content: center;
@@ -298,7 +398,7 @@ body {
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(14, 165, 233, 0.35);
+    box-shadow: 0 6px 15px rgba(34, 211, 238, 0.35);
     filter: brightness(1.1);
 }
 
@@ -375,8 +475,13 @@ body {
     background-color: rgba(255, 255, 255, 0.03);
 }
 
-.trade-table .positive { color: var(--success-color); }
-.trade-table .negative { color: var(--error-color); }
+.trade-table .positive {
+    color: var(--success-color);
+}
+
+.trade-table .negative {
+    color: var(--error-color);
+}
 
 /* Utilities */
 .text-gradient {

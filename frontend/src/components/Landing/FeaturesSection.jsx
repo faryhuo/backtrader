@@ -14,64 +14,64 @@ import {
  * Features section with grid of feature cards
  */
 export function FeaturesSection() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     const features = [
         {
             icon: LineChart,
             titleKey: 'landing.features.backtest.title',
             descriptionKey: 'landing.features.backtest.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: Brain,
             titleKey: 'landing.features.ai.title',
             descriptionKey: 'landing.features.ai.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: Layers,
             titleKey: 'landing.features.portfolio.title',
             descriptionKey: 'landing.features.portfolio.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: BarChart3,
             titleKey: 'landing.features.optimization.title',
             descriptionKey: 'landing.features.optimization.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: Radio,
             titleKey: 'landing.features.live.title',
             descriptionKey: 'landing.features.live.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: Zap,
             titleKey: 'landing.features.realtime.title',
             descriptionKey: 'landing.features.realtime.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: Shield,
             titleKey: 'landing.features.security.title',
             descriptionKey: 'landing.features.security.description',
-            status: i18n.language === 'zh' ? '已上线' : 'Live',
-            statusType: 'live'
+            statusKey: 'landing.status.live',
+            statusType: 'live',
         },
         {
             icon: GitBranch,
             titleKey: 'landing.features.versioning.title',
             descriptionKey: 'landing.features.versioning.description',
-            status: i18n.language === 'zh' ? '开发中' : 'In Dev',
-            statusType: 'dev'
+            statusKey: 'landing.status.in_dev',
+            statusType: 'dev',
         },
     ];
 
@@ -106,7 +106,7 @@ export function FeaturesSection() {
                             >
                                 {/* Status Badge */}
                                 <div className={`landing-feature-status landing-feature-status-${feature.statusType}`}>
-                                    {feature.status}
+                                    {t(feature.statusKey)}
                                 </div>
 
                                 {/* Icon */}

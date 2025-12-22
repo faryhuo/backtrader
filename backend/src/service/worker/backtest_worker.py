@@ -15,10 +15,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Configure logging for worker process
-logging.basicConfig(
-    level=logging.INFO,
-    format="[Worker] %(levelname)s - %(message)s",
-)
+from src.utils.logger import setup_worker_logging
+setup_worker_logging()
 logger = logging.getLogger(__name__)
 
 

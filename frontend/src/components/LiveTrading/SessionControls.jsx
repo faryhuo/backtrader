@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button, Space, Tag, Tooltip, Popconfirm } from 'antd';
 import { PlayCircleOutlined, StopOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +24,7 @@ const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
     return t(`live.status_${status}`) || status;
   };
 
-  const isRunning = session && ['starting', 'running'].includes(session.status);
+  const _isRunning = session && ['starting', 'running'].includes(session.status);
   const isStopped = session && ['stopped', 'error'].includes(session.status);
 
   return (

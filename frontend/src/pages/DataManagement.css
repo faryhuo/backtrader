@@ -1,0 +1,266 @@
+/**
+ * Data Management Page Styles
+ * Dark theme with teal/cyan accents inspired by reference design
+ */
+
+.data-management-page {
+    padding: 24px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1628 0%, #1a2942 100%);
+}
+
+.data-management-page .page-header {
+    margin-bottom: 24px;
+}
+
+.data-management-page .page-header h2 {
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.data-management-page .page-header .ant-typography-secondary {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+/* Stats Cards */
+.data-management-page .stats-row {
+    margin-bottom: 24px;
+}
+
+.data-management-page .stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.data-management-page .stat-card:hover {
+    border-color: rgba(0, 210, 190, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 210, 190, 0.15);
+    transform: translateY(-2px);
+}
+
+.data-management-page .stat-card .ant-statistic-title {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+}
+
+.data-management-page .stat-card .ant-statistic-content {
+    color: #fff;
+}
+
+.data-management-page .stat-card .ant-statistic-content-prefix {
+    margin-right: 8px;
+}
+
+/* Card icon colors */
+.data-management-page .stat-card-tickers .ant-statistic-content-prefix {
+    color: #00d2be;
+}
+
+.data-management-page .stat-card-records .ant-statistic-content-prefix {
+    color: #52c41a;
+}
+
+.data-management-page .stat-card-rate .ant-statistic-content-prefix {
+    color: #faad14;
+}
+
+.data-management-page .stat-card-updated .ant-statistic-content-prefix {
+    color: #1890ff;
+}
+
+/* Feature Cards */
+.data-management-page .feature-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.data-management-page .feature-card .ant-card-head {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.data-management-page .feature-card .ant-card-head-title {
+    color: #fff;
+    font-weight: 600;
+}
+
+.data-management-page .feature-card .ant-card-body {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.data-management-page .card-icon {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.data-management-page .warmup-icon {
+    color: #ff7a45;
+}
+
+.data-management-page .resample-icon {
+    color: #00d2be;
+}
+
+.data-management-page .cleanup-icon {
+    color: #ff4d4f;
+}
+
+/* Form Styling */
+.data-management-page .ant-form-item-label>label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.data-management-page .ant-input,
+.data-management-page .ant-input-number,
+.data-management-page .ant-picker,
+.data-management-page .ant-select-selector {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+}
+
+.data-management-page .ant-input::placeholder,
+.data-management-page .ant-input-number-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.data-management-page .ant-input:hover,
+.data-management-page .ant-input-number:hover,
+.data-management-page .ant-picker:hover,
+.data-management-page .ant-select-selector:hover {
+    border-color: #00d2be !important;
+}
+
+.data-management-page .ant-input:focus,
+.data-management-page .ant-input-number:focus,
+.data-management-page .ant-picker-focused {
+    border-color: #00d2be !important;
+    box-shadow: 0 0 0 2px rgba(0, 210, 190, 0.2) !important;
+}
+
+.data-management-page .ant-select-selection-placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.data-management-page .ant-select-arrow,
+.data-management-page .ant-picker-suffix {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Button Styling */
+.data-management-page .ant-btn-primary {
+    background: linear-gradient(135deg, #00d2be 0%, #00a896 100%);
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 210, 190, 0.3);
+    font-weight: 500;
+}
+
+.data-management-page .ant-btn-primary:hover {
+    background: linear-gradient(135deg, #00e6cf 0%, #00b9a7 100%);
+    box-shadow: 0 6px 20px rgba(0, 210, 190, 0.4);
+}
+
+.data-management-page .ant-btn-dangerous {
+    background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+    border: none;
+    color: #fff;
+}
+
+/* Table Styling */
+.data-management-page .ant-table {
+    background: transparent;
+}
+
+.data-management-page .ant-table-thead>tr>th {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-management-page .ant-table-tbody>tr>td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.data-management-page .ant-table-tbody>tr:hover>td {
+    background: rgba(0, 210, 190, 0.05) !important;
+}
+
+.data-management-page .ant-table-pagination .ant-pagination-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.data-management-page .ant-table-pagination .ant-pagination-item a {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.data-management-page .ant-table-pagination .ant-pagination-item-active {
+    background: #00d2be;
+    border-color: #00d2be;
+}
+
+.data-management-page .ant-empty-description {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Alert Styling */
+.data-management-page .ant-alert {
+    margin-top: 16px;
+    border-radius: 8px;
+}
+
+.data-management-page .ant-alert-success {
+    background: rgba(82, 196, 26, 0.1);
+    border-color: rgba(82, 196, 26, 0.3);
+}
+
+/* Strategy Info */
+.data-management-page .strategy-info {
+    padding: 12px;
+    background: rgba(0, 210, 190, 0.05);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.data-management-page .strategy-info ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 12px;
+}
+
+.data-management-page .strategy-info li {
+    margin-bottom: 4px;
+}
+
+/* Divider */
+.data-management-page .ant-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tag */
+.data-management-page .ant-tag-blue {
+    background: rgba(24, 144, 255, 0.2);
+    border-color: rgba(24, 144, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .data-management-page {
+        padding: 16px;
+    }
+
+    .data-management-page .stats-row {
+        margin-bottom: 16px;
+    }
+
+    .data-management-page .feature-card {
+        margin-bottom: 16px;
+    }
+}

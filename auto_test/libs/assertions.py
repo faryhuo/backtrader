@@ -231,14 +231,88 @@ def assert_list_response(
     assert expected_items_key in response_data, (
         f"Missing {expected_items_key} in list response"
     )
-    
+
     assert isinstance(response_data[expected_items_key], list), (
         f"{expected_items_key} should be a list"
     )
-    
+
     total = response_data[expected_total_key]
     items_count = len(response_data[expected_items_key])
-    
+
     assert total >= items_count, (
         f"Total ({total}) should be >= items count ({items_count})"
     )
+
+
+def assert_task_response(task: Dict[str, Any]):
+    """
+    Assert task response has expected structure.
+
+    Args:
+        task: Task dictionary
+
+    Raises:
+        AssertionError: If task structure is invalid
+    """
+    required_keys = [
+        "task_id",
+        "task_type",
+        "status",
+    ]
+
+    for key in required_keys:
+        assert key in task, f"Missing required task field: {key}"
+
+    # Validate task_type
+    valid_types = ["backtest", "portfolio", "walkforward", "deep_analysis"]
+    assert task["task_type"] in valid_types, (
+        f"Invalid task type: {task['task_type']}"
+    )
+
+    # Validate status
+    valid_statuses = ["pending", "running", "completed", "failed", "cancelled"]
+    assert task["status"] in valid_statuses, (
+        f"Invalid task status: {task['status']}"
+    )
+
+
+def assert_settings_response(settings: Dict[str, Any]):
+    """
+    Assert settings response has expected structure.
+
+    Args:
+        settings: Settings dictionary
+
+    Raises:
+        AssertionError: If settings structure is invalid
+    """
+    expected_keys = [
+        "selected_models",
+        "code_analysis_prompt",
+        "code_rewrite_prompt",
+        "full_strategy_analysis_prompt",
+    ]
+
+    for key in expected_keys:
+        assert key in settings, f"Missing settings field: {key}"
+
+    assert isinstance(settings["selected_models"], list), (
+        "selected_models should be a list"
+    )
+    assert len(settings["selected_models"]) > 0, (
+        "selected_models should not be empty"
+    )
+
+
+def assert_cache_stats_response(stats: Dict[str, Any]):
+    """
+    Assert cache stats response has expected structure.
+
+    Args:
+        stats: Cache stats dictionary
+
+    Raises:
+        AssertionError: If stats structure is invalid
+    """
+    # Should be a dictionary with cache information
+    assert isinstance(stats, dict), "Cache stats should be a dictionary"

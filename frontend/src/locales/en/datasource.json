@@ -40,6 +40,7 @@
   "custom_range": "Custom Range",
   "apply": "Apply",
   "price_history": "Price History",
+  "chart_meta": "{{count}} candles · {{start}} to {{end}}",
   "empty_state_hint": "Enter a ticker code and click search to get started",
   "clear_history": "Clear History",
   "add_to_watchlist": "Add to Watchlist",
@@ -60,6 +61,7 @@
   "export_chart": "Export Chart",
   "export_success": "Export successful",
   "export_failed": "Export failed",
+  "chart_not_found": "Chart not found",
   "ma5": "MA(5)",
   "ma10": "MA(10)",
   "ma20": "MA(20)",
@@ -69,5 +71,9 @@
   "add_stock": "Add Stock",
   "remove_stock": "Remove",
   "normalized_view": "Normalized View",
-  "absolute_view": "Absolute View"
+  "absolute_view": "Absolute View",
+  "errors": {
+    "no_data_found": "No data found for the given parameters.",
+    "fetch_failed": "Failed to fetch data."
+  }
 }
