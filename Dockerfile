@@ -1,4 +1,16 @@
-# Stage 1: Builder
+# Stage 1: Frontend Builder
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+# Copy frontend source
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Python Builder
 # Lock to Debian Bookworm (stable) for consistent package availability
 FROM python:3.12-slim-bookworm AS builder
 
@@ -60,6 +72,9 @@ RUN pip install --upgrade pip \
 
 # Copy application code
 COPY backend /app
+
+# Copy frontend build artifacts from frontend-builder stage
+COPY --from=frontend-builder /frontend/dist /app/resources/frontend
 
 # Copy the desired environment file inside the image (default: .env.prod)
 RUN if [ -f "/app/${ENV_FILE}" ]; then \
