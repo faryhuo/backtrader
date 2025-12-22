@@ -12,6 +12,7 @@ backend/coverage_html
 backend/coverage.xml
 backend/resources/frontend
 backend/venv_new
+backend/data
 
 frontend/.env
 frontend/.envprod

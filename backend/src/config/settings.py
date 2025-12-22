@@ -31,7 +31,113 @@ LOGTO_REQUIRED_SCOPES = [
 # Database configuration with centralized default path
 DEFAULT_DB_PATH = PROJECT_ROOT / "trading_sessions.db"
 DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH}"
-DATABASE_URL = os.getenv("DATABASE_URL") or DEFAULT_DB_URL
+
+
+def load_database_config() -> dict:
+    """
+    Load database configuration from database_config.json.
+    
+    Returns:
+        dict: Database configuration with all settings
+    """
+    import json
+    config_file = CONFIG_DIR / "database_config.json"
+    
+    if config_file.exists():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to load database_config.json: {e}")
+    
+    # Return default config if file doesn't exist or fails to load
+    return {
+        "database": {
+            "type": "sqlite",
+            "sqlite": {"path": "trading_sessions.db"}
+        }
+    }
+
+
+def _build_postgresql_url(pg_config: dict) -> str:
+    """
+    Build PostgreSQL connection URL from configuration.
+    
+    Args:
+        pg_config: PostgreSQL configuration dictionary with host, port, 
+                   database, username, password keys
+    
+    Returns:
+        str: PostgreSQL SQLAlchemy URL
+    """
+    host = pg_config.get("host", "localhost")
+    port = pg_config.get("port", 5432)
+    database = pg_config.get("database", "trading")
+    username = pg_config.get("username", "")
+    password = pg_config.get("password", "")
+    
+    if username and password:
+        return f"postgresql://{username}:{password}@{host}:{port}/{database}"
+    elif username:
+        return f"postgresql://{username}@{host}:{port}/{database}"
+    else:
+        return f"postgresql://{host}:{port}/{database}"
+
+
+def _build_sqlite_url(sqlite_config: dict) -> str:
+    """
+    Build SQLite connection URL from configuration.
+    
+    Args:
+        sqlite_config: SQLite configuration dictionary with path key
+    
+    Returns:
+        str: SQLite SQLAlchemy URL
+    """
+    db_path = sqlite_config.get("path", "trading_sessions.db")
+    
+    # Make path absolute if relative
+    if not Path(db_path).is_absolute():
+        db_path = PROJECT_ROOT / db_path
+    
+    # Create parent directory if it doesn't exist
+    db_path = Path(db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    return f"sqlite:///{db_path}"
+
+
+def get_database_url_from_config() -> str:
+    """
+    Build database URL from configuration file.
+    
+    Priority:
+    1. DATABASE_URL environment variable (if set)
+    2. database_config.json settings
+    3. Default SQLite path
+    
+    Returns:
+        str: SQLAlchemy database URL
+    """
+    # Environment variable takes precedence
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+    
+    config = load_database_config()
+    db_config = config.get("database", {})
+    db_type = db_config.get("type", "sqlite")
+    
+    if db_type == "postgresql":
+        return _build_postgresql_url(db_config.get("postgresql", {}))
+    
+    # Default: SQLite
+    return _build_sqlite_url(db_config.get("sqlite", {}))
+
+
+# Load database URL from config (environment variable takes precedence)
+DATABASE_URL = get_database_url_from_config()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
@@ -113,4 +219,6 @@ __all__ = [
     "RESOURCES_DIR",
     "STRATEGY_DIR",
     "ensure_resource_dirs",
+    "load_database_config",
+    "get_database_url_from_config",
 ]

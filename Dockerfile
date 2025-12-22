@@ -74,6 +74,11 @@ COPY backend /app
 # Copy frontend build artifacts from frontend-builder stage
 COPY --from=frontend-builder /frontend/dist /app/resources/frontend
 
+# Create .env from template if it doesn't exist
+RUN if [ ! -f /app/.env ] && [ -f /app/.env.template ]; then \
+        cp /app/.env.template /app/.env; \
+    fi
+
 ENV PYTHONPATH=/app
 ENV PORT=8000
 ENV HOST=0.0.0.0

@@ -1,0 +1,34 @@
+{
+    "version": "1.0",
+    "database": {
+        "type": "sqlite",
+        "sqlite": {
+            "path": "data/trading_sessions.db",
+            "wal_mode": true,
+            "timeout_seconds": 30,
+            "pool_size": 5,
+            "max_overflow": 10
+        },
+        "postgresql": {
+            "host": "localhost",
+            "port": 5432,
+            "database": "trading",
+            "username": "trading_user",
+            "password": "",
+            "ssl_mode": "prefer",
+            "pool_size": 10,
+            "max_overflow": 20
+        }
+    },
+    "backup": {
+        "enabled": false,
+        "interval_hours": 24,
+        "max_backups": 7,
+        "backup_directory": "data/backups"
+    },
+    "maintenance": {
+        "vacuum_enabled": true,
+        "vacuum_interval_hours": 168,
+        "optimize_on_startup": true
+    }
+}

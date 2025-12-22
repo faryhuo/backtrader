@@ -8,4 +8,9 @@ services:
     environment:
       - PORT=8000
       - HOST=0.0.0.0
+    volumes:
+      - ./data:/app/data                          # Database files
+      - ./logs:/app/logs                          # Log files
+      - ./resources:/app/resources                
     restart: unless-stopped
+
