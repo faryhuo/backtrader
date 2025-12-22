@@ -1,0 +1,22 @@
+{
+    "title": "Shared Report",
+    "loading": "Loading shared report...",
+    "error": {
+        "missingToken": {
+            "title": "Invalid Link",
+            "subTitle": "The share link is invalid or incomplete."
+        },
+        "expired": {
+            "title": "Link Expired",
+            "subTitle": "This share link has expired or is no longer valid."
+        },
+        "notFound": {
+            "title": "Report Not Found",
+            "subTitle": "The shared report could not be found."
+        },
+        "unknown": {
+            "title": "Error",
+            "subTitle": "Failed to load the shared report. Please try again later."
+        }
+    }
+}

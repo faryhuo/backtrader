@@ -56,5 +56,8 @@
   "optimal_weights": "Optimal Weights",
   "current_weights": "Current Weights",
   "expected_return": "Expected Return",
-  "expected_volatility": "Expected Volatility"
+  "expected_volatility": "Expected Volatility",
+  "generate_report": "Generate Report",
+  "report_generating": "Report generation started. You can view it in the Report Center.",
+  "report_generation_failed": "Failed to generate report"
 }

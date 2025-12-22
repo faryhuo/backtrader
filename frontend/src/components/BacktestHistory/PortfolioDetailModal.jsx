@@ -1,10 +1,13 @@
-import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty } from 'antd'
+import { useState } from 'react'
+import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty, Button, message } from 'antd'
+import { FileTextOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
-import { API_URL } from '../../services/api'
+import { api } from '../../services/api'
 
 function PortfolioDetailModal({ visible, portfolio, onClose }) {
     const { t } = useTranslation()
+    const [reportLoading, setReportLoading] = useState(false)
 
     if (!portfolio) return null
 
@@ -253,6 +256,34 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         )
     }
 
+    const handleGenerateReport = async () => {
+        if (!portfolio || !portfolio.portfolio_id) {
+            return
+        }
+        setReportLoading(true)
+
+        try {
+            const reportTitle = `Portfolio: ${portfolio.tickers?.join(', ')} (${portfolio.start_date} ~ ${portfolio.end_date})`
+
+            await api.generateReport({
+                report_type: 'portfolio',
+                title: reportTitle,
+                source_ids: [portfolio.portfolio_id],
+                config: {
+                    include_correlation: true,
+                    include_optimization: true
+                }
+            })
+
+            message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))
+        } catch (err) {
+            console.error('Failed to generate report:', err)
+            message.error(t('history.report_generation_failed', 'Failed to generate report'))
+        } finally {
+            setReportLoading(false)
+        }
+    }
+
     const tabItems = [
         {
             key: 'overview',
@@ -348,7 +379,20 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             title={t('history.portfolio_detail_title')}
             open={visible}
             onCancel={onClose}
-            footer={null}
+            footer={[
+                <Button
+                    key="generate-report"
+                    type="primary"
+                    icon={<FileTextOutlined />}
+                    onClick={handleGenerateReport}
+                    loading={reportLoading}
+                >
+                    {t('history.generate_report', 'Generate Report')}
+                </Button>,
+                <Button key="close" onClick={onClose}>
+                    {t('common.close', 'Close')}
+                </Button>
+            ]}
             width={900}
             destroyOnClose
         >

@@ -1,0 +1,68 @@
+{
+    "title": "报告中心",
+    "generate": "生成报告",
+    "generateTitle": "生成报告",
+    "generatePlaceholder": "报告生成向导即将推出。",
+    "generateFirst": "生成您的第一份报告",
+    "empty": "尚未生成报告",
+    "emptyDesc": "暂无报告。请从回测/组合/Walk-Forward结果页面生成报告。",
+    "total": "共 {{total}} 份报告",
+    "fetchError": "加载报告失败",
+    "notReady": "报告尚未就绪",
+    "downloadSuccess": "报告已下载",
+    "downloadError": "下载报告失败",
+    "deleteConfirm": "删除报告",
+    "deleteMessage": "确定要删除\"{{title}}\"吗？",
+    "deleteSuccess": "报告已删除",
+    "deleteError": "删除报告失败",
+    "viewPlaceholder": "报告查看器即将推出。请使用下载查看完整报告。",
+    "shareTitle": "分享报告",
+    "shared": "已分享",
+    "filter": {
+        "type": "类型",
+        "status": "状态"
+    },
+    "table": {
+        "title": "标题",
+        "type": "类型",
+        "status": "状态",
+        "sources": "来源",
+        "created": "创建时间",
+        "actions": "操作"
+    },
+    "type": {
+        "backtest": "回测",
+        "portfolio": "组合",
+        "walkforward": "Walk-Forward",
+        "comparison": "对比"
+    },
+    "status": {
+        "pending": "等待中",
+        "generating": "生成中",
+        "completed": "已完成",
+        "failed": "失败"
+    },
+    "actions": {
+        "view": "查看",
+        "download": "下载",
+        "share": "分享",
+        "delete": "删除"
+    },
+    "share": {
+        "generate": "生成分享链接",
+        "generateSuccess": "分享链接已生成",
+        "generateError": "生成分享链接失败",
+        "revoke": "撤销分享链接",
+        "revokeSuccess": "分享链接已撤销",
+        "revokeError": "撤销分享链接失败",
+        "copy": "复制链接",
+        "copied": "链接已复制到剪贴板",
+        "copyError": "复制链接失败",
+        "linkActive": "分享链接已激活",
+        "expiresAt": "过期时间",
+        "expiresIn": "链接将在以下时间后过期",
+        "expirationLabel": "链接有效期",
+        "days": "天",
+        "description": "任何拥有此链接的人都可以在无需登录的情况下查看报告。"
+    }
+}

@@ -162,7 +162,7 @@ def run_optimization_task(
 
 # API Endpoints
 
-@router.post("/api/walkforward/start", response_model=WalkForwardOptimizationResponse)
+@router.post("/walkforward/start", response_model=WalkForwardOptimizationResponse)
 async def start_walkforward_optimization(
     request: WalkForwardOptimizationRequest,
     background_tasks: BackgroundTasks,
@@ -296,7 +296,7 @@ async def start_walkforward_optimization(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/walkforward/list", response_model=WalkForwardListResponse)
+@router.get("/walkforward/list", response_model=WalkForwardListResponse)
 async def list_walkforward_optimizations(
     ticker: Optional[str] = None,
     strategy_name: Optional[str] = None,
@@ -344,7 +344,7 @@ async def list_walkforward_optimizations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/walkforward/{optimization_id}")
+@router.get("/walkforward/{optimization_id}")
 async def get_walkforward_optimization(
     optimization_id: str,
     user: dict = Depends(get_optional_user),
@@ -383,7 +383,7 @@ async def get_walkforward_optimization(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/api/walkforward/{optimization_id}")
+@router.delete("/walkforward/{optimization_id}")
 async def delete_walkforward_optimization(
     optimization_id: str,
     user: dict = Depends(get_optional_user),
@@ -417,7 +417,7 @@ async def delete_walkforward_optimization(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/walkforward/{optimization_id}/status")
+@router.get("/walkforward/{optimization_id}/status")
 async def get_walkforward_status(
     optimization_id: str,
     user: dict = Depends(get_optional_user),

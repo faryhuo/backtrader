@@ -23,7 +23,7 @@ from src.service.portfolio_backtest import (
 from src.db import get_portfolio_storage
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
+router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 
 def _get_task_storage():

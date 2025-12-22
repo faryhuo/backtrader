@@ -1,0 +1,68 @@
+{
+    "title": "Report Center",
+    "generate": "Generate Report",
+    "generateTitle": "Generate Report",
+    "generatePlaceholder": "Report generation wizard coming soon.",
+    "generateFirst": "Generate Your First Report",
+    "empty": "No reports generated yet",
+    "emptyDesc": "No reports yet. Generate reports from backtest/portfolio/walk-forward result pages.",
+    "total": "Total {{total}} reports",
+    "fetchError": "Failed to load reports",
+    "notReady": "Report is not ready yet",
+    "downloadSuccess": "Report downloaded",
+    "downloadError": "Failed to download report",
+    "deleteConfirm": "Delete Report",
+    "deleteMessage": "Are you sure you want to delete \"{{title}}\"?",
+    "deleteSuccess": "Report deleted",
+    "deleteError": "Failed to delete report",
+    "viewPlaceholder": "Report viewer coming soon. Use download to view the full report.",
+    "shareTitle": "Share Report",
+    "shared": "Shared",
+    "filter": {
+        "type": "Type",
+        "status": "Status"
+    },
+    "table": {
+        "title": "Title",
+        "type": "Type",
+        "status": "Status",
+        "sources": "Sources",
+        "created": "Created",
+        "actions": "Actions"
+    },
+    "type": {
+        "backtest": "Backtest",
+        "portfolio": "Portfolio",
+        "walkforward": "Walk-Forward",
+        "comparison": "Comparison"
+    },
+    "status": {
+        "pending": "Pending",
+        "generating": "Generating",
+        "completed": "Completed",
+        "failed": "Failed"
+    },
+    "actions": {
+        "view": "View",
+        "download": "Download",
+        "share": "Share",
+        "delete": "Delete"
+    },
+    "share": {
+        "generate": "Generate Share Link",
+        "generateSuccess": "Share link generated",
+        "generateError": "Failed to generate share link",
+        "revoke": "Revoke Share Link",
+        "revokeSuccess": "Share link revoked",
+        "revokeError": "Failed to revoke share link",
+        "copy": "Copy link",
+        "copied": "Link copied to clipboard",
+        "copyError": "Failed to copy link",
+        "linkActive": "Share link is active",
+        "expiresAt": "Expires",
+        "expiresIn": "Link will expire in",
+        "expirationLabel": "Link expiration",
+        "days": "days",
+        "description": "Anyone with this link can view the report without signing in."
+    }
+}

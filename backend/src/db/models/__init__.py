@@ -47,6 +47,13 @@ from src.db.models.task import (
     TaskStatus,
 )
 
+# Report models
+from src.db.models.report import (
+    ReportModel,
+    ReportStatus,
+    ReportType,
+)
+
 
 __all__ = [
     # Base utilities
@@ -73,4 +80,8 @@ __all__ = [
     "TaskModel",
     "TaskType",
     "TaskStatus",
+    # Report
+    "ReportModel",
+    "ReportStatus",
+    "ReportType",
 ]

@@ -1,0 +1,55 @@
+.shared-report {
+    width: 100vw;
+    height: 100vh;
+    background: #0a0b10;
+    overflow: hidden;
+}
+
+.shared-report-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background: #0a0b10;
+}
+
+.shared-report-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background: #0a0b10;
+    padding: 24px;
+}
+
+.shared-report-error .ant-result {
+    padding: 48px 32px;
+}
+
+.shared-report-error .ant-result-title {
+    color: #ffffff;
+}
+
+.shared-report-error .ant-result-subtitle {
+    color: #a1a1aa;
+}
+
+.shared-report-error .ant-result-icon {
+    font-size: 72px;
+    color: #22d3ee;
+}
+
+.shared-report-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.shared-report-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #0a0b10;
+}

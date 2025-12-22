@@ -21,7 +21,7 @@ from src.utils.auth import get_current_user, get_optional_user
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 # Constants
 TASK_NOT_FOUND = "Task not found"

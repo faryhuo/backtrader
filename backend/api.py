@@ -19,10 +19,12 @@ from src.routes.walkforward_routes import router as walkforward_router
 from src.routes.websocket_routes import router as websocket_router
 from src.routes.task_routes import router as task_router
 from src.routes.site_config_routes import router as site_config_router
+from src.routes.report_routes import router as report_router
 from src.routes.frontend_routes import mount_frontend
 from src.utils.exception_handlers import create_exception_handlers
 from src.utils.request_context import RequestContextMiddleware
 
+prefix = "/api"
 ensure_resource_dirs()
 
 app = FastAPI()
@@ -48,17 +50,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(strategy_router, prefix="/api")
-app.include_router(backtest_router, prefix="/api")
-app.include_router(market_data_router, prefix="/api")
-app.include_router(ai_router, prefix="/api")
-app.include_router(live_router, prefix="/api")
-app.include_router(portfolio_router)  # Portfolio routes (includes /api/portfolio prefix)
-app.include_router(settings_router, prefix="/api")
-app.include_router(walkforward_router)  # Walk-forward routes (includes /api prefix)
+app.include_router(strategy_router, prefix=prefix)
+app.include_router(backtest_router, prefix=prefix)
+app.include_router(market_data_router, prefix=prefix)
+app.include_router(ai_router, prefix=prefix)
+app.include_router(live_router, prefix=prefix)
+app.include_router(portfolio_router, prefix=prefix)
+app.include_router(settings_router, prefix=prefix)
+app.include_router(walkforward_router, prefix=prefix) 
 app.include_router(websocket_router)  # WebSocket routes (no prefix)
-app.include_router(task_router)  # Task routes (includes /api/tasks prefix)
-app.include_router(site_config_router, prefix="/api")  # Site config (public, no auth)
+app.include_router(task_router, prefix=prefix)
+app.include_router(site_config_router, prefix=prefix)  # Site config (public, no auth)
+app.include_router(report_router, prefix=prefix)  
 mount_frontend(app)
 
 __all__ = ["app"]
