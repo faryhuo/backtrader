@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Overview Tab -->
+<div id="overview" class="tab-content active">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Comparison Overview</h2>
+            <span class="badge">{{ results | length }} Results</span>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Symbol</th>
+                        <th>Strategy</th>
+                        <th>Period</th>
+                        <th>Return</th>
+                        <th>Sharpe</th>
+                        <th>Max DD</th>
+                        <th>Win Rate</th>
+                        <th>Trades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.name or ("Result " ~ loop.index) }}</td>
+                        <td>{{ result.ticker }}</td>
+                        <td>{{ result.strategy_name }}</td>
+                        <td>{{ result.start_date }} - {{ result.end_date }}</td>
+                        <td class="{% if result.total_return >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if result.total_return >= 0 %}+{% endif %}{{ "%.2f"|format(result.total_return) }}%
+                        </td>
+                        <td>{{ "%.2f"|format(result.sharpe_ratio) if result.sharpe_ratio else "N/A" }}</td>
+                        <td class="negative">{{ "%.2f"|format(result.max_drawdown) if result.max_drawdown else "N/A" }}%</td>
+                        <td>{{ "%.1f"|format(result.win_rate) if result.win_rate else "N/A" }}%</td>
+                        <td>{{ result.total_trades or 0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Best/Worst Metrics -->
+    {% if comparison_metrics %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Best Performers</h2>
+        </div>
+        <div class="metrics-grid">
+            {% if comparison_metrics.best_return %}
+            <div class="metric-card">
+                <div class="metric-label">Best Return</div>
+                <div class="metric-value positive">+{{ "%.2f"|format(comparison_metrics.best_return.value) }}%</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ comparison_metrics.best_return.name }}</div>
+            </div>
+            {% endif %}
+            {% if comparison_metrics.best_sharpe %}
+            <div class="metric-card">
+                <div class="metric-label">Best Sharpe</div>
+                <div class="metric-value positive">{{ "%.2f"|format(comparison_metrics.best_sharpe.value) }}</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ comparison_metrics.best_sharpe.name }}</div>
+            </div>
+            {% endif %}
+            {% if comparison_metrics.lowest_drawdown %}
+            <div class="metric-card">
+                <div class="metric-label">Lowest Drawdown</div>
+                <div class="metric-value">{{ "%.2f"|format(comparison_metrics.lowest_drawdown.value) }}%</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ comparison_metrics.lowest_drawdown.name }}</div>
+            </div>
+            {% endif %}
+            {% if comparison_metrics.best_win_rate %}
+            <div class="metric-card">
+                <div class="metric-label">Best Win Rate</div>
+                <div class="metric-value positive">{{ "%.1f"|format(comparison_metrics.best_win_rate.value) }}%</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ comparison_metrics.best_win_rate.name }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Charts Tab -->
+<div id="charts" class="tab-content">
+    {% if cumulative_returns_chart %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Cumulative Returns Comparison</h2>
+        </div>
+        <div class="chart-container large" data-chart='{{ cumulative_returns_chart | tojson }}'></div>
+    </div>
+    {% endif %}
+
+    {% if metrics_bar_chart %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Metrics Comparison</h2>
+        </div>
+        <div class="chart-container" data-chart='{{ metrics_bar_chart | tojson }}'></div>
+    </div>
+    {% endif %}
+
+    {% if drawdown_comparison_chart %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Drawdown Comparison</h2>
+        </div>
+        <div class="chart-container" data-chart='{{ drawdown_comparison_chart | tojson }}'></div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Details Tab -->
+<div id="details" class="tab-content">
+    <div class="comparison-grid">
+        {% for result in results %}
+        <div class="comparison-item">
+            <h3>{{ result.name or ("Result " ~ loop.index) }} - {{ result.ticker }}</h3>
+            <div class="metrics-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <div class="metric-card" style="padding: 12px;">
+                    <div class="metric-label">Return</div>
+                    <div class="metric-value" style="font-size: 18px;">
+                        <span class="{% if result.total_return >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if result.total_return >= 0 %}+{% endif %}{{ "%.2f"|format(result.total_return) }}%
+                        </span>
+                    </div>
+                </div>
+                <div class="metric-card" style="padding: 12px;">
+                    <div class="metric-label">Sharpe</div>
+                    <div class="metric-value" style="font-size: 18px;">{{ "%.2f"|format(result.sharpe_ratio) if result.sharpe_ratio else "N/A" }}</div>
+                </div>
+                <div class="metric-card" style="padding: 12px;">
+                    <div class="metric-label">Max Drawdown</div>
+                    <div class="metric-value negative" style="font-size: 18px;">{{ "%.2f"|format(result.max_drawdown) if result.max_drawdown else "N/A" }}%</div>
+                </div>
+                <div class="metric-card" style="padding: 12px;">
+                    <div class="metric-label">Trades</div>
+                    <div class="metric-value" style="font-size: 18px;">{{ result.total_trades or 0 }}</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <div class="param-item" style="margin-bottom: 8px;">
+                    <span class="param-name">Strategy</span>
+                    <span class="param-value">{{ result.strategy_name }}</span>
+                </div>
+                <div class="param-item" style="margin-bottom: 8px;">
+                    <span class="param-name">Period</span>
+                    <span class="param-value">{{ result.start_date }} - {{ result.end_date }}</span>
+                </div>
+                <div class="param-item">
+                    <span class="param-name">Initial Cash</span>
+                    <span class="param-value">${{ "{:,.0f}".format(result.initial_cash) if result.initial_cash else "100,000" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Correlation Tab (if applicable) -->
+{% if correlation_matrix %}
+<div id="correlation" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Returns Correlation Matrix</h2>
+        </div>
+        <div class="chart-container" data-chart='{{ correlation_chart | tojson }}'></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Correlation Values</h2>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for name in correlation_names %}
+                        <th>{{ name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i, row in enumerate(correlation_matrix) %}
+                    <tr>
+                        <th>{{ correlation_names[i] }}</th>
+                        {% for value in row %}
+                        <td style="background: rgba(34, 211, 238, {{ (value + 1) / 2 * 0.3 }});">{{ "%.2f"|format(value) }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistics Tab -->
+<div id="statistics" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Statistical Summary</h2>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Mean</th>
+                        <th>Std Dev</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Median</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if stats %}
+                    <tr>
+                        <td>Total Return (%)</td>
+                        <td>{{ "%.2f"|format(stats.return_mean) }}</td>
+                        <td>{{ "%.2f"|format(stats.return_std) }}</td>
+                        <td class="{% if stats.return_min < 0 %}negative{% endif %}">{{ "%.2f"|format(stats.return_min) }}</td>
+                        <td class="positive">{{ "%.2f"|format(stats.return_max) }}</td>
+                        <td>{{ "%.2f"|format(stats.return_median) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Sharpe Ratio</td>
+                        <td>{{ "%.2f"|format(stats.sharpe_mean) }}</td>
+                        <td>{{ "%.2f"|format(stats.sharpe_std) }}</td>
+                        <td>{{ "%.2f"|format(stats.sharpe_min) }}</td>
+                        <td>{{ "%.2f"|format(stats.sharpe_max) }}</td>
+                        <td>{{ "%.2f"|format(stats.sharpe_median) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Max Drawdown (%)</td>
+                        <td>{{ "%.2f"|format(stats.dd_mean) }}</td>
+                        <td>{{ "%.2f"|format(stats.dd_std) }}</td>
+                        <td>{{ "%.2f"|format(stats.dd_min) }}</td>
+                        <td class="negative">{{ "%.2f"|format(stats.dd_max) }}</td>
+                        <td>{{ "%.2f"|format(stats.dd_median) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Win Rate (%)</td>
+                        <td>{{ "%.1f"|format(stats.wr_mean) }}</td>
+                        <td>{{ "%.1f"|format(stats.wr_std) }}</td>
+                        <td>{{ "%.1f"|format(stats.wr_min) }}</td>
+                        <td>{{ "%.1f"|format(stats.wr_max) }}</td>
+                        <td>{{ "%.1f"|format(stats.wr_median) }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -18,6 +18,8 @@ import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
 import TaskCenter from './pages/TaskCenter'
+import ReportCenter from './pages/ReportCenter'
+import SharedReport from './pages/SharedReport'
 import { setTokenGetter } from './services/api'
 import { useAuth } from './hooks/useAuth'
 import { LOGIN_ENABLED } from './config/auth'
@@ -81,8 +83,12 @@ function AppContent() {
                             <Route path="live" element={<LiveTradingDashboard />} />
                             <Route path="data_management" element={<DataManagement />} />
                             <Route path="tasks" element={<TaskCenter />} />
+                            <Route path="reports" element={<ReportCenter />} />
                             <Route path="settings" element={<Settings />} />
                         </Route>
+
+                        {/* Public Shared Report Route - No authentication required */}
+                        <Route path="report/shared/:token" element={<SharedReport />} />
 
                         {/* Redirects for Auth Disabled */}
                         {!loginEnabled && (

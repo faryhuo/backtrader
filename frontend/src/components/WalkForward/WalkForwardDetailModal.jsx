@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Modal,
@@ -11,7 +12,9 @@ import {
     Statistic,
     Alert,
     Space,
-    Typography
+    Typography,
+    Button,
+    message
 } from 'antd'
 import {
     CheckCircleOutlined,
@@ -19,8 +22,10 @@ import {
     LineChartOutlined,
     TableOutlined,
     BarChartOutlined,
-    HeatMapOutlined
+    HeatMapOutlined,
+    FileTextOutlined
 } from '@ant-design/icons'
+import { api } from '../../services/api'
 import OverfittingScoreCard from './OverfittingScoreCard'
 import ParameterHeatmap from './ParameterHeatmap'
 import Parameter3DSurface from './Parameter3DSurface'
@@ -31,6 +36,7 @@ const { Title, Text } = Typography
 
 const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
     const { t } = useTranslation()
+    const [reportLoading, setReportLoading] = useState(false)
 
     if (!optimization) return null
 
@@ -316,13 +322,54 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
         )
     }
 
+    const handleGenerateReport = async () => {
+        if (!optimization || !optimization.optimization_id) {
+            return
+        }
+        setReportLoading(true)
+
+        try {
+            const reportTitle = `Walk-Forward: ${optimization.strategy_name} - ${optimization.ticker} (${optimization.start_date} ~ ${optimization.end_date})`
+
+            await api.generateReport({
+                report_type: 'walkforward',
+                title: reportTitle,
+                source_ids: [optimization.optimization_id],
+                config: {
+                    include_parameter_analysis: true,
+                    include_overfitting_metrics: true
+                }
+            })
+
+            message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))
+        } catch (err) {
+            console.error('Failed to generate report:', err)
+            message.error(t('history.report_generation_failed', 'Failed to generate report'))
+        } finally {
+            setReportLoading(false)
+        }
+    }
+
     return (
         <Modal
             title={t('walkforward.detail.title')}
             open={visible}
             onCancel={onClose}
             width={1200}
-            footer={null}
+            footer={[
+                <Button
+                    key="generate-report"
+                    type="primary"
+                    icon={<FileTextOutlined />}
+                    onClick={handleGenerateReport}
+                    loading={reportLoading}
+                >
+                    {t('history.generate_report', 'Generate Report')}
+                </Button>,
+                <Button key="close" onClick={onClose}>
+                    {t('common.close', 'Close')}
+                </Button>
+            ]}
         >
             <Tabs defaultActiveKey="overview">
                 <TabPane

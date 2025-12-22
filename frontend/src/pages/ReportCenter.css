@@ -1,0 +1,222 @@
+.report-center {
+    padding: 24px;
+    min-height: calc(100vh - 64px);
+}
+
+.report-center-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.report-center-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.report-center-filters {
+    background: #1a1b23;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #1e293b;
+}
+
+.report-center-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    color: #ef4444;
+}
+
+/* Table customizations */
+.report-center .ant-table {
+    background: #1a1b23;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.report-center .ant-table-thead>tr>th {
+    background: #252631;
+    color: #a1a1aa;
+    font-weight: 500;
+    border-bottom: 1px solid #1e293b;
+}
+
+.report-center .ant-table-tbody>tr>td {
+    border-bottom: 1px solid #1e293b;
+}
+
+.report-center .ant-table-tbody>tr:hover>td {
+    background: #252631;
+}
+
+/* Badge customizations */
+.report-center .ant-badge-count {
+    box-shadow: none;
+}
+
+/* Modal customizations */
+.report-center .ant-modal-content {
+    background: #1a1b23;
+    border: 1px solid #1e293b;
+}
+
+.report-center .ant-modal-header {
+    background: #1a1b23;
+    border-bottom: 1px solid #1e293b;
+}
+
+.report-center .ant-modal-title {
+    color: #ffffff;
+}
+
+.report-center .ant-modal-body {
+    color: #a1a1aa;
+}
+
+.report-center .ant-modal-footer {
+    border-top: 1px solid #1e293b;
+}
+
+/* Empty state */
+.report-center .ant-empty-description {
+    color: #71717a;
+}
+
+/* Action buttons */
+.report-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.report-actions .action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    color: #a1a1aa;
+}
+
+.report-actions .action-btn:hover:not(:disabled) {
+    background: rgba(34, 211, 238, 0.1);
+    color: #22d3ee;
+}
+
+.report-actions .action-btn:disabled {
+    color: #52525b;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.report-actions .action-btn-danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Action button icons */
+.report-actions .action-btn .anticon {
+    font-size: 16px;
+}
+
+/* Share Modal Styles */
+.share-modal-content {
+    padding: 8px 0;
+}
+
+.share-report-info {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.share-report-info .ant-typography {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.share-link-section {
+    animation: fadeIn 0.3s ease;
+}
+
+.share-generate-section {
+    animation: fadeIn 0.3s ease;
+}
+
+.expiration-section {
+    padding: 16px;
+    background: rgba(34, 211, 238, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(34, 211, 238, 0.1);
+}
+
+.expiration-slider {
+    padding: 0 8px;
+}
+
+.expiration-slider .ant-slider-track {
+    background: linear-gradient(90deg, #22d3ee, #06b6d4);
+}
+
+.expiration-slider .ant-slider-handle::after {
+    box-shadow: 0 0 0 2px #22d3ee;
+}
+
+.expiration-slider .ant-slider-mark-text {
+    color: #71717a;
+    font-size: 12px;
+}
+
+.share-modal-content .ant-input {
+    background: #252631;
+    border-color: #1e293b;
+    color: #ffffff;
+}
+
+.share-modal-content .ant-input:focus,
+.share-modal-content .ant-input:hover {
+    border-color: #22d3ee;
+}
+
+.share-modal-content .ant-alert {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.share-modal-content .ant-alert-success .ant-alert-message {
+    color: #22c55e;
+}
+
+.share-modal-content .ant-alert-success .ant-alert-description {
+    color: #a1a1aa;
+}
+
+.share-modal-content .ant-btn-primary {
+    background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+    border: none;
+    font-weight: 500;
+}
+
+.share-modal-content .ant-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

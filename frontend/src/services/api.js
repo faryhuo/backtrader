@@ -26,6 +26,7 @@ import { liveApi } from './liveApi'
 import { walkforwardApi } from './walkforwardApi'
 import { settingsApi } from './settingsApi'
 import { portfolioApi } from './portfolioApi'
+import { reportApi } from './reportApi'
 
 // Re-export domain APIs for direct import
 export { strategyApi } from './strategyApi'
@@ -35,6 +36,7 @@ export { liveApi } from './liveApi'
 export { walkforwardApi } from './walkforwardApi'
 export { settingsApi } from './settingsApi'
 export { portfolioApi } from './portfolioApi'
+export { reportApi } from './reportApi'
 
 /**
  * Unified API object for backward compatibility
@@ -60,5 +62,8 @@ export const api = {
     ...settingsApi,
 
     // Portfolio API
-    ...portfolioApi
+    ...portfolioApi,
+
+    // Report API
+    ...reportApi
 }

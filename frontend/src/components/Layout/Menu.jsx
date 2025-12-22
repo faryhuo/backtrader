@@ -10,6 +10,7 @@ import {
     ThunderboltOutlined,
     CloudServerOutlined,
     UnorderedListOutlined,
+    FileTextOutlined,
     SettingOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
@@ -110,6 +111,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><UnorderedListOutlined /></span>
                     {!collapsed && <span>{t('nav.task_center', 'Task Center')}</span>}
+                </Link>
+                <Link
+                    to="/reports"
+                    className={getNavClass('/reports')}
+                    title={t('nav.reports', 'Reports')}
+                >
+                    <span className="icon"><FileTextOutlined /></span>
+                    {!collapsed && <span>{t('nav.reports', 'Reports')}</span>}
                 </Link>
                 <Link
                     to="/settings"

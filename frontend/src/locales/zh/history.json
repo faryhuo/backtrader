@@ -58,5 +58,8 @@
   "expected_return": "预期收益",
   "expected_volatility": "预期波动率",
   "strategy_params": "策略参数",
-  "params_override": "参数覆盖"
+  "params_override": "参数覆盖",
+  "generate_report": "生成报告",
+  "report_generating": "报告生成已启动。您可以在报告中心查看。",
+  "report_generation_failed": "生成报告失败"
 }

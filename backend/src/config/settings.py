@@ -12,6 +12,8 @@ ASSETS_DIR = FRONTEND_DIR / "assets"
 IMAGES_DIR = RESOURCES_DIR / "images"
 STRATEGY_DIR = RESOURCES_DIR / "strategy"
 CONFIG_DIR = RESOURCES_DIR / "config"
+REPORTS_DIR = RESOURCES_DIR / "reports"
+TEMPLATES_DIR = RESOURCES_DIR / "templates"
 
 # Load environment variables from the backend .env if present.
 load_dotenv(PROJECT_ROOT / ".env", override=False)
@@ -148,6 +150,10 @@ HTTPS_PROXY = os.getenv("HTTPS_PROXY") or os.getenv("https_proxy")
 # Debug mode - when True, detailed error messages and stack traces are returned to clients
 DEBUG = os.getenv("DEBUG", "false").lower() in {"true", "1", "yes", "on"}
 
+# Report Center configuration
+REPORT_SHARE_SECRET = os.getenv("REPORT_SHARE_SECRET", "default-secret-change-me-in-production")
+REPORT_MAX_AGE_DAYS = int(os.getenv("REPORT_MAX_AGE_DAYS", "30"))
+
 # Live Trading Configuration
 LIVE_TRADING_ENABLED = os.getenv("LIVE_TRADING_ENABLED", "false").lower() in {"true", "1", "yes", "on"}
 DEFAULT_EXCHANGE = os.getenv("DEFAULT_EXCHANGE", "binance")
@@ -182,12 +188,14 @@ CORS_ALLOW_CREDENTIALS = (
 
 
 def ensure_resource_dirs() -> None:
-    """Ensure resource folders exist (images, strategy, frontend, config)."""
+    """Ensure resource folders exist (images, strategy, frontend, config, reports, templates)."""
     RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 __all__ = [
@@ -216,8 +224,12 @@ __all__ = [
     "OPENAI_API_KEY",
     "OPENAI_BASE_URL",
     "PROJECT_ROOT",
+    "REPORTS_DIR",
+    "REPORT_MAX_AGE_DAYS",
+    "REPORT_SHARE_SECRET",
     "RESOURCES_DIR",
     "STRATEGY_DIR",
+    "TEMPLATES_DIR",
     "ensure_resource_dirs",
     "load_database_config",
     "get_database_url_from_config",

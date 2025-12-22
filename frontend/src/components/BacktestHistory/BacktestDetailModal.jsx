@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Modal, Tabs, Descriptions, Tag, Button, Select, message } from 'antd'
 import { useTranslation } from 'react-i18next'
+import { FileTextOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { performFullStrategyAnalysis } from '../../services/aiAnalysis'
 import { useSettingsContext } from '../../contexts/SettingsContext'
@@ -16,6 +17,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t } = useTranslation()
     const { getAvailableModels } = useSettingsContext()
     const [aiLoading, setAiLoading] = useState(false)
+    const [reportLoading, setReportLoading] = useState(false)
     const [analyses, setAnalyses] = useState({})
     const [activeTab, setActiveTab] = useState(null)
 
@@ -88,13 +90,53 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
         }
     }
 
+    const handleGenerateReport = async () => {
+        if (!backtest || !backtest.backtest_id) {
+            return
+        }
+        setReportLoading(true)
+
+        try {
+            const reportTitle = `${backtest.strategy_name} - ${backtest.ticker} (${backtest.start_date} ~ ${backtest.end_date})`
+
+            await api.generateReport({
+                report_type: 'backtest',
+                title: reportTitle,
+                source_ids: [backtest.backtest_id],
+                config: {
+                    include_ai_analysis: Object.keys(allAnalyses).length > 0
+                }
+            })
+
+            message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))
+        } catch (err) {
+            console.error('Failed to generate report:', err)
+            message.error(t('history.report_generation_failed', 'Failed to generate report'))
+        } finally {
+            setReportLoading(false)
+        }
+    }
+
     return (
         <Modal
             title={t('history.detail_title')}
             open={visible}
             onCancel={onClose}
             width="90%"
-            footer={null}
+            footer={[
+                <Button
+                    key="generate-report"
+                    type="primary"
+                    icon={<FileTextOutlined />}
+                    onClick={handleGenerateReport}
+                    loading={reportLoading}
+                >
+                    {t('history.generate_report', 'Generate Report')}
+                </Button>,
+                <Button key="close" onClick={onClose}>
+                    {t('common.close', 'Close')}
+                </Button>
+            ]}
             style={{ top: 20 }}
         >
             <Tabs defaultActiveKey="overview">

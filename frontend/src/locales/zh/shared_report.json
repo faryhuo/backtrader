@@ -1,0 +1,22 @@
+{
+    "title": "共享报告",
+    "loading": "加载共享报告中...",
+    "error": {
+        "missingToken": {
+            "title": "无效链接",
+            "subTitle": "分享链接无效或不完整。"
+        },
+        "expired": {
+            "title": "链接已过期",
+            "subTitle": "此分享链接已过期或不再有效。"
+        },
+        "notFound": {
+            "title": "报告未找到",
+            "subTitle": "无法找到共享报告。"
+        },
+        "unknown": {
+            "title": "错误",
+            "subTitle": "加载共享报告失败，请稍后重试。"
+        }
+    }
+}
