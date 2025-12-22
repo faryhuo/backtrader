@@ -21,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR
 from src.db.storage import BacktestStorage, PortfolioStorage, WalkForwardStorage, get_report_storage
 from src.db.models import ReportStatus
+from src.utils.report_i18n import get_translations, get_report_type_name, DEFAULT_LANGUAGE
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class ReportGenerator:
         config: Optional[Dict[str, Any]] = None,
         progress_callback: Optional[Callable] = None,
         user_id: Optional[str] = None,
+        language: str = DEFAULT_LANGUAGE,
     ) -> Dict[str, Any]:
         """
         Generate a complete HTML report.
@@ -77,11 +79,15 @@ class ReportGenerator:
             config: Optional configuration dict
             progress_callback: Optional async callback for progress updates
             user_id: Optional user ID for filtering
+            language: Language code for report content ("en" or "zh")
 
         Returns:
             Dict with report_id, html_filename, and metrics_summary
         """
         config = config or {}
+        
+        # Get translations for the specified language
+        t = get_translations(language)
 
         try:
             # Update status to generating
@@ -103,19 +109,23 @@ class ReportGenerator:
             # Determine template and prepare context
             if report_type == "comparison" or len(source_ids) > 1:
                 template_name = "comparison.html"
-                context = self._prepare_comparison_context(source_data, config)
+                context = self._prepare_comparison_context(source_data, config, t)
             elif report_type == "backtest":
                 template_name = "backtest.html"
-                context = self._prepare_backtest_context(source_data[0], config)
+                context = self._prepare_backtest_context(source_data[0], config, t)
             elif report_type == "portfolio":
                 template_name = "backtest.html"  # Portfolio uses similar template
-                context = self._prepare_portfolio_context(source_data[0], config)
+                context = self._prepare_portfolio_context(source_data[0], config, t)
             elif report_type == "walkforward":
                 template_name = "backtest.html"  # Walkforward uses similar template
-                context = self._prepare_walkforward_context(source_data[0], config)
+                context = self._prepare_walkforward_context(source_data[0], config, t)
             else:
                 template_name = "backtest.html"
-                context = self._prepare_backtest_context(source_data[0], config)
+                context = self._prepare_backtest_context(source_data[0], config, t)
+            
+            # Add translations to context
+            context["t"] = t
+            context["lang"] = t.get("lang", language)
 
             if progress_callback:
                 await progress_callback(40, "Generating charts...")
@@ -203,8 +213,10 @@ class ReportGenerator:
         self,
         data: Dict[str, Any],
         config: Dict[str, Any],
+        translations: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Prepare context for backtest report template."""
+        t = translations or {}
         metrics = data.get("metrics", {})
         trade_details = metrics.get("trade_details", {})
 
@@ -213,17 +225,27 @@ class ReportGenerator:
         winning_trades = trade_details.get("winning_trades", 0)
         win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else None
 
+        # Define section name mapping
+        section_name_map = {
+            "overview": t.get("tab_overview", "Overview"),
+            "charts": t.get("tab_charts", "Charts"),
+            "trades": t.get("tab_trades", "Trades"),
+            "parameters": t.get("tab_parameters", "Parameters"),
+            "deep-analysis": t.get("tab_deep_analysis", "Deep Analysis"),
+            "ai-analysis": t.get("tab_ai_analysis", "AI Analysis"),
+        }
+
         # Determine sections
         sections = config.get("sections", ["overview", "charts", "trades", "parameters"])
-        section_list = [{"id": s, "name": s.replace("_", " ").title()} for s in sections]
+        section_list = [{"id": s, "name": section_name_map.get(s, s.replace("_", " ").title())} for s in sections]
 
         # Add deep analysis section if available
         if data.get("deep_analysis") and "deep_analysis" not in sections:
-            section_list.append({"id": "deep-analysis", "name": "Deep Analysis"})
+            section_list.append({"id": "deep-analysis", "name": section_name_map.get("deep-analysis", "Deep Analysis")})
 
         # Add AI analysis section if available
         if data.get("ai_analysis") and "ai_analysis" not in sections:
-            section_list.append({"id": "ai-analysis", "name": "AI Analysis"})
+            section_list.append({"id": "ai-analysis", "name": section_name_map.get("ai-analysis", "AI Analysis")})
 
         context = {
             "report_id": data.get("backtest_id", str(uuid.uuid4())),
@@ -280,9 +302,10 @@ class ReportGenerator:
         self,
         data: Dict[str, Any],
         config: Dict[str, Any],
+        translations: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Prepare context for portfolio report template."""
-        context = self._prepare_backtest_context(data, config)
+        context = self._prepare_backtest_context(data, config, translations)
         context["report_type"] = "portfolio"
         context["title"] = f"Portfolio - {', '.join(data.get('tickers', [])[:3])}..."
         context["ticker"] = ", ".join(data.get("tickers", []))
@@ -292,8 +315,18 @@ class ReportGenerator:
         self,
         data: Dict[str, Any],
         config: Dict[str, Any],
+        translations: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Prepare context for walk-forward report template."""
+        t = translations or {}
+        
+        # Define section name mapping
+        section_name_map = {
+            "overview": t.get("tab_overview", "Overview"),
+            "charts": t.get("tab_charts", "Charts"),
+            "parameters": t.get("tab_parameters", "Parameters"),
+        }
+        
         context = {
             "report_id": data.get("optimization_id", str(uuid.uuid4())),
             "title": f"Walk-Forward - {data.get('strategy_name', 'Strategy')} - {data.get('ticker', 'Unknown')}",
@@ -301,9 +334,9 @@ class ReportGenerator:
             "report_type": "walkforward",
             "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
             "sections": [
-                {"id": "overview", "name": "Overview"},
-                {"id": "charts", "name": "Charts"},
-                {"id": "parameters", "name": "Parameters"},
+                {"id": "overview", "name": section_name_map["overview"]},
+                {"id": "charts", "name": section_name_map["charts"]},
+                {"id": "parameters", "name": section_name_map["parameters"]},
             ],
 
             "strategy_name": data.get("strategy_name"),
@@ -329,8 +362,10 @@ class ReportGenerator:
         self,
         source_data: List[Dict[str, Any]],
         config: Dict[str, Any],
+        translations: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Prepare context for comparison report template."""
+        t = translations or {}
         results = []
         for i, data in enumerate(source_data):
             metrics = data.get("metrics", {})
@@ -357,6 +392,14 @@ class ReportGenerator:
 
         # Calculate statistics
         stats = self._calculate_statistics(results)
+        
+        # Define section name mapping
+        section_name_map = {
+            "overview": t.get("tab_overview", "Overview"),
+            "charts": t.get("tab_charts", "Charts"),
+            "details": t.get("tab_trades", "Details"),
+            "statistics": t.get("tab_parameters", "Statistics"),
+        }
 
         context = {
             "report_id": str(uuid.uuid4()),
@@ -365,10 +408,10 @@ class ReportGenerator:
             "report_type": "comparison",
             "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
             "sections": [
-                {"id": "overview", "name": "Overview"},
-                {"id": "charts", "name": "Charts"},
-                {"id": "details", "name": "Details"},
-                {"id": "statistics", "name": "Statistics"},
+                {"id": "overview", "name": section_name_map["overview"]},
+                {"id": "charts", "name": section_name_map["charts"]},
+                {"id": "details", "name": section_name_map["details"]},
+                {"id": "statistics", "name": section_name_map["statistics"]},
             ],
 
             "results": results,

@@ -6,7 +6,7 @@ import dayjs from 'dayjs'
 import { api } from '../../services/api'
 
 function PortfolioDetailModal({ visible, portfolio, onClose }) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const [reportLoading, setReportLoading] = useState(false)
 
     if (!portfolio) return null
@@ -272,7 +272,8 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                 config: {
                     include_correlation: true,
                     include_optimization: true
-                }
+                },
+                language: i18n.language?.startsWith('zh') ? 'zh' : 'en'
             })
 
             message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))

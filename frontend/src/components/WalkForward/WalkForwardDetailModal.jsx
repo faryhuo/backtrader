@@ -35,7 +35,7 @@ const { TabPane } = Tabs
 const { Title, Text } = Typography
 
 const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const [reportLoading, setReportLoading] = useState(false)
 
     if (!optimization) return null
@@ -338,7 +338,8 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                 config: {
                     include_parameter_analysis: true,
                     include_overfitting_metrics: true
-                }
+                },
+                language: i18n.language?.startsWith('zh') ? 'zh' : 'en'
             })
 
             message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))

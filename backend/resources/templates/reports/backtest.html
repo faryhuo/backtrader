@@ -5,7 +5,7 @@
 <div id="overview" class="tab-content active">
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Performance Overview</h2>
+            <h2 class="card-title">{{ t.performance_overview }}</h2>
             {% if total_return is defined %}
             <span class="badge {% if total_return >= 0 %}success{% else %}danger{% endif %}">
                 {% if total_return >= 0 %}+{% endif %}{{ "%.2f"|format(total_return) }}%
@@ -15,46 +15,51 @@
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-label">Final Value</div>
-                <div class="metric-value">${{ "{:,.2f}".format(final_value) if final_value else "N/A" }}</div>
+                <div class="metric-label">{{ t.final_value }}</div>
+                <div class="metric-value">${{ "{:,.2f}".format(final_value) if final_value else t.no_data }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Total Return</div>
-                <div class="metric-value {% if total_return and total_return >= 0 %}positive{% elif total_return %}negative{% endif %}">
-                    {% if total_return %}{% if total_return >= 0 %}+{% endif %}{{ "%.2f"|format(total_return) }}%{% else %}N/A{% endif %}
+                <div class="metric-label">{{ t.total_return }}</div>
+                <div
+                    class="metric-value {% if total_return and total_return >= 0 %}positive{% elif total_return %}negative{% endif %}">
+                    {% if total_return %}{% if total_return >= 0 %}+{% endif %}{{ "%.2f"|format(total_return) }}%{% else
+                    %}{{ t.no_data }}{% endif %}
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Sharpe Ratio</div>
-                <div class="metric-value {% if sharpe_ratio and sharpe_ratio >= 1 %}positive{% elif sharpe_ratio and sharpe_ratio < 0 %}negative{% endif %}">
-                    {{ "%.2f"|format(sharpe_ratio) if sharpe_ratio else "N/A" }}
+                <div class="metric-label">{{ t.sharpe_ratio }}</div>
+                <div
+                    class="metric-value {% if sharpe_ratio and sharpe_ratio >= 1 %}positive{% elif sharpe_ratio and sharpe_ratio < 0 %}negative{% endif %}">
+                    {{ "%.2f"|format(sharpe_ratio) if sharpe_ratio else t.no_data }}
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Max Drawdown</div>
+                <div class="metric-label">{{ t.max_drawdown }}</div>
                 <div class="metric-value negative">
-                    {{ "%.2f"|format(max_drawdown) if max_drawdown else "N/A" }}%
+                    {{ "%.2f"|format(max_drawdown) if max_drawdown else t.no_data }}%
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Total Trades</div>
+                <div class="metric-label">{{ t.total_trades }}</div>
                 <div class="metric-value">{{ total_trades if total_trades else "0" }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value {% if win_rate and win_rate >= 50 %}positive{% elif win_rate %}negative{% endif %}">
-                    {{ "%.1f"|format(win_rate) if win_rate else "N/A" }}%
+                <div class="metric-label">{{ t.win_rate }}</div>
+                <div
+                    class="metric-value {% if win_rate and win_rate >= 50 %}positive{% elif win_rate %}negative{% endif %}">
+                    {{ "%.1f"|format(win_rate) if win_rate else t.no_data }}%
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Profit Factor</div>
-                <div class="metric-value {% if profit_factor and profit_factor >= 1 %}positive{% elif profit_factor %}negative{% endif %}">
-                    {{ "%.2f"|format(profit_factor) if profit_factor else "N/A" }}
+                <div class="metric-label">{{ t.profit_factor }}</div>
+                <div
+                    class="metric-value {% if profit_factor and profit_factor >= 1 %}positive{% elif profit_factor %}negative{% endif %}">
+                    {{ "%.2f"|format(profit_factor) if profit_factor else t.no_data }}
                 </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">SQN</div>
-                <div class="metric-value">{{ "%.2f"|format(sqn) if sqn else "N/A" }}</div>
+                <div class="metric-label">{{ t.sqn }}</div>
+                <div class="metric-value">{{ "%.2f"|format(sqn) if sqn else t.no_data }}</div>
             </div>
         </div>
     </div>
@@ -62,14 +67,14 @@
     {% if annual_returns %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Annual Returns</h2>
+            <h2 class="card-title">{{ t.annual_returns }}</h2>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Year</th>
-                        <th>Return</th>
+                        <th>{{ t.year }}</th>
+                        <th>{{ t.return }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,7 +98,7 @@
     {% if equity_chart %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Equity Curve</h2>
+            <h2 class="card-title">{{ t.equity_curve }}</h2>
         </div>
         <div class="chart-container large" data-chart='{{ equity_chart | tojson }}'></div>
     </div>
@@ -102,7 +107,7 @@
     {% if drawdown_chart %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Drawdown</h2>
+            <h2 class="card-title">{{ t.drawdown }}</h2>
         </div>
         <div class="chart-container" data-chart='{{ drawdown_chart | tojson }}'></div>
     </div>
@@ -111,7 +116,7 @@
     {% if plot_url %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Strategy Chart</h2>
+            <h2 class="card-title">{{ t.strategy_chart }}</h2>
         </div>
         <img src="{{ plot_url }}" alt="Strategy Chart" style="width: 100%; max-width: 100%; border-radius: 8px;">
     </div>
@@ -122,25 +127,25 @@
 <div id="trades" class="tab-content">
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Trade Summary</h2>
+            <h2 class="card-title">{{ t.trade_summary }}</h2>
         </div>
 
         <div class="metrics-grid" style="margin-bottom: 24px;">
             <div class="metric-card">
-                <div class="metric-label">Total Trades</div>
+                <div class="metric-label">{{ t.total_trades }}</div>
                 <div class="metric-value">{{ total_trades if total_trades else "0" }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Winning Trades</div>
+                <div class="metric-label">{{ t.winning_trades }}</div>
                 <div class="metric-value positive">{{ winning_trades if winning_trades else "0" }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Losing Trades</div>
+                <div class="metric-label">{{ t.losing_trades }}</div>
                 <div class="metric-value negative">{{ losing_trades if losing_trades else "0" }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value">{{ "%.1f"|format(win_rate) if win_rate else "N/A" }}%</div>
+                <div class="metric-label">{{ t.win_rate }}</div>
+                <div class="metric-value">{{ "%.1f"|format(win_rate) if win_rate else t.no_data }}%</div>
             </div>
         </div>
 
@@ -150,14 +155,14 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Entry Date</th>
-                        <th>Exit Date</th>
-                        <th>Type</th>
-                        <th>Size</th>
-                        <th>Entry Price</th>
-                        <th>Exit Price</th>
-                        <th>P&L</th>
-                        <th>Return</th>
+                        <th>{{ t.entry_date }}</th>
+                        <th>{{ t.exit_date }}</th>
+                        <th>{{ t.type }}</th>
+                        <th>{{ t.size }}</th>
+                        <th>{{ t.entry_price }}</th>
+                        <th>{{ t.exit_price }}</th>
+                        <th>{{ t.pnl }}</th>
+                        <th>{{ t.return_pct }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -182,7 +187,7 @@
             </table>
         </div>
         {% else %}
-        <p style="color: var(--text-muted); text-align: center; padding: 40px;">No trade data available</p>
+        <p style="color: var(--text-muted); text-align: center; padding: 40px;">{{ t.no_trade_data }}</p>
         {% endif %}
     </div>
 </div>
@@ -191,35 +196,35 @@
 <div id="parameters" class="tab-content">
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Backtest Configuration</h2>
+            <h2 class="card-title">{{ t.backtest_config }}</h2>
         </div>
         <div class="params-grid">
             <div class="param-item">
-                <span class="param-name">Symbol</span>
+                <span class="param-name">{{ t.symbol }}</span>
                 <span class="param-value">{{ ticker }}</span>
             </div>
             <div class="param-item">
-                <span class="param-name">Strategy</span>
+                <span class="param-name">{{ t.strategy }}</span>
                 <span class="param-value">{{ strategy_name }}</span>
             </div>
             <div class="param-item">
-                <span class="param-name">Start Date</span>
+                <span class="param-name">{{ t.start_date }}</span>
                 <span class="param-value">{{ start_date }}</span>
             </div>
             <div class="param-item">
-                <span class="param-name">End Date</span>
+                <span class="param-name">{{ t.end_date }}</span>
                 <span class="param-value">{{ end_date }}</span>
             </div>
             <div class="param-item">
-                <span class="param-name">Initial Cash</span>
+                <span class="param-name">{{ t.initial_cash }}</span>
                 <span class="param-value">${{ "{:,.2f}".format(initial_cash) if initial_cash else "100,000.00" }}</span>
             </div>
             <div class="param-item">
-                <span class="param-name">Commission</span>
+                <span class="param-name">{{ t.commission }}</span>
                 <span class="param-value">{{ "%.4f"|format(commission * 100) if commission else "0.05" }}%</span>
             </div>
             <div class="param-item">
-                <span class="param-name">Stake</span>
+                <span class="param-name">{{ t.stake }}</span>
                 <span class="param-value">{{ stake if stake else "100" }}</span>
             </div>
         </div>
@@ -228,7 +233,7 @@
     {% if strategy_params %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Strategy Parameters</h2>
+            <h2 class="card-title">{{ t.strategy_params }}</h2>
         </div>
         <div class="params-grid">
             {% for name, value in strategy_params.items() %}
@@ -248,7 +253,7 @@
     {% if deep_analysis.monthly_returns and monthly_returns_chart is defined %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Monthly Returns Heatmap</h2>
+            <h2 class="card-title">{{ t.monthly_returns }}</h2>
         </div>
         <div class="chart-container" data-chart='{{ monthly_returns_chart | tojson }}'></div>
     </div>
@@ -257,7 +262,7 @@
     {% if deep_analysis.rolling_sharpe and rolling_sharpe_chart is defined %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Rolling Sharpe Ratio</h2>
+            <h2 class="card-title">{{ t.rolling_sharpe }}</h2>
         </div>
         <div class="chart-container" data-chart='{{ rolling_sharpe_chart | tojson }}'></div>
     </div>
@@ -266,69 +271,78 @@
     {% if deep_analysis.returns_distribution %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Returns Distribution</h2>
+            <h2 class="card-title">{{ t.returns_distribution }}</h2>
         </div>
         <div class="metrics-grid" style="margin-bottom: 20px;">
             <div class="metric-card">
-                <div class="metric-label">Mean</div>
+                <div class="metric-label">{{ t.mean }}</div>
                 <div class="metric-value">{{ "%.4f"|format(deep_analysis.returns_distribution.statistics.mean) }}%</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Std Dev</div>
+                <div class="metric-label">{{ t.std_dev }}</div>
                 <div class="metric-value">{{ "%.4f"|format(deep_analysis.returns_distribution.statistics.std) }}%</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Skewness</div>
-                <div class="metric-value">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.skewness) }}</div>
+                <div class="metric-label">{{ t.skewness }}</div>
+                <div class="metric-value">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.skewness) }}
+                </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Kurtosis</div>
-                <div class="metric-value">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.kurtosis) }}</div>
+                <div class="metric-label">{{ t.kurtosis }}</div>
+                <div class="metric-value">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.kurtosis) }}
+                </div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">VaR (95%)</div>
-                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.var_95) }}%</div>
+                <div class="metric-label">{{ t.var_95 }}</div>
+                <div class="metric-value negative">{{
+                    "%.2f"|format(deep_analysis.returns_distribution.statistics.var_95) }}%</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">CVaR (95%)</div>
-                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.returns_distribution.statistics.cvar_95) }}%</div>
+                <div class="metric-label">{{ t.cvar_95 }}</div>
+                <div class="metric-value negative">{{
+                    "%.2f"|format(deep_analysis.returns_distribution.statistics.cvar_95) }}%</div>
             </div>
         </div>
-        {% if returns_dist_chart is defined %}<div class="chart-container small" data-chart='{{ returns_dist_chart | tojson }}'></div>{% endif %}
+        {% if returns_dist_chart is defined %}<div class="chart-container small"
+            data-chart='{{ returns_dist_chart | tojson }}'></div>{% endif %}
     </div>
     {% endif %}
 
     {% if deep_analysis.drawdown_distribution %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Drawdown Analysis</h2>
+            <h2 class="card-title">{{ t.drawdown_analysis }}</h2>
         </div>
         <div class="metrics-grid" style="margin-bottom: 20px;">
             <div class="metric-card">
-                <div class="metric-label">Max Drawdown</div>
-                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.drawdown_distribution.max_drawdown) }}%</div>
+                <div class="metric-label">{{ t.max_drawdown }}</div>
+                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.drawdown_distribution.max_drawdown)
+                    }}%</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Avg Drawdown</div>
-                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.drawdown_distribution.avg_drawdown) }}%</div>
+                <div class="metric-label">{{ t.avg_drawdown }}</div>
+                <div class="metric-value negative">{{ "%.2f"|format(deep_analysis.drawdown_distribution.avg_drawdown)
+                    }}%</div>
             </div>
         </div>
-        {% if drawdown_dist_chart is defined %}<div class="chart-container small" data-chart='{{ drawdown_dist_chart | tojson }}'></div>{% endif %}
+        {% if drawdown_dist_chart is defined %}<div class="chart-container small"
+            data-chart='{{ drawdown_dist_chart | tojson }}'></div>{% endif %}
     </div>
     {% endif %}
 
     {% if deep_analysis.benchmark_comparison %}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Benchmark Comparison</h2>
+            <h2 class="card-title">{{ t.benchmark_comparison }}</h2>
         </div>
-        {% if benchmark_chart is defined %}<div class="chart-container" data-chart='{{ benchmark_chart | tojson }}'></div>{% endif %}
+        {% if benchmark_chart is defined %}<div class="chart-container" data-chart='{{ benchmark_chart | tojson }}'>
+        </div>{% endif %}
         <div class="table-container" style="margin-top: 20px;">
             <table>
                 <thead>
                     <tr>
-                        <th>Metric</th>
-                        <th>Strategy</th>
+                        <th>{{ t.metric }}</th>
+                        <th>{{ t.strategy }}</th>
                         {% for benchmark in deep_analysis.benchmark_comparison.correlation.keys() %}
                         <th>{{ benchmark }}</th>
                         {% endfor %}
@@ -336,21 +350,21 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Correlation</td>
+                        <td>{{ t.correlation }}</td>
                         <td>1.00</td>
                         {% for benchmark, value in deep_analysis.benchmark_comparison.correlation.items() %}
                         <td>{{ "%.2f"|format(value) }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
-                        <td>Beta</td>
+                        <td>{{ t.beta }}</td>
                         <td>-</td>
                         {% for benchmark, value in deep_analysis.benchmark_comparison.beta.items() %}
                         <td>{{ "%.2f"|format(value) }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
-                        <td>Alpha</td>
+                        <td>{{ t.alpha }}</td>
                         <td>-</td>
                         {% for benchmark, value in deep_analysis.benchmark_comparison.alpha.items() %}
                         <td>{{ "%.2f"|format(value * 100) }}%</td>
@@ -369,7 +383,7 @@
 <div id="ai-analysis" class="tab-content">
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">AI Analysis</h2>
+            <h2 class="card-title">{{ t.ai_analysis }}</h2>
         </div>
         {% for model, content in ai_analysis.items() %}
         <div style="margin-bottom: 24px;">

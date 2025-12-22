@@ -15,7 +15,8 @@ export const reportApi = {
                 source_ids: params.source_ids,
                 title: params.title || null,
                 description: params.description || null,
-                config: params.config || null
+                config: params.config || null,
+                language: params.language || 'en'
             })
         })
         return await parseResponse(res)

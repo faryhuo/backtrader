@@ -55,6 +55,10 @@ class ReportGenerateRequest(BaseModel):
         None,
         description="Report configuration (sections, chart_format, etc.)",
     )
+    language: str = Field(
+        default="en",
+        description="Report language: 'en' for English, 'zh' for Chinese",
+    )
 
 
 class ReportListQuery(BaseModel):
@@ -85,6 +89,7 @@ async def _run_report_generation(
     source_ids: list[str],
     config: dict,
     user_id: Optional[str],
+    language: str = "en",
 ):
     """Background task for report generation."""
     try:
@@ -95,6 +100,7 @@ async def _run_report_generation(
             source_ids=source_ids,
             config=config,
             user_id=user_id,
+            language=language,
         )
     except Exception as e:
         logger.error(f"Report generation failed for {report_id}: {e}", exc_info=True)
@@ -184,6 +190,7 @@ async def generate_report(
         source_ids=request.source_ids,
         config=request.config or {},
         user_id=user_id,
+        language=request.language,
     )
 
     logger.info(f"Report generation started: {report_id}")

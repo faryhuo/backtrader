@@ -14,7 +14,7 @@ import CodeViewer from '../RunStrategy/CodeViewer'
 import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { getAvailableModels } = useSettingsContext()
     const [aiLoading, setAiLoading] = useState(false)
     const [reportLoading, setReportLoading] = useState(false)
@@ -105,7 +105,8 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 source_ids: [backtest.backtest_id],
                 config: {
                     include_ai_analysis: Object.keys(allAnalyses).length > 0
-                }
+                },
+                language: i18n.language?.startsWith('zh') ? 'zh' : 'en'
             })
 
             message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))
