@@ -44,10 +44,8 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 </div>}
             </div>
             <nav className="sidebar-nav">
-                <Link to="/strategy" className={getNavClass('/strategy')} title={t('nav.run_strategy')}>
-                    <span className="icon"><FundOutlined /></span>
-                    {!collapsed && <span>{t('nav.run_strategy')}</span>}
-                </Link>
+                {/* Strategy & Trading Group */}
+                {!collapsed && <div className="nav-group-header">{t('nav.group_strategy')}</div>}
                 <Link
                     to="/maintain"
                     className={getNavClass('/maintain')}
@@ -56,14 +54,21 @@ const Menu = ({ collapsed, setCollapsed }) => {
                     <span className="icon"><CodeOutlined /></span>
                     {!collapsed && <span>{t('nav.strategy_maintain')}</span>}
                 </Link>
-                <Link
-                    to="/datasource"
-                    className={getNavClass('/datasource')}
-                    title={t('nav.datasource')}
-                >
-                    <span className="icon"><DatabaseOutlined /></span>
-                    {!collapsed && <span>{t('nav.datasource')}</span>}
+                <Link to="/strategy" className={getNavClass('/strategy')} title={t('nav.run_strategy')}>
+                    <span className="icon"><FundOutlined /></span>
+                    {!collapsed && <span>{t('nav.run_strategy')}</span>}
                 </Link>
+                <Link
+                    to="/live"
+                    className={getNavClass('/live')}
+                    title={t('nav.live_trading', 'Live Trading')}
+                >
+                    <span className="icon"><ThunderboltOutlined /></span>
+                    {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                </Link>
+
+                {/* Analysis & Optimization Group */}
+                {!collapsed && <div className="nav-group-header">{t('nav.group_analysis')}</div>}
                 <Link
                     to="/history"
                     className={getNavClass('/history')}
@@ -88,13 +93,16 @@ const Menu = ({ collapsed, setCollapsed }) => {
                     <span className="icon"><PieChartOutlined /></span>
                     {!collapsed && <span>{t('nav.portfolio', 'Portfolio')}</span>}
                 </Link>
+
+                {/* Infrastructure Group */}
+                {!collapsed && <div className="nav-group-header">{t('nav.group_infrastructure')}</div>}
                 <Link
-                    to="/live"
-                    className={getNavClass('/live')}
-                    title={t('nav.live_trading', 'Live Trading')}
+                    to="/datasource"
+                    className={getNavClass('/datasource')}
+                    title={t('nav.datasource')}
                 >
-                    <span className="icon"><ThunderboltOutlined /></span>
-                    {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                    <span className="icon"><DatabaseOutlined /></span>
+                    {!collapsed && <span>{t('nav.datasource')}</span>}
                 </Link>
                 <Link
                     to="/data_management"

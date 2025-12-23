@@ -1,4 +1,7 @@
 {
+  "group_strategy": "Strategy & Trading",
+  "group_analysis": "Analysis & Optimization",
+  "group_infrastructure": "Infrastructure",
   "run_strategy": "Run Strategy",
   "strategy_maintain": "Strategy Maintain",
   "datasource": "Data Source",
