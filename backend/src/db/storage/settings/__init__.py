@@ -12,9 +12,11 @@ from .base import SettingsStorageBase, DEFAULT_SETTINGS
 from .credentials import CredentialsMixin
 from .site_config import SiteConfigMixin
 from .data_source import DataSourceMixin
+from .logto_config import LogtoConfigMixin
 
 
 class SettingsStorage(
+    LogtoConfigMixin,
     DataSourceMixin,
     SiteConfigMixin,
     CredentialsMixin,

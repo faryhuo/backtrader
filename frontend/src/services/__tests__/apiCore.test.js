@@ -4,11 +4,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { parseResponse, buildRequest, setTokenGetter, getAccessToken } from '../apiCore'
 
-// Mock the auth config module
-vi.mock('../../config/auth', () => ({
-    LOGIN_ENABLED: false
-}))
-
 describe('apiCore', () => {
     describe('parseResponse', () => {
         it('should return null for 204 No Content', async () => {

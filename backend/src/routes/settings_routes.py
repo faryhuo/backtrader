@@ -126,6 +126,31 @@ def reset_user_settings(user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/settings/logto-config")
+def get_logto_config(user: dict = Depends(get_current_user)) -> dict:
+    """
+    Get Logto frontend configuration.
+
+    Returns Logto configuration for frontend initialization including
+    endpoint, appId, redirect URIs, and login enablement status.
+    Falls back to environment variables if not set in database.
+    """
+    try:
+        storage = get_settings_storage()
+        user_id = user.get("sub") if user else None
+
+        config = storage.get_logto_frontend_config(user_id=user_id)
+
+        return {
+            "status": "ok",
+            "config": config
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get Logto config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ========== CREDENTIAL MANAGEMENT ENDPOINTS ==========
 
 class CredentialUpdate(BaseModel):

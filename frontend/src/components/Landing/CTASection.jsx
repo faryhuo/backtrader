@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useLogtoConfig } from '../../contexts/LogtoConfigContext';
 import { useSiteConfig } from '../../contexts/SiteConfigContext';
 import { ArrowRight, Github, BookOpen } from 'lucide-react';
 
@@ -10,6 +11,7 @@ import { ArrowRight, Github, BookOpen } from 'lucide-react';
 export function CTASection() {
     const { t } = useTranslation();
     const { config } = useSiteConfig();
+    const { config: logtoConfig } = useLogtoConfig();
     const { signIn, loginEnabled } = useAuth();
     const navigate = useNavigate();
 
@@ -18,8 +20,10 @@ export function CTASection() {
             navigate('/strategy');
             return;
         }
-        const redirectUri = import.meta.env.VITE_LOGTO_REDIRECT_URI;
-        signIn(redirectUri);
+        const redirectUri = logtoConfig?.redirectUri;
+        if (redirectUri) {
+            signIn(redirectUri);
+        }
     };
 
     const handleDocsClick = (e) => {

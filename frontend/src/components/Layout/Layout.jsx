@@ -8,6 +8,7 @@ import {
     GlobalOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../../hooks/useAuth'
+import { useLogtoConfig } from '../../contexts/LogtoConfigContext'
 import Menu from './Menu'
 import NotificationCenter from './NotificationCenter'
 import '../../index.css'
@@ -17,6 +18,7 @@ function Layout() {
     const { t, i18n } = useTranslation();
     const [collapsed, setCollapsed] = useState(false)
     const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
+    const { config } = useLogtoConfig()
     const isZh = i18n.language.startsWith('zh');
     const [userInfo, setUserInfo] = useState({
         email: null,
@@ -53,8 +55,10 @@ function Layout() {
         if (!loginEnabled) {
             return
         }
-        const postLogoutRedirectUri = import.meta.env.VITE_LOGTO_POST_LOGOUT_REDIRECT_URI
-        signOut(postLogoutRedirectUri)
+        const postLogoutRedirectUri = config?.postLogoutRedirectUri
+        if (postLogoutRedirectUri) {
+            signOut(postLogoutRedirectUri)
+        }
     }
 
     // User menu items

@@ -1,7 +1,6 @@
 /**
  * Core API utilities - authentication, request building, response parsing
  */
-import { LOGIN_ENABLED } from '../config/auth'
 
 // API base URL for HTTP requests (separate from Logto resource identifier)
 export const API_URL = import.meta.env.VITE_API_BASE_URL
@@ -55,13 +54,10 @@ export const getAccessToken = async () => {
 }
 
 export const parseResponse = async (response) => {
-    // Handle 401 Unauthorized first (before trying to parse body)
-    if (response.status === 401 && LOGIN_ENABLED) {
-        console.error('Unauthorized - redirecting to login')
-        const loginPath = '/login'
-        if (window.location.pathname !== loginPath) {
-            window.location.href = loginPath
-        }
+    // Handle 401 Unauthorized
+    // Note: Auth redirect is handled by PrivateRoute component, not here
+    if (response.status === 401) {
+        console.warn('Unauthorized request')
         throw new Error('Unauthorized')
     }
 

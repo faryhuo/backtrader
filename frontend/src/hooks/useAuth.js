@@ -1,5 +1,5 @@
 import { useLogto } from '@logto/react';
-import { LOGIN_ENABLED } from '../config/auth';
+import { useLogtoConfig } from '../contexts/LogtoConfigContext';
 
 const ANONYMOUS_AUTH = {
   loginEnabled: false,
@@ -20,8 +20,19 @@ const ANONYMOUS_AUTH = {
  * because the LogtoProvider is not present in the component tree in that case.
  */
 export function useAuth() {
+  const { config, loading } = useLogtoConfig();
+
+  // Show loading state while config is being fetched
+  if (loading) {
+    return {
+      ...ANONYMOUS_AUTH,
+      isLoading: true,
+    };
+  }
+
   // Return early when login is disabled - LogtoProvider is not present
-  if (!LOGIN_ENABLED) {
+  const loginEnabled = config?.enableLogin ?? false;
+  if (!loginEnabled) {
     return ANONYMOUS_AUTH;
   }
 

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import { LogtoProvider } from './providers/LogtoProvider'
+import { LogtoConfigProvider, useLogtoConfig } from './contexts/LogtoConfigContext'
 import { NotificationProvider } from './providers/NotificationProvider'
 import { SettingsProvider } from './contexts/SettingsContext'
 import { PrivateRoute } from './components/Auth/PrivateRoute'
@@ -22,7 +23,6 @@ import ReportCenter from './pages/ReportCenter'
 import SharedReport from './pages/SharedReport'
 import { setTokenGetter } from './services/api'
 import { useAuth } from './hooks/useAuth'
-import { LOGIN_ENABLED } from './config/auth'
 import './index.css'
 
 /**
@@ -32,6 +32,7 @@ import './index.css'
  * Sets up token getter for API calls.
  */
 function AppContent() {
+    const { config: logtoConfig } = useLogtoConfig()
     const { getAccessToken, loginEnabled } = useAuth()
 
     // Initialize token getter for API calls
@@ -113,7 +114,30 @@ function AppContent() {
  * Wraps the application with authentication provider.
  */
 function App() {
-    if (!LOGIN_ENABLED) {
+    return (
+        <LogtoConfigProvider>
+            <AppInner />
+        </LogtoConfigProvider>
+    )
+}
+
+/**
+ * App Inner Component
+ * 
+ * Has access to Logto config from context.
+ */
+function AppInner() {
+    const { config, loading } = useLogtoConfig()
+
+    // Show loading while config is being fetched
+    if (loading) {
+        return <div>Loading...</div>
+    }
+
+    // Check if login is enabled from config
+    const loginEnabled = config?.enableLogin ?? false
+
+    if (!loginEnabled) {
         return (
             <BrowserRouter>
                 <AppContent />
