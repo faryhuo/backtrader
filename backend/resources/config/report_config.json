@@ -2,7 +2,7 @@
     "version": "1.0",
     "description": "Report generation configuration template. Copy this file to report_config.json and customize.",
     "report": {
-        "output_directory": "/data/reports",
+        "output_directory": "data/reports",
         "default_format": "html",
         "supported_formats": [
             "html",

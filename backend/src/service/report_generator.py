@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR, load_report_config
+from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR, PROJECT_ROOT, load_report_config
 from src.db.storage import BacktestStorage, PortfolioStorage, WalkForwardStorage, get_report_storage
 from src.db.models import ReportStatus
 from src.utils.report_i18n import get_translations, get_report_type_name, DEFAULT_LANGUAGE
@@ -47,6 +47,21 @@ class ReportGenerator:
         # Load report configuration
         self.config = load_report_config()
         logger.debug(f"Loaded report config version: {self.config.get('version', 'unknown')}")
+        
+        # Set output directory from config, with fallback to default REPORTS_DIR
+        output_dir_config = self.config.get("report", {}).get("output_directory", "")
+        if output_dir_config:
+            output_path = Path(output_dir_config)
+            # Handle relative paths - make them relative to PROJECT_ROOT
+            if not output_path.is_absolute():
+                output_path = PROJECT_ROOT / output_path
+            self.output_dir = output_path
+        else:
+            self.output_dir = REPORTS_DIR
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Report output directory: {self.output_dir}")
         
         template_path = TEMPLATES_DIR / "reports"
         template_path.mkdir(parents=True, exist_ok=True)
@@ -149,9 +164,9 @@ class ReportGenerator:
             if progress_callback:
                 await progress_callback(80, "Saving report...")
 
-            # Save to file
+            # Save to file using configured output directory
             html_filename = f"{report_id}.html"
-            html_path = REPORTS_DIR / html_filename
+            html_path = self.output_dir / html_filename
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(html_content)
 

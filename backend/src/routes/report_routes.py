@@ -16,7 +16,7 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel, Field
 
-from src.config.settings import REPORTS_DIR
+# Note: REPORTS_DIR no longer imported - using generator.output_dir instead
 from src.db.storage.report import get_report_storage
 from src.db.models.report import ReportStatus, ReportType
 from src.service.report_generator import get_report_generator
@@ -266,7 +266,9 @@ def download_report(
     if not html_filename:
         raise HTTPException(status_code=404, detail="Report file not found")
 
-    file_path = REPORTS_DIR / html_filename
+    # Get output directory from generator config
+    generator = get_report_generator()
+    file_path = generator.output_dir / html_filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Report file not found on disk")
 
@@ -380,10 +382,11 @@ def get_shared_report(share_token: str) -> HTMLResponse:
     # Return HTML content
     html_content = report.get("html_content")
     if not html_content:
-        # Try to read from file
+        # Try to read from file using configured output directory
         html_filename = report.get("html_filename")
         if html_filename:
-            file_path = REPORTS_DIR / html_filename
+            generator = get_report_generator()
+            file_path = generator.output_dir / html_filename
             if file_path.exists():
                 with open(file_path, "r", encoding="utf-8") as f:
                     html_content = f.read()

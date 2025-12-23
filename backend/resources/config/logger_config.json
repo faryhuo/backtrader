@@ -1,0 +1,77 @@
+{
+    "version": "1.0",
+    "description": "Logger configuration template. Copy this file to logger_config.json and customize.",
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "date_format": "%Y-%m-%d %H:%M:%S",
+        "handlers": {
+            "console": {
+                "enabled": true,
+                "level": "INFO",
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            },
+            "file": {
+                "enabled": false,
+                "level": "DEBUG",
+                "filename": "logs/app.log",
+                "max_bytes": 10485760,
+                "backup_count": 5,
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            }
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "INFO",
+            "handlers": [
+                "console"
+            ]
+        },
+        "uvicorn": {
+            "level": "INFO",
+            "propagate": false
+        },
+        "sqlalchemy": {
+            "level": "WARNING",
+            "propagate": false
+        },
+        "backtrader": {
+            "level": "WARNING",
+            "propagate": false
+        },
+        "ccxt": {
+            "level": "WARNING",
+            "propagate": false
+        },
+        "src.service.worker": {
+            "level": "INFO",
+            "propagate": true,
+            "notes": "Worker process logs"
+        }
+    },
+    "worker_logging": {
+        "level": "INFO",
+        "format": "[Worker] %(levelname)s - %(message)s",
+        "notes": "Separate configuration for worker processes"
+    },
+    "sensitive_fields": {
+        "mask_patterns": [
+            "password",
+            "api_key",
+            "secret",
+            "token",
+            "credential"
+        ],
+        "mask_char": "*",
+        "visible_chars": 4,
+        "notes": "Fields matching these patterns will be masked in logs"
+    },
+    "instructions": {
+        "1_setup": "Copy this template to logger_config.json",
+        "2_levels": "Available levels: DEBUG, INFO, WARNING, ERROR, CRITICAL",
+        "3_handlers": "Enable file handler to persist logs to disk",
+        "4_loggers": "Configure per-module log levels as needed",
+        "5_sensitive": "Add patterns to mask_patterns to prevent credential leaks"
+    }
+}
