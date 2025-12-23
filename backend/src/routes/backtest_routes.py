@@ -13,6 +13,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
+from src.service.task_manager import get_task_manager
+from src.routes.common.task_helpers import get_user_id, generate_task_name, create_task_config, map_exception_to_http
 from src.service.backtest_engine import (
     run_backtest,
     get_user_strategy_code,
@@ -94,150 +96,136 @@ class DeepAnalysisConfig(BaseModel):
 # ========== Backtest Execution Endpoints ==========
 
 
+async def _backtest_executor(config: dict, progress_callback) -> dict:
+    """
+    Executor function for backtest tasks.
+    
+    This function is called by TaskManager with automatic status tracking.
+    
+    Args:
+        config: Backtest configuration from task
+        progress_callback: Callback for progress updates (progress, message)
+        
+    Returns:
+        Dictionary with backtest_id and result data
+    """
+    backtest_id = str(uuid.uuid4())
+    filename = f"{backtest_id}.png"
+    save_path = IMAGES_DIR / filename
+    
+    await progress_callback(10, "Loading strategy")
+    
+    # Get strategy code
+    strategy_code = None
+    if config.get("strategy_name"):
+        try:
+            strategy_code = get_user_strategy_code(config["strategy_name"])
+        except Exception as e:
+            logger.warning(f"Failed to get strategy code: {e}")
+    
+    await progress_callback(20, "Running backtest")
+    
+    # Run backtest
+    metrics = run_backtest(
+        ticker=config["ticker"],
+        start_date=config["start_date"],
+        end_date=config["end_date"],
+        initial_cash=config.get("initial_cash", 100000.0),
+        commission=config.get("commission", 0.0005),
+        stake=config.get("stake", 100),
+        strategy_name=config.get("strategy_name"),
+        save_path=save_path,
+        params=config.get("params"),
+    )
+    
+    if metrics is None:
+        raise ValueError("Backtest failed - no metrics returned")
+    
+    await progress_callback(80, "Saving results")
+    
+    # Save to database
+    storage = get_backtest_storage()
+    storage_config = {
+        "ticker": config["ticker"],
+        "start_date": config["start_date"],
+        "strategy_code": strategy_code,
+        "end_date": config["end_date"],
+        "initial_cash": config.get("initial_cash", 100000.0),
+        "commission": config.get("commission", 0.0005),
+        "stake": config.get("stake", 100),
+        "strategy_name": config.get("strategy_name"),
+        "params": config.get("params"),
+    }
+    
+    storage.save_backtest(
+        backtest_id=backtest_id,
+        config=storage_config,
+        metrics=metrics,
+        plot_filename=filename,
+        ai_analysis=None,
+        strategy_code=strategy_code,
+        user_id=config.get("user_id"),
+    )
+    
+    await progress_callback(100, "Backtest completed")
+    
+    return {
+        "id": backtest_id,
+        "backtest_id": backtest_id,
+        "metrics": metrics,
+        "plot_url": f"/images/{filename}",
+    }
+
+
 @router.post("/backtest")
 async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
-    # Generate unique ID for this backtest
-    backtest_id = str(uuid.uuid4())
-    set_trace_id(backtest_id)  # Set trace ID for logging correlation
+    """
+    Run a backtest and return results.
+    
+    This endpoint submits a backtest task to TaskManager for execution.
+    The task runs asynchronously with automatic status tracking and WebSocket updates.
+    """
+    user_id = get_user_id(user)
+    
+    # Generate trace ID for logging
+    trace_id = str(uuid.uuid4())
+    set_trace_id(trace_id)
     
     request_id = get_request_id()
     logger.info(
-        f"[{request_id}] Starting backtest trace_id={backtest_id} ticker={request.ticker}"
+        f"[{request_id}] Submitting backtest: ticker={request.ticker} strategy={request.strategy_name}"
     )
     
-    filename = f"{backtest_id}.png"
-    save_path = IMAGES_DIR / filename
-    user_id = user.get("sub") if user else None
-
-    # Create task record (lazy import to avoid circular dependency)
-    task_storage = _get_task_storage()
-    TaskStatus = _get_task_status()
-
-    task_name = f"Backtest {request.ticker} - {request.strategy_name or 'Default'}"
-    task_config = {
-        "ticker": request.ticker,
-        "start_date": request.start_date,
-        "end_date": request.end_date,
-        "initial_cash": request.initial_cash,
-        "strategy_name": request.strategy_name,
-    }
-    task = task_storage.create_task(
-        task_type="backtest",
-        config=task_config,
-        user_id=user_id,
-        name=task_name,
-    )
-    task_id = task["task_id"]
-
     try:
-        # Update task to running
-        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=10)
-
-        # Get strategy code before running backtest
-        strategy_code = None
-        if request.strategy_name:
-            try:
-                strategy_code = get_user_strategy_code(request.strategy_name)
-            except Exception as e:
-                logger.warning(f"Failed to get strategy code for {request.strategy_name}: {e}")
-
-        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=20)
-
-        metrics = run_backtest(
-            ticker=request.ticker,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            initial_cash=request.initial_cash,
-            commission=request.commission if request.commission is not None else 0.0005,
-            stake=request.stake if request.stake is not None else 100,
-            strategy_name=request.strategy_name,
-            save_path=save_path,
-            params=request.params,
+        # Create task configuration
+        task_config = create_task_config(request, "backtest")
+        task_config["user_id"] = user_id  # Add user_id for storage
+        
+        # Generate task name
+        task_name = generate_task_name("backtest", task_config)
+        
+        # Submit to TaskManager
+        task_manager = get_task_manager()
+        task = await task_manager.submit(
+            task_type="backtest",
+            executor=_backtest_executor,
+            config=task_config,
+            user_id=user_id,
+            name=task_name,
         )
-
-        if metrics is None:
-            task_storage.update_status(
-                task_id, TaskStatus.FAILED.value,
-                progress=100,
-                error_message="Backtest failed - no metrics returned"
-            )
-            raise HTTPException(status_code=500, detail="Backtest failed")
-
-        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=80)
-
-        response = {
-            "backtest_id": backtest_id,
-            "task_id": task_id,
-            "metrics": metrics,
-            "plot_url": f"/images/{filename}",
+        
+        logger.info(f"[{request_id}] Backtest task submitted: {task['task_id']}")
+        
+        return {
+            "task_id": task["task_id"],
+            "status": task["status"],
+            "message": "Backtest task submitted successfully",
         }
-
-        # Save to database
-        try:
-            storage = get_backtest_storage()
-
-            config = {
-                "ticker": request.ticker,
-                "start_date": request.start_date,
-                "strategy_code": strategy_code,
-                "end_date": request.end_date,
-                "initial_cash": request.initial_cash,
-                "commission": request.commission if request.commission is not None else 0.0005,
-                "stake": request.stake if request.stake is not None else 100,
-                "strategy_name": request.strategy_name,
-                "params": request.params,
-            }
-
-            storage.save_backtest(
-                backtest_id=backtest_id,
-                config=config,
-                metrics=metrics,
-                plot_filename=filename,
-                ai_analysis=None,
-                strategy_code=strategy_code,
-                user_id=user_id,
-            )
-
-            # Update task to completed with result link
-            task_storage.update_status(
-                task_id,
-                TaskStatus.COMPLETED.value,
-                progress=100,
-                result_id=backtest_id,
-                result_type="backtest",
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to save backtest to history: {e}", exc_info=True)
-            # Still mark task as completed since backtest ran successfully
-            task_storage.update_status(task_id, TaskStatus.COMPLETED.value, progress=100)
-
-        return response
-
-    except StrategyLoadError as exc:
-        task_storage.update_status(
-            task_id, TaskStatus.FAILED.value,
-            progress=100,
-            error_message=str(exc)
-        )
-        raise HTTPException(status_code=400, detail=str(exc))
-    except DataLoadError as exc:
-        task_storage.update_status(
-            task_id, TaskStatus.FAILED.value,
-            progress=100,
-            error_message=str(exc)
-        )
-        raise HTTPException(status_code=502, detail=str(exc))
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
+    
     except Exception as exc:
-        task_storage.update_status(
-            task_id, TaskStatus.FAILED.value,
-            progress=100,
-            error_message=str(exc)
-        )
-        raise
+        logger.exception(f"Failed to submit backtest: {exc}")
+        http_exc = map_exception_to_http(exc)
+        raise http_exc
 
 
 # ========== Backtest History Endpoints ==========

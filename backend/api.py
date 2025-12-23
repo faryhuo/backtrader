@@ -23,11 +23,55 @@ from src.routes.report_routes import router as report_router
 from src.routes.frontend_routes import mount_frontend
 from src.utils.exception_handlers import create_exception_handlers
 from src.utils.request_context import RequestContextMiddleware
+from src.service.worker.worker_pool import get_worker_pool, shutdown_worker_pool
 
 prefix = "/api"
 ensure_resource_dirs()
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+async def startup_warmup():
+    """
+    Application startup handler - Warmup worker pool.
+    
+    Pre-initializes the worker pool to eliminate cold start delays
+    when users submit their first backtest.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("Warming up worker pool...")
+        pool = get_worker_pool()
+        
+        if pool.is_enabled:
+            pool.start()
+            logger.info(f"Worker pool warmed up: {pool.get_stats()}")
+        else:
+            logger.info("Worker pool disabled, skipping warmup")
+    except Exception as e:
+        logger.error(f"Worker pool warmup failed: {e}")
+        # Don't fail startup if worker pool fails
+
+
+@app.on_event("shutdown")
+async def shutdown_cleanup():
+    """
+    Application shutdown handler - Cleanup worker pool.
+    
+    Gracefully shutdown worker processes on app shutdown.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("Shutting down worker pool...")
+        shutdown_worker_pool()
+        logger.info("Worker pool shutdown complete")
+    except Exception as e:
+        logger.error(f"Worker pool shutdown failed: {e}")
 
 # Request context middleware (must be added first for proper request_id propagation)
 app.add_middleware(RequestContextMiddleware)

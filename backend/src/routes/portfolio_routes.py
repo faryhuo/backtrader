@@ -15,6 +15,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from src.config.settings import IMAGES_DIR
+from src.service.task_manager import get_task_manager
+from src.routes.common.task_helpers import get_user_id, generate_task_name, create_task_config, map_exception_to_http
 from src.routes.settings_routes import get_current_user
 from src.service.portfolio_backtest import (
     run_portfolio_backtest,
@@ -26,16 +28,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 
-def _get_task_storage():
-    """Lazy import to avoid circular dependency."""
-    from src.db.storage.task import get_task_storage
-    return get_task_storage()
 
-
-def _get_task_status():
-    """Lazy import to avoid circular dependency."""
-    from src.db.models.task import TaskStatus
-    return TaskStatus
 
 
 # Request/Response Models
@@ -58,6 +51,53 @@ class PortfolioHistoryQuery(BaseModel):
     sort_order: str = "desc"
     limit: int = 50
     offset: int = 0
+
+
+async def _portfolio_executor(config: dict, progress_callback) -> dict:
+    """
+    Executor function for portfolio backtest tasks.
+    
+    Args:
+        config: Portfolio configuration from task
+        progress_callback: Callback for progress updates
+        
+    Returns:
+        Dictionary with portfolio_id and results
+    """
+    plot_filename = f"portfolio_{uuid.uuid4()}.png"
+    save_path = IMAGES_DIR / plot_filename
+    
+    await progress_callback(10, "Starting portfolio backtest")
+    
+    # Run portfolio backtest
+    result = run_portfolio_backtest(
+        tickers=config["tickers"],
+        weights=config["weights"],
+        start_date=config["start_date"],
+        end_date=config["end_date"],
+        initial_cash=config.get("initial_cash", 100000.0),
+        commission=config.get("commission", 0.0005),
+        stake=config.get("stake", 100),
+        strategy_name=config.get("strategy_name"),
+        params=config.get("params"),
+        save_path=save_path,
+    )
+    
+    await progress_callback(80, "Saving portfolio results")
+    
+    # Save to database
+    result["plot_filename"] = plot_filename
+    storage = get_portfolio_storage()
+    portfolio_id = storage.save_result(result, user_id=config.get("user_id"))
+    
+    await progress_callback(100, "Portfolio backtest completed")
+    
+    # Add additional metadata to result
+    result["id"] = portfolio_id
+    result["portfolio_id"] = portfolio_id
+    result["plot_url"] = f"/images/{plot_filename}"
+    
+    return result
 
 
 @router.post("/backtest")
@@ -83,91 +123,36 @@ async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Dep
             detail="At least one ticker is required"
         )
 
-    user_id = user.get("sub") if user else None
-    plot_filename = f"portfolio_{uuid.uuid4()}.png"
-    save_path = IMAGES_DIR / plot_filename
-
-    # Create task record
-    task_storage = _get_task_storage()
-    TaskStatus = _get_task_status()
+    user_id = get_user_id(user)
     
-    tickers_str = ", ".join(request.tickers[:3])
-    if len(request.tickers) > 3:
-        tickers_str += f" +{len(request.tickers) - 3}"
-    task_name = f"Portfolio Backtest: {tickers_str}"
-    
-    task_config = {
-        "tickers": request.tickers,
-        "weights": request.weights,
-        "start_date": request.start_date,
-        "end_date": request.end_date,
-        "initial_cash": request.initial_cash,
-        "strategy_name": request.strategy_name,
-    }
-    task = task_storage.create_task(
-        task_type="portfolio",
-        config=task_config,
-        user_id=user_id,
-        name=task_name,
-    )
-    task_id = task["task_id"]
-
     try:
-        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=10)
+        # Create task configuration
+        task_config = create_task_config(request, "portfolio")
+        task_config["user_id"] = user_id
         
-        # Run portfolio backtest
-        result = run_portfolio_backtest(
-            tickers=request.tickers,
-            weights=request.weights,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            initial_cash=request.initial_cash,
-            commission=request.commission,
-            stake=request.stake,
-            strategy_name=request.strategy_name,
-            params=request.params,
-            save_path=save_path,
+        # Generate task name
+        task_name = generate_task_name("portfolio", task_config)
+        
+        # Submit to TaskManager
+        task_manager = get_task_manager()
+        task = await task_manager.submit(
+            task_type="portfolio",
+            executor=_portfolio_executor,
+            config=task_config,
+            user_id=user_id,
+            name=task_name,
         )
         
-        task_storage.update_status(task_id, TaskStatus.RUNNING.value, progress=80)
-        
-        # Save to database - save_result returns the portfolio_id
-        result["plot_filename"] = plot_filename
-        storage = get_portfolio_storage()
-        portfolio_id = storage.save_result(result, user_id=user_id)
-        
-        # Update task to completed with the portfolio_id
-        task_storage.update_status(
-            task_id, TaskStatus.COMPLETED.value,
-            progress=100,
-            result_id=portfolio_id,
-            result_type="portfolio",
-        )
-        
-        # Add plot URL, task_id, and portfolio_id to result
-        result["plot_url"] = f"/images/{plot_filename}"
-        result["task_id"] = task_id
-        result["portfolio_id"] = portfolio_id
-        
-        return result
+        return {
+            "task_id": task["task_id"],
+            "status": task["status"],
+            "message": "Portfolio backtest task submitted successfully",
+        }
     
-    except PortfolioBacktestError as e:
-        task_storage.update_status(
-            task_id, TaskStatus.FAILED.value,
-            progress=100,
-            error_message=str(e)
-        )
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException:
-        raise
     except Exception as e:
-        task_storage.update_status(
-            task_id, TaskStatus.FAILED.value,
-            progress=100,
-            error_message=str(e)
-        )
-        logger.exception(f"Portfolio backtest failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Portfolio backtest failed: {str(e)}")
+        logger.exception(f"Portfolio backtest submission failed: {e}")
+        http_exc = map_exception_to_http(e)
+        raise http_exc
 
 
 @router.get("/history")
