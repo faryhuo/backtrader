@@ -13,6 +13,8 @@ backend/coverage.xml
 backend/resources/frontend
 backend/venv_new
 backend/data
+backend/.coverage
+backend/.coveragerc
 
 frontend/.env
 frontend/.envprod

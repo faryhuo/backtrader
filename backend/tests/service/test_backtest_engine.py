@@ -2,6 +2,7 @@ import backtrader as bt
 import pytest
 
 from src.service import backtest_engine
+from src.service import strategy_repo
 
 
 def test_get_strategy_path_valid():
@@ -18,8 +19,9 @@ def test_get_strategy_path_rejects_traversal():
 
 
 def test_strategy_file_round_trip(tmp_path, monkeypatch):
-    monkeypatch.setattr(backtest_engine, "STRATEGY_DIR", tmp_path)
-    monkeypatch.setattr(backtest_engine, "ensure_resource_files", lambda: None)
+    # Mock the strategy directory at the source
+    monkeypatch.setattr(strategy_repo, "_get_strategy_dir", lambda: tmp_path)
+    monkeypatch.setattr(strategy_repo, "ensure_strategy_dirs", lambda: None)
 
     code = "import backtrader as bt\n\nclass UserStrategy(bt.Strategy):\n    pass\n"
     backtest_engine.save_user_strategy_code("my_strategy", code)
@@ -28,8 +30,9 @@ def test_strategy_file_round_trip(tmp_path, monkeypatch):
 
 
 def test_load_user_strategy_from_sandbox(tmp_path, monkeypatch):
-    monkeypatch.setattr(backtest_engine, "STRATEGY_DIR", tmp_path)
-    monkeypatch.setattr(backtest_engine, "ensure_resource_files", lambda: None)
+    # Mock the strategy directory at the source
+    monkeypatch.setattr(strategy_repo, "_get_strategy_dir", lambda: tmp_path)
+    monkeypatch.setattr(strategy_repo, "ensure_strategy_dirs", lambda: None)
 
     code = "import backtrader as bt\n\nclass UserStrategy(bt.Strategy):\n    pass\n"
     backtest_engine.save_user_strategy_code("ok", code)

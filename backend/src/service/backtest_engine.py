@@ -130,17 +130,7 @@ class TradeRecorder(bt.Analyzer):
                     pnl = (trade_info['price'] - open_info['price']) * open_info['size']
                     total_commission = open_info['commission'] + trade_info['commission']
                     net_pnl = pnl - total_commission
-                    
-                    # 获取策略参数（止损止盈规则）
-                    stop_loss = getattr(self.strategy.params, 'stop_loss', None)
-                    take_profit = getattr(self.strategy.params, 'take_profit', None)
-                    
-                    # 计算持仓时长（天数）
-                    from datetime import datetime
-                    open_date = open_info['date']
-                    close_date = trade_info['date']
-                    duration = (close_date - open_date).days if isinstance(open_date, datetime) or hasattr(open_date, 'days') else 0
-                    
+                                        
                     # 记录完整的交易信息
                     complete_trade = {
                         'trade_num': len(self.trades) + 1,

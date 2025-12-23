@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import PropTypes from 'prop-types'
 import {
     Modal,
     Form,
@@ -31,13 +32,11 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const [strategies, setStrategies] = useState([])
     const [loading, setLoading] = useState(false)
     const [loadingParams, setLoadingParams] = useState(false)
-    const [_paramFields, setParamFields] = useState([{ name: '', values: '' }])
 
     useEffect(() => {
         if (visible) {
             loadStrategies()
             form.resetFields()
-            setParamFields([{ name: '', values: '' }])
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible])
@@ -46,7 +45,8 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
         try {
             const data = await api.getStrategies()
             setStrategies(data)
-        } catch (_error) {
+        } catch (err) {
+            console.error('Failed to load strategies:', err)
             message.error(t('walkforward.config.loadStrategiesError'))
         }
     }
@@ -96,7 +96,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                         const trimmed = v.trim()
                         // Try to parse as number
                         const num = Number(trimmed)
-                        return isNaN(num) ? trimmed : num
+                        return Number.isNaN(num) ? trimmed : num
                     })
                     param_grid[param.name] = valuesList
                 }
@@ -211,7 +211,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             name="train_period_days"
                             rules={[{ required: true }]}
                         >
-                            <InputNumber min={30} max={1825} addonAfter={t('walkforward.config.days')} style={{ width: '100%' }} />
+                            <InputNumber min={30} max={1825} suffix={t('walkforward.config.days')} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -227,7 +227,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             name="test_period_days"
                             rules={[{ required: true }]}
                         >
-                            <InputNumber min={7} max={365} addonAfter={t('walkforward.config.days')} style={{ width: '100%' }} />
+                            <InputNumber min={7} max={365} suffix={t('walkforward.config.days')} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -331,6 +331,12 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
             </Form>
         </Modal>
     )
+}
+
+WalkForwardConfigModal.propTypes = {
+    visible: PropTypes.bool.isRequired,
+    onCancel: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func.isRequired
 }
 
 export default WalkForwardConfigModal

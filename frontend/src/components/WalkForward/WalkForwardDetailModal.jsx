@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import PropTypes from 'prop-types'
 import {
     Modal,
     Descriptions,
     Table,
-    Tag,
     Tabs,
     Card,
     Row,
@@ -68,7 +68,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
             key: 'best_params',
             width: 200,
             render: (params) => (
-                <Space direction="vertical" size="small">
+                <Space size="small" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     {Object.entries(params || {}).map(([key, value]) => (
                         <Text key={key} code>{`${key}: ${value}`}</Text>
                     ))}
@@ -82,7 +82,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
             align: 'right',
             render: (_, record) => {
                 const metric = record.train_metrics?.[optimization.optimization_metric]
-                return metric != null ? metric.toFixed(4) : '-'
+                return metric == null ? '-' : metric.toFixed(4)
             }
         },
         {
@@ -92,7 +92,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
             align: 'right',
             render: (_, record) => {
                 const metric = record.test_metrics?.[optimization.optimization_metric]
-                return metric != null ? metric.toFixed(4) : '-'
+                return metric == null ? '-' : metric.toFixed(4)
             }
         },
         {
@@ -103,9 +103,15 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
             render: (_, record) => {
                 const trainVal = record.train_metrics?.[optimization.optimization_metric] || 0
                 const testVal = record.test_metrics?.[optimization.optimization_metric] || 0
-                if (trainVal === 0) return '-'
+                if (trainVal === 0) return <Text>-</Text>
                 const degradation = ((trainVal - testVal) / Math.abs(trainVal)) * 100
-                const color = Math.abs(degradation) > 30 ? 'red' : Math.abs(degradation) > 20 ? 'orange' : 'green'
+                const absDeg = Math.abs(degradation)
+                let color = 'green'
+                if (absDeg > 30) {
+                    color = 'red'
+                } else if (absDeg > 20) {
+                    color = 'orange'
+                }
                 return <Text style={{ color }}>{degradation.toFixed(2)}%</Text>
             }
         }
@@ -116,19 +122,25 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
 
         const isOverfitting = overfitting_metrics.overfitting_detected
 
+        const alertMessage = isOverfitting
+            ? t('walkforward.detail.overfittingDetected')
+            : t('walkforward.detail.noOverfitting')
+        const alertDescription = isOverfitting
+            ? t('walkforward.detail.overfittingDescription')
+            : t('walkforward.detail.noOverfittingDescription')
+        const alertType = isOverfitting ? 'warning' : 'success'
+        const alertIcon = isOverfitting ? <ExclamationCircleOutlined /> : <CheckCircleOutlined />
+
         return (
             <Alert
-                message={isOverfitting ? t('walkforward.detail.overfittingDetected') : t('walkforward.detail.noOverfitting')}
-                description={
-                    isOverfitting
-                        ? t('walkforward.detail.overfittingDescription')
-                        : t('walkforward.detail.noOverfittingDescription')
-                }
-                type={isOverfitting ? 'warning' : 'success'}
-                icon={isOverfitting ? <ExclamationCircleOutlined /> : <CheckCircleOutlined />}
+                description={alertDescription}
+                type={alertType}
+                icon={alertIcon}
                 showIcon
                 style={{ marginBottom: 24 }}
-            />
+            >
+                {alertMessage}
+            </Alert>
         )
     }
 
@@ -143,7 +155,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                             title={t('walkforward.detail.trainTestCorrelation')}
                             value={overfitting_metrics.train_test_correlation}
                             precision={4}
-                            valueStyle={{
+                            style={{
                                 color: overfitting_metrics.train_test_correlation > 0.5 ? '#3f8600' : '#cf1322'
                             }}
                         />
@@ -156,7 +168,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                             value={overfitting_metrics.avg_degradation_pct}
                             precision={2}
                             suffix="%"
-                            valueStyle={{
+                            style={{
                                 color: Math.abs(overfitting_metrics.avg_degradation_pct) < 20 ? '#3f8600' : '#cf1322'
                             }}
                         />
@@ -169,7 +181,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                             value={overfitting_metrics.consistency_score}
                             precision={2}
                             suffix="%"
-                            valueStyle={{
+                            style={{
                                 color: overfitting_metrics.consistency_score > 70 ? '#3f8600' : '#cf1322'
                             }}
                         />
@@ -218,7 +230,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                             value={combined_test_metrics.total_return}
                             precision={2}
                             suffix="%"
-                            valueStyle={{ color: combined_test_metrics.total_return > 0 ? '#3f8600' : '#cf1322' }}
+                            style={{ color: combined_test_metrics.total_return > 0 ? '#3f8600' : '#cf1322' }}
                         />
                     </Card>
                 </Col>
@@ -248,7 +260,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                             value={combined_test_metrics.win_rate}
                             precision={2}
                             suffix="%"
-                            valueStyle={{ color: combined_test_metrics.win_rate > 50 ? '#3f8600' : '#cf1322' }}
+                            style={{ color: combined_test_metrics.win_rate > 50 ? '#3f8600' : '#cf1322' }}
                         />
                     </Card>
                 </Col>
@@ -265,7 +277,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                         <Statistic
                             title={t('walkforward.detail.winningTrades')}
                             value={combined_test_metrics.winning_trades}
-                            valueStyle={{ color: '#3f8600' }}
+                            style={{ color: '#3f8600' }}
                         />
                     </Card>
                 </Col>
@@ -274,7 +286,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                         <Statistic
                             title={t('walkforward.detail.losingTrades')}
                             value={combined_test_metrics.losing_trades}
-                            valueStyle={{ color: '#cf1322' }}
+                            style={{ color: '#cf1322' }}
                         />
                     </Card>
                 </Col>
@@ -310,7 +322,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                     {optimization.optimization_metric}
                 </Descriptions.Item>
                 <Descriptions.Item label={t('walkforward.detail.parameterGrid')} span={2}>
-                    <Space direction="vertical">
+                    <Space style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         {Object.entries(param_grid || {}).map(([key, values]) => (
                             <Text key={key} code>
                                 {key}: [{values.join(', ')}]
@@ -323,7 +335,7 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
     }
 
     const handleGenerateReport = async () => {
-        if (!optimization || !optimization.optimization_id) {
+        if (!optimization?.optimization_id) {
             return
         }
         setReportLoading(true)
@@ -450,16 +462,59 @@ const WalkForwardDetailModal = ({ visible, optimization, onClose }) => {
                     )}
                     {!parameter_analysis && (
                         <Alert
-                            message={t('walkforward.analysis.noData', 'No Parameter Analysis')}
-                            description={t('walkforward.analysis.noDataDesc', 'Parameter analysis data is not available for this optimization.')}
                             type="info"
                             showIcon
-                        />
+                            description={t('walkforward.analysis.noDataDesc', 'Parameter analysis data is not available for this optimization.')}
+                        >
+                            {t('walkforward.analysis.noData', 'No Parameter Analysis')}
+                        </Alert>
                     )}
                 </TabPane>
             </Tabs>
         </Modal>
     )
+}
+
+WalkForwardDetailModal.propTypes = {
+    visible: PropTypes.bool.isRequired,
+    optimization: PropTypes.shape({
+        optimization_id: PropTypes.string,
+        strategy_name: PropTypes.string,
+        ticker: PropTypes.string,
+        start_date: PropTypes.string,
+        end_date: PropTypes.string,
+        train_period_days: PropTypes.number,
+        test_period_days: PropTypes.number,
+        anchored: PropTypes.bool,
+        optimization_metric: PropTypes.string,
+        windows: PropTypes.array,
+        overfitting_metrics: PropTypes.shape({
+            overfitting_detected: PropTypes.bool,
+            train_test_correlation: PropTypes.number,
+            avg_degradation_pct: PropTypes.number,
+            consistency_score: PropTypes.number,
+            avg_train_performance: PropTypes.number,
+            avg_test_performance: PropTypes.number,
+            degradation_std: PropTypes.number
+        }),
+        combined_test_metrics: PropTypes.shape({
+            total_return: PropTypes.number,
+            avg_sharpe_ratio: PropTypes.number,
+            avg_max_drawdown: PropTypes.number,
+            win_rate: PropTypes.number,
+            total_trades: PropTypes.number,
+            winning_trades: PropTypes.number,
+            losing_trades: PropTypes.number
+        }),
+        param_grid: PropTypes.object,
+        parameter_analysis: PropTypes.shape({
+            overfitting_score: PropTypes.number,
+            sensitivity_ranking: PropTypes.array,
+            heatmap: PropTypes.object,
+            surface3d: PropTypes.object
+        })
+    }),
+    onClose: PropTypes.func.isRequired
 }
 
 export default WalkForwardDetailModal

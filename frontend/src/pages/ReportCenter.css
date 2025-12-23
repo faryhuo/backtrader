@@ -182,22 +182,22 @@
 
 .report-type-badge.backtest {
     background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
+    color: #1d4ed8;
 }
 
 .report-type-badge.portfolio {
     background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
+    color: #7e22ce;
 }
 
 .report-type-badge.walkforward {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
+    background: rgba(16, 34, 23, 0.15);
+    color: #15803d;
 }
 
 .report-type-badge.comparison {
     background: rgba(6, 182, 212, 0.15);
-    color: #06b6d4;
+    color: #0e7490;
 }
 
 /* Report Status Badge */
@@ -213,22 +213,22 @@
 
 .report-status-badge.pending {
     background: rgba(234, 179, 8, 0.15);
-    color: #eab308;
+    color: #a16207;
 }
 
 .report-status-badge.generating {
     background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
+    color: #1d4ed8;
 }
 
 .report-status-badge.completed {
     background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
+    color: #15803d;
 }
 
 .report-status-badge.failed {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: #b91c1c;
 }
 
 .status-dot {
@@ -310,34 +310,42 @@
 
 .report-action-btn.view {
     background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
 }
 
 .report-action-btn.view:hover:not(:disabled) {
     background: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
 }
 
 .report-action-btn.download {
     background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
 }
 
 .report-action-btn.download:hover:not(:disabled) {
     background: rgba(34, 197, 94, 0.25);
+    color: #86efac;
 }
 
 .report-action-btn.share {
     background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
 }
 
 .report-action-btn.share:hover:not(:disabled) {
     background: rgba(6, 182, 212, 0.25);
+    color: #67e8f9;
 }
 
 .report-action-btn.delete {
     background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
 }
 
 .report-action-btn.delete:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
 }
 
 .report-action-btn:disabled {

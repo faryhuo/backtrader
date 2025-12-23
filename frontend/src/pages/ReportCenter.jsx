@@ -115,6 +115,7 @@ function ReportCenter() {
                     message.success(t('reportCenter.deleteSuccess', 'Report deleted'));
                     fetchReports();
                 } catch (err) {
+                    console.error('Failed to delete report:', err);
                     message.error(t('reportCenter.deleteError', 'Failed to delete report'));
                 }
             },
@@ -130,6 +131,132 @@ function ReportCenter() {
         setShareModalVisible(false);
         setSelectedReport(null);
     }, []);
+
+    // Render table content - extracted to avoid nested ternary
+    const renderTableContent = useCallback(() => {
+        if (loading) {
+            return (
+                <div className="report-loading">
+                    {t('common.loading', 'Loading...')}
+                </div>
+            );
+        }
+
+        if (reports.length === 0) {
+            return (
+                <div className="report-empty">
+                    <div className="report-empty-icon">📄</div>
+                    <h3>{t('reportCenter.noReports', 'No Reports')}</h3>
+                    <p>{t('reportCenter.emptyDesc', 'Generate reports from backtest/portfolio/walk-forward result pages.')}</p>
+                </div>
+            );
+        }
+
+        return (
+            <table className="report-table">
+                <thead>
+                    <tr>
+                        <th>{t('reportCenter.table.title', 'Title')}</th>
+                        <th>{t('reportCenter.table.type', 'Type')}</th>
+                        <th>{t('reportCenter.table.status', 'Status')}</th>
+                        <th>{t('reportCenter.table.sources', 'Sources')}</th>
+                        <th>{t('reportCenter.table.created', 'Created')}</th>
+                        <th>{t('reportCenter.table.actions', 'Actions')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {reports.map(report => (
+                        <tr key={report.report_id}>
+                            <td>
+                                <div className="report-title">
+                                    {report.title || 'Unnamed Report'}
+                                    {report.has_share_link && (
+                                        <span className="share-indicator" title={t('reportCenter.shared', 'Shared')}>🔗</span>
+                                    )}
+                                </div>
+                                <div className="report-id">{report.report_id.substring(0, 8)}...</div>
+                            </td>
+                            <td>
+                                <span className={`report-type-badge ${report.report_type}`}>
+                                    {getReportTypeLabel(report.report_type, t)}
+                                </span>
+                            </td>
+                            <td>
+                                <span className={`report-status-badge ${report.status}`}>
+                                    <span className={`status-dot ${report.status}`} />
+                                    {getReportStatusLabel(report.status, t)}
+                                </span>
+                                {report.status === ReportStatus.GENERATING && report.progress > 0 && (
+                                    <div className="report-progress">
+                                        <div className="progress-bar">
+                                            <div
+                                                className="progress-fill"
+                                                style={{ width: `${report.progress || 0}%` }}
+                                            />
+                                        </div>
+                                        <span className="progress-text">{report.progress}%</span>
+                                    </div>
+                                )}
+                                {report.error_message && (
+                                    <div className="report-error-message" title={report.error_message}>
+                                        {report.error_message}
+                                    </div>
+                                )}
+                            </td>
+                            <td className="report-sources">
+                                {report.source_ids?.length || 0}
+                            </td>
+                            <td>
+                                {formatDate(report.created_at)}
+                            </td>
+                            <td>
+                                <div className="report-actions">
+                                    {/* View button */}
+                                    <button
+                                        className="report-action-btn view"
+                                        onClick={() => handleView(report)}
+                                        disabled={report.status !== ReportStatus.COMPLETED}
+                                        title={t('reportCenter.actions.view', 'View')}
+                                    >
+                                        <EyeOutlined />
+                                    </button>
+
+                                    {/* Download button */}
+                                    <button
+                                        className="report-action-btn download"
+                                        onClick={() => handleDownload(report)}
+                                        disabled={report.status !== ReportStatus.COMPLETED}
+                                        title={t('reportCenter.actions.download', 'Download')}
+                                    >
+                                        <DownloadOutlined />
+                                    </button>
+
+                                    {/* Share button */}
+                                    <button
+                                        className="report-action-btn share"
+                                        onClick={() => handleShare(report)}
+                                        disabled={report.status !== ReportStatus.COMPLETED}
+                                        title={t('reportCenter.actions.share', 'Share')}
+                                    >
+                                        <ShareAltOutlined />
+                                    </button>
+
+                                    {/* Delete button */}
+                                    <button
+                                        className="report-action-btn delete"
+                                        onClick={() => handleDelete(report)}
+                                        title={t('reportCenter.actions.delete', 'Delete')}
+                                    >
+                                        <DeleteOutlined />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        );
+    }, [loading, reports, t, handleView, handleDownload, handleShare, handleDelete]);
 
     return (
         <div className="report-center">
@@ -200,120 +327,7 @@ function ReportCenter() {
 
             {/* Report Table */}
             <div className="report-table-container">
-                {loading ? (
-                    <div className="report-loading">
-                        {t('common.loading', 'Loading...')}
-                    </div>
-                ) : reports.length === 0 ? (
-                    <div className="report-empty">
-                        <div className="report-empty-icon">📄</div>
-                        <h3>{t('reportCenter.noReports', 'No Reports')}</h3>
-                        <p>{t('reportCenter.emptyDesc', 'Generate reports from backtest/portfolio/walk-forward result pages.')}</p>
-                    </div>
-                ) : (
-                    <table className="report-table">
-                        <thead>
-                            <tr>
-                                <th>{t('reportCenter.table.title', 'Title')}</th>
-                                <th>{t('reportCenter.table.type', 'Type')}</th>
-                                <th>{t('reportCenter.table.status', 'Status')}</th>
-                                <th>{t('reportCenter.table.sources', 'Sources')}</th>
-                                <th>{t('reportCenter.table.created', 'Created')}</th>
-                                <th>{t('reportCenter.table.actions', 'Actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {reports.map(report => (
-                                <tr key={report.report_id}>
-                                    <td>
-                                        <div className="report-title">
-                                            {report.title || 'Unnamed Report'}
-                                            {report.has_share_link && (
-                                                <span className="share-indicator" title={t('reportCenter.shared', 'Shared')}>🔗</span>
-                                            )}
-                                        </div>
-                                        <div className="report-id">{report.report_id.substring(0, 8)}...</div>
-                                    </td>
-                                    <td>
-                                        <span className={`report-type-badge ${report.report_type}`}>
-                                            {getReportTypeLabel(report.report_type, t)}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`report-status-badge ${report.status}`}>
-                                            <span className={`status-dot ${report.status}`} />
-                                            {getReportStatusLabel(report.status, t)}
-                                        </span>
-                                        {report.status === ReportStatus.GENERATING && report.progress > 0 && (
-                                            <div className="report-progress">
-                                                <div className="progress-bar">
-                                                    <div
-                                                        className="progress-fill"
-                                                        style={{ width: `${report.progress || 0}%` }}
-                                                    />
-                                                </div>
-                                                <span className="progress-text">{report.progress}%</span>
-                                            </div>
-                                        )}
-                                        {report.error_message && (
-                                            <div className="report-error-message" title={report.error_message}>
-                                                {report.error_message}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="report-sources">
-                                        {report.source_ids?.length || 0}
-                                    </td>
-                                    <td>
-                                        {formatDate(report.created_at)}
-                                    </td>
-                                    <td>
-                                        <div className="report-actions">
-                                            {/* View button */}
-                                            <button
-                                                className="report-action-btn view"
-                                                onClick={() => handleView(report)}
-                                                disabled={report.status !== ReportStatus.COMPLETED}
-                                                title={t('reportCenter.actions.view', 'View')}
-                                            >
-                                                <EyeOutlined />
-                                            </button>
-
-                                            {/* Download button */}
-                                            <button
-                                                className="report-action-btn download"
-                                                onClick={() => handleDownload(report)}
-                                                disabled={report.status !== ReportStatus.COMPLETED}
-                                                title={t('reportCenter.actions.download', 'Download')}
-                                            >
-                                                <DownloadOutlined />
-                                            </button>
-
-                                            {/* Share button */}
-                                            <button
-                                                className="report-action-btn share"
-                                                onClick={() => handleShare(report)}
-                                                disabled={report.status !== ReportStatus.COMPLETED}
-                                                title={t('reportCenter.actions.share', 'Share')}
-                                            >
-                                                <ShareAltOutlined />
-                                            </button>
-
-                                            {/* Delete button */}
-                                            <button
-                                                className="report-action-btn delete"
-                                                onClick={() => handleDelete(report)}
-                                                title={t('reportCenter.actions.delete', 'Delete')}
-                                            >
-                                                <DeleteOutlined />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                {renderTableContent()}
             </div>
 
             {/* Total count */}
