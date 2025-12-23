@@ -5,6 +5,7 @@ import '../index.css'
 import '../components/StrategyMaintain/StrategyMaintain.css'
 import { api } from '../services/api'
 import { analyzeCode, rewriteCode } from '../services/aiAnalysis'
+import { useSettingsContext } from '../contexts/SettingsContext'
 import NewStrategyModal from '../components/StrategyMaintain/NewStrategyModal'
 import StrategyEditorPanel from '../components/StrategyMaintain/StrategyEditorPanel'
 import AnalysisModal from '../components/StrategyMaintain/AnalysisModal'
@@ -14,6 +15,7 @@ import VersionDiffViewer from '../components/StrategyMaintain/VersionDiffViewer'
 
 function StrategyMaintain() {
     const { t } = useTranslation();
+    const { settings } = useSettingsContext();
     // Strategy Editor State
     const [strategies, setStrategies] = useState([])
     const [selectedStrategy, setSelectedStrategy] = useState('')
@@ -41,7 +43,7 @@ function StrategyMaintain() {
             }
         }
         init();
-         
+
     }, [])
 
     useEffect(() => {
@@ -149,7 +151,7 @@ class UserStrategy(bt.Strategy):
         if (!code) return;
         try {
             setCodeLoading(true);
-            const result = await analyzeCode(code);
+            const result = await analyzeCode(code, null, settings);
             setAnalysisResult(result);
             setShowAnalysisModal(true);
         } catch (err) {
@@ -167,7 +169,7 @@ class UserStrategy(bt.Strategy):
         }
         try {
             setCodeLoading(true);
-            const newCode = await rewriteCode(code);
+            const newCode = await rewriteCode(code, null, settings);
             setCode(newCode);
         } catch (err) {
             console.error("AI Rewrite failed", err);

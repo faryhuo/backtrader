@@ -1,8 +1,8 @@
 """
 Strategy Parameter Extractor.
 
-Extracts `params` from a user strategy with a subprocess-first approach and
-AST-only fallback (no code execution).
+Extracts `params` from a user strategy with an AST-first approach and optional
+subprocess fallback for complex definitions.
 """
 
 from __future__ import annotations
@@ -26,9 +26,9 @@ def extract_strategy_params(name: str) -> list[dict[str, object]]:
     """
     Extract parameters from a strategy file safely.
 
-    Uses `IsolatedSandbox` to extract parameters in a subprocess when configured,
-    so user code never executes in the main API process. Falls back to static
-    AST parsing if sandbox extraction is unavailable or fails.
+    PERFORMANCE:
+        - Fast path: static AST parsing (no code execution).
+        - Slow path: subprocess sandbox execution only if AST finds no params.
 
     Args:
         name: Strategy name (without ".py").
@@ -41,23 +41,27 @@ def extract_strategy_params(name: str) -> list[dict[str, object]]:
     except FileNotFoundError:
         return []
 
+    ast_params = _extract_params_from_source_ast(source)
+    if ast_params:
+        return ast_params
+
     sandbox_config = get_sandbox_config()
 
-    if sandbox_config.mode == "subprocess":
-        try:
-            sandbox = IsolatedSandbox()
-            result = sandbox.execute_strategy(
-                source=source,
-                module_name=f"user_strategy_{name}",
-                filename=str(path),
-            )
-            strategy_params = result.get("strategy_params", [])
-            if strategy_params:
-                return strategy_params
-        except (SandboxError, SandboxExecutionError, SandboxTimeoutError) as exc:
-            logger.warning("Isolated sandbox param extraction failed: %s", exc)
+    if sandbox_config.mode != "subprocess":
+        return []
 
-    return _extract_params_from_source_ast(source)
+    try:
+        sandbox = IsolatedSandbox()
+        result = sandbox.execute_strategy(
+            source=source,
+            module_name=f"user_strategy_{name}",
+            filename=str(path),
+        )
+        strategy_params = result.get("strategy_params", [])
+        return strategy_params or []
+    except (SandboxError, SandboxExecutionError, SandboxTimeoutError) as exc:
+        logger.warning("Isolated sandbox param extraction failed: %s", exc)
+        return []
 
 
 def _extract_params_from_source_ast(source: str) -> list[dict[str, object]]:
@@ -119,4 +123,3 @@ def _extract_params_from_source_ast(source: str) -> list[dict[str, object]]:
                     )
 
     return params_list
-

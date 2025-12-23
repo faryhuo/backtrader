@@ -108,7 +108,7 @@
   - 将模板元数据迁移到 `resources/strategy/templates/templates.json`（或 YAML），代码只负责加载与校验。
   - 模板 code 继续放 `resources/strategy/templates/*.py`，以 `id` 关联，减少代码内嵌大段文本。
 
-### 8) `backtest_engine.py` 职责过多，重复的“读策略/去 BOM/解析参数”散落
+### ----8) `backtest_engine.py` 职责过多，重复的“读策略/去 BOM/解析参数”散落
 
 - 位置：`backend/src/service/backtest_engine.py`
 - 冗余/维护问题：

@@ -1,36 +1,19 @@
 import { API_URL, getAccessToken, parseResponse } from './api';
 import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
+import { DEFAULT_SETTINGS } from '../constants/settingsConstants';
 
-export const getAISettings = () => {
-    const DEFAULT_SETTINGS = {
-        selectedModels: ['gpt-5.1'],
-        codeAnalysisPrompt: 'Please analyze the following Backtrader strategy code. Explain its logic, potential pitfalls, and suggest improvements:\n\n{code}',
-        codeRewritePrompt: 'Please rewrite and optimize the following Backtrader strategy code to follow best practices and fix potential issues. Return ONLY the python code, no markdown formatting or explanation:\n\n{code}',
-        fullStrategyAnalysisPrompt: 'Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.\n\n{contextText}\n\n{metricsText}\n\n{logsText}\n\nProvide a comprehensive assessment including:\n1. Overall Performance: Is it profitable and consistent?\n2. Risk Profile: analysis of drawdowns and volatility.\n3. Strengths & Weaknesses: What is working well and what isn\'t?\n4. Suggestions: Recommendations for improvement.\n5. Code Analysis: Comments on the strategy logic.\n6. Always return with Chinese.\n7. 不需要对策略代码逻辑进行点评'
-    };
-
-    try {
-        const stored = localStorage.getItem('userSettings');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            // Migration handling
-            if (parsed.aiModel && !parsed.selectedModels) {
-                parsed.selectedModels = [parsed.aiModel];
-                delete parsed.aiModel;
-            }
-            return { ...DEFAULT_SETTINGS, ...parsed };
-        }
-    } catch (e) {
-        console.error('Failed to read settings from localStorage', e);
+/**
+ * Get effective settings by merging provided settings with defaults.
+ * Eliminates the need to read localStorage directly - callers should
+ * inject settings from SettingsContext.
+ * @param {Object} providedSettings - Settings injected from SettingsContext (optional)
+ * @returns {Object} Merged settings with defaults as fallback
+ */
+const getEffectiveSettings = (providedSettings) => {
+    if (providedSettings && Object.keys(providedSettings).length > 0) {
+        return { ...DEFAULT_SETTINGS, ...providedSettings };
     }
     return DEFAULT_SETTINGS;
-};
-
-export const getAvailableModels = () => {
-    const settings = getAISettings();
-    return settings.selectedModels && settings.selectedModels.length > 0
-        ? settings.selectedModels
-        : ['gpt-5.1'];
 };
 
 export const analyzeChart = async (message, model, file) => {
@@ -56,6 +39,11 @@ export const analyzeChart = async (message, model, file) => {
     return await parseResponse(res)
 }
 
+/**
+ * Perform full strategy analysis with AI.
+ * @param {Object} params - Analysis parameters
+ * @param {Object} params.settings - Settings from SettingsContext (optional, uses defaults if not provided)
+ */
 export const performFullStrategyAnalysis = async ({
     result,
     strategyName,
@@ -63,8 +51,11 @@ export const performFullStrategyAnalysis = async ({
     startDate,
     endDate,
     model = "gpt-5.1",
-    initialStrategyCode
+    initialStrategyCode,
+    settings: providedSettings
 }) => {
+    const settings = getEffectiveSettings(providedSettings);
+
     // 1. Fetch Strategy Code
     let strategyCode = '';
     if (initialStrategyCode) {
@@ -106,15 +97,11 @@ export const performFullStrategyAnalysis = async ({
 
     // 3. Prepare Prompt Content
     const metrics = result.metrics || {};
-    const trades = metrics.trades || {}; // Note: backend structure might vary, strictly follows StrategyPlot's usage
-    // Actually, StrategyPlot used: trades.total?.total etc.
-    // Let's copy formatting logic exactly.
+    const trades = metrics.trades || {};
 
     const totalTrades = trades.total?.total ?? (metrics.trade_details?.trades?.length ?? 0);
     const winRate = trades.total?.closed ? ((trades.won?.total ?? 0) / trades.total.closed) * 100 : 0;
-    // Fallback if detailed trade analysis isn't in metrics but simple list is
 
-    // Re-implement the metrics extraction from StrategyPlot
     const metricsText = `
 Strategy Performance Metrics:
 - Final Value: ${formatCurrency(metrics.final_value)}
@@ -148,23 +135,7 @@ ${strategyCode}
 \`\`\`
 `;
 
-    const settings = getAISettings();
-    const promptTemplate = settings.fullStrategyAnalysisPrompt || `Please analyze the trading strategy based on the following configurations, source code, performance metrics, the attached equity curve chart, and the recent trading logs.
-
-{contextText}
-
-{metricsText}
-
-{logsText}
-
-Provide a comprehensive assessment including:
-1. Overall Performance: Is it profitable and consistent?
-2. Risk Profile: analysis of drawdowns and volatility.
-3. Strengths & Weaknesses: What is working well and what isn't?
-4. Suggestions: Recommendations for improvement.
-5. Code Analysis: Comments on the strategy logic.
-6. Always return with Chinese.
-7. 不需要对策略代码逻辑进行点评`;
+    const promptTemplate = settings.fullStrategyAnalysisPrompt || DEFAULT_SETTINGS.fullStrategyAnalysisPrompt;
 
     const message = promptTemplate
         .replace('{contextText}', contextText)
@@ -172,22 +143,33 @@ Provide a comprehensive assessment including:
         .replace('{logsText}', logsText);
 
     // 4. Call API
-    // Note: api.analyzeChart expects (message, model, file)
     return await analyzeChart(message, model, file);
 };
 
-export const analyzeCode = async (code, model = null) => {
-    const settings = getAISettings();
-    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : 'gpt-5.1');
+/**
+ * Analyze strategy code with AI.
+ * @param {string} code - Strategy code to analyze
+ * @param {string} model - AI model to use (optional)
+ * @param {Object} providedSettings - Settings from SettingsContext (optional)
+ */
+export const analyzeCode = async (code, model = null, providedSettings = null) => {
+    const settings = getEffectiveSettings(providedSettings);
+    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : DEFAULT_SETTINGS.selectedModels[0]);
     const prompt = settings.codeAnalysisPrompt.replace('{code}', code);
 
     const data = await analyzeChart(prompt, effectiveModel, null);
     return data.analysis;
 };
 
-export const rewriteCode = async (code, model = null) => {
-    const settings = getAISettings();
-    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : 'gpt-5.1');
+/**
+ * Rewrite strategy code with AI.
+ * @param {string} code - Strategy code to rewrite
+ * @param {string} model - AI model to use (optional)
+ * @param {Object} providedSettings - Settings from SettingsContext (optional)
+ */
+export const rewriteCode = async (code, model = null, providedSettings = null) => {
+    const settings = getEffectiveSettings(providedSettings);
+    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : DEFAULT_SETTINGS.selectedModels[0]);
     const prompt = settings.codeRewritePrompt.replace('{code}', code);
 
     const data = await analyzeChart(prompt, effectiveModel, null);
@@ -199,4 +181,3 @@ export const rewriteCode = async (code, model = null) => {
     }
     return cleanCode;
 };
-

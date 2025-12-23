@@ -120,23 +120,17 @@ class LiveWorkerSession:
             import backtrader as bt
             
             from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
-            from src.config.settings import STRATEGY_DIR
             from src.service.backtest_engine import TradeRecorder
+            from src.service.strategy_repo import read_user_strategy_source
             from src.service.strategy_sandbox import execute_strategy_code
             from src.utils.config_loader import get_exchange_config, load_broker_config
             
             # 1. Load strategy
-            strategy_path = STRATEGY_DIR / f"{self.task.strategy_name}.py"
-            if not strategy_path.exists():
-                self._send_event(
-                    LiveEventType.ERROR,
-                    {"error": f"Strategy '{self.task.strategy_name}' not found"}
-                )
+            try:
+                strategy_path, source = read_user_strategy_source(self.task.strategy_name)
+            except (FileNotFoundError, ValueError) as exc:
+                self._send_event(LiveEventType.ERROR, {"error": str(exc)})
                 return
-            
-            source = strategy_path.read_text(encoding="utf-8")
-            if source.startswith("\ufeff"):
-                source = source.lstrip("\ufeff")
             
             module_globals = execute_strategy_code(
                 source,

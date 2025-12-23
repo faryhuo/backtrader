@@ -15,7 +15,7 @@ import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t, i18n } = useTranslation()
-    const { getAvailableModels } = useSettingsContext()
+    const { settings, getAvailableModels } = useSettingsContext()
     const [aiLoading, setAiLoading] = useState(false)
     const [reportLoading, setReportLoading] = useState(false)
     const [analyses, setAnalyses] = useState({})
@@ -54,7 +54,8 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 startDate: backtest.start_date,
                 endDate: backtest.end_date,
                 model: selectedModel,
-                initialStrategyCode: backtest.strategy_code
+                initialStrategyCode: backtest.strategy_code,
+                settings: settings
             })
 
             setAnalyses(prev => {

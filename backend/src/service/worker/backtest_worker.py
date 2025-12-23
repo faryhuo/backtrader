@@ -45,8 +45,8 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         
-        from src.config.settings import STRATEGY_DIR
         from src.db.storage.market_data import get_bt_feed
+        from src.service.strategy_repo import read_user_strategy_source
         from src.service.strategy_sandbox import execute_strategy_code
         
         # Disable matplotlib popups
@@ -54,17 +54,14 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         plt.show = lambda *args, **kwargs: None
         
         # 1. Load strategy file
-        strategy_path = STRATEGY_DIR / f"{task.strategy_name}.py"
-        if not strategy_path.exists():
+        try:
+            strategy_path, source = read_user_strategy_source(task.strategy_name)
+        except (FileNotFoundError, ValueError) as exc:
             return BacktestResult.error_result(
                 task_id,
-                f"Strategy '{task.strategy_name}' not found",
-                "StrategyLoadError"
+                str(exc),
+                "StrategyLoadError",
             )
-        
-        source = strategy_path.read_text(encoding="utf-8")
-        if source.startswith("\ufeff"):
-            source = source.lstrip("\ufeff")
         
         # 2. Execute strategy code in soft sandbox (we're already isolated)
         try:

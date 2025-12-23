@@ -41,37 +41,30 @@ class CredentialsMixin:
         Returns:
             Decrypted credential value, or None if not set
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db, commit_on_success=False) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                if not settings:
+                    return None
 
-            if not settings:
+                value = getattr(settings, credential_key, None)
+
+                if value is None:
+                    return None
+
+                if self._is_encrypted_field(credential_key):
+                    return decrypt_value(value)
+                else:
+                    return value
+
+            except Exception as e:
+                logger.error(f"Failed to get credential {credential_key} for user {normalized_user_id}: {e}")
                 return None
-
-            value = getattr(settings, credential_key, None)
-
-            if value is None:
-                return None
-
-            if self._is_encrypted_field(credential_key):
-                return decrypt_value(value)
-            else:
-                return value
-
-        except Exception as e:
-            logger.error(f"Failed to get credential {credential_key} for user {normalized_user_id}: {e}")
-            return None
-        finally:
-            if close_db:
-                db.close()
 
     def save_credential(
         self,
@@ -92,32 +85,23 @@ class CredentialsMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
-            settings = self._get_or_create_settings(normalized_user_id, db)
+                if value is not None and self._is_encrypted_field(credential_key):
+                    value = encrypt_value(str(value))
 
-            if value is not None and self._is_encrypted_field(credential_key):
-                value = encrypt_value(str(value))
+                setattr(settings, credential_key, value)
+                settings.updated_at = datetime.utcnow()
 
-            setattr(settings, credential_key, value)
-            settings.updated_at = datetime.utcnow()
+                logger.debug(f"Saved credential {credential_key} for user {normalized_user_id}")
+                return True
 
-            db.commit()
-            logger.debug(f"Saved credential {credential_key} for user {normalized_user_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save credential {credential_key} for user {normalized_user_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save credential {credential_key} for user {normalized_user_id}: {e}")
+                return False
 
     def delete_credential(
         self,
@@ -136,39 +120,30 @@ class CredentialsMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                if not hasattr(UserSettingsModel, credential_key):
+                    logger.error(f"Invalid credential key: {credential_key}")
+                    return False
 
-            if not hasattr(UserSettingsModel, credential_key):
-                logger.error(f"Invalid credential key: {credential_key}")
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
+
+                if settings:
+                    setattr(settings, credential_key, None)
+                    settings.updated_at = datetime.utcnow()
+                    logger.debug(f"Deleted credential {credential_key} for user {normalized_user_id}")
+                else:
+                    logger.debug(f"No settings found for user {normalized_user_id}, nothing to delete")
+
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to delete credential {credential_key} for user {normalized_user_id}: {e}")
                 return False
-
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
-
-            if settings:
-                setattr(settings, credential_key, None)
-                settings.updated_at = datetime.utcnow()
-                db.commit()
-                logger.debug(f"Deleted credential {credential_key} for user {normalized_user_id}")
-            else:
-                logger.debug(f"No settings found for user {normalized_user_id}, nothing to delete")
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to delete credential {credential_key} for user {normalized_user_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def get_credential_with_fallback(
         self,
@@ -217,12 +192,7 @@ class CredentialsMixin:
         Returns:
             Dict with credential values and their sources
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as session:
             result = {
                 "openai": {},
                 "logto": {},
@@ -231,8 +201,8 @@ class CredentialsMixin:
             }
 
             # OpenAI credentials
-            api_key, api_key_source = self.get_credential_with_fallback("openai_api_key", user_id, db)
-            base_url, base_url_source = self.get_credential_with_fallback("openai_base_url", user_id, db)
+            api_key, api_key_source = self.get_credential_with_fallback("openai_api_key", user_id, session)
+            base_url, base_url_source = self.get_credential_with_fallback("openai_base_url", user_id, session)
 
             result["openai"]["api_key"] = mask_credential(api_key) if mask_sensitive and api_key else api_key
             result["openai"]["api_key_source"] = api_key_source
@@ -242,18 +212,18 @@ class CredentialsMixin:
             # Logto credentials
             logto_fields = ["logto_issuer", "logto_jwks_uri", "logto_audience", "logto_required_scopes"]
             for field in logto_fields:
-                value, source = self.get_credential_with_fallback(field, user_id, db)
+                value, source = self.get_credential_with_fallback(field, user_id, session)
                 key = field.replace("logto_", "")
                 result["logto"][key] = value
                 result["logto"][f"{key}_source"] = source
 
-            enable_login, enable_login_source = self.get_credential_with_fallback("enable_login", user_id, db)
+            enable_login, enable_login_source = self.get_credential_with_fallback("enable_login", user_id, session)
             result["logto"]["enable_login"] = enable_login
             result["logto"]["enable_login_source"] = enable_login_source
 
             # Proxy credentials
-            http_proxy, http_source = self.get_credential_with_fallback("http_proxy", user_id, db)
-            https_proxy, https_source = self.get_credential_with_fallback("https_proxy", user_id, db)
+            http_proxy, http_source = self.get_credential_with_fallback("http_proxy", user_id, session)
+            https_proxy, https_source = self.get_credential_with_fallback("https_proxy", user_id, session)
 
             result["proxies"]["http_proxy"] = http_proxy
             result["proxies"]["http_proxy_source"] = http_source
@@ -261,15 +231,11 @@ class CredentialsMixin:
             result["proxies"]["https_proxy_source"] = https_source
 
             # CCXT credentials
-            ccxt_creds, ccxt_source = self.get_ccxt_credentials_all(user_id, mask_sensitive, db)
+            ccxt_creds, ccxt_source = self.get_ccxt_credentials_all(user_id, mask_sensitive, session)
             result["exchanges"] = ccxt_creds
             result["exchanges_source"] = ccxt_source
 
             return result
-
-        finally:
-            if close_db:
-                db.close()
 
     # ========== CCXT CREDENTIALS ==========
 
@@ -281,43 +247,36 @@ class CredentialsMixin:
         db: Optional[Session] = None
     ) -> Optional[Dict[str, str]]:
         """Get CCXT credentials for a specific exchange and mode."""
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db, commit_on_success=False) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                if not settings or not settings.ccxt_credentials:
+                    return None
 
-            if not settings or not settings.ccxt_credentials:
+                creds = settings.ccxt_credentials
+                if isinstance(creds, str):
+                    creds = json.loads(creds)
+
+                if exchange not in creds or mode not in creds[exchange]:
+                    return None
+
+                encrypted_creds = creds[exchange][mode]
+
+                result = {}
+                for key in ["api_key", "secret", "passphrase"]:
+                    if key in encrypted_creds and encrypted_creds[key]:
+                        result[key] = decrypt_value(encrypted_creds[key])
+
+                return result if result else None
+
+            except Exception as e:
+                logger.error(f"Failed to get CCXT credentials for {exchange}/{mode}: {e}")
                 return None
-
-            creds = settings.ccxt_credentials
-            if isinstance(creds, str):
-                creds = json.loads(creds)
-
-            if exchange not in creds or mode not in creds[exchange]:
-                return None
-
-            encrypted_creds = creds[exchange][mode]
-
-            result = {}
-            for key in ["api_key", "secret", "passphrase"]:
-                if key in encrypted_creds and encrypted_creds[key]:
-                    result[key] = decrypt_value(encrypted_creds[key])
-
-            return result if result else None
-
-        except Exception as e:
-            logger.error(f"Failed to get CCXT credentials for {exchange}/{mode}: {e}")
-            return None
-        finally:
-            if close_db:
-                db.close()
 
     def save_ccxt_credentials(
         self,
@@ -328,45 +287,36 @@ class CredentialsMixin:
         db: Optional[Session] = None
     ) -> bool:
         """Save CCXT credentials for a specific exchange and mode."""
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
-            settings = self._get_or_create_settings(normalized_user_id, db)
+                creds = settings.ccxt_credentials or {}
+                if isinstance(creds, str):
+                    creds = json.loads(creds)
 
-            creds = settings.ccxt_credentials or {}
-            if isinstance(creds, str):
-                creds = json.loads(creds)
+                if exchange not in creds:
+                    creds[exchange] = {}
+                if mode not in creds[exchange]:
+                    creds[exchange][mode] = {}
 
-            if exchange not in creds:
-                creds[exchange] = {}
-            if mode not in creds[exchange]:
-                creds[exchange][mode] = {}
+                for key in ["api_key", "secret", "passphrase"]:
+                    if key in credentials and credentials[key]:
+                        creds[exchange][mode][key] = encrypt_value(credentials[key])
+                    elif key in credentials and credentials[key] is None:
+                        creds[exchange][mode].pop(key, None)
 
-            for key in ["api_key", "secret", "passphrase"]:
-                if key in credentials and credentials[key]:
-                    creds[exchange][mode][key] = encrypt_value(credentials[key])
-                elif key in credentials and credentials[key] is None:
-                    creds[exchange][mode].pop(key, None)
+                settings.ccxt_credentials = creds
+                flag_modified(settings, "ccxt_credentials")
+                settings.updated_at = datetime.utcnow()
 
-            settings.ccxt_credentials = creds
-            flag_modified(settings, "ccxt_credentials")
-            settings.updated_at = datetime.utcnow()
+                logger.debug(f"Saved CCXT credentials for {exchange}/{mode} (user {normalized_user_id})")
+                return True
 
-            db.commit()
-            logger.debug(f"Saved CCXT credentials for {exchange}/{mode} (user {normalized_user_id})")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save CCXT credentials for {exchange}/{mode}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save CCXT credentials for {exchange}/{mode}: {e}")
+                return False
 
     def get_ccxt_credentials_all(
         self,

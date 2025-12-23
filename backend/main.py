@@ -1,7 +1,8 @@
 import os
 import logging
 from urllib.parse import urlparse, urlunparse
-from daphne.server import Server
+
+import uvicorn
 
 from api import app
 from src.config.settings import DATABASE_URL, DEFAULT_DB_PATH
@@ -50,16 +51,18 @@ def main() -> None:
     logging.info(f"Database URL: {mask_database_url(DATABASE_URL)}")
     logging.info(f"Database absolute path: {DEFAULT_DB_PATH.absolute()}")
 
-    logging.info(f"Starting server on {host}:{port} with log level {log_level}")
+    logging.info(f"Starting Uvicorn server on {host}:{port} with log level {log_level}")
     
-    server = Server(
-        application=app,
-        endpoints=[f"tcp:port={port}:interface={host}"],
-        signal_handlers=True,
-        verbosity=1 if log_level == "INFO" else 2,  # 1=INFO, 2=DEBUG
+    # Use Uvicorn - properly triggers FastAPI startup/shutdown events
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level=log_level.lower(),
+        access_log=True,
     )
-    server.run()
 
 
 if __name__ == "__main__":
     main()
+

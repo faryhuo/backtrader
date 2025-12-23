@@ -80,15 +80,10 @@ class SettingsStorageBase(BaseStorage):
         Returns:
             Dict with settings fields, or defaults if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as session:
             normalized_user_id = self._normalize_user_id(user_id)
 
-            settings = db.query(UserSettingsModel).filter(
+            settings = session.query(UserSettingsModel).filter(
                 UserSettingsModel.user_id == normalized_user_id
             ).first()
 
@@ -97,10 +92,6 @@ class SettingsStorageBase(BaseStorage):
             else:
                 logger.debug(f"No settings found for user {normalized_user_id}, returning defaults")
                 return self._get_default_dict()
-
-        finally:
-            if close_db:
-                db.close()
 
     def save_settings(
         self,
@@ -125,58 +116,49 @@ class SettingsStorageBase(BaseStorage):
         Returns:
             Saved settings as dict
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                models_str = ",".join(selected_models) if selected_models else DEFAULT_SETTINGS["selected_models"]
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
-            models_str = ",".join(selected_models) if selected_models else DEFAULT_SETTINGS["selected_models"]
+                existing = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            existing = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                if existing:
+                    existing.selected_models = models_str
+                    existing.code_analysis_prompt = code_analysis_prompt
+                    existing.code_rewrite_prompt = code_rewrite_prompt
+                    existing.full_strategy_analysis_prompt = full_strategy_analysis_prompt
+                    existing.updated_at = datetime.utcnow()
+                    logger.debug(f"Updated settings for user {normalized_user_id}")
+                else:
+                    new_settings = UserSettingsModel(
+                        user_id=normalized_user_id,
+                        selected_models=models_str,
+                        code_analysis_prompt=code_analysis_prompt,
+                        code_rewrite_prompt=code_rewrite_prompt,
+                        full_strategy_analysis_prompt=full_strategy_analysis_prompt,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    session.add(new_settings)
+                    logger.debug(f"Created settings for user {normalized_user_id}")
 
-            if existing:
-                existing.selected_models = models_str
-                existing.code_analysis_prompt = code_analysis_prompt
-                existing.code_rewrite_prompt = code_rewrite_prompt
-                existing.full_strategy_analysis_prompt = full_strategy_analysis_prompt
-                existing.updated_at = datetime.utcnow()
-                logger.debug(f"Updated settings for user {normalized_user_id}")
-            else:
-                new_settings = UserSettingsModel(
-                    user_id=normalized_user_id,
-                    selected_models=models_str,
-                    code_analysis_prompt=code_analysis_prompt,
-                    code_rewrite_prompt=code_rewrite_prompt,
-                    full_strategy_analysis_prompt=full_strategy_analysis_prompt,
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
-                )
-                db.add(new_settings)
-                logger.debug(f"Created settings for user {normalized_user_id}")
+                session.flush()
 
-            db.commit()
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                return self._model_to_dict(settings)
 
-            return self._model_to_dict(settings)
-
-        except IntegrityError as e:
-            logger.error(f"Integrity error saving settings for {normalized_user_id}: {e}")
-            db.rollback()
-            raise
-        except Exception as e:
-            logger.error(f"Failed to save settings for {normalized_user_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except IntegrityError as e:
+                logger.error(f"Integrity error saving settings for {normalized_user_id}: {e}")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to save settings for {normalized_user_id}: {e}")
+                raise
 
     def reset_settings(
         self,
@@ -193,30 +175,21 @@ class SettingsStorageBase(BaseStorage):
         Returns:
             Default settings dict
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).delete()
 
-            db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).delete()
+                logger.info(f"Reset settings for user {normalized_user_id}")
 
-            db.commit()
-            logger.info(f"Reset settings for user {normalized_user_id}")
+                return self._get_default_dict()
 
-            return self._get_default_dict()
-
-        except Exception as e:
-            logger.error(f"Failed to reset settings for {normalized_user_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to reset settings for {normalized_user_id}: {e}")
+                raise
 
     def _normalize_user_id(self, user_id: Optional[str]) -> Optional[str]:
         """

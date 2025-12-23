@@ -1,0 +1,32 @@
+{
+    "version": "1.0",
+    "description": "Report generation configuration template. Copy this file to report_config.json and customize.",
+    "report": {
+        "output_directory": "reports",
+        "default_format": "html",
+        "supported_formats": [
+            "html",
+            "pdf"
+        ]
+    },
+    "templates": {
+        "backtest_report": {
+            "template_file": "templates/backtest_report.html"
+        },
+        "portfolio_report": {
+            "template_file": "templates/portfolio_report.html"
+        },
+        "walkforward_report": {
+            "template_file": "templates/walkforward_report.html"
+        }
+    },
+    "export": {
+        "pdf": {
+            "enabled": true,
+            "page_size": "A4",
+            "orientation": "portrait",
+            "margin_mm": 15,
+            "include_watermark": false
+        }
+    }
+}

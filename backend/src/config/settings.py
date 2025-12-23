@@ -62,6 +62,67 @@ def load_database_config() -> dict:
     }
 
 
+def load_report_config() -> dict:
+    """
+    Load report generation configuration from report_config.json.
+    
+    Priority:
+    1. report_config.json (user-customized)
+    2. report_config.template.json (defaults)
+    3. Hardcoded defaults (fallback)
+    
+    Returns:
+        dict: Report configuration with all settings
+    """
+    import json
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Try user config first
+    config_file = CONFIG_DIR / "report_config.json"
+    if config_file.exists():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                logger.debug("Loaded report config from report_config.json")
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"Failed to load report_config.json: {e}")
+    
+    # Fallback to template
+    template_file = CONFIG_DIR / "report_config.template.json"
+    if template_file.exists():
+        try:
+            with open(template_file, "r", encoding="utf-8") as f:
+                logger.debug("Loaded report config from report_config.template.json")
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"Failed to load report_config.template.json: {e}")
+    
+    # Return default config if all files fail
+    return {
+        "version": "1.0",
+        "report": {
+            "output_directory": "reports",
+            "default_format": "html",
+            "supported_formats": ["html", "pdf"]
+        },
+        "templates": {
+            "backtest_report": {"template_file": "templates/backtest_report.html"},
+            "portfolio_report": {"template_file": "templates/portfolio_report.html"},
+            "walkforward_report": {"template_file": "templates/walkforward_report.html"}
+        },
+        "export": {
+            "pdf": {
+                "enabled": True,
+                "page_size": "A4",
+                "orientation": "portrait",
+                "margin_mm": 15,
+                "include_watermark": False
+            }
+        }
+    }
+
+
 def _build_postgresql_url(pg_config: dict) -> str:
     """
     Build PostgreSQL connection URL from configuration.
@@ -232,5 +293,6 @@ __all__ = [
     "TEMPLATES_DIR",
     "ensure_resource_dirs",
     "load_database_config",
+    "load_report_config",
     "get_database_url_from_config",
 ]

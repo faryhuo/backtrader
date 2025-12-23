@@ -71,45 +71,36 @@ class WalkForwardStorage(BaseStorage):
         Returns:
             Created WalkForwardOptimizationModel instance
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                record = WalkForwardOptimizationModel(
+                    optimization_id=optimization_id,
+                    user_id=user_id,
+                    strategy_name=strategy_name,
+                    ticker=ticker,
+                    start_date=start_date,
+                    end_date=end_date,
+                    train_period_days=train_period_days,
+                    test_period_days=test_period_days,
+                    anchored=1 if anchored else 0,
+                    optimization_metric=optimization_metric,
+                    initial_cash=initial_cash,
+                    commission=commission,
+                    stake=stake,
+                    param_grid=param_grid,
+                    status="pending",
+                    created_at=datetime.utcnow(),
+                )
 
-        try:
-            record = WalkForwardOptimizationModel(
-                optimization_id=optimization_id,
-                user_id=user_id,
-                strategy_name=strategy_name,
-                ticker=ticker,
-                start_date=start_date,
-                end_date=end_date,
-                train_period_days=train_period_days,
-                test_period_days=test_period_days,
-                anchored=1 if anchored else 0,
-                optimization_metric=optimization_metric,
-                initial_cash=initial_cash,
-                commission=commission,
-                stake=stake,
-                param_grid=param_grid,
-                status="pending",
-                created_at=datetime.utcnow(),
-            )
+                session.add(record)
+                session.flush()
 
-            db.add(record)
-            db.commit()
-            db.refresh(record)
+                logger.info(f"Created walk-forward optimization {optimization_id}")
+                return record
 
-            logger.info(f"Created walk-forward optimization {optimization_id}")
-            return record
-
-        except Exception as e:
-            logger.error(f"Failed to create optimization {optimization_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to create optimization {optimization_id}: {e}")
+                raise
 
     def update_optimization_status(
         self,
@@ -130,36 +121,27 @@ class WalkForwardStorage(BaseStorage):
         Returns:
             True if updated, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                record = session.query(WalkForwardOptimizationModel).filter(
+                    WalkForwardOptimizationModel.optimization_id == optimization_id
+                ).first()
 
-        try:
-            record = db.query(WalkForwardOptimizationModel).filter(
-                WalkForwardOptimizationModel.optimization_id == optimization_id
-            ).first()
+                if not record:
+                    return False
 
-            if not record:
+                record.status = status
+                if error_message:
+                    record.error_message = error_message
+                if status == "completed":
+                    record.completed_at = datetime.utcnow()
+
+                logger.info(f"Updated optimization {optimization_id} status to {status}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to update status for {optimization_id}: {e}")
                 return False
-
-            record.status = status
-            if error_message:
-                record.error_message = error_message
-            if status == "completed":
-                record.completed_at = datetime.utcnow()
-
-            db.commit()
-            logger.info(f"Updated optimization {optimization_id} status to {status}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to update status for {optimization_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def save_optimization_result(
         self,
@@ -178,63 +160,54 @@ class WalkForwardStorage(BaseStorage):
         Returns:
             Updated WalkForwardOptimizationModel instance
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                record = session.query(WalkForwardOptimizationModel).filter(
+                    WalkForwardOptimizationModel.optimization_id == result.optimization_id
+                ).first()
 
-        try:
-            record = db.query(WalkForwardOptimizationModel).filter(
-                WalkForwardOptimizationModel.optimization_id == result.optimization_id
-            ).first()
+                if not record:
+                    raise ValueError(f"Optimization {result.optimization_id} not found")
 
-            if not record:
-                raise ValueError(f"Optimization {result.optimization_id} not found")
+                # Convert windows to serializable format
+                windows_data = []
+                for window in result.windows:
+                    windows_data.append({
+                        "window_id": window.window_id,
+                        "train_start": window.train_start,
+                        "train_end": window.train_end,
+                        "test_start": window.test_start,
+                        "test_end": window.test_end,
+                        "best_params": window.best_params,
+                        "train_metrics": window.train_metrics,
+                        "test_metrics": window.test_metrics,
+                        "all_train_results": window.all_train_results,
+                    })
 
-            # Convert windows to serializable format
-            windows_data = []
-            for window in result.windows:
-                windows_data.append({
-                    "window_id": window.window_id,
-                    "train_start": window.train_start,
-                    "train_end": window.train_end,
-                    "test_start": window.test_start,
-                    "test_end": window.test_end,
-                    "best_params": window.best_params,
-                    "train_metrics": window.train_metrics,
-                    "test_metrics": window.test_metrics,
-                    "all_train_results": window.all_train_results,
-                })
+                # Update record with results
+                record.status = "completed"
+                record.completed_at = datetime.utcnow()
+                record.num_windows = len(result.windows)
+                record.windows = windows_data
+                record.overfitting_metrics = result.overfitting_metrics
+                record.combined_test_metrics = result.combined_test_metrics
 
-            # Update record with results
-            record.status = "completed"
-            record.completed_at = datetime.utcnow()
-            record.num_windows = len(result.windows)
-            record.windows = windows_data
-            record.overfitting_metrics = result.overfitting_metrics
-            record.combined_test_metrics = result.combined_test_metrics
+                # Update denormalized summary fields
+                record.avg_train_performance = result.overfitting_metrics.get("avg_train_performance")
+                record.avg_test_performance = result.overfitting_metrics.get("avg_test_performance")
+                record.avg_degradation_pct = result.overfitting_metrics.get("avg_degradation_pct")
+                record.train_test_correlation = result.overfitting_metrics.get("train_test_correlation")
+                record.consistency_score = result.overfitting_metrics.get("consistency_score")
+                record.overfitting_detected = 1 if result.overfitting_metrics.get("overfitting_detected") else 0
 
-            # Update denormalized summary fields
-            record.avg_train_performance = result.overfitting_metrics.get("avg_train_performance")
-            record.avg_test_performance = result.overfitting_metrics.get("avg_test_performance")
-            record.avg_degradation_pct = result.overfitting_metrics.get("avg_degradation_pct")
-            record.train_test_correlation = result.overfitting_metrics.get("train_test_correlation")
-            record.consistency_score = result.overfitting_metrics.get("consistency_score")
-            record.overfitting_detected = 1 if result.overfitting_metrics.get("overfitting_detected") else 0
+                session.flush()
 
-            db.commit()
-            db.refresh(record)
+                logger.info(f"Saved walk-forward optimization result {result.optimization_id}")
+                return record
 
-            logger.info(f"Saved walk-forward optimization result {result.optimization_id}")
-            return record
-
-        except Exception as e:
-            logger.error(f"Failed to save optimization result {result.optimization_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save optimization result {result.optimization_id}: {e}")
+                raise
 
     def list_optimizations(
         self,
@@ -265,13 +238,8 @@ class WalkForwardStorage(BaseStorage):
         Returns:
             Dict with 'optimizations' list and 'total' count
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(WalkForwardOptimizationModel)
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(WalkForwardOptimizationModel)
 
             # Apply filters
             if user_id:
@@ -303,10 +271,6 @@ class WalkForwardStorage(BaseStorage):
 
             return {"optimizations": optimizations, "total": total}
 
-        finally:
-            if close_db:
-                db.close()
-
     def get_optimization(
         self,
         optimization_id: str,
@@ -314,13 +278,8 @@ class WalkForwardStorage(BaseStorage):
         db: Optional[Session] = None,
     ) -> Optional[Dict[str, Any]]:
         """Get single optimization by ID."""
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(WalkForwardOptimizationModel).filter(
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(WalkForwardOptimizationModel).filter(
                 WalkForwardOptimizationModel.optimization_id == optimization_id
             )
 
@@ -334,10 +293,6 @@ class WalkForwardStorage(BaseStorage):
 
             return self._record_to_dict(record, include_full_results=True)
 
-        finally:
-            if close_db:
-                db.close()
-
     def delete_optimization(
         self,
         optimization_id: str,
@@ -350,37 +305,28 @@ class WalkForwardStorage(BaseStorage):
         Returns:
             True if deleted, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(WalkForwardOptimizationModel).filter(
+                    WalkForwardOptimizationModel.optimization_id == optimization_id
+                )
 
-        try:
-            query = db.query(WalkForwardOptimizationModel).filter(
-                WalkForwardOptimizationModel.optimization_id == optimization_id
-            )
+                if user_id:
+                    query = query.filter(WalkForwardOptimizationModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(WalkForwardOptimizationModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                session.delete(record)
+
+                logger.info(f"Deleted optimization {optimization_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to delete optimization {optimization_id}: {e}")
                 return False
-
-            db.delete(record)
-            db.commit()
-
-            logger.info(f"Deleted optimization {optimization_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to delete optimization {optimization_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def _record_to_dict(
         self,

@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR
+from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR, load_report_config
 from src.db.storage import BacktestStorage, PortfolioStorage, WalkForwardStorage, get_report_storage
 from src.db.models import ReportStatus
 from src.utils.report_i18n import get_translations, get_report_type_name, DEFAULT_LANGUAGE
@@ -39,10 +39,15 @@ class ReportGenerator:
     - ECharts configuration for interactive charts
     - Support for single and comparison reports
     - Progress callbacks for background task integration
+    - Configurable via report_config.json
     """
 
     def __init__(self):
-        """Initialize the report generator with Jinja2 environment."""
+        """Initialize the report generator with Jinja2 environment and config."""
+        # Load report configuration
+        self.config = load_report_config()
+        logger.debug(f"Loaded report config version: {self.config.get('version', 'unknown')}")
+        
         template_path = TEMPLATES_DIR / "reports"
         template_path.mkdir(parents=True, exist_ok=True)
 
@@ -58,6 +63,7 @@ class ReportGenerator:
         self.portfolio_storage = PortfolioStorage()
         self.walkforward_storage = WalkForwardStorage()
         self.report_storage = get_report_storage()
+
 
     async def generate_report(
         self,
