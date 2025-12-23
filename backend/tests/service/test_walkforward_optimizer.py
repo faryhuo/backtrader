@@ -1,11 +1,9 @@
-import types
-
-from src.service import walkforward_optimizer as wfo
+from src.service.walkforward_optimizer import WalkForwardOptimizer
 
 
-def test_generate_param_combinations(monkeypatch):
-    monkeypatch.setattr(wfo, "load_user_strategy", lambda _: object())
-    optimizer = wfo.WalkForwardOptimizer(
+def test_generate_param_combinations():
+    """Test that parameter combinations are generated correctly from param_grid."""
+    optimizer = WalkForwardOptimizer(
         strategy_name="s",
         ticker="AAPL",
         start_date="2024-01-01",
@@ -20,10 +18,9 @@ def test_generate_param_combinations(monkeypatch):
     assert {"a": 2, "b": "x"} in combos
 
 
-def test_generate_windows_rolling_vs_anchored(monkeypatch):
-    monkeypatch.setattr(wfo, "load_user_strategy", lambda _: object())
-
-    rolling = wfo.WalkForwardOptimizer(
+def test_generate_windows_rolling_vs_anchored():
+    """Test that rolling and anchored windows are generated correctly."""
+    rolling = WalkForwardOptimizer(
         strategy_name="s",
         ticker="AAPL",
         start_date="2024-01-01",
@@ -36,7 +33,7 @@ def test_generate_windows_rolling_vs_anchored(monkeypatch):
     rw = rolling._generate_windows()
     assert len(rw) >= 1
 
-    anchored = wfo.WalkForwardOptimizer(
+    anchored = WalkForwardOptimizer(
         strategy_name="s",
         ticker="AAPL",
         start_date="2024-01-01",

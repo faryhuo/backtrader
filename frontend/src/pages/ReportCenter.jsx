@@ -9,29 +9,48 @@
  * Note: Report generation is integrated into backtest/portfolio/walkforward detail modals
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    Table,
-    Button,
-    Space,
-    Modal,
-    message,
-    Select,
-    Empty,
-} from 'antd';
+import { Modal, message } from 'antd';
 import {
     DownloadOutlined,
-    ReloadOutlined,
+    EyeOutlined,
+    ShareAltOutlined,
+    DeleteOutlined,
 } from '@ant-design/icons';
 
 import { reportApi } from '../services/reportApi';
 import { useReports, ReportStatus, ReportType } from '../hooks/useReports';
-import { getReportColumns } from '../utils/tableColumns';
 import { ShareReportModal } from '../components/ReportCenter';
 import './ReportCenter.css';
 
-const { Option } = Select;
+// Helper to get report type label
+function getReportTypeLabel(type, t) {
+    const labels = {
+        [ReportType.BACKTEST]: t('reportCenter.type.backtest', 'Backtest'),
+        [ReportType.PORTFOLIO]: t('reportCenter.type.portfolio', 'Portfolio'),
+        [ReportType.WALKFORWARD]: t('reportCenter.type.walkforward', 'Walk-Forward'),
+        [ReportType.COMPARISON]: t('reportCenter.type.comparison', 'Comparison'),
+    };
+    return labels[type] || type;
+}
+
+// Helper to get report status label
+function getReportStatusLabel(status, t) {
+    const labels = {
+        [ReportStatus.PENDING]: t('reportCenter.status.pending', 'Pending'),
+        [ReportStatus.GENERATING]: t('reportCenter.status.generating', 'Generating'),
+        [ReportStatus.COMPLETED]: t('reportCenter.status.completed', 'Completed'),
+        [ReportStatus.FAILED]: t('reportCenter.status.failed', 'Failed'),
+    };
+    return labels[status] || status;
+}
+
+// Format date
+const formatDate = (isoString) => {
+    if (!isoString) return '-';
+    return new Date(isoString).toLocaleString();
+};
 
 function ReportCenter() {
     const { t } = useTranslation();
@@ -43,10 +62,8 @@ function ReportCenter() {
         loading,
         error,
         filters,
-        currentPage,
         fetchReports,
         handleFilterChange,
-        handlePaginationChange,
         downloadReport,
     } = useReports();
 
@@ -114,53 +131,200 @@ function ReportCenter() {
         setSelectedReport(null);
     }, []);
 
-    // Get table columns
-    const columns = useMemo(() => getReportColumns({
-        t,
-        onView: handleView,
-        onDownload: handleDownload,
-        onShare: handleShare,
-        onDelete: handleDelete,
-    }), [t, handleView, handleDownload, handleShare, handleDelete]);
-
     return (
         <div className="report-center">
-            <ReportCenterHeader t={t} loading={loading} onRefresh={fetchReports} />
+            {/* Header */}
+            <div className="report-center-header">
+                <h1>{t('reportCenter.title', 'Report Center')}</h1>
 
-            <ReportFilters
-                t={t}
-                filters={filters}
-                onFilterChange={handleFilterChange}
-            />
+                <div className="report-stats">
+                    <div className="report-stat">
+                        <span className="stat-label">{t('reportCenter.pending', 'Pending')}</span>
+                        <span className="stat-value pending">
+                            {reports.filter(r => r.status === ReportStatus.PENDING || r.status === ReportStatus.GENERATING).length}
+                        </span>
+                    </div>
+                    <div className="report-stat">
+                        <span className="stat-label">{t('reportCenter.failed', 'Failed')}</span>
+                        <span className="stat-value failed">
+                            {reports.filter(r => r.status === ReportStatus.FAILED).length}
+                        </span>
+                    </div>
+                    <div className="report-stat">
+                        <span className="stat-label">{t('reportCenter.totalReports', 'Total')}</span>
+                        <span className="stat-value">{total || 0}</span>
+                    </div>
+                    <button className="refresh-btn" onClick={fetchReports} disabled={loading}>
+                        {loading ? t('common.loading', 'Loading...') : t('common.refresh', 'Refresh')}
+                    </button>
+                </div>
+            </div>
 
+            {/* Filters */}
+            <div className="report-filters">
+                <div className="report-filter">
+                    <label>{t('reportCenter.filter.type', 'Type')}</label>
+                    <select
+                        value={filters.report_type}
+                        onChange={(e) => handleFilterChange('report_type', e.target.value)}
+                    >
+                        <option value="">{t('common.all', 'All Types')}</option>
+                        <option value={ReportType.BACKTEST}>{getReportTypeLabel(ReportType.BACKTEST, t)}</option>
+                        <option value={ReportType.PORTFOLIO}>{getReportTypeLabel(ReportType.PORTFOLIO, t)}</option>
+                        <option value={ReportType.WALKFORWARD}>{getReportTypeLabel(ReportType.WALKFORWARD, t)}</option>
+                        <option value={ReportType.COMPARISON}>{getReportTypeLabel(ReportType.COMPARISON, t)}</option>
+                    </select>
+                </div>
+
+                <div className="report-filter">
+                    <label>{t('reportCenter.filter.status', 'Status')}</label>
+                    <select
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                    >
+                        <option value="">{t('common.all', 'All Status')}</option>
+                        <option value={ReportStatus.PENDING}>{getReportStatusLabel(ReportStatus.PENDING, t)}</option>
+                        <option value={ReportStatus.GENERATING}>{getReportStatusLabel(ReportStatus.GENERATING, t)}</option>
+                        <option value={ReportStatus.COMPLETED}>{getReportStatusLabel(ReportStatus.COMPLETED, t)}</option>
+                        <option value={ReportStatus.FAILED}>{getReportStatusLabel(ReportStatus.FAILED, t)}</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Error */}
             {error && (
-                <div className="report-center-error">
-                    <p>{error}</p>
+                <div className="report-error" style={{ color: 'red', marginBottom: '1rem' }}>
+                    {error}
                 </div>
             )}
 
-            <Table
-                columns={columns}
-                dataSource={reports}
-                loading={loading}
-                rowKey="report_id"
-                pagination={{
-                    current: currentPage,
-                    pageSize: filters.limit,
-                    total: total,
-                    onChange: handlePaginationChange,
-                    showSizeChanger: true,
-                    showTotal: (total) => t('reportCenter.total', `Total ${total} reports`, { total }),
-                }}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            description={t('reportCenter.emptyDesc', 'No reports yet. Generate reports from backtest/portfolio/walk-forward result pages.')}
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        />
-                    ),
-                }}
-            />
+            {/* Report Table */}
+            <div className="report-table-container">
+                {loading ? (
+                    <div className="report-loading">
+                        {t('common.loading', 'Loading...')}
+                    </div>
+                ) : reports.length === 0 ? (
+                    <div className="report-empty">
+                        <div className="report-empty-icon">📄</div>
+                        <h3>{t('reportCenter.noReports', 'No Reports')}</h3>
+                        <p>{t('reportCenter.emptyDesc', 'Generate reports from backtest/portfolio/walk-forward result pages.')}</p>
+                    </div>
+                ) : (
+                    <table className="report-table">
+                        <thead>
+                            <tr>
+                                <th>{t('reportCenter.table.title', 'Title')}</th>
+                                <th>{t('reportCenter.table.type', 'Type')}</th>
+                                <th>{t('reportCenter.table.status', 'Status')}</th>
+                                <th>{t('reportCenter.table.sources', 'Sources')}</th>
+                                <th>{t('reportCenter.table.created', 'Created')}</th>
+                                <th>{t('reportCenter.table.actions', 'Actions')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {reports.map(report => (
+                                <tr key={report.report_id}>
+                                    <td>
+                                        <div className="report-title">
+                                            {report.title || 'Unnamed Report'}
+                                            {report.has_share_link && (
+                                                <span className="share-indicator" title={t('reportCenter.shared', 'Shared')}>🔗</span>
+                                            )}
+                                        </div>
+                                        <div className="report-id">{report.report_id.substring(0, 8)}...</div>
+                                    </td>
+                                    <td>
+                                        <span className={`report-type-badge ${report.report_type}`}>
+                                            {getReportTypeLabel(report.report_type, t)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`report-status-badge ${report.status}`}>
+                                            <span className={`status-dot ${report.status}`} />
+                                            {getReportStatusLabel(report.status, t)}
+                                        </span>
+                                        {report.status === ReportStatus.GENERATING && report.progress > 0 && (
+                                            <div className="report-progress">
+                                                <div className="progress-bar">
+                                                    <div
+                                                        className="progress-fill"
+                                                        style={{ width: `${report.progress || 0}%` }}
+                                                    />
+                                                </div>
+                                                <span className="progress-text">{report.progress}%</span>
+                                            </div>
+                                        )}
+                                        {report.error_message && (
+                                            <div className="report-error-message" title={report.error_message}>
+                                                {report.error_message}
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="report-sources">
+                                        {report.source_ids?.length || 0}
+                                    </td>
+                                    <td>
+                                        {formatDate(report.created_at)}
+                                    </td>
+                                    <td>
+                                        <div className="report-actions">
+                                            {/* View button */}
+                                            <button
+                                                className="report-action-btn view"
+                                                onClick={() => handleView(report)}
+                                                disabled={report.status !== ReportStatus.COMPLETED}
+                                                title={t('reportCenter.actions.view', 'View')}
+                                            >
+                                                <EyeOutlined />
+                                            </button>
+
+                                            {/* Download button */}
+                                            <button
+                                                className="report-action-btn download"
+                                                onClick={() => handleDownload(report)}
+                                                disabled={report.status !== ReportStatus.COMPLETED}
+                                                title={t('reportCenter.actions.download', 'Download')}
+                                            >
+                                                <DownloadOutlined />
+                                            </button>
+
+                                            {/* Share button */}
+                                            <button
+                                                className="report-action-btn share"
+                                                onClick={() => handleShare(report)}
+                                                disabled={report.status !== ReportStatus.COMPLETED}
+                                                title={t('reportCenter.actions.share', 'Share')}
+                                            >
+                                                <ShareAltOutlined />
+                                            </button>
+
+                                            {/* Delete button */}
+                                            <button
+                                                className="report-action-btn delete"
+                                                onClick={() => handleDelete(report)}
+                                                title={t('reportCenter.actions.delete', 'Delete')}
+                                            >
+                                                <DeleteOutlined />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Total count */}
+            {!loading && reports.length > 0 && (
+                <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    {t('reportCenter.showingReports', 'Showing {{count}} of {{total}} reports', {
+                        count: reports.length,
+                        total: total,
+                    })}
+                </div>
+            )}
 
             {/* View Modal */}
             <Modal
@@ -169,12 +333,12 @@ function ReportCenter() {
                 onCancel={closeViewModal}
                 width="90%"
                 footer={[
-                    <Button key="close" onClick={closeViewModal}>
+                    <button key="close" className="modal-btn secondary" onClick={closeViewModal}>
                         {t('common.close', 'Close')}
-                    </Button>,
-                    <Button key="download" icon={<DownloadOutlined />} onClick={() => handleDownload(selectedReport)}>
-                        {t('reportCenter.actions.download', 'Download')}
-                    </Button>,
+                    </button>,
+                    <button key="download" className="modal-btn primary" onClick={() => handleDownload(selectedReport)}>
+                        <DownloadOutlined /> {t('reportCenter.actions.download', 'Download')}
+                    </button>,
                 ]}
             >
                 <p>{t('reportCenter.viewPlaceholder', 'Report viewer coming soon. Use download to view the full report.')}</p>
@@ -187,64 +351,6 @@ function ReportCenter() {
                 onClose={closeShareModal}
                 onShareUpdate={fetchReports}
             />
-        </div>
-    );
-}
-
-// Header component
-function ReportCenterHeader({ t, loading, onRefresh }) {
-    return (
-        <div className="report-center-header">
-            <h1>{t('reportCenter.title', 'Report Center')}</h1>
-            <Button
-                icon={<ReloadOutlined />}
-                onClick={onRefresh}
-                loading={loading}
-            >
-                {t('common.refresh', 'Refresh')}
-            </Button>
-        </div>
-    );
-}
-
-// Filters component
-function ReportFilters({ t, filters, onFilterChange }) {
-    return (
-        <div className="report-center-filters">
-            <Space size="large">
-                <Space>
-                    <span>{t('reportCenter.filter.type', 'Type:')}</span>
-                    <Select
-                        style={{ width: 150 }}
-                        value={filters.report_type}
-                        onChange={(value) => onFilterChange('report_type', value)}
-                        allowClear
-                        placeholder={t('common.all', 'All')}
-                    >
-                        <Option value="">{t('common.all', 'All')}</Option>
-                        <Option value={ReportType.BACKTEST}>{t('reportCenter.type.backtest', 'Backtest')}</Option>
-                        <Option value={ReportType.PORTFOLIO}>{t('reportCenter.type.portfolio', 'Portfolio')}</Option>
-                        <Option value={ReportType.WALKFORWARD}>{t('reportCenter.type.walkforward', 'Walk-Forward')}</Option>
-                        <Option value={ReportType.COMPARISON}>{t('reportCenter.type.comparison', 'Comparison')}</Option>
-                    </Select>
-                </Space>
-                <Space>
-                    <span>{t('reportCenter.filter.status', 'Status:')}</span>
-                    <Select
-                        style={{ width: 150 }}
-                        value={filters.status}
-                        onChange={(value) => onFilterChange('status', value)}
-                        allowClear
-                        placeholder={t('common.all', 'All')}
-                    >
-                        <Option value="">{t('common.all', 'All')}</Option>
-                        <Option value={ReportStatus.PENDING}>{t('reportCenter.status.pending', 'Pending')}</Option>
-                        <Option value={ReportStatus.GENERATING}>{t('reportCenter.status.generating', 'Generating')}</Option>
-                        <Option value={ReportStatus.COMPLETED}>{t('reportCenter.status.completed', 'Completed')}</Option>
-                        <Option value={ReportStatus.FAILED}>{t('reportCenter.status.failed', 'Failed')}</Option>
-                    </Select>
-                </Space>
-            </Space>
         </div>
     );
 }

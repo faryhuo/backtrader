@@ -4,7 +4,7 @@ from typing import Optional
 
 import backtrader as bt
 
-from src.config.settings import IMAGES_DIR, STRATEGY_DIR, ensure_resource_dirs
+from src.config.settings import IMAGES_DIR, ensure_resource_dirs
 from src.config.worker_config import get_config as get_worker_config
 from src.db.storage.market_data import get_raw_data_json
 from src.service.backtest_runner import BacktestRunnerError, run_backtest_legacy, run_backtest_worker
@@ -263,9 +263,9 @@ __all__ = [
     "ensure_resource_files",
     "StrategyLoadError",
     "DEFAULT_STRATEGY_NAME",
-    "STRATEGY_DIR",
     "get_strategy_path",
     "IMAGES_DIR",
     "get_raw_data_json",
     "extract_strategy_params",
 ]
+

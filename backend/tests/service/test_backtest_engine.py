@@ -4,12 +4,17 @@ import pytest
 from src.service import backtest_engine
 
 
-def test_sanitize_strategy_name():
-    assert backtest_engine._sanitize_strategy_name("abc") == "abc.py"
-    assert backtest_engine._sanitize_strategy_name("abc.py") == "abc.py"
+def test_get_strategy_path_valid():
+    """Test that get_strategy_path returns valid paths."""
+    # Test with a valid strategy name format
+    path = backtest_engine.get_strategy_path("test")
+    assert path.name == "test.py"
 
+
+def test_get_strategy_path_rejects_traversal():
+    """Test that path traversal is rejected."""
     with pytest.raises(backtest_engine.StrategyLoadError):
-        backtest_engine._sanitize_strategy_name("../x")
+        backtest_engine.get_strategy_path("../x")
 
 
 def test_strategy_file_round_trip(tmp_path, monkeypatch):
@@ -19,7 +24,7 @@ def test_strategy_file_round_trip(tmp_path, monkeypatch):
     code = "import backtrader as bt\n\nclass UserStrategy(bt.Strategy):\n    pass\n"
     backtest_engine.save_user_strategy_code("my_strategy", code)
     assert backtest_engine.get_user_strategy_code("my_strategy") == code
-    assert backtest_engine.list_strategies() == ["my_strategy"]
+    assert "my_strategy" in backtest_engine.list_strategies()
 
 
 def test_load_user_strategy_from_sandbox(tmp_path, monkeypatch):

@@ -1,0 +1,25 @@
+{
+    "strategy": {
+        "filePath": "data/strategies/"
+    },
+    "sandbox": {
+        "mode": "subprocess",
+        "timeoutSeconds": 30.0,
+        "maxMemoryMB": 512,
+        "maxCpuPercent": 100,
+        "allowNetwork": false,
+        "allowFileWrite": false,
+        "dockerImage": "python:3.11-slim"
+    },
+    "workerPool": {
+        "enabled": true,
+        "poolSize": 4,
+        "taskTimeoutSeconds": 300,
+        "maxMemoryMB": 1024,
+        "heartbeatIntervalSeconds": 10,
+        "shutdownTimeoutSeconds": 30,
+        "maxQueueSize": 100,
+        "allowNetwork": true,
+        "allowFileWrite": true
+    }
+}

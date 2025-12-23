@@ -63,21 +63,17 @@ class ResampleRequest(BaseModel):
 @router.get("/ticker/{ticker}/info")
 def get_ticker_info(ticker: str, user: dict = Depends(get_current_user)) -> dict:
     """Get ticker metadata and validation info."""
-    try:
-        from src.db.storage.ticker_metadata import get_ticker_metadata
-        ticker_info = get_ticker_metadata(ticker)
+    from src.db.storage.ticker_metadata import get_ticker_metadata
+    from src.utils.exception_handlers import TickerValidationError
+    
+    ticker_info = get_ticker_metadata(ticker)
 
-        if not ticker_info.get('is_valid'):
-            raise HTTPException(
-                status_code=400,
-                detail=ticker_info.get('validation_error', 'Invalid ticker symbol')
-            )
+    if not ticker_info.get('is_valid'):
+        raise TickerValidationError(
+            ticker_info.get('validation_error', 'Invalid ticker symbol')
+        )
 
-        return ticker_info
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    return ticker_info
 
 
 @router.get("/ticker/{ticker}/prices")
@@ -88,40 +84,33 @@ def get_ticker_prices(
     user: dict = Depends(get_current_user)
 ) -> dict:
     """Get OHLCV price data for a ticker within date range."""
-    try:
-        data = get_raw_data_json(ticker, start_date, end_date)
-        return {"data": data}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    data = get_raw_data_json(ticker, start_date, end_date)
+    return {"data": data}
 
 
 # Legacy endpoint for backward compatibility
 @router.post("/data")
 def fetch_market_data(request: DataRequest, user: dict = Depends(get_current_user)) -> dict:
-    try:
-        # Step 1: Get ticker metadata (validates ticker)
-        from src.db.storage.ticker_metadata import get_ticker_metadata
-        ticker_info = get_ticker_metadata(request.ticker)
+    from src.db.storage.ticker_metadata import get_ticker_metadata
+    from src.utils.exception_handlers import TickerValidationError
+    
+    # Step 1: Get ticker metadata (validates ticker)
+    ticker_info = get_ticker_metadata(request.ticker)
 
-        # Step 2: Validate ticker
-        if not ticker_info.get('is_valid'):
-            raise HTTPException(
-                status_code=400,
-                detail=ticker_info.get('validation_error', 'Invalid ticker symbol')
-            )
+    # Step 2: Validate ticker
+    if not ticker_info.get('is_valid'):
+        raise TickerValidationError(
+            ticker_info.get('validation_error', 'Invalid ticker symbol')
+        )
 
-        # Step 3: Fetch OHLCV data (existing logic)
-        data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
+    # Step 3: Fetch OHLCV data (existing logic)
+    data = get_raw_data_json(request.ticker, request.start_date, request.end_date)
 
-        # Step 4: Return enhanced response
-        return {
-            "ticker_info": ticker_info,
-            "data": data
-        }
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    # Step 4: Return enhanced response
+    return {
+        "ticker_info": ticker_info,
+        "data": data
+    }
 
 
 # ========== Cache Management Endpoints ==========
@@ -135,24 +124,16 @@ def get_cache_stats(user: dict = Depends(get_current_user)) -> dict:
     Returns overall cache stats including total tickers, records,
     date ranges, and per-ticker summaries.
     """
-    try:
-        storage = get_data_cache_storage()
-        return storage.get_cache_stats()
-    except Exception as exc:
-        logger.error(f"Failed to get cache stats: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    storage = get_data_cache_storage()
+    return storage.get_cache_stats()
 
 
 @router.get("/cache/tickers")
 def get_cached_tickers(user: dict = Depends(get_current_user)) -> dict:
     """Get list of all cached ticker symbols."""
-    try:
-        storage = get_data_cache_storage()
-        tickers = storage.get_all_cached_tickers()
-        return {"tickers": tickers, "count": len(tickers)}
-    except Exception as exc:
-        logger.error(f"Failed to get cached tickers: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    storage = get_data_cache_storage()
+    tickers = storage.get_all_cached_tickers()
+    return {"tickers": tickers, "count": len(tickers)}
 
 
 @router.get("/cache/{ticker}")
@@ -165,22 +146,15 @@ def get_ticker_cache_info(
     
     Returns record count, date range, and last updated timestamp.
     """
-    try:
-        storage = get_data_cache_storage()
-        info = storage.get_ticker_cache_info(ticker)
-        
-        if not info:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No cached data found for ticker: {ticker}"
-            )
-        
-        return info
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error(f"Failed to get cache info for {ticker}: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    from src.utils.exception_handlers import DataNotFoundError
+    
+    storage = get_data_cache_storage()
+    info = storage.get_ticker_cache_info(ticker)
+    
+    if not info:
+        raise DataNotFoundError(f"No cached data found for ticker: {ticker}")
+    
+    return info
 
 
 @router.post("/cache/warmup")
@@ -194,17 +168,13 @@ def warmup_cache(
     Fetches and caches OHLCV data for the specified tickers and date range.
     Returns warmup results including success/failure counts and cache hit rate.
     """
-    try:
-        storage = get_data_cache_storage()
-        result = storage.warmup_data(
-            tickers=request.tickers,
-            start_date=request.start_date,
-            end_date=request.end_date,
-        )
-        return result
-    except Exception as exc:
-        logger.error(f"Warmup failed: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    storage = get_data_cache_storage()
+    result = storage.warmup_data(
+        tickers=request.tickers,
+        start_date=request.start_date,
+        end_date=request.end_date,
+    )
+    return result
 
 
 @router.delete("/cache/cleanup")
@@ -220,26 +190,23 @@ def cleanup_cache(
     Specify at least one filter: before_date, tickers, or older_than_days.
     Returns the number of deleted records and affected tickers.
     """
-    # Require at least one filter to prevent accidental deletion of all data
-    if not any([before_date, tickers, older_than_days]):
-        raise HTTPException(
-            status_code=400,
-            detail="At least one filter (before_date, tickers, or older_than_days) is required"
-        )
+    from src.routes.common.error_utils import require_filter
     
-    try:
-        storage = get_data_cache_storage()
-        ticker_list = tickers.split(",") if tickers else None
-        
-        result = storage.cleanup_cache(
-            before_date=before_date,
-            tickers=ticker_list,
-            older_than_days=older_than_days,
-        )
-        return result
-    except Exception as exc:
-        logger.error(f"Cache cleanup failed: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    # Require at least one filter to prevent accidental deletion of all data
+    require_filter(
+        before_date, tickers, older_than_days,
+        message="At least one filter (before_date, tickers, or older_than_days) is required"
+    )
+    
+    storage = get_data_cache_storage()
+    ticker_list = tickers.split(",") if tickers else None
+    
+    result = storage.cleanup_cache(
+        before_date=before_date,
+        tickers=ticker_list,
+        older_than_days=older_than_days,
+    )
+    return result
 
 
 @router.delete("/cache/{ticker}")
@@ -248,22 +215,15 @@ def delete_ticker_cache(
     user: dict = Depends(get_current_user)
 ) -> dict:
     """Delete all cached data for a specific ticker."""
-    try:
-        storage = get_data_cache_storage()
-        deleted = storage.delete_ticker_cache(ticker)
-        
-        if not deleted:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No cached data found for ticker: {ticker}"
-            )
-        
-        return {"message": f"Deleted cache for {ticker}", "deleted": True}
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error(f"Failed to delete cache for {ticker}: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+    from src.utils.exception_handlers import DataNotFoundError
+    
+    storage = get_data_cache_storage()
+    deleted = storage.delete_ticker_cache(ticker)
+    
+    if not deleted:
+        raise DataNotFoundError(f"No cached data found for ticker: {ticker}")
+    
+    return {"message": f"Deleted cache for {ticker}", "deleted": True}
 
 
 # ========== Resample Endpoints ==========
@@ -321,66 +281,58 @@ def resample_data(
     - Close: last value in interval
     - Volume: sum of values in interval
     """
+    from src.db.storage.market_data import get_data
+    from src.utils.exception_handlers import DataNotFoundError, ValidationError
+    
+    # Fetch source data
+    df = get_data(request.ticker, request.start_date, request.end_date)
+    
+    if df is None or df.empty:
+        raise DataNotFoundError(f"No data found for {request.ticker}")
+    
+    # Perform resampling (ValueError will be converted to ValidationError by global handler)
     try:
-        from src.db.storage.market_data import get_data
-        
-        # Fetch source data
-        df = get_data(request.ticker, request.start_date, request.end_date)
-        
-        if df is None or df.empty:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No data found for {request.ticker}"
-            )
-        
-        # Perform resampling
         resampled = resample_ohlcv(
             df,
             target_timeframe=request.target_timeframe,
             include_incomplete=request.include_incomplete,
         )
-        
-        # Convert to JSON-serializable format
-        resampled = resampled.reset_index()
-        
-        # Rename index column if needed
-        if "Date" not in resampled.columns and "date" not in resampled.columns:
-            if resampled.columns[0] in ["index", "level_0"]:
-                resampled = resampled.rename(columns={resampled.columns[0]: "Date"})
-        
-        date_col = "Date" if "Date" in resampled.columns else "date"
-        
-        data = []
-        for _, row in resampled.iterrows():
-            date_val = row.get(date_col)
-            if hasattr(date_val, "strftime"):
-                date_str = date_val.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                date_str = str(date_val)
-            
-            data.append({
-                "time": date_str,
-                "open": float(row.get("Open", row.get("open", 0))),
-                "high": float(row.get("High", row.get("high", 0))),
-                "low": float(row.get("Low", row.get("low", 0))),
-                "close": float(row.get("Close", row.get("close", 0))),
-                "volume": int(row.get("Volume", row.get("volume", 0))),
-            })
-        
-        return {
-            "ticker": request.ticker,
-            "timeframe": request.target_timeframe,
-            "record_count": len(data),
-            "data": data,
-        }
-    
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error(f"Resample failed: {exc}")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise ValidationError(str(ve))
+    
+    # Convert to JSON-serializable format
+    resampled = resampled.reset_index()
+    
+    # Rename index column if needed
+    if "Date" not in resampled.columns and "date" not in resampled.columns:
+        if resampled.columns[0] in ["index", "level_0"]:
+            resampled = resampled.rename(columns={resampled.columns[0]: "Date"})
+    
+    date_col = "Date" if "Date" in resampled.columns else "date"
+    
+    data = []
+    for _, row in resampled.iterrows():
+        date_val = row.get(date_col)
+        if hasattr(date_val, "strftime"):
+            date_str = date_val.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            date_str = str(date_val)
+        
+        data.append({
+            "time": date_str,
+            "open": float(row.get("Open", row.get("open", 0))),
+            "high": float(row.get("High", row.get("high", 0))),
+            "low": float(row.get("Low", row.get("low", 0))),
+            "close": float(row.get("Close", row.get("close", 0))),
+            "volume": int(row.get("Volume", row.get("volume", 0))),
+        })
+    
+    return {
+        "ticker": request.ticker,
+        "timeframe": request.target_timeframe,
+        "record_count": len(data),
+        "data": data,
+    }
 
 
 # ========== Analysis Endpoints ==========

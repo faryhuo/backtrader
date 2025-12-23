@@ -23,6 +23,8 @@ import portfolioEn from './locales/en/portfolio.json';
 import deepAnalysisEn from './locales/en/deep_analysis.json';
 import landingEn from './locales/en/landing.json';
 import datamanagementEn from './locales/en/datamanagement.json';
+import reportcenterEn from './locales/en/report_center.json';
+import taskcenterEn from './locales/en/task_center.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -45,6 +47,8 @@ import portfolioZh from './locales/zh/portfolio.json';
 import deepAnalysisZh from './locales/zh/deep_analysis.json';
 import landingZh from './locales/zh/landing.json';
 import datamanagementZh from './locales/zh/datamanagement.json';
+import reportcenterZh from './locales/zh/report_center.json';
+import taskcenterZh from './locales/zh/task_center.json';
 
 const en = {
   app: appEn,
@@ -66,7 +70,9 @@ const en = {
   portfolio: portfolioEn,
   deep_analysis: deepAnalysisEn,
   landing: landingEn,
-  datamanagement: datamanagementEn
+  datamanagement: datamanagementEn,
+  reportcenter: reportcenterEn,
+  taskcenter: taskcenterEn,
 };
 
 const zh = {
@@ -89,7 +95,9 @@ const zh = {
   portfolio: portfolioZh,
   deep_analysis: deepAnalysisZh,
   landing: landingZh,
-  datamanagement: datamanagementZh
+  datamanagement: datamanagementZh,
+  reportcenter: reportcenterZh,
+  taskcenter: taskcenterZh
 };
 
 i18n

@@ -138,9 +138,22 @@ class UserStrategy(bt.Strategy):
 
     const createStrategy = async (name) => {
         if (!name) return
-        setSelectedStrategy(name)
-        setCode(defaultTemplate)
-        setShowNewStrategyModal(false)
+        try {
+            setCodeLoading(true);
+            // Save the new strategy with default template
+            await api.saveStrategy(name, defaultTemplate);
+            // Refresh strategy list
+            await fetchStrategies();
+            // Select the new strategy
+            setSelectedStrategy(name);
+            setCode(defaultTemplate);
+            setShowNewStrategyModal(false);
+        } catch (err) {
+            console.error("Failed to create strategy", err);
+            alert(t('maintain.save_failed'));
+        } finally {
+            setCodeLoading(false);
+        }
     }
 
     const openNewStrategyModal = () => {

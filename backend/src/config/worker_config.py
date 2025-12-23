@@ -1,17 +1,17 @@
 """
 Worker Configuration - Settings for worker process pool.
 
-Environment variables:
-- WORKER_POOL_ENABLED: Enable/disable worker pool (default: true)
-- WORKER_POOL_SIZE: Number of worker processes (default: 4)
-- WORKER_TASK_TIMEOUT: Task timeout in seconds (default: 300)
-- WORKER_MAX_MEMORY_MB: Max memory per worker in MB (default: 1024)
-- WORKER_HEARTBEAT_INTERVAL: Heartbeat interval in seconds (default: 10)
+Configuration is loaded from strategy_config.json.
 """
 
-import os
+import json
+import logging
 from dataclasses import dataclass
 from typing import Optional
+
+from src.config.settings import CONFIG_DIR
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -46,28 +46,56 @@ class WorkerPoolConfig:
     allow_file_write: bool = True  # Required for chart generation
 
 
-def _parse_bool(value: str) -> bool:
-    """Parse boolean from string."""
-    return value.lower() in ("true", "1", "yes", "on")
+def _parse_bool(value) -> bool:
+    """Parse boolean from JSON boolean or string."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes", "on")
+    return bool(value)
+
+
+def _load_strategy_config_json() -> dict:
+    """
+    Load strategy configuration from strategy_config.json.
+    
+    Returns:
+        dict: Parsed JSON configuration or empty dict if file not found
+    """
+    config_file = CONFIG_DIR / "strategy_config.json"
+    
+    if config_file.exists():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                logger.debug(f"Loaded worker config from {config_file}")
+                return config
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"Failed to load strategy_config.json: {e}")
+    
+    return {}
 
 
 def get_worker_pool_config() -> WorkerPoolConfig:
     """
-    Load worker pool configuration from environment variables.
+    Load worker pool configuration from strategy_config.json.
     
     Returns:
-        WorkerPoolConfig with values from environment or defaults
+        WorkerPoolConfig with values from config file or defaults
     """
+    config_data = _load_strategy_config_json()
+    worker_data = config_data.get("workerPool", {})
+    
     return WorkerPoolConfig(
-        enabled=_parse_bool(os.getenv("WORKER_POOL_ENABLED", "true")),
-        pool_size=int(os.getenv("WORKER_POOL_SIZE", "4")),
-        task_timeout_seconds=float(os.getenv("WORKER_TASK_TIMEOUT", "300")),
-        max_memory_mb=int(os.getenv("WORKER_MAX_MEMORY_MB", "1024")),
-        heartbeat_interval_seconds=float(os.getenv("WORKER_HEARTBEAT_INTERVAL", "10")),
-        shutdown_timeout_seconds=float(os.getenv("WORKER_SHUTDOWN_TIMEOUT", "30")),
-        max_queue_size=int(os.getenv("WORKER_MAX_QUEUE_SIZE", "100")),
-        allow_network=_parse_bool(os.getenv("WORKER_ALLOW_NETWORK", "true")),
-        allow_file_write=_parse_bool(os.getenv("WORKER_ALLOW_FILE_WRITE", "true")),
+        enabled=_parse_bool(worker_data.get("enabled", True)),
+        pool_size=int(worker_data.get("poolSize", 4)),
+        task_timeout_seconds=float(worker_data.get("taskTimeoutSeconds", 300)),
+        max_memory_mb=int(worker_data.get("maxMemoryMB", 1024)),
+        heartbeat_interval_seconds=float(worker_data.get("heartbeatIntervalSeconds", 10)),
+        shutdown_timeout_seconds=float(worker_data.get("shutdownTimeoutSeconds", 30)),
+        max_queue_size=int(worker_data.get("maxQueueSize", 100)),
+        allow_network=_parse_bool(worker_data.get("allowNetwork", True)),
+        allow_file_write=_parse_bool(worker_data.get("allowFileWrite", True)),
     )
 
 
@@ -95,3 +123,5 @@ __all__ = [
     "get_config",
     "reset_config",
 ]
+
+

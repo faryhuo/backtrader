@@ -88,6 +88,46 @@ class ExternalServiceError(AppError):
         )
 
 
+class DataNotFoundError(NotFoundError):
+    """No data found for specified ticker/date range."""
+    pass
+
+
+class TickerValidationError(ValidationError):
+    """Ticker symbol validation failed."""
+    pass
+
+
+class CredentialError(AppError):
+    """Credential validation or storage failed."""
+    def __init__(self, message: str):
+        super().__init__(
+            message=message,
+            error_code=ErrorCode.BAD_REQUEST,
+            status_code=400
+        )
+
+
+class SessionNotFoundError(NotFoundError):
+    """Trading session not found."""
+    pass
+
+
+class SessionAlreadyStoppedError(ValidationError):
+    """Trading session already stopped."""
+    pass
+
+
+class TaskNotFoundError(NotFoundError):
+    """Task not found."""
+    pass
+
+
+class StrategyNotFoundError(NotFoundError):
+    """Strategy not found."""
+    pass
+
+
 # ========== Response Builders ==========
 
 def build_error_response(
@@ -249,6 +289,13 @@ __all__ = [
     "ValidationError",
     "NotFoundError",
     "ExternalServiceError",
+    "DataNotFoundError",
+    "TickerValidationError",
+    "CredentialError",
+    "SessionNotFoundError",
+    "SessionAlreadyStoppedError",
+    "TaskNotFoundError",
+    "StrategyNotFoundError",
     "create_exception_handlers",
     "build_error_response",
 ]

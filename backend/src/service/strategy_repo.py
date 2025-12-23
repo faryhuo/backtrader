@@ -3,7 +3,7 @@ Strategy Repository.
 
 This module encapsulates user strategy file operations:
 - Strategy name sanitization (prevents path traversal)
-- CRUD operations in `STRATEGY_DIR`
+- CRUD operations in strategy directory (configured in strategy_config.json)
 - Reading strategy source with optional UTF-8 BOM stripping
 """
 
@@ -13,15 +13,25 @@ import re
 from pathlib import Path
 from typing import Final, Tuple
 
-from src.config.settings import STRATEGY_DIR, ensure_resource_dirs
+from src.config.sandbox_config import get_strategy_config_singleton
+from src.config.settings import ensure_resource_dirs
 
 _STRATEGY_NAME_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9_-]+$")
 _UTF8_BOM: Final[str] = "\ufeff"
 
 
+def _get_strategy_dir() -> Path:
+    """Get the strategy directory from config."""
+    config = get_strategy_config_singleton()
+    return config.get_absolute_path()
+
+
 def ensure_strategy_dirs() -> None:
     """Ensure required resource directories exist (strategy/images/etc)."""
     ensure_resource_dirs()
+    # Also ensure strategy dir from config exists
+    strategy_dir = _get_strategy_dir()
+    strategy_dir.mkdir(parents=True, exist_ok=True)
 
 
 def sanitize_strategy_filename(name: str) -> str:
@@ -58,9 +68,9 @@ def get_strategy_path(name: str) -> Path:
         name: Strategy name, with or without ".py".
 
     Returns:
-        Path under `STRATEGY_DIR`.
+        Path under strategy directory (configured in strategy_config.json).
     """
-    return STRATEGY_DIR / sanitize_strategy_filename(name)
+    return _get_strategy_dir() / sanitize_strategy_filename(name)
 
 
 def list_strategies() -> list[str]:
@@ -71,7 +81,8 @@ def list_strategies() -> list[str]:
         Sorted list of strategy stems.
     """
     ensure_strategy_dirs()
-    return sorted({path.stem for path in STRATEGY_DIR.glob("*.py")})
+    strategy_dir = _get_strategy_dir()
+    return sorted({path.stem for path in strategy_dir.glob("*.py")})
 
 
 def get_user_strategy_code(name: str) -> str:
@@ -143,4 +154,5 @@ def _strip_utf8_bom(text: str) -> str:
     if text.startswith(_UTF8_BOM):
         return text.lstrip(_UTF8_BOM)
     return text
+
 

@@ -43,20 +43,15 @@ def get_user_settings(user: dict = Depends(get_current_user)) -> dict:
     Returns settings from database if found, otherwise returns defaults.
     Frontend will migrate from localStorage on first save.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        settings = storage.get_settings(user_id=user_id)
+    settings = storage.get_settings(user_id=user_id)
 
-        return {
-            "status": "ok",
-            "settings": settings
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to get settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "settings": settings
+    }
 
 
 @router.put("/settings")
@@ -70,36 +65,27 @@ def update_user_settings(
     Creates new settings if none exist, updates existing settings otherwise.
     Frontend should migrate localStorage data on first save.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    from src.routes.common.error_utils import validate_list_not_empty
+    
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        # Validate at least one model selected
-        if not request.selected_models or len(request.selected_models) == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="At least one AI model must be selected"
-            )
+    # Validate at least one model selected
+    validate_list_not_empty(request.selected_models, "selected_models")
 
-        settings = storage.save_settings(
-            selected_models=request.selected_models,
-            code_analysis_prompt=request.code_analysis_prompt,
-            code_rewrite_prompt=request.code_rewrite_prompt,
-            full_strategy_analysis_prompt=request.full_strategy_analysis_prompt,
-            user_id=user_id
-        )
+    settings = storage.save_settings(
+        selected_models=request.selected_models,
+        code_analysis_prompt=request.code_analysis_prompt,
+        code_rewrite_prompt=request.code_rewrite_prompt,
+        full_strategy_analysis_prompt=request.full_strategy_analysis_prompt,
+        user_id=user_id
+    )
 
-        return {
-            "status": "ok",
-            "message": "Settings saved successfully",
-            "settings": settings
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to update settings: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to update settings")
+    return {
+        "status": "ok",
+        "message": "Settings saved successfully",
+        "settings": settings
+    }
 
 
 @router.post("/settings/reset")
@@ -109,21 +95,16 @@ def reset_user_settings(user: dict = Depends(get_current_user)) -> dict:
 
     Deletes user settings from database and returns default values.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        defaults = storage.reset_settings(user_id=user_id)
+    defaults = storage.reset_settings(user_id=user_id)
 
-        return {
-            "status": "ok",
-            "message": "Settings reset to defaults",
-            "settings": defaults
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to reset settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": "Settings reset to defaults",
+        "settings": defaults
+    }
 
 
 @router.get("/settings/logto-config")
@@ -135,20 +116,15 @@ def get_logto_config(user: dict = Depends(get_current_user)) -> dict:
     endpoint, appId, redirect URIs, and login enablement status.
     Falls back to environment variables if not set in database.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        config = storage.get_logto_frontend_config(user_id=user_id)
+    config = storage.get_logto_frontend_config(user_id=user_id)
 
-        return {
-            "status": "ok",
-            "config": config
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to get Logto config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "config": config
+    }
 
 
 # ========== CREDENTIAL MANAGEMENT ENDPOINTS ==========
@@ -201,48 +177,43 @@ def get_credentials(user: dict = Depends(get_current_user)) -> dict:
     Returns credentials from database if found, otherwise falls back to .env.
     Sensitive values (API keys, secrets) are masked for security.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        credentials_nested = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
+    credentials_nested = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
 
-        # Flatten the structure to match frontend expectations
-        credentials_flat = {
-            "openai_api_key": credentials_nested["openai"]["api_key"],
-            "openai_base_url": credentials_nested["openai"]["base_url"],
-            "logto_issuer": credentials_nested["logto"]["issuer"],
-            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri"],
-            "logto_audience": credentials_nested["logto"]["audience"],
-            "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
-            "enable_login": credentials_nested["logto"]["enable_login"],
-            "http_proxy": credentials_nested["proxies"]["http_proxy"],
-            "https_proxy": credentials_nested["proxies"]["https_proxy"],
-            "ccxt": credentials_nested["exchanges"]
-        }
+    # Flatten the structure to match frontend expectations
+    credentials_flat = {
+        "openai_api_key": credentials_nested["openai"]["api_key"],
+        "openai_base_url": credentials_nested["openai"]["base_url"],
+        "logto_issuer": credentials_nested["logto"]["issuer"],
+        "logto_jwks_uri": credentials_nested["logto"]["jwks_uri"],
+        "logto_audience": credentials_nested["logto"]["audience"],
+        "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
+        "enable_login": credentials_nested["logto"]["enable_login"],
+        "http_proxy": credentials_nested["proxies"]["http_proxy"],
+        "https_proxy": credentials_nested["proxies"]["https_proxy"],
+        "ccxt": credentials_nested["exchanges"]
+    }
 
-        # Flatten sources as well
-        sources = {
-            "openai_api_key": credentials_nested["openai"]["api_key_source"],
-            "openai_base_url": credentials_nested["openai"]["base_url_source"],
-            "logto_issuer": credentials_nested["logto"]["issuer_source"],
-            "logto_jwks_uri": credentials_nested["logto"]["jwks_uri_source"],
-            "logto_audience": credentials_nested["logto"]["audience_source"],
-            "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
-            "enable_login": credentials_nested["logto"]["enable_login_source"],
-            "http_proxy": credentials_nested["proxies"]["http_proxy_source"],
-            "https_proxy": credentials_nested["proxies"]["https_proxy_source"],
-        }
+    # Flatten sources as well
+    sources = {
+        "openai_api_key": credentials_nested["openai"]["api_key_source"],
+        "openai_base_url": credentials_nested["openai"]["base_url_source"],
+        "logto_issuer": credentials_nested["logto"]["issuer_source"],
+        "logto_jwks_uri": credentials_nested["logto"]["jwks_uri_source"],
+        "logto_audience": credentials_nested["logto"]["audience_source"],
+        "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
+        "enable_login": credentials_nested["logto"]["enable_login_source"],
+        "http_proxy": credentials_nested["proxies"]["http_proxy_source"],
+        "https_proxy": credentials_nested["proxies"]["https_proxy_source"],
+    }
 
-        return {
-            "status": "ok",
-            "credentials": credentials_flat,
-            "sources": sources
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to get credentials: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "credentials": credentials_flat,
+        "sources": sources
+    }
 
 
 @router.put("/settings/credentials")
@@ -256,29 +227,24 @@ def update_credentials(
     Only updates fields that are explicitly set in the request.
     Values are encrypted before storage if they are sensitive fields.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        # Update each credential that was provided
-        updated_fields = []
-        for key, value in request.dict(exclude_unset=True).items():
-            if value is not None:  # Allow empty string to clear a value
-                success = storage.save_credential(key, value, user_id)
-                if success:
-                    updated_fields.append(key)
-                else:
-                    logger.warning(f"Failed to update credential: {key}")
+    # Update each credential that was provided
+    updated_fields = []
+    for key, value in request.dict(exclude_unset=True).items():
+        if value is not None:  # Allow empty string to clear a value
+            success = storage.save_credential(key, value, user_id)
+            if success:
+                updated_fields.append(key)
+            else:
+                logger.warning(f"Failed to update credential: {key}")
 
-        return {
-            "status": "ok",
-            "message": f"Updated {len(updated_fields)} credentials",
-            "updated_fields": updated_fields
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to update credentials: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": f"Updated {len(updated_fields)} credentials",
+        "updated_fields": updated_fields
+    }
 
 
 @router.put("/settings/credentials/ccxt")
@@ -291,45 +257,37 @@ def update_ccxt_credentials(
 
     Credentials are encrypted before storage.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    from src.utils.exception_handlers import ValidationError, CredentialError
+    
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        # Extract credentials dict
-        credentials = {}
-        if request.api_key is not None:
-            credentials["api_key"] = request.api_key
-        if request.secret is not None:
-            credentials["secret"] = request.secret
-        if request.passphrase is not None:
-            credentials["passphrase"] = request.passphrase
+    # Extract credentials dict
+    credentials = {}
+    if request.api_key is not None:
+        credentials["api_key"] = request.api_key
+    if request.secret is not None:
+       credentials["secret"] = request.secret
+    if request.passphrase is not None:
+        credentials["passphrase"] = request.passphrase
 
-        if not credentials:
-            raise HTTPException(
-                status_code=400,
-                detail="At least one credential field must be provided"
-            )
+    if not credentials:
+        raise ValidationError("At least one credential field must be provided")
 
-        success = storage.save_ccxt_credentials(
-            exchange=request.exchange,
-            mode=request.mode,
-            credentials=credentials,
-            user_id=user_id
-        )
+    success = storage.save_ccxt_credentials(
+        exchange=request.exchange,
+        mode=request.mode,
+        credentials=credentials,
+        user_id=user_id
+    )
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to save credentials")
+    if not success:
+        raise CredentialError("Failed to save credentials")
 
-        return {
-            "status": "ok",
-            "message": f"Updated {request.exchange} {request.mode} credentials"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to update CCXT credentials: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": f"Updated {request.exchange} {request.mode} credentials"
+    }
 
 
 @router.delete("/settings/credentials/{credential_key}")
@@ -342,25 +300,20 @@ def reset_credential(
 
     After deletion, the credential will fall back to the value in .env file.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    from src.utils.exception_handlers import CredentialError
+    
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        success = storage.delete_credential(credential_key, user_id)
+    success = storage.delete_credential(credential_key, user_id)
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to delete credential")
+    if not success:
+        raise CredentialError("Failed to delete credential")
 
-        return {
-            "status": "ok",
-            "message": f"Credential '{credential_key}' reset to .env value"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to reset credential: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": f"Credential '{credential_key}' reset to .env value"
+    }
 
 
 @router.post("/settings/credentials/test")
@@ -444,20 +397,15 @@ def get_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
 
     Returns the priority order for fetching market data and EODHD API key status.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        settings = storage.get_data_source_settings(user_id=user_id)
+    settings = storage.get_data_source_settings(user_id=user_id)
 
-        return {
-            "status": "ok",
-            "settings": settings
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to get data source settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "settings": settings
+    }
 
 
 @router.put("/settings/data-source")
@@ -470,39 +418,33 @@ def update_data_source_settings(
 
     Sets the priority order for fetching market data and/or EODHD API key.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    from src.utils.exception_handlers import ValidationError, CredentialError
+    
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        # Validate priority if provided
-        valid_sources = {"yahoo", "eodhd", "database"}
-        if request.data_source_priority:
-            invalid = [s for s in request.data_source_priority if s not in valid_sources]
-            if invalid:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid data sources: {invalid}. Valid options: {list(valid_sources)}"
-                )
+    # Validate priority if provided
+    valid_sources = {"yahoo", "eodhd", "database"}
+    if request.data_source_priority:
+        invalid = [s for s in request.data_source_priority if s not in valid_sources]
+        if invalid:
+            raise ValidationError(
+                f"Invalid data sources: {invalid}. Valid options: {list(valid_sources)}"
+            )
 
-        success = storage.save_data_source_settings(
-            data_source_priority=request.data_source_priority,
-            eodhd_api_key=request.eodhd_api_key,
-            user_id=user_id
-        )
+    success = storage.save_data_source_settings(
+        data_source_priority=request.data_source_priority,
+        eodhd_api_key=request.eodhd_api_key,
+        user_id=user_id
+    )
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to save data source settings")
+    if not success:
+        raise CredentialError("Failed to save data source settings")
 
-        return {
-            "status": "ok",
-            "message": "Data source settings saved successfully"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to update data source settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": "Data source settings saved successfully"
+    }
 
 
 @router.post("/settings/data-source/reset")
@@ -512,27 +454,22 @@ def reset_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
 
     Removes custom priority and EODHD API key from database.
     """
-    try:
-        storage = get_settings_storage()
-        user_id = user.get("sub") if user else None
+    from src.utils.exception_handlers import CredentialError
+    
+    storage = get_settings_storage()
+    user_id = user.get("sub") if user else None
 
-        success = storage.reset_data_source_settings(user_id=user_id)
+    success = storage.reset_data_source_settings(user_id=user_id)
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to reset data source settings")
+    if not success:
+        raise CredentialError("Failed to reset data source settings")
 
-        # Return new settings (defaults)
-        settings = storage.get_data_source_settings(user_id=user_id)
+    # Return new settings (defaults)
+    settings = storage.get_data_source_settings(user_id=user_id)
 
-        return {
-            "status": "ok",
-            "message": "Data source settings reset to defaults",
-            "settings": settings
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to reset data source settings: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "status": "ok",
+        "message": "Data source settings reset to defaults",
+        "settings": settings
+    }
 
