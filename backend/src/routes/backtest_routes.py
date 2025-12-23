@@ -6,8 +6,10 @@ Handles:
 - Backtest history CRUD
 - AI analysis updates
 """
+import asyncio
 import uuid
 import logging
+from functools import partial
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -125,17 +127,22 @@ async def _backtest_executor(config: dict, progress_callback) -> dict:
     
     await progress_callback(20, "Running backtest")
     
-    # Run backtest
-    metrics = run_backtest(
-        ticker=config["ticker"],
-        start_date=config["start_date"],
-        end_date=config["end_date"],
-        initial_cash=config.get("initial_cash", 100000.0),
-        commission=config.get("commission", 0.0005),
-        stake=config.get("stake", 100),
-        strategy_name=config.get("strategy_name"),
-        save_path=save_path,
-        params=config.get("params"),
+    # Run backtest in thread pool to avoid blocking event loop
+    loop = asyncio.get_event_loop()
+    metrics = await loop.run_in_executor(
+        None,  # Use default ThreadPoolExecutor
+        partial(
+            run_backtest,
+            ticker=config["ticker"],
+            start_date=config["start_date"],
+            end_date=config["end_date"],
+            initial_cash=config.get("initial_cash", 100000.0),
+            commission=config.get("commission", 0.0005),
+            stake=config.get("stake", 100),
+            strategy_name=config.get("strategy_name"),
+            save_path=save_path,
+            params=config.get("params"),
+        )
     )
     
     if metrics is None:

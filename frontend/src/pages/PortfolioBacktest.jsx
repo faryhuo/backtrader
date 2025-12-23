@@ -155,7 +155,8 @@ function PortfolioBacktest() {
             // Build params object only if there are overrides
             const paramsToSend = Object.keys(paramOverrides).length > 0 ? paramOverrides : null
 
-            const data = await api.runPortfolioBacktest({
+            // Submit portfolio backtest task
+            const taskResponse = await api.runPortfolioBacktest({
                 tickers: validTickers,
                 weights: weights.slice(0, validTickers.length),
                 start_date: dateRange[0].format('YYYY-MM-DD'),
@@ -166,7 +167,35 @@ function PortfolioBacktest() {
                 strategy_name: selectedStrategy || null,
                 params: paramsToSend
             })
-            setResult(data)
+
+            // If response contains task_id, poll for completion
+            if (taskResponse.task_id) {
+                const { taskApi } = await import('../services/taskApi')
+                const taskId = taskResponse.task_id
+
+                // Poll for task completion
+                let taskStatus = taskResponse.status
+                let taskData = null
+
+                while (taskStatus === 'pending' || taskStatus === 'running') {
+                    await new Promise(resolve => setTimeout(resolve, 1500)) // Wait 1.5s
+                    taskData = await taskApi.getTask(taskId)
+                    taskStatus = taskData.status
+                }
+
+                if (taskStatus === 'completed' && taskData?.result_id) {
+                    // Fetch the actual portfolio result
+                    const portfolioResult = await api.getPortfolioDetail(taskData.result_id)
+                    setResult(portfolioResult)
+                } else if (taskStatus === 'failed') {
+                    throw new Error(taskData?.error_message || t('portfolio.error.run_failed', 'Portfolio backtest failed'))
+                } else if (taskStatus === 'cancelled') {
+                    throw new Error(t('common.task_cancelled', 'Task was cancelled'))
+                }
+            } else {
+                // Legacy response format - direct result
+                setResult(taskResponse)
+            }
         } catch (err) {
             setError(err?.message || t('portfolio.error.run_failed', 'Portfolio backtest failed'))
         } finally {

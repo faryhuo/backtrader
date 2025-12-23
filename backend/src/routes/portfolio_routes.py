@@ -7,8 +7,10 @@ This module provides REST API endpoints for:
 - Retrieving portfolio details
 """
 
+import asyncio
 import logging
 import uuid
+from functools import partial
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -69,18 +71,23 @@ async def _portfolio_executor(config: dict, progress_callback) -> dict:
     
     await progress_callback(10, "Starting portfolio backtest")
     
-    # Run portfolio backtest
-    result = run_portfolio_backtest(
-        tickers=config["tickers"],
-        weights=config["weights"],
-        start_date=config["start_date"],
-        end_date=config["end_date"],
-        initial_cash=config.get("initial_cash", 100000.0),
-        commission=config.get("commission", 0.0005),
-        stake=config.get("stake", 100),
-        strategy_name=config.get("strategy_name"),
-        params=config.get("params"),
-        save_path=save_path,
+    # Run portfolio backtest in thread pool to avoid blocking event loop
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,  # Use default ThreadPoolExecutor
+        partial(
+            run_portfolio_backtest,
+            tickers=config["tickers"],
+            weights=config["weights"],
+            start_date=config["start_date"],
+            end_date=config["end_date"],
+            initial_cash=config.get("initial_cash", 100000.0),
+            commission=config.get("commission", 0.0005),
+            stake=config.get("stake", 100),
+            strategy_name=config.get("strategy_name"),
+            params=config.get("params"),
+            save_path=save_path,
+        )
     )
     
     await progress_callback(80, "Saving portfolio results")

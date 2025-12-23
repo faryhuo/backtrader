@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import { Select, Button, Space, message, Tabs } from 'antd'
+import { Select, Button, Space, message, Tabs, Progress, Card } from 'antd'
 import '../components/RunStrategy/RunStrategy.css'
 import { api } from '../services/api'
 import { performFullStrategyAnalysis } from '../services/aiAnalysis'
@@ -23,7 +23,9 @@ import {
     CodeOutlined,
     StockOutlined,
     CalendarOutlined,
-    DollarOutlined
+    DollarOutlined,
+    LoadingOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 
@@ -44,6 +46,9 @@ function RunStrategy() {
     const [result, setResult] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+
+    // Task Progress State
+    const [taskProgress, setTaskProgress] = useState(null)
 
     // AI Analysis State
     const [aiLoading, setAiLoading] = useState(false)
@@ -118,11 +123,13 @@ function RunStrategy() {
         setResult(null)
         setAnalyses({})
         setActiveTab(null)
+        setTaskProgress(null)
 
         try {
             const paramsToSend = Object.keys(paramOverrides).length > 0 ? paramOverrides : null;
 
-            const data = await api.runBacktest({
+            // Submit backtest task
+            const taskResponse = await api.runBacktest({
                 ticker,
                 start_date: startDate,
                 end_date: endDate,
@@ -132,12 +139,57 @@ function RunStrategy() {
                 strategy_name: selectedStrategy,
                 params: paramsToSend
             })
-            setResult(data)
+
+            // If response contains task_id, poll for completion
+            if (taskResponse.task_id) {
+                const { taskApi } = await import('../services/taskApi')
+                const taskId = taskResponse.task_id
+
+                // Poll for task completion with progress updates
+                let taskStatus = taskResponse.status
+                let taskData = null
+
+                // Initial progress
+                setTaskProgress({
+                    status: taskStatus,
+                    progress: 0,
+                    name: taskResponse.name || `Backtest ${ticker} - ${selectedStrategy}`,
+                    message: 'Starting backtest...'
+                })
+
+                while (taskStatus === 'pending' || taskStatus === 'running') {
+                    await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s
+                    taskData = await taskApi.getTask(taskId)
+                    taskStatus = taskData.status
+
+                    // Update progress
+                    setTaskProgress({
+                        status: taskStatus,
+                        progress: taskData.progress || 0,
+                        name: taskData.name || `Backtest ${ticker} - ${selectedStrategy}`,
+                        message: taskData.logs?.slice(-1)?.[0]?.message || (taskStatus === 'running' ? 'Running backtest...' : 'Waiting...')
+                    })
+                }
+
+                if (taskStatus === 'completed' && taskData?.result_id) {
+                    // Fetch the actual backtest result
+                    const backtestResult = await api.getBacktestDetail(taskData.result_id)
+                    setResult(backtestResult)
+                } else if (taskStatus === 'failed') {
+                    throw new Error(taskData?.error_message || t('common.backtest_failed', 'Backtest failed'))
+                } else if (taskStatus === 'cancelled') {
+                    throw new Error(t('common.backtest_cancelled', 'Backtest was cancelled'))
+                }
+            } else {
+                // Legacy response format - direct result
+                setResult(taskResponse)
+            }
         } catch (err) {
             console.error(err)
             setError(err.message || t('common.error_occurred', 'An error occurred'))
         } finally {
             setLoading(false)
+            setTaskProgress(null)
         }
     }
 
@@ -390,6 +442,34 @@ function RunStrategy() {
                         items={tabItems}
                     />
                 </div>
+            ) : loading && taskProgress ? (
+                <Card className="task-progress-card" style={{
+                    background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%)',
+                    border: '1px solid rgba(34, 211, 238, 0.3)',
+                    borderRadius: '12px',
+                    marginTop: '24px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                        {taskProgress.status === 'completed' ? (
+                            <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
+                        ) : (
+                            <LoadingOutlined style={{ fontSize: '24px', color: '#22d3ee' }} spin />
+                        )}
+                        <div>
+                            <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: '16px' }}>{taskProgress.name}</h3>
+                            <span style={{ color: '#94a3b8', fontSize: '14px' }}>{taskProgress.message}</span>
+                        </div>
+                    </div>
+                    <Progress
+                        percent={taskProgress.progress}
+                        status={taskProgress.status === 'running' ? 'active' : 'normal'}
+                        strokeColor={{
+                            '0%': '#22d3ee',
+                            '100%': '#0891b2',
+                        }}
+                        trailColor="rgba(255,255,255,0.1)"
+                    />
+                </Card>
             ) : (
                 <div className="empty-state-container">
                     <div className="empty-state-icon">

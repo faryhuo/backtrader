@@ -8,8 +8,10 @@ Provides endpoints for:
 - Deleting optimizations
 """
 
+import asyncio
 import logging
 import uuid
+from functools import partial
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -100,10 +102,15 @@ async def _walkforward_executor(config: dict, progress_callback) -> dict:
     
     await progress_callback(30, "Running walk-forward analysis")
     
-    # Run walk-forward analysis
-    result = optimizer.run_walkforward(
-        optimization_metric=config.get("optimization_metric", "sharpe_ratio"),
-        optimization_id=optimization_id,
+    # Run walk-forward analysis in thread pool to avoid blocking event loop
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,  # Use default ThreadPoolExecutor
+        partial(
+            optimizer.run_walkforward,
+            optimization_metric=config.get("optimization_metric", "sharpe_ratio"),
+            optimization_id=optimization_id,
+        )
     )
     
     await progress_callback(90, "Saving optimization results")
