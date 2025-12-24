@@ -18,7 +18,7 @@
 
 ## 后端：冗余与可维护性问题清单
 
-### 1) 任务管理“两套机制并存”，路由层重复写状态机
+### ----1) 任务管理“两套机制并存”，路由层重复写状态机
 
 - 位置：
   - `backend/src/service/task_manager.py`（统一并发控制、日志、WebSocket 广播的 TaskManager）
@@ -34,7 +34,7 @@
   - 把 `backtest/portfolio/walkforward/deep_analysis` 的执行入口改为 `TaskManager.submit()` 统一调度（路由只负责参数校验与提交）。
   - 抽取 `routes/common/task_helpers.py`：统一 `user_id`、task_name 生成、progress 规范与异常映射。
 
-### 2) `async` 路由内部执行同步/阻塞逻辑（事件循环被卡住）
+### ----2) `async` 路由内部执行同步/阻塞逻辑（事件循环被卡住）
 
 - 位置：
   - `backend/src/routes/backtest_routes.py`：`async def backtest()` 内部调用同步 `run_backtest(...)`
@@ -47,7 +47,7 @@
   - **两条路径二选一**：要么把这些路由改成同步 `def` 并明确为“同步执行”；要么改成真正后台任务（TaskManager + WS/轮询获取结果）。
   - 若短期无法完全改后台任务，至少把阻塞部分移到 `run_in_executor`（并明确超时/取消语义）。
 
-### 3) 路由层重复的 try/except + HTTPException 映射与日志样板
+### ---3) 路由层重复的 try/except + HTTPException 映射与日志样板
 
 - 位置：`backend/src/routes/*.py`（尤其 `market_data_routes.py`、`settings_routes.py`、`live_routes.py` 等）
 - 冗余点：
@@ -71,7 +71,7 @@
 - 建议：
   - 使用 FastAPI 依赖注入 + `functools.lru_cache`（或 `app.state`）来做单例依赖，集中在 `routes/dependencies.py`。
 
-### 5) 存储层重复的 DB session 管理样板（而已有 BaseStorage 工具）
+### ----5) 存储层重复的 DB session 管理样板（而已有 BaseStorage 工具）
 
 - 位置：`backend/src/db/storage/*.py`、`backend/src/db/storage/settings/*.py`
   - 大量 `close_db = False` → `if db is None: db = get_db_session(); close_db=True` → `try/except/rollback/finally close`
@@ -153,7 +153,7 @@
 - 建议：
   - `siteApi.js` 与 `aiAnalysis.js` 统一改用 `buildRequest/parseResponse`（或直接复用现成 domain API：`strategyApi/backtestApi/...`）。
 
-### 2) AI Settings 默认值/读取逻辑重复且不一致（至少 3 份）
+### ---2) AI Settings 默认值/读取逻辑重复且不一致（至少 3 份）
 
 - 位置：
   - `frontend/src/constants/settingsConstants.js`（默认值）
@@ -165,7 +165,7 @@
 - 建议：
   - `aiAnalysis.js` 不再自带默认值与 localStorage 读取；改为从 `SettingsContext` 获取（或注入 settings 参数），默认值只保留在 `settingsConstants.js` 一处。
 
-### 3) “策略列表 + 参数拉取 + 默认值覆盖”逻辑在多页面/组件复制
+### ---3) “策略列表 + 参数拉取 + 默认值覆盖”逻辑在多页面/组件复制
 
 - 位置：
   - `frontend/src/pages/RunStrategy.jsx`
@@ -176,7 +176,7 @@
 - 建议：
   - 抽 `useStrategies()` + `useStrategyParams(strategyName)` hooks（包含默认值初始化与错误兜底策略），各页面只负责渲染。
 
-### 4) 多个页面组件体积过大，UI 与数据/业务逻辑耦合
+### ---4) 多个页面组件体积过大，UI 与数据/业务逻辑耦合
 
 - 位置（代表性）：
   - `frontend/src/pages/PortfolioBacktest.jsx`

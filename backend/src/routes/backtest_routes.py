@@ -29,22 +29,12 @@ from src.service.deep_analysis import (
 )
 from src.db.storage.market_data import DataLoadError
 from src.db.storage.backtest import BacktestStorage
+from src.routes.common.dependencies import get_backtest_storage
 from src.utils.auth import get_current_user
 from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Initialize backtest storage (module-level singleton)
-_backtest_storage = None
-
-
-def get_backtest_storage():
-    """Get or create backtest storage singleton."""
-    global _backtest_storage
-    if _backtest_storage is None:
-        _backtest_storage = BacktestStorage()
-    return _backtest_storage
 
 
 def _get_task_storage():

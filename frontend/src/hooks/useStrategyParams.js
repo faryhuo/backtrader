@@ -1,99 +1,142 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { api } from '../services/api'
 
 /**
  * Hook for fetching and managing strategy parameters.
  * Shared between RunStrategy and PortfolioBacktest pages.
  *
  * @param {string} selectedStrategy - Currently selected strategy name
+ * @param {object} [options]
+ * @param {boolean} [options.enabled=true] - Whether to fetch strategy data
+ * @param {boolean} [options.includeCode=true] - Whether to fetch strategy code
+ * @param {object|null} [options.initialOverrides=null] - Values to override defaults
  * @returns {Object} Strategy params state and handlers
  */
-export function useStrategyParams(selectedStrategy) {
-    const [strategyParams, setStrategyParams] = useState([]);
-    const [paramOverrides, setParamOverrides] = useState({});
-    const [strategyCode, setStrategyCode] = useState('');
-    const [loading, setLoading] = useState(false);
+export function useStrategyParams(selectedStrategy, options = {}) {
+    const {
+        enabled = true,
+        includeCode = true,
+        initialOverrides = null
+    } = options
 
-    // Fetch strategy parameters and code when strategy changes
-    useEffect(() => {
-        const fetchStrategyDetails = async () => {
-            if (!selectedStrategy) {
-                setStrategyParams([]);
-                setParamOverrides({});
-                setStrategyCode('');
-                return;
-            }
+    const [strategyParams, setStrategyParams] = useState([])
+    const [paramOverrides, setParamOverrides] = useState({})
+    const [paramDefaults, setParamDefaults] = useState({})
+    const [strategyCode, setStrategyCode] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
 
-            setLoading(true);
-            try {
-                // Fetch parameters
-                const paramsData = await api.getStrategyParams(selectedStrategy);
-                setStrategyParams(paramsData.params || []);
+    const requestIdRef = useRef(0)
 
-                // Initialize overrides with default values
-                const defaults = {};
-                (paramsData.params || []).forEach(p => {
-                    defaults[p.name] = p.value;
-                });
-                setParamOverrides(defaults);
+    const refresh = useCallback(async () => {
+        if (!enabled) return
 
-                // Fetch strategy code
+        const requestId = ++requestIdRef.current
+
+        if (!selectedStrategy) {
+            setStrategyParams([])
+            setParamOverrides({})
+            setParamDefaults({})
+            setStrategyCode('')
+            setError(null)
+            return
+        }
+
+        setLoading(true)
+        setError(null)
+
+        try {
+            const paramsData = await api.getStrategyParams(selectedStrategy)
+            if (requestId !== requestIdRef.current) return
+
+            const params = paramsData?.params || []
+            setStrategyParams(params)
+
+            const defaults = {}
+            params.forEach(p => {
+                defaults[p.name] = p.value
+            })
+            setParamDefaults(defaults)
+
+            const mergedOverrides = initialOverrides
+                ? { ...defaults, ...initialOverrides }
+                : defaults
+            setParamOverrides(mergedOverrides)
+
+            if (includeCode) {
                 try {
-                    const strategyData = await api.getStrategy(selectedStrategy);
-                    if (strategyData && strategyData.code) {
-                        setStrategyCode(strategyData.code);
-                    }
+                    const strategyData = await api.getStrategy(selectedStrategy)
+                    if (requestId !== requestIdRef.current) return
+                    setStrategyCode(strategyData?.code || '')
                 } catch {
-                    // Strategy code is optional
-                    setStrategyCode('');
+                    if (requestId !== requestIdRef.current) return
+                    setStrategyCode('')
                 }
-            } catch (err) {
-                console.warn('Failed to fetch strategy details:', err);
-                setStrategyParams([]);
-                setParamOverrides({});
-            } finally {
-                setLoading(false);
+            } else {
+                setStrategyCode('')
             }
-        };
+        } catch (err) {
+            if (requestId !== requestIdRef.current) return
+            console.warn('Failed to fetch strategy details:', err)
+            setStrategyParams([])
+            setParamOverrides({})
+            setParamDefaults({})
+            setStrategyCode('')
+            setError(err)
+        } finally {
+            if (requestId === requestIdRef.current) setLoading(false)
+        }
+    }, [enabled, selectedStrategy, includeCode, initialOverrides])
 
-        fetchStrategyDetails();
-    }, [selectedStrategy]);
+    useEffect(() => {
+        refresh()
+    }, [refresh])
 
     // Handle parameter value change with type coercion
     const handleParamChange = useCallback((name, value, type) => {
-        let parsedValue = value;
+        let parsedValue = value
         if (type === 'int') {
-            parsedValue = parseInt(value, 10) || 0;
+            parsedValue = parseInt(value, 10) || 0
         } else if (type === 'float') {
-            parsedValue = parseFloat(value) || 0;
+            parsedValue = parseFloat(value) || 0
         }
-        setParamOverrides(prev => ({ ...prev, [name]: parsedValue }));
-    }, []);
+        setParamOverrides(prev => ({ ...prev, [name]: parsedValue }))
+    }, [])
 
     // Reset params to defaults
     const resetParams = useCallback(() => {
-        const defaults = {};
-        strategyParams.forEach(p => {
-            defaults[p.name] = p.value;
-        });
-        setParamOverrides(defaults);
-    }, [strategyParams]);
+        setParamOverrides(paramDefaults)
+    }, [paramDefaults])
 
     // Get params object for API call (null if no overrides)
     const getParamsForApi = useCallback(() => {
-        return Object.keys(paramOverrides).length > 0 ? paramOverrides : null;
-    }, [paramOverrides]);
+        return Object.keys(paramOverrides).length > 0 ? paramOverrides : null
+    }, [paramOverrides])
 
-    return {
+    return useMemo(() => ({
         strategyParams,
         paramOverrides,
         setParamOverrides,
+        paramDefaults,
         strategyCode,
         loading,
+        error,
+        refresh,
         handleParamChange,
         resetParams,
-        getParamsForApi,
-    };
+        getParamsForApi
+    }), [
+        strategyParams,
+        paramOverrides,
+        paramDefaults,
+        strategyCode,
+        loading,
+        error,
+        refresh,
+        handleParamChange,
+        resetParams,
+        getParamsForApi
+    ])
 }
 
 export default useStrategyParams;

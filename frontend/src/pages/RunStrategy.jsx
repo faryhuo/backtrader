@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Select, Button, Space, Tabs, Progress, Card } from 'antd';
 import '../components/RunStrategy/RunStrategy.css';
-import { api } from '../services/api';
 import { useSettingsContext } from '../contexts/SettingsContext';
 import { useStrategyParams } from '../hooks/useStrategyParams';
+import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
 import { useAIAnalysis } from '../hooks/useAIAnalysis';
 import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm';
@@ -41,8 +41,13 @@ function RunStrategy() {
     const [initialCash, setInitialCash] = useState(100000.0);
     const [commission, setCommission] = useState(0.0005);
     const [stake, setStake] = useState(100);
-    const [strategies, setStrategies] = useState([]);
-    const [selectedStrategy, setSelectedStrategy] = useState('');
+
+    const {
+        strategies,
+        selectedStrategy,
+        setSelectedStrategy,
+        refresh: fetchStrategies,
+    } = useStrategies();
 
     // Use custom hooks for complex state management
     const {
@@ -71,31 +76,6 @@ function RunStrategy() {
         clearAnalyses,
         availableModels,
     } = useAIAnalysis({ getAvailableModels, settings });
-
-    // Load strategies on mount
-    useEffect(() => {
-        const init = async () => {
-            const names = await fetchStrategies();
-            if (names && names.length > 0) {
-                if (!names.includes(selectedStrategy)) {
-                    setSelectedStrategy(names[0]);
-                }
-            }
-        };
-        init();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const fetchStrategies = async () => {
-        try {
-            const names = await api.getStrategies();
-            setStrategies(names);
-            return names;
-        } catch (err) {
-            console.error('Failed to fetch strategies', err);
-            return [];
-        }
-    };
 
     const handleBacktest = async (e) => {
         e.preventDefault();

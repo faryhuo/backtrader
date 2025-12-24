@@ -22,3 +22,7 @@ frontend/.env.prod
 frontend/node_modules
 frontend/dist
 
+auto_test/.env
+auto_test/test_screenshots
+auto_test/test/trading_sessions.db
+

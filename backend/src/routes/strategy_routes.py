@@ -19,6 +19,7 @@ from src.service.backtest_engine import (
     extract_strategy_params,
 )
 from src.db.storage.strategy_version import StrategyVersionStorage
+from src.routes.common.dependencies import get_version_storage
 from src.service.version_service import compare_versions
 from src.utils.auth import get_current_user
 from src.service.strategy_templates import (
@@ -30,17 +31,6 @@ from src.service.strategy_templates import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Initialize version storage (module-level singleton)
-_version_storage = None
-
-
-def get_version_storage():
-    """Get or create version storage singleton."""
-    global _version_storage
-    if _version_storage is None:
-        _version_storage = StrategyVersionStorage()
-    return _version_storage
 
 
 # ========== Pydantic Models ==========

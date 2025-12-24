@@ -20,7 +20,8 @@ import {
 } from 'antd'
 import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { api } from '../../services/api'
+import { useStrategies } from '../../hooks/useStrategies'
+import { useStrategyParams } from '../../hooks/useStrategyParams'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -29,58 +30,59 @@ const { Text } = Typography
 const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const { t } = useTranslation()
     const [form] = Form.useForm()
-    const [strategies, setStrategies] = useState([])
     const [loading, setLoading] = useState(false)
-    const [loadingParams, setLoadingParams] = useState(false)
+    const [selectedStrategy, setSelectedStrategy] = useState('')
+
+    const {
+        strategies,
+        loading: loadingStrategies,
+        error: strategiesError,
+    } = useStrategies({ enabled: visible, autoSelectFirst: false })
+
+    const {
+        strategyParams,
+        paramOverrides,
+        loading: loadingParams,
+    } = useStrategyParams(selectedStrategy, { enabled: visible, includeCode: false })
 
     useEffect(() => {
         if (visible) {
-            loadStrategies()
             form.resetFields()
+            setSelectedStrategy('')
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible])
 
-    const loadStrategies = async () => {
-        try {
-            const data = await api.getStrategies()
-            setStrategies(data)
-        } catch (err) {
-            console.error('Failed to load strategies:', err)
-            message.error(t('walkforward.config.loadStrategiesError'))
-        }
-    }
+    useEffect(() => {
+        if (!visible) return
+        if (!strategiesError) return
+        message.error(t('walkforward.config.loadStrategiesError'))
+    }, [visible, strategiesError, t])
 
     // Fetch strategy params when strategy changes
-    const handleStrategyChange = async (strategyName) => {
-        if (!strategyName) {
+    const handleStrategyChange = (strategyName) => {
+        setSelectedStrategy(strategyName || '')
+    }
+
+    useEffect(() => {
+        if (!visible) return
+
+        if (!selectedStrategy) {
             form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
             return
         }
 
-        setLoadingParams(true)
-        try {
-            const data = await api.getStrategyParams(strategyName)
-            const params = data.params || []
-
-            if (params.length > 0) {
-                // Populate parameter grid with strategy params
-                const parameterFields = params.map(p => ({
-                    name: p.name,
-                    values: String(p.value) // Pre-fill with default value as starting point
-                }))
-                form.setFieldsValue({ parameters: parameterFields })
-            } else {
-                // No params found, reset to empty
-                form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
-            }
-        } catch (err) {
-            console.warn('Failed to fetch strategy params:', err)
-            // Keep current params on error
-        } finally {
-            setLoadingParams(false)
+        const params = strategyParams || []
+        if (params.length > 0) {
+            const parameterFields = params.map(p => ({
+                name: p.name,
+                values: String(paramOverrides?.[p.name] ?? p.value ?? '')
+            }))
+            form.setFieldsValue({ parameters: parameterFields })
+        } else {
+            form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
         }
-    }
+    }, [visible, selectedStrategy, strategyParams, paramOverrides, form])
 
     const handleSubmit = async () => {
         try {
@@ -168,7 +170,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             <Select
                                 placeholder={t('walkforward.config.selectStrategy')}
                                 onChange={handleStrategyChange}
-                                loading={loadingParams}
+                                loading={loadingParams || loadingStrategies}
                             >
                                 {strategies.map(s => (
                                     <Option key={s} value={s}>{s}</Option>

@@ -20,6 +20,19 @@ class TestCriticalAPI:
         # 503 means server is up but may need proper authentication
         assert response.status_code in [200, 401, 403, 503]
 
+    def test_site_config_public_endpoint(self, api_client):
+        """Verify public site config endpoint works without auth."""
+        response = api_client.get("/api/site/config")
+        assert response.status_code in [200, 503]
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, dict)
+            assert "site" in data
+            assert "links" in data
+            assert "stats" in data
+            assert "features" in data
+
     def test_strategy_list_endpoint(self, api_client):
         """Verify strategy listing endpoint works."""
         response = api_client.get("/api/strategies")

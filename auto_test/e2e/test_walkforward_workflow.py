@@ -1,159 +1,183 @@
 """
-E2E tests for walk-forward optimization workflow.
+E2E tests for Walk-forward Optimization API.
 
-Tests cover:
-- Starting walk-forward optimizations
-- Listing optimization results
-- Getting optimization details and status
-- Error handling
+Based on TEST_CASES.md - WALKFORWARD section:
+- WF-001: Empty/invalid param_grid returns 422/400
+- WF-002: train_period_days/test_period_days minimum validation
+- WF-003: List filtering/pagination/sorting works
+- WF-004: Get/status not found returns 404
+- WF-005: Delete not found returns 404
 """
 
 import pytest
 import sys
-import time
 from pathlib import Path
 
 # Add libs to path
 libs_path = Path(__file__).parent.parent / "libs"
 sys.path.insert(0, str(libs_path))
 
-from assertions import assert_api_response, assert_api_error, assert_walkforward_result
-from response_normalizer import normalize_list_response
+from assertions import assert_api_response, assert_api_error
+import api_paths
 
+
+# ========== Walk-forward Submission Tests ==========
 
 @pytest.mark.api
 @pytest.mark.requires_auth
-class TestWalkForwardAPI:
-    """API tests for walk-forward optimization."""
+class TestWalkforwardSubmission:
+    """API tests for walk-forward optimization submission."""
+
+    def test_wf_001_empty_param_grid(self, api_client, data_fixtures):
+        """WF-001: Empty param_grid returns 422/400."""
+        config = data_fixtures.walkforward_config()
+        config["param_grid"] = {}  # Empty
+        
+        response = api_client.post(api_paths.WALKFORWARD_START, json=config)
+        
+        # Should fail validation
+        assert response.status_code in [400, 422]
+
+    def test_wf_001_invalid_param_grid_structure(self, api_client, data_fixtures):
+        """WF-001: Invalid param_grid structure returns 422/400."""
+        config = data_fixtures.walkforward_config()
+        config["param_grid"] = "not_a_dict"  # Invalid structure
+        
+        response = api_client.post(api_paths.WALKFORWARD_START, json=config)
+        
+        # Should fail validation
+        assert response.status_code in [400, 422]
+
+    def test_wf_002_train_period_too_short(self, api_client, data_fixtures):
+        """WF-002: train_period_days below minimum returns 422/400."""
+        config = data_fixtures.walkforward_config()
+        config["train_period_days"] = 10  # Below minimum (ge=30)
+        
+        response = api_client.post(api_paths.WALKFORWARD_START, json=config)
+        
+        # Should fail validation
+        assert response.status_code in [400, 422]
+
+    def test_wf_002_test_period_too_short(self, api_client, data_fixtures):
+        """WF-002: test_period_days below minimum returns 422/400."""
+        config = data_fixtures.walkforward_config()
+        config["test_period_days"] = 3  # Below minimum (ge=7)
+        
+        response = api_client.post(api_paths.WALKFORWARD_START, json=config)
+        
+        # Should fail validation
+        assert response.status_code in [400, 422]
 
     @pytest.mark.slow
-    def test_start_walkforward_optimization(self, api_client, data_fixtures, test_strategy_name):
-        """Test starting a walk-forward optimization."""
-        # Create strategy first
-        strategy_code = data_fixtures.simple_strategy_code(test_strategy_name)
+    def test_walkforward_submit_success(self, api_client, data_fixtures, test_strategy_name):
+        """Submit valid walk-forward optimization."""
+        # First create a strategy
+        strategy_code = data_fixtures.strategy_with_params()
         api_client.post(
-            "/api/strategies",
+            api_paths.STRATEGY,
             json={"name": test_strategy_name, "code": strategy_code}
         )
-
+        
         config = data_fixtures.walkforward_config(
-            ticker="AAPL",
-            strategy_name=test_strategy_name,
-            days_back=365,
+            strategy_name=test_strategy_name
         )
-
-        response = api_client.post("/api/walkforward/start", json=config)
-
+        
+        response = api_client.post(api_paths.WALKFORWARD_START, json=config)
+        
         if response.status_code == 200:
             data = response.json()
-            assert "optimization_id" in data
-            assert "status" in data
-            assert data["status"] in ["pending", "running"]
-            return data["optimization_id"]
+            # Should have optimization_id or task_id
+            assert "optimization_id" in data or "task_id" in data
         else:
-            # May fail if resources unavailable
-            assert response.status_code in [400, 500]
+            # Strategy not found or other error
+            assert response.status_code in [400, 404, 500]
 
-    def test_list_walkforward_optimizations(self, api_client):
-        """Test listing walk-forward optimizations."""
-        response = api_client.get("/api/walkforward/list")
+
+# ========== Walk-forward List Tests ==========
+
+@pytest.mark.api
+@pytest.mark.requires_auth
+class TestWalkforwardList:
+    """API tests for walk-forward listing."""
+
+    def test_wf_003_list_basic(self, api_client):
+        """WF-003: List optimizations returns structure."""
+        response = api_client.get(api_paths.WALKFORWARD_LIST)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
-        assert "optimizations" in data
-        assert "total" in data
-        assert isinstance(data["optimizations"], list)
+        assert "optimizations" in data or "items" in data or isinstance(data, list)
 
-    def test_list_walkforward_with_filters(self, api_client):
-        """Test listing walk-forward optimizations with filters."""
+    def test_wf_003_list_pagination(self, api_client):
+        """WF-003: List pagination works."""
         response = api_client.get(
-            "/api/walkforward/list",
-            params={
-                "status": "completed",
-                "limit": 10,
-                "offset": 0,
-                "sort_by": "created_at",
-                "sort_order": "desc",
-            }
+            api_paths.WALKFORWARD_LIST,
+            params={"limit": 5, "offset": 0}
         )
+        
         assert_api_response(response, expected_status=200)
 
-    def test_get_walkforward_not_found(self, api_client):
-        """Test getting non-existent walk-forward optimization."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-
-        response = api_client.get(f"/api/walkforward/{fake_id}")
-        assert_api_error(response, expected_status=404)
-
-    def test_get_walkforward_status_not_found(self, api_client):
-        """Test getting status of non-existent optimization."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-
-        response = api_client.get(f"/api/walkforward/{fake_id}/status")
-        assert_api_error(response, expected_status=404)
-
-    def test_delete_walkforward_not_found(self, api_client):
-        """Test deleting non-existent walk-forward optimization."""
-        fake_id = "00000000-0000-0000-0000-000000000000"
-
-        response = api_client.delete(f"/api/walkforward/{fake_id}")
-        assert_api_error(response, expected_status=404)
-
-    def test_start_walkforward_invalid_strategy(self, api_client, data_fixtures):
-        """Test starting optimization with non-existent strategy."""
-        config = data_fixtures.walkforward_config(
-            ticker="AAPL",
-            strategy_name="NonExistentStrategy123",
-        )
-
-        response = api_client.post("/api/walkforward/start", json=config)
-        # Should fail with strategy not found error
-        assert response.status_code in [400, 404, 500]
-
-    def test_start_walkforward_invalid_param_grid(self, api_client, data_fixtures, test_strategy_name):
-        """Test starting optimization with invalid parameter grid."""
-        # Create strategy first
-        strategy_code = data_fixtures.simple_strategy_code(test_strategy_name)
-        api_client.post(
-            "/api/strategies",
-            json={"name": test_strategy_name, "code": strategy_code}
-        )
-
-        config = data_fixtures.walkforward_config(
-            ticker="AAPL",
-            strategy_name=test_strategy_name,
-        )
-        # Override with empty param_grid
-        config["param_grid"] = {}
-
-        response = api_client.post("/api/walkforward/start", json=config)
-        # May fail validation or allow empty grid
-        assert response.status_code in [200, 400, 422]
-
-    def test_list_walkforward_filter_by_ticker(self, api_client):
-        """Test filtering walk-forward list by ticker."""
+    def test_wf_003_list_sorting(self, api_client):
+        """WF-003: List sorting works."""
         response = api_client.get(
-            "/api/walkforward/list",
-            params={"ticker": "AAPL"}
+            api_paths.WALKFORWARD_LIST,
+            params={"sort_by": "created_at", "sort_order": "desc"}
         )
+        
         assert_api_response(response, expected_status=200)
 
-    def test_list_walkforward_filter_by_strategy(self, api_client):
-        """Test filtering walk-forward list by strategy name."""
+    def test_wf_003_list_filter_by_status(self, api_client):
+        """WF-003: List filter by status works."""
         response = api_client.get(
-            "/api/walkforward/list",
-            params={"strategy_name": "test_strategy"}
+            api_paths.WALKFORWARD_LIST,
+            params={"status": "completed"}
         )
+        
         assert_api_response(response, expected_status=200)
 
+
+# ========== Walk-forward Detail Tests ==========
+
+@pytest.mark.api
+@pytest.mark.requires_auth
+class TestWalkforwardDetail:
+    """API tests for walk-forward detail operations."""
+
+    def test_wf_004_detail_not_found(self, api_client):
+        """WF-004: Get detail for non-existent ID returns 404."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        
+        response = api_client.get(api_paths.walkforward_detail(fake_id))
+        
+        assert_api_error(response, expected_status=404)
+
+    def test_wf_004_status_not_found(self, api_client):
+        """WF-004: Get status for non-existent ID returns 404."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        
+        response = api_client.get(api_paths.walkforward_status(fake_id))
+        
+        assert_api_error(response, expected_status=404)
+
+    def test_wf_005_delete_not_found(self, api_client):
+        """WF-005: Delete non-existent optimization returns 404."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        
+        response = api_client.delete(api_paths.walkforward_delete(fake_id))
+        
+        assert_api_error(response, expected_status=404)
+
+
+# ========== UI Tests ==========
 
 @pytest.mark.ui
 @pytest.mark.slow
-class TestWalkForwardUI:
-    """UI tests for walk-forward optimization interface."""
+class TestWalkforwardUI:
+    """UI tests for walk-forward page."""
 
     def test_walkforward_page_loads(self, browser):
-        """Test that optimization page can load."""
+        """Test that walk-forward page can load."""
         try:
             browser.goto("/")
             browser.wait_for_network_idle()

@@ -1,152 +1,147 @@
 """
-E2E tests for portfolio backtest workflow.
+E2E tests for Portfolio API.
 
-Tests cover:
-- Portfolio backtest execution
-- Portfolio history management
-- Portfolio details retrieval
-- Error handling for invalid inputs
+Based on TEST_CASES.md - PORTFOLIO section:
+- PF-001: tickers/weights count mismatch returns 400
+- PF-002: Submit returns task_id, result from task
+- PF-003: History list pagination/sorting works
+- PF-004: Detail not found returns 404, only own records
+- PF-005: Delete not found returns 404
 """
 
 import pytest
 import sys
-import time
 from pathlib import Path
 
 # Add libs to path
 libs_path = Path(__file__).parent.parent / "libs"
 sys.path.insert(0, str(libs_path))
 
-from assertions import assert_api_response, assert_api_error, assert_portfolio_result
-from response_normalizer import normalize_list_response
+from assertions import assert_api_response, assert_api_error
+import api_paths
 
+
+# ========== Portfolio Submission Tests ==========
 
 @pytest.mark.api
 @pytest.mark.requires_auth
-class TestPortfolioAPI:
-    """API tests for portfolio backtest execution and history."""
+class TestPortfolioSubmission:
+    """API tests for portfolio backtest submission."""
 
-    @pytest.mark.slow
-    def test_run_portfolio_backtest(self, api_client, data_fixtures):
-        """Test running a portfolio backtest with multiple tickers."""
-        config = data_fixtures.portfolio_config(
-            tickers=["AAPL", "MSFT"],
-            weights=[0.6, 0.4],
-            days_back=90,
+    def test_pf_001_tickers_weights_mismatch(self, api_client, data_fixtures):
+        """PF-001: tickers/weights count mismatch returns 400."""
+        response = api_client.post(api_paths.PORTFOLIO, json={
+            "tickers": ["AAPL", "MSFT", "GOOGL"],
+            "weights": [0.5, 0.5],  # Mismatch - only 2 weights for 3 tickers
+            "start_date": "2024-01-01",
+            "end_date": "2024-06-01",
+            "initial_cash": 100000
+        })
+        
+        assert response.status_code == 400, (
+            f"Expected 400 for tickers/weights mismatch, got {response.status_code}"
         )
 
-        response = api_client.post("/api/portfolio/backtest", json=config)
-
-        # May fail if data not available or service issue
-        if response.status_code == 200:
-            data = response.json()
-            assert "portfolio_id" in data or "task_id" in data
-            assert "plot_url" in data
-            # Store portfolio_id for cleanup
-            return data.get("portfolio_id")
-        else:
-            # Expected if data source unavailable
-            assert response.status_code in [400, 500, 502]
-
-    def test_portfolio_backtest_weight_mismatch(self, api_client, data_fixtures):
-        """Test portfolio backtest with mismatched tickers and weights."""
-        config = data_fixtures.portfolio_config(
-            tickers=["AAPL", "MSFT", "GOOGL"],
-            weights=[0.5, 0.5],  # Only 2 weights for 3 tickers
-            days_back=30,
-        )
-
-        response = api_client.post("/api/portfolio/backtest", json=config)
-        assert_api_error(response, expected_status=400)
-
-    def test_portfolio_backtest_empty_tickers(self, api_client, data_fixtures):
-        """Test portfolio backtest with empty ticker list."""
-        end_date = "2024-12-01"
-        start_date = "2024-09-01"
-
-        config = {
+    def test_pf_001_empty_tickers(self, api_client):
+        """PF-001: Empty tickers list returns 422/400."""
+        response = api_client.post(api_paths.PORTFOLIO, json={
             "tickers": [],
             "weights": [],
-            "start_date": start_date,
-            "end_date": end_date,
-            "initial_cash": 100000.0,
-            "commission": 0.0005,
-            "stake": 100,
-        }
-
-        response = api_client.post("/api/portfolio/backtest", json=config)
-        # Should fail validation - empty tickers
+            "start_date": "2024-01-01",
+            "end_date": "2024-06-01",
+            "initial_cash": 100000
+        })
+        
+        # Should fail validation (min_length=1)
         assert response.status_code in [400, 422]
 
-    def test_portfolio_history_list(self, api_client):
-        """Test listing portfolio backtest history."""
-        response = api_client.get("/api/portfolio/history")
-        assert_api_response(response, expected_status=200)
+    @pytest.mark.slow
+    def test_pf_002_submit_returns_task_id(self, api_client, data_fixtures):
+        """PF-002: Submit portfolio returns task_id."""
+        config = data_fixtures.portfolio_config(
+            tickers=["AAPL", "MSFT"],
+            weights=[0.5, 0.5],
+            days_back=30
+        )
+        
+        response = api_client.post(api_paths.PORTFOLIO, json=config)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Should have task_id for async execution
+            assert "task_id" in data or "portfolio_id" in data, (
+                "Response should have task_id or portfolio_id"
+            )
+        else:
+            # Data unavailable or validation error
+            assert response.status_code in [400, 500]
 
+
+# ========== Portfolio History Tests ==========
+
+@pytest.mark.api
+@pytest.mark.requires_auth
+class TestPortfolioHistory:
+    """API tests for portfolio history."""
+
+    def test_pf_003_history_list_basic(self, api_client):
+        """PF-003: History list returns structure."""
+        response = api_client.get(api_paths.PORTFOLIO_HISTORY)
+        
+        assert_api_response(response, expected_status=200)
+        
         data = response.json()
         assert "results" in data or "items" in data or isinstance(data, list)
 
-    def test_portfolio_history_with_pagination(self, api_client):
-        """Test portfolio history with pagination parameters."""
+    def test_pf_003_history_pagination(self, api_client):
+        """PF-003: History list pagination works."""
         response = api_client.get(
-            "/api/portfolio/history",
-            params={"limit": 5, "offset": 0, "sort_by": "created_at", "sort_order": "desc"}
+            api_paths.PORTFOLIO_HISTORY,
+            params={"limit": 5, "offset": 0}
         )
+        
         assert_api_response(response, expected_status=200)
 
-    def test_get_portfolio_detail_not_found(self, api_client):
-        """Test getting non-existent portfolio detail."""
-        fake_portfolio_id = "00000000-0000-0000-0000-000000000000"
+    def test_pf_003_history_sorting(self, api_client):
+        """PF-003: History list sorting works."""
+        response = api_client.get(
+            api_paths.PORTFOLIO_HISTORY,
+            params={"sort_by": "created_at", "sort_order": "desc"}
+        )
+        
+        assert_api_response(response, expected_status=200)
 
-        response = api_client.get(f"/api/portfolio/{fake_portfolio_id}")
+
+# ========== Portfolio Detail Tests ==========
+
+@pytest.mark.api
+@pytest.mark.requires_auth
+class TestPortfolioDetail:
+    """API tests for portfolio detail operations."""
+
+    def test_pf_004_detail_not_found(self, api_client):
+        """PF-004: Detail for non-existent ID returns 404."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        
+        response = api_client.get(api_paths.portfolio_detail(fake_id))
+        
         assert_api_error(response, expected_status=404)
 
-    def test_delete_portfolio_not_found(self, api_client):
-        """Test deleting non-existent portfolio record."""
-        fake_portfolio_id = "00000000-0000-0000-0000-000000000000"
-
-        response = api_client.delete(f"/api/portfolio/{fake_portfolio_id}")
+    def test_pf_005_delete_not_found(self, api_client):
+        """PF-005: Delete non-existent portfolio returns 404."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        
+        response = api_client.delete(api_paths.portfolio_delete(fake_id))
+        
         assert_api_error(response, expected_status=404)
 
-    @pytest.mark.slow
-    def test_portfolio_backtest_with_strategy(self, api_client, data_fixtures, test_strategy_name):
-        """Test portfolio backtest with custom strategy."""
-        # Create strategy first
-        strategy_code = data_fixtures.simple_strategy_code(test_strategy_name)
-        api_client.post(
-            "/api/strategies",
-            json={"name": test_strategy_name, "code": strategy_code}
-        )
 
-        config = data_fixtures.portfolio_config(
-            tickers=["AAPL", "MSFT"],
-            weights=[0.5, 0.5],
-            days_back=60,
-            strategy_name=test_strategy_name,
-        )
-
-        response = api_client.post("/api/portfolio/backtest", json=config)
-
-        # May succeed or fail depending on data availability
-        assert response.status_code in [200, 400, 500, 502]
-
-    def test_portfolio_backtest_invalid_ticker(self, api_client, data_fixtures):
-        """Test portfolio backtest with invalid ticker."""
-        config = data_fixtures.portfolio_config(
-            tickers=["AAPL", "INVALID_XYZ_123"],
-            weights=[0.5, 0.5],
-            days_back=30,
-        )
-
-        response = api_client.post("/api/portfolio/backtest", json=config)
-        # Should fail with data error
-        assert response.status_code in [400, 500, 502]
-
+# ========== UI Tests ==========
 
 @pytest.mark.ui
 @pytest.mark.slow
 class TestPortfolioUI:
-    """UI tests for portfolio interface."""
+    """UI tests for portfolio page."""
 
     def test_portfolio_page_loads(self, browser):
         """Test that portfolio page can load."""

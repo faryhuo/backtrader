@@ -9,22 +9,12 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from src.db import SettingsStorage
+from src.routes.common.dependencies import get_settings_storage
 from src.utils.auth import get_current_user
 from src.utils.credential_validator import validate_credential
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Module-level singleton
-_settings_storage = None
-
-
-def get_settings_storage():
-    """Get or create settings storage singleton."""
-    global _settings_storage
-    if _settings_storage is None:
-        _settings_storage = SettingsStorage()
-    return _settings_storage
 
 
 class UserSettingsRequest(BaseModel):

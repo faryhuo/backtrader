@@ -34,7 +34,8 @@ class APIClient:
         self.base_url = base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
         self.token = token
         self.timeout = timeout
-        self.client = httpx.Client(base_url=self.base_url, timeout=timeout)
+        # Disable proxy to avoid 503 errors when system has HTTP_PROXY configured
+        self.client = httpx.Client(base_url=self.base_url, timeout=timeout, proxy=None)
 
     def set_token(self, token: str):
         """Set authentication token for subsequent requests."""
@@ -193,6 +194,53 @@ class APIClient:
                 raise
         
         return response
+
+    def wait_for_task(
+        self,
+        task_id: str,
+        timeout: int = 120,
+        poll_interval: float = 1.0,
+    ) -> Dict[str, Any]:
+        """
+        Poll task status until completion or timeout.
+
+        Args:
+            task_id: Task ID to poll
+            timeout: Maximum time to wait in seconds
+            poll_interval: Time between polls in seconds
+
+        Returns:
+            Task result dictionary
+
+        Raises:
+            TimeoutError: If task doesn't complete within timeout
+            Exception: If task fails
+        """
+        from api_paths import task_detail
+        
+        start_time = time.time()
+        
+        while (time.time() - start_time) < timeout:
+            response = self.get(task_detail(task_id))
+            
+            if response.status_code != 200:
+                raise Exception(f"Failed to get task status: {response.text}")
+            
+            task = response.json()
+            status = task.get("status", "unknown")
+            
+            if status == "completed":
+                return task
+            elif status == "failed":
+                error = task.get("error", "Unknown error")
+                raise Exception(f"Task failed: {error}")
+            elif status == "cancelled":
+                raise Exception("Task was cancelled")
+            
+            # Still running or pending, wait and poll again
+            time.sleep(poll_interval)
+        
+        raise TimeoutError(f"Task {task_id} did not complete within {timeout} seconds")
 
     def close(self):
         """Close the HTTP client."""

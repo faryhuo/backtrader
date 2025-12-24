@@ -8,8 +8,9 @@ If backend auth is disabled, all tests run without needing tokens.
 import os
 import httpx
 
-# Set to True to skip tests that require authentication
-SKIP_AUTH_TESTS = os.getenv("SKIP_AUTH_TESTS", "true").lower() == "true"
+# Set to True to skip tests that require authentication (when backend has auth enabled)
+# Default to False - tests will run regardless of auth status
+SKIP_AUTH_TESTS = os.getenv("SKIP_AUTH_TESTS", "false").lower() == "true"
 
 # Real JWT token for testing (if available)
 # You can set this via environment variable: TEST_AUTH_TOKEN

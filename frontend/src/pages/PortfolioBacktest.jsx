@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, Button, InputNumber, Table, Spin, Alert, Tag, Select, DatePicker, Space, Empty, Progress } from 'antd';
 import {
     PieChartOutlined,
@@ -11,10 +11,10 @@ import {
     RightOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { api } from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { useTickerWeights } from '../hooks/useTickerWeights';
 import { useStrategyParams } from '../hooks/useStrategyParams';
+import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
 import { getIndividualResultsColumns } from '../utils/tableColumns';
 import './PortfolioBacktest.css';
@@ -27,8 +27,12 @@ function PortfolioBacktest() {
     const [initialCash, setInitialCash] = useState(100000);
     const [commission, setCommission] = useState(0.0005);
     const [stake] = useState(100);
-    const [strategies, setStrategies] = useState([]);
-    const [selectedStrategy, setSelectedStrategy] = useState('');
+
+    const {
+        strategies,
+        selectedStrategy,
+        setSelectedStrategy,
+    } = useStrategies();
     const [paramsExpanded, setParamsExpanded] = useState(true);
 
     // Use custom hooks
@@ -58,23 +62,6 @@ function PortfolioBacktest() {
         error,
         runPortfolioBacktest,
     } = useBacktest();
-
-    // Load strategies on mount
-    useEffect(() => {
-        const loadStrategies = async () => {
-            try {
-                const names = await api.getStrategies();
-                setStrategies(names);
-                if (names.length > 0 && !selectedStrategy) {
-                    setSelectedStrategy(names[0]);
-                }
-            } catch (err) {
-                console.error('Failed to load strategies:', err);
-            }
-        };
-        loadStrategies();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     // Run portfolio backtest handler
     const handleRunBacktest = async () => {
