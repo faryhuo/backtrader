@@ -22,7 +22,8 @@ export function setTokenGetter(fn) {
 export const buildRequest = async (path, options = {}) => {
     const headers = new Headers(options.headers || {})
 
-    if (options.body && !headers.has('Content-Type')) {
+    // Set Content-Type for JSON body, but not for FormData (browser sets it with boundary)
+    if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
     }
 

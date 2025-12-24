@@ -1,5 +1,5 @@
-import { API_URL, getAccessToken, parseResponse } from './api';
-import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
+import { API_URL, buildRequest, parseResponse, strategyApi } from './api';
+import { buildMetricsSummary, buildRecentTradesTable } from '../utils/formatters';
 import { DEFAULT_SETTINGS } from '../constants/settingsConstants';
 
 /**
@@ -24,16 +24,8 @@ export const analyzeChart = async (message, model, file) => {
         formData.append('file', file)
     }
 
-    // Build headers with auth token
-    const headers = new Headers()
-    const token = await getAccessToken()
-    if (token) {
-        headers.set('Authorization', `Bearer ${token}`)
-    }
-
-    const res = await fetch(`${API_URL}/ai_analyze`, {
+    const res = await buildRequest('/ai_analyze', {
         method: 'POST',
-        headers,
         body: formData
     })
     return await parseResponse(res)
@@ -60,20 +52,10 @@ export const performFullStrategyAnalysis = async ({
     let strategyCode = '';
     if (initialStrategyCode) {
         strategyCode = initialStrategyCode;
-    } else {
+    } else if (strategyName) {
         try {
-            if (strategyName) {
-                const token = await getAccessToken();
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                const res = await fetch(`${API_URL}/strategy?name=${strategyName}`, { headers });
-                if (res.ok) {
-                    const stratData = await res.json();
-                    strategyCode = stratData?.code || 'Code not available';
-                } else {
-                    console.warn(`Failed to fetch strategy code: ${res.status}`);
-                    strategyCode = 'Code not available';
-                }
-            }
+            const stratData = await strategyApi.getStrategy(strategyName);
+            strategyCode = stratData?.code || 'Code not available';
         } catch (e) {
             console.warn("Could not fetch strategy code", e);
             strategyCode = 'Error fetching code';
@@ -95,33 +77,11 @@ export const performFullStrategyAnalysis = async ({
         console.warn("Error fetching chart image", e);
     }
 
-    // 3. Prepare Prompt Content
+    // 3. Prepare Prompt Content - using shared formatters to ensure consistency with UI
     const metrics = result.metrics || {};
-    const trades = metrics.trades || {};
-
-    const totalTrades = trades.total?.total ?? (metrics.trade_details?.trades?.length ?? 0);
-    const winRate = trades.total?.closed ? ((trades.won?.total ?? 0) / trades.total.closed) * 100 : 0;
-
-    const metricsText = `
-Strategy Performance Metrics:
-- Final Value: ${formatCurrency(metrics.final_value)}
-- Return: ${formatPercent(metrics.returns)}
-- Sharpe Ratio: ${formatNumber(metrics.sharpe)}
-- Max Drawdown: ${formatPercent(metrics.drawdown)}
-- SQN: ${formatNumber(metrics.sqn)}
-- Total Trades: ${totalTrades}
-- Win Rate: ${formatPercent(winRate)}
-`;
-
+    const metricsText = buildMetricsSummary(metrics);
     const tradeList = metrics.trade_details?.trades || [];
-    const recentTrades = tradeList.slice(-50);
-
-    const logsText = recentTrades.length > 0 ? `
-Recent Trading Logs (Last ${recentTrades.length} trades):
-| # | Open Date | Open Price | Close Date | Close Price | Size | Net PnL | Return % |
-|---|-----------|------------|------------|-------------|------|---------|----------|
-${recentTrades.map(t => `| ${t.trade_num} | ${t.open_date} | ${t.open_price.toFixed(2)} | ${t.close_date} | ${t.close_price.toFixed(2)} | ${t.size} | ${t.net_pnl.toFixed(2)} | ${t.return_pct.toFixed(2)}% |`).join('\n')}
-` : 'No trades executed.';
+    const logsText = buildRecentTradesTable(tradeList, 50);
 
     const contextText = `
 Backtest Context:

@@ -142,7 +142,7 @@
 
 ## 前端：冗余与可维护性问题清单
 
-### 1) 存在绕过 `apiCore` 的 API 调用与 token 处理（重复且不一致）
+### ---1) 存在绕过 `apiCore` 的 API 调用与 token 处理（重复且不一致）
 
 - 位置：
   - `frontend/src/services/siteApi.js`：自己 `fetch` + `localStorage.auth_token`
@@ -188,7 +188,7 @@
 - 建议：
   - 拆分为 container（数据/状态）+ presentational（纯 UI）组件；把“数据整形/指标摘要构建”抽到 `utils/`。
 
-### 5) AI 分析中“指标摘要/交易日志拼接”与 UI 展示逻辑重复
+### ---5) AI 分析中“指标摘要/交易日志拼接”与 UI 展示逻辑重复
 
 - 位置：`frontend/src/services/aiAnalysis.js`（注释中明确“复制 StrategyPlot 的格式化逻辑”）
 - 维护问题：

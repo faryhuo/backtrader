@@ -17,7 +17,8 @@
       "Bash(curl:*)",
       "Bash(taskkill:*)",
       "Bash(dir:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(npm run lint)"
     ]
   }
 }

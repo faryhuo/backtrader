@@ -1,11 +1,33 @@
 /**
  * Site Configuration API
- * 
+ *
  * Public API for fetching site-level configuration.
  * No authentication required for GET, requires auth for PUT.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+import { buildRequest, parseResponse, API_URL } from './apiCore';
+
+const DEFAULT_CONFIG = {
+    site: {
+        title: 'Backtrader Pro',
+        description: 'Professional quantitative trading platform'
+    },
+    links: {
+        docs: '',
+        github: '',
+        twitter: '',
+        email: ''
+    },
+    stats: {
+        strategies: '50+',
+        backtests: '10K+',
+        users: '1K+'
+    },
+    features: {
+        loginEnabled: false,
+        liveTrading: false
+    }
+};
 
 /**
  * Fetch site configuration from backend
@@ -13,35 +35,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
  */
 export async function getSiteConfig() {
     try {
-        const response = await fetch(`${API_BASE}/site/config`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch site config: ${response.status}`);
-        }
-        return await response.json();
+        // Public endpoint - use simple fetch without auth
+        const response = await fetch(`${API_URL}/site/config`);
+        return await parseResponse(response);
     } catch (error) {
         console.warn('Failed to fetch site config, using defaults:', error);
-        // Return default config on error
-        return {
-            site: {
-                title: 'Backtrader Pro',
-                description: 'Professional quantitative trading platform'
-            },
-            links: {
-                docs: '',
-                github: '',
-                twitter: '',
-                email: ''
-            },
-            stats: {
-                strategies: '50+',
-                backtests: '10K+',
-                users: '1K+'
-            },
-            features: {
-                loginEnabled: false,
-                liveTrading: false
-            }
-        };
+        return DEFAULT_CONFIG;
     }
 }
 
@@ -50,19 +49,8 @@ export async function getSiteConfig() {
  * @returns {Promise<Object>} Site configuration with sources
  */
 export async function getSiteConfigAdmin() {
-    const token = localStorage.getItem('auth_token');
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/site/config/admin`, { headers });
-    if (!response.ok) {
-        throw new Error(`Failed to fetch site config: ${response.status}`);
-    }
-    return await response.json();
+    const response = await buildRequest('/site/config/admin');
+    return await parseResponse(response);
 }
 
 /**
@@ -71,25 +59,11 @@ export async function getSiteConfigAdmin() {
  * @returns {Promise<Object>} Update result
  */
 export async function updateSiteConfig(config) {
-    const token = localStorage.getItem('auth_token');
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/site/config`, {
+    const response = await buildRequest('/site/config', {
         method: 'PUT',
-        headers,
         body: JSON.stringify(config)
     });
-
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new Error(error.detail || `Failed to update site config: ${response.status}`);
-    }
-    return await response.json();
+    return await parseResponse(response);
 }
 
 /**
@@ -97,24 +71,10 @@ export async function updateSiteConfig(config) {
  * @returns {Promise<Object>} Reset result
  */
 export async function resetSiteConfig() {
-    const token = localStorage.getItem('auth_token');
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE}/site/config/reset`, {
-        method: 'POST',
-        headers
+    const response = await buildRequest('/site/config/reset', {
+        method: 'POST'
     });
-
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new Error(error.detail || `Failed to reset site config: ${response.status}`);
-    }
-    return await response.json();
+    return await parseResponse(response);
 }
 
 export const siteApi = {
