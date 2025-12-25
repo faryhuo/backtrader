@@ -16,7 +16,8 @@ from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
 from src.service.task_manager import get_task_manager
-from src.routes.common.task_helpers import get_user_id, generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.backtest_engine import (
     run_backtest,
     get_user_strategy_code,
@@ -30,7 +31,6 @@ from src.service.deep_analysis import (
 from src.db.storage.market_data import DataLoadError
 from src.db.storage.backtest import BacktestStorage
 from src.routes.common.dependencies import get_backtest_storage
-from src.utils.auth import get_current_user
 from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
@@ -175,14 +175,16 @@ async def _backtest_executor(config: dict, progress_callback) -> dict:
 
 
 @router.post("/backtest")
-async def backtest(request: BacktestRequest, user: dict = Depends(get_current_user)) -> dict:
+async def backtest(
+    request: BacktestRequest,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """
     Run a backtest and return results.
-    
+
     This endpoint submits a backtest task to TaskManager for execution.
     The task runs asynchronously with automatic status tracking and WebSocket updates.
     """
-    user_id = get_user_id(user)
     
     # Generate trace ID for logging
     trace_id = str(uuid.uuid4())
@@ -230,13 +232,13 @@ async def backtest(request: BacktestRequest, user: dict = Depends(get_current_us
 
 @router.post("/backtest/history")
 def get_backtest_history(
-    query: BacktestHistoryQuery, user: dict = Depends(get_current_user)
+    query: BacktestHistoryQuery,
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     List backtest history with filtering and sorting.
     """
     storage = get_backtest_storage()
-    user_id = user.get("sub") if user else None
 
     return storage.list_backtests(
         ticker=query.ticker,
@@ -252,12 +254,14 @@ def get_backtest_history(
 
 
 @router.get("/backtest/history/{backtest_id}")
-def get_backtest_detail(backtest_id: str, user: dict = Depends(get_current_user)) -> dict:
+def get_backtest_detail(
+    backtest_id: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """
     Get detailed backtest result by ID.
     """
     storage = get_backtest_storage()
-    user_id = user.get("sub") if user else None
 
     result = storage.get_backtest(backtest_id, user_id=user_id)
 
@@ -268,12 +272,14 @@ def get_backtest_detail(backtest_id: str, user: dict = Depends(get_current_user)
 
 
 @router.delete("/backtest/history/{backtest_id}")
-def delete_backtest_record(backtest_id: str, user: dict = Depends(get_current_user)) -> dict:
+def delete_backtest_record(
+    backtest_id: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """
     Delete backtest history record and associated plot file.
     """
     storage = get_backtest_storage()
-    user_id = user.get("sub") if user else None
 
     deleted = storage.delete_backtest(backtest_id, user_id=user_id)
 
@@ -285,14 +291,15 @@ def delete_backtest_record(backtest_id: str, user: dict = Depends(get_current_us
 
 @router.post("/backtest/history/{backtest_id}/ai-analysis")
 def update_ai_analysis(
-    backtest_id: str, analysis: AIAnalysisUpdate, user: dict = Depends(get_current_user)
+    backtest_id: str,
+    analysis: AIAnalysisUpdate,
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Update AI analysis for a backtest (when user runs AI analysis).
     Stores analysis in JSON format: {model_name: analysis_content}
     """
     storage = get_backtest_storage()
-    user_id = user.get("sub") if user else None
 
     updated = storage.update_ai_analysis(
         backtest_id=backtest_id,
@@ -314,7 +321,7 @@ def update_ai_analysis(
 def get_or_compute_deep_analysis(
     backtest_id: str,
     config: DeepAnalysisConfig | None = None,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Get or compute deep analysis for a backtest.
@@ -330,7 +337,6 @@ def get_or_compute_deep_analysis(
     The analysis is computed on-demand and cached in the database.
     """
     storage = get_backtest_storage()
-    user_id = user.get("sub") if user else None
 
     # Get backtest details
     backtest = storage.get_backtest(backtest_id, user_id=user_id)

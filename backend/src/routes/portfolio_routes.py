@@ -18,8 +18,8 @@ from pydantic import BaseModel, Field
 
 from src.config.settings import IMAGES_DIR
 from src.service.task_manager import get_task_manager
-from src.routes.common.task_helpers import get_user_id, generate_task_name, create_task_config, map_exception_to_http
-from src.routes.settings_routes import get_current_user
+from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.portfolio_backtest import (
     run_portfolio_backtest,
     PortfolioBacktestError,
@@ -108,7 +108,7 @@ async def _portfolio_executor(config: dict, progress_callback) -> dict:
 
 
 @router.post("/backtest")
-async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Depends(get_current_user)):
+async def portfolio_backtest(request: PortfolioBacktestRequest, user_id: str = Depends(get_optional_user_id)):
     """
     Run a portfolio backtest with multiple tickers.
     
@@ -130,8 +130,6 @@ async def portfolio_backtest(request: PortfolioBacktestRequest, user: dict = Dep
             detail="At least one ticker is required"
         )
 
-    user_id = get_user_id(user)
-    
     try:
         # Create task configuration
         task_config = create_task_config(request, "portfolio")
@@ -168,7 +166,7 @@ async def get_portfolio_history(
     sort_order: str = "desc",
     limit: int = 50,
     offset: int = 0,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id)
 ):
     """
     List portfolio backtest history.
@@ -176,7 +174,7 @@ async def get_portfolio_history(
     Returns summary information for each portfolio backtest.
     """
     try:
-        user_id = user.get("sub") if user else None
+        
         storage = get_portfolio_storage()
         
         results = storage.list_history(
@@ -195,14 +193,14 @@ async def get_portfolio_history(
 
 
 @router.get("/{portfolio_id}")
-async def get_portfolio_detail(portfolio_id: str, user: dict = Depends(get_current_user)):
+async def get_portfolio_detail(portfolio_id: str, user_id: str = Depends(get_optional_user_id)):
     """
     Get detailed portfolio result by ID.
     
     Includes all metrics, correlation matrix, and optimization suggestions.
     """
     try:
-        user_id = user.get("sub") if user else None
+        
         storage = get_portfolio_storage()
         
         result = storage.get_by_id(portfolio_id, user_id=user_id)
@@ -220,12 +218,12 @@ async def get_portfolio_detail(portfolio_id: str, user: dict = Depends(get_curre
 
 
 @router.delete("/{portfolio_id}")
-async def delete_portfolio_record(portfolio_id: str, user: dict = Depends(get_current_user)):
+async def delete_portfolio_record(portfolio_id: str, user_id: str = Depends(get_optional_user_id)):
     """
     Delete a portfolio backtest record.
     """
     try:
-        user_id = user.get("sub") if user else None
+        
         storage = get_portfolio_storage()
         
         deleted = storage.delete_by_id(portfolio_id, user_id=user_id)

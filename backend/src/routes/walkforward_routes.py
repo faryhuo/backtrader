@@ -19,9 +19,9 @@ from pydantic import BaseModel, Field
 
 from src.db import WalkForwardStorage
 from src.service.task_manager import get_task_manager
-from src.routes.common.task_helpers import get_user_id, generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.walkforward_optimizer import WalkForwardOptimizer
-from src.utils.auth import get_current_user, get_optional_user
 from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ async def _walkforward_executor(config: dict, progress_callback) -> dict:
 @router.post("/walkforward/start", response_model=WalkForwardOptimizationResponse)
 async def start_walkforward_optimization(
     request: WalkForwardOptimizationRequest,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Start a new walk-forward optimization.
@@ -181,14 +181,12 @@ async def start_walkforward_optimization(
         # Generate optimization ID
         optimization_id = str(uuid.uuid4())
         set_trace_id(optimization_id)
-        
+
         request_id = get_request_id()
         logger.info(
             f"[{request_id}] Starting walk-forward optimization: "
             f"strategy={request.strategy_name} ticker={request.ticker}"
         )
-
-        user_id = get_user_id(user)
 
         # Create task configuration
         task_config = create_task_config(request, "walkforward")
@@ -250,7 +248,7 @@ async def list_walkforward_optimizations(
     sort_order: str = "desc",
     limit: int = 100,
     offset: int = 0,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     List walk-forward optimizations with optional filtering.
@@ -269,8 +267,6 @@ async def list_walkforward_optimizations(
     - **total**: Total count of matching records
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.list_optimizations(
             ticker=ticker,
             strategy_name=strategy_name,
@@ -292,7 +288,7 @@ async def list_walkforward_optimizations(
 @router.get("/walkforward/{optimization_id}")
 async def get_walkforward_optimization(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Get detailed results for a specific walk-forward optimization.
@@ -309,8 +305,6 @@ async def get_walkforward_optimization(
     - Combined test performance metrics
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.get_optimization(
             optimization_id=optimization_id,
             user_id=user_id,
@@ -331,7 +325,7 @@ async def get_walkforward_optimization(
 @router.delete("/walkforward/{optimization_id}")
 async def delete_walkforward_optimization(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Delete a walk-forward optimization.
@@ -343,8 +337,6 @@ async def delete_walkforward_optimization(
     - **message**: Success message
     """
     try:
-        user_id = user.get("sub") if user else None
-
         success = storage.delete_optimization(
             optimization_id=optimization_id,
             user_id=user_id,
@@ -365,7 +357,7 @@ async def delete_walkforward_optimization(
 @router.get("/walkforward/{optimization_id}/status")
 async def get_walkforward_status(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Get the current status of a walk-forward optimization.
@@ -380,8 +372,6 @@ async def get_walkforward_status(
     - **progress**: Progress information if available (optional)
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.get_optimization(
             optimization_id=optimization_id,
             user_id=user_id,

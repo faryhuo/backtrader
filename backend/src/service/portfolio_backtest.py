@@ -399,12 +399,13 @@ def run_portfolio_backtest(
                 "success": r["success"],
                 "initial_cash": r["initial_cash"],
                 "final_value": r["metrics"].get("final_value") if r["success"] else None,
-                "return": round(
+                "total_return": round(
                     ((r["metrics"].get("final_value", r["initial_cash"]) - r["initial_cash"]) / r["initial_cash"]) * 100,
                     2
                 ) if r["success"] else None,
-                "sharpe": r["metrics"].get("sharpe") if r["success"] else None,
-                "drawdown": r["metrics"].get("drawdown") if r["success"] else None,
+                "sharpe_ratio": r["metrics"].get("sharpe") if r["success"] else None,
+                "max_drawdown": r["metrics"].get("drawdown") if r["success"] else None,
+                "total_trades": r["metrics"].get("trade_details", {}).get("total_trades", 0) if r["success"] else None,
                 "error": r.get("error")
             }
             for r in individual_results

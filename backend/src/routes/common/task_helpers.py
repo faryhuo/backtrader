@@ -13,10 +13,16 @@ from pydantic import BaseModel
 def get_user_id(user: Optional[dict]) -> Optional[str]:
     """
     Extract user ID from authentication context.
-    
+
+    .. deprecated::
+        This function is deprecated. Use FastAPI dependency injection instead:
+        - Import: `from src.routes.common.auth_dependencies import get_optional_user_id, get_user_id`
+        - Usage: `user_id: str = Depends(get_optional_user_id)` in endpoint signature
+        This provides better type safety and cleaner code.
+
     Args:
         user: User dictionary from authentication dependency
-        
+
     Returns:
         User ID string or None if not authenticated
     """

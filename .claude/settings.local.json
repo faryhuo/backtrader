@@ -18,7 +18,13 @@
       "Bash(taskkill:*)",
       "Bash(dir:*)",
       "Bash(test:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(grep:*)",
+      "Bash(while read file)",
+      "Bash(do if ! grep -q \"task_helpers\" \"$file\")",
+      "Bash(then basename \"$file\")",
+      "Bash(fi)",
+      "Bash(done)"
     ]
   }
 }

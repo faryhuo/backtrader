@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from src.db import SettingsStorage
 from src.routes.common.dependencies import get_settings_storage
-from src.utils.auth import get_current_user
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.utils.credential_validator import validate_credential
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class UserSettingsRequest(BaseModel):
 
 
 @router.get("/settings")
-def get_user_settings(user: dict = Depends(get_current_user)) -> dict:
+def get_user_settings(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Get user settings.
 
@@ -34,7 +34,6 @@ def get_user_settings(user: dict = Depends(get_current_user)) -> dict:
     Frontend will migrate from localStorage on first save.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     settings = storage.get_settings(user_id=user_id)
 
@@ -47,7 +46,7 @@ def get_user_settings(user: dict = Depends(get_current_user)) -> dict:
 @router.put("/settings")
 def update_user_settings(
     request: UserSettingsRequest,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Update user settings.
@@ -56,9 +55,8 @@ def update_user_settings(
     Frontend should migrate localStorage data on first save.
     """
     from src.routes.common.error_utils import validate_list_not_empty
-    
+
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     # Validate at least one model selected
     validate_list_not_empty(request.selected_models, "selected_models")
@@ -79,14 +77,13 @@ def update_user_settings(
 
 
 @router.post("/settings/reset")
-def reset_user_settings(user: dict = Depends(get_current_user)) -> dict:
+def reset_user_settings(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Reset user settings to defaults.
 
     Deletes user settings from database and returns default values.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     defaults = storage.reset_settings(user_id=user_id)
 
@@ -98,7 +95,7 @@ def reset_user_settings(user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.get("/settings/logto-config")
-def get_logto_config(user: dict = Depends(get_current_user)) -> dict:
+def get_logto_config(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Get Logto frontend configuration.
 
@@ -107,7 +104,6 @@ def get_logto_config(user: dict = Depends(get_current_user)) -> dict:
     Falls back to environment variables if not set in database.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     config = storage.get_logto_frontend_config(user_id=user_id)
 
@@ -160,7 +156,7 @@ class CredentialTestRequest(BaseModel):
 
 
 @router.get("/settings/credentials")
-def get_credentials(user: dict = Depends(get_current_user)) -> dict:
+def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Get all credentials with masked sensitive values.
 
@@ -168,7 +164,6 @@ def get_credentials(user: dict = Depends(get_current_user)) -> dict:
     Sensitive values (API keys, secrets) are masked for security.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     credentials_nested = storage.get_all_credentials(user_id=user_id, mask_sensitive=True)
 
@@ -209,7 +204,7 @@ def get_credentials(user: dict = Depends(get_current_user)) -> dict:
 @router.put("/settings/credentials")
 def update_credentials(
     request: CredentialUpdate,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Update general credentials (OpenAI, Logto, Proxies).
@@ -218,7 +213,6 @@ def update_credentials(
     Values are encrypted before storage if they are sensitive fields.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     # Update each credential that was provided
     updated_fields = []
@@ -240,7 +234,7 @@ def update_credentials(
 @router.put("/settings/credentials/ccxt")
 def update_ccxt_credentials(
     request: CCXTCredentialUpdate,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Update CCXT exchange credentials for a specific exchange and mode.
@@ -248,9 +242,8 @@ def update_ccxt_credentials(
     Credentials are encrypted before storage.
     """
     from src.utils.exception_handlers import ValidationError, CredentialError
-    
+
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     # Extract credentials dict
     credentials = {}
@@ -283,7 +276,7 @@ def update_ccxt_credentials(
 @router.delete("/settings/credentials/{credential_key}")
 def reset_credential(
     credential_key: str,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Reset a credential to .env value by deleting it from database.
@@ -291,9 +284,8 @@ def reset_credential(
     After deletion, the credential will fall back to the value in .env file.
     """
     from src.utils.exception_handlers import CredentialError
-    
+
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     success = storage.delete_credential(credential_key, user_id)
 
@@ -309,7 +301,7 @@ def reset_credential(
 @router.post("/settings/credentials/test")
 def test_credentials(
     request: CredentialTestRequest,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Test API credentials by making actual API calls.
@@ -381,14 +373,13 @@ class DataSourceSettingsRequest(BaseModel):
 
 
 @router.get("/settings/data-source")
-def get_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
+def get_data_source_settings(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Get data source configuration.
 
     Returns the priority order for fetching market data and EODHD API key status.
     """
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     settings = storage.get_data_source_settings(user_id=user_id)
 
@@ -401,7 +392,7 @@ def get_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
 @router.put("/settings/data-source")
 def update_data_source_settings(
     request: DataSourceSettingsRequest,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Update data source configuration.
@@ -409,9 +400,8 @@ def update_data_source_settings(
     Sets the priority order for fetching market data and/or EODHD API key.
     """
     from src.utils.exception_handlers import ValidationError, CredentialError
-    
+
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     # Validate priority if provided
     valid_sources = {"yahoo", "eodhd", "database"}
@@ -438,16 +428,15 @@ def update_data_source_settings(
 
 
 @router.post("/settings/data-source/reset")
-def reset_data_source_settings(user: dict = Depends(get_current_user)) -> dict:
+def reset_data_source_settings(user_id: str = Depends(get_optional_user_id)) -> dict:
     """
     Reset data source settings to defaults.
 
     Removes custom priority and EODHD API key from database.
     """
     from src.utils.exception_handlers import CredentialError
-    
+
     storage = get_settings_storage()
-    user_id = user.get("sub") if user else None
 
     success = storage.reset_data_source_settings(user_id=user_id)
 

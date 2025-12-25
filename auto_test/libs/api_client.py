@@ -13,6 +13,9 @@ import time
 from typing import Any, Dict, Optional
 import httpx
 
+# Force disable proxy for localhost - Windows may use system proxy settings
+os.environ.setdefault('NO_PROXY', 'localhost,127.0.0.1')
+
 
 class APIClient:
     """HTTP client wrapper for testing backend API."""
@@ -34,8 +37,12 @@ class APIClient:
         self.base_url = base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
         self.token = token
         self.timeout = timeout
-        # Disable proxy to avoid 503 errors when system has HTTP_PROXY configured
-        self.client = httpx.Client(base_url=self.base_url, timeout=timeout, proxy=None)
+        # Disable proxy completely - trust_env=False ignores HTTP_PROXY/HTTPS_PROXY
+        self.client = httpx.Client(
+            base_url=self.base_url,
+            timeout=timeout,
+            trust_env=False,  # Don't read proxy settings from environment
+        )
 
     def set_token(self, token: str):
         """Set authentication token for subsequent requests."""

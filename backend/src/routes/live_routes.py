@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from src.config.settings import LIVE_TRADING_ENABLED
 from src.service.live_engine import run_live, stop_live, get_session_status
 from src.service.session_manager import SessionStatus, get_session_manager
-from src.utils.auth import get_current_user
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.utils.config_loader import list_enabled_exchanges, load_broker_config, validate_symbol, validate_timeframe
 from src.utils.request_context import get_request_id, set_trace_id
 
@@ -103,7 +103,7 @@ class ExchangeInfo(BaseModel):
 @router.post("/live/start", response_model=dict, tags=["Live Trading"])
 async def start_live_trading(
     request: StartLiveRequest,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id)
 ):
     """
     Start a new live/paper trading session.
@@ -126,7 +126,7 @@ async def start_live_trading(
     - Session status and configuration
     """
     # Extract user ID for credential lookup
-    user_id = user.get("sub") if user else None
+    
     
     # Validate mode first
     if request.mode not in ['paper', 'live']:

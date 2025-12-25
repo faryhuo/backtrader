@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from openai import AsyncOpenAI
 
 from src.config.config_manager import ConfigManager
-from src.utils.auth import get_current_user
+from src.routes.common.auth_dependencies import get_optional_user_id
 
 router = APIRouter()
 
@@ -19,11 +19,11 @@ async def analyze_chart(
     message: str = Form(...),
     model: str = Form("gpt-4o"),
     file: Optional[UploadFile] = File(None),
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     try:
         # Get user-specific configuration with database fallback
-        user_id = user.get("sub") if user else None
+        
         config_manager = ConfigManager(user_id=user_id)
 
         # Get OpenAI and proxy configuration

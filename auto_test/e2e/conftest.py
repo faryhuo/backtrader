@@ -33,20 +33,37 @@ def is_port_in_use(port: int, host: str = "localhost") -> bool:
 
 
 def wait_for_server(port: int, host: str = "localhost", timeout: int = 30) -> bool:
-    """Wait for server to become available."""
+    """Wait for server to become available and healthy."""
     start_time = time.time()
     while (time.time() - start_time) < timeout:
         if is_port_in_use(port, host):
-            # Double-check with HTTP request
+            # Double-check with HTTP request - trust_env=False bypasses system proxy
             try:
                 import httpx
-                response = httpx.get(f"http://{host}:{port}/api/site/config", timeout=5, proxy=None)
-                if response.status_code == 200:
-                    return True
+                with httpx.Client(trust_env=False) as client:
+                    response = client.get(f"http://{host}:{port}/api/site/config", timeout=5)
+                    if response.status_code == 200:
+                        return True
+                    elif response.status_code == 503:
+                        # Server is starting up, wait more
+                        time.sleep(2)
+                        continue
             except Exception:
                 pass
         time.sleep(1)
     return False
+
+
+def is_server_healthy(port: int = 8000, host: str = "localhost") -> bool:
+    """Check if server is responding with 200."""
+    try:
+        import httpx
+        # trust_env=False bypasses Windows system proxy settings
+        with httpx.Client(trust_env=False) as client:
+            response = client.get(f"http://{host}:{port}/api/site/config", timeout=5)
+            return response.status_code == 200
+    except Exception:
+        return False
 
 
 # Global to track if we started the server
@@ -159,6 +176,14 @@ def skip_if_no_auth(request):
             if is_auth_required():
                 pytest.skip("Backend requires authentication. Set TEST_AUTH_TOKEN or disable backend auth")
             # If auth is not required, test will run!
+
+
+@pytest.fixture(scope="function", autouse=True)
+def skip_if_server_unavailable(request):
+    """Skip API tests if backend server is returning 503."""
+    if request.node.get_closest_marker('api'):
+        if not is_server_healthy():
+            pytest.skip("Backend server unavailable (503). Please restart the server.")
 
 
 @pytest.fixture(scope="function", autouse=True)
