@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../services/api'
+import { coerceParamValue } from '../utils/paramUtils'
 
 /**
  * Hook for fetching and managing strategy parameters.
@@ -94,12 +95,7 @@ export function useStrategyParams(selectedStrategy, options = {}) {
 
     // Handle parameter value change with type coercion
     const handleParamChange = useCallback((name, value, type) => {
-        let parsedValue = value
-        if (type === 'int') {
-            parsedValue = parseInt(value, 10) || 0
-        } else if (type === 'float') {
-            parsedValue = parseFloat(value) || 0
-        }
+        const parsedValue = coerceParamValue(type, value)
         setParamOverrides(prev => ({ ...prev, [name]: parsedValue }))
     }, [])
 
