@@ -19,8 +19,9 @@ from src.service.backtest_engine import (
     extract_strategy_params,
 )
 from src.db.storage.strategy_version import StrategyVersionStorage
+from src.routes.common.dependencies import get_version_storage
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.version_service import compare_versions
-from src.utils.auth import get_current_user
 from src.service.strategy_templates import (
     get_all_templates,
     get_template_by_id,
@@ -30,17 +31,6 @@ from src.service.strategy_templates import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Initialize version storage (module-level singleton)
-_version_storage = None
-
-
-def get_version_storage():
-    """Get or create version storage singleton."""
-    global _version_storage
-    if _version_storage is None:
-        _version_storage = StrategyVersionStorage()
-    return _version_storage
 
 
 # ========== Pydantic Models ==========
@@ -70,7 +60,7 @@ class VersionCreateRequest(BaseModel):
 
 
 @router.get("/strategies")
-def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
+def get_strategy_list(user_id: str = Depends(get_optional_user_id)) -> dict:
     try:
         names = list_strategies()
         return {"strategies": names}
@@ -79,7 +69,10 @@ def get_strategy_list(user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.get("/strategy")
-def get_strategy(name: str | None = None, user: dict = Depends(get_current_user)) -> dict:
+def get_strategy(
+    name: str | None = None,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     try:
         if not name:
             names = list_strategies()
@@ -95,16 +88,18 @@ def get_strategy(name: str | None = None, user: dict = Depends(get_current_user)
 
 
 @router.post("/strategy")
-def save_strategy(request: StrategySaveRequest, user: dict = Depends(get_current_user)) -> dict:
+def save_strategy(
+    request: StrategySaveRequest,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     try:
         # Save to file system
         save_user_strategy_code(request.name, request.code)
-        
+
         # Create version record (non-blocking, errors logged)
         version_info = None
         try:
             storage = get_version_storage()
-            user_id = user.get("sub") if user else None
             version_info = storage.create_version(
                 strategy_name=request.name,
                 code=request.code,
@@ -131,7 +126,10 @@ def save_strategy(request: StrategySaveRequest, user: dict = Depends(get_current
 
 
 @router.get("/strategy/{name}/params")
-def get_strategy_params(name: str, user: dict = Depends(get_current_user)) -> dict:
+def get_strategy_params(
+    name: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """
     Get parameters defined in a strategy file.
     Returns a list of parameter objects with name, value, and type.
@@ -161,7 +159,7 @@ def get_strategy_params(name: str, user: dict = Depends(get_current_user)) -> di
 
 
 @router.get("/templates")
-def get_templates(user: dict = Depends(get_current_user)) -> dict:
+def get_templates(user_id: str = Depends(get_optional_user_id)) -> dict:
     """Get all strategy templates with metadata."""
     try:
         templates = get_all_templates()
@@ -177,7 +175,10 @@ def get_templates(user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.get("/templates/{template_id}")
-def get_template_detail(template_id: str, user: dict = Depends(get_current_user)) -> dict:
+def get_template_detail(
+    template_id: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """Get template detail including code."""
     try:
         template = get_template_by_id(template_id)
@@ -191,7 +192,10 @@ def get_template_detail(template_id: str, user: dict = Depends(get_current_user)
 
 
 @router.post("/templates/import")
-def import_template(request: TemplateImportRequest, user: dict = Depends(get_current_user)) -> dict:
+def import_template(
+    request: TemplateImportRequest,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
     """Import a template as a new strategy."""
     try:
         # Get template
@@ -234,16 +238,15 @@ def list_strategy_versions(
     name: str,
     limit: int = 50,
     offset: int = 0,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     List all versions of a strategy.
-    
+
     Returns version history sorted by version number descending (newest first).
     """
     storage = get_version_storage()
-    user_id = user.get("sub") if user else None
-    
+
     return storage.list_versions(
         strategy_name=name,
         user_id=user_id,
@@ -255,19 +258,18 @@ def list_strategy_versions(
 @router.get("/strategy/{name}/versions/latest")
 def get_latest_strategy_version(
     name: str,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Get the most recent version of a strategy.
     """
     storage = get_version_storage()
-    user_id = user.get("sub") if user else None
-    
+
     version = storage.get_latest_version(name, user_id=user_id)
-    
+
     if not version:
         raise HTTPException(status_code=404, detail="No versions found for this strategy")
-    
+
     return version
 
 
@@ -276,22 +278,21 @@ def compare_strategy_versions(
     name: str,
     from_version: int,
     to_version: int,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Compare two versions and return a unified diff.
-    
+
     Args:
         name: Strategy name
         from_version: Older version number
         to_version: Newer version number
-        
+
     Returns:
         Unified diff and change statistics
     """
     storage = get_version_storage()
-    user_id = user.get("sub") if user else None
-    
+
     # Get both versions
     old_version = storage.get_version(name, from_version, user_id=user_id)
     new_version = storage.get_version(name, to_version, user_id=user_id)
@@ -320,21 +321,20 @@ def compare_strategy_versions(
 def get_strategy_version(
     name: str,
     version_number: int,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Get a specific version of a strategy.
-    
+
     Returns full version details including the code snapshot.
     """
     storage = get_version_storage()
-    user_id = user.get("sub") if user else None
-    
+
     version = storage.get_version(name, version_number, user_id=user_id)
-    
+
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
-    
+
     return version
 
 
@@ -343,17 +343,16 @@ def rollback_to_version(
     name: str,
     version_number: int,
     request: VersionCreateRequest = None,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Rollback a strategy to a specific version.
-    
+
     This creates a new version with the content from the specified version,
     preserving the full version history (audit trail).
     """
     storage = get_version_storage()
-    user_id = user.get("sub") if user else None
-    
+
     # Get the target version
     target_version = storage.get_version(name, version_number, user_id=user_id)
     

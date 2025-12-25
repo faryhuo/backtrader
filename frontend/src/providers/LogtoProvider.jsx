@@ -1,29 +1,59 @@
 import { LogtoProvider as LogtoReactProvider } from '@logto/react';
 import PropTypes from 'prop-types';
+import { useLogtoConfig } from '../contexts/LogtoConfigContext';
 
 /**
  * Logto Authentication Provider
  *
  * Wraps the application with Logto authentication configuration.
  * Handles OAuth 2.0 authentication flow and token management.
+ * Fetches configuration from backend API with fallback to environment variables.
  */
 export function LogtoProvider({ children }) {
-  const config = {
-    endpoint: import.meta.env.VITE_LOGTO_ENDPOINT,
-    appId: import.meta.env.VITE_LOGTO_APP_ID,
-    // This is separate from VITE_API_BASE_URL which is the HTTP API endpoint
-    resources: [import.meta.env.VITE_API_BASE_URL],
+  const { config, loading, error } = useLogtoConfig();
+
+  // Show loading state while fetching config
+  if (loading) {
+    return <div>Loading authentication configuration...</div>;
+  }
+
+  // If config failed to load and no fallback is available
+  if (error && (!config || !config.endpoint || !config.appId)) {
+    console.error(
+      'Logto configuration missing. Please configure Logto settings or set environment variables.'
+    );
+    // Return children without Logto provider if login is disabled
+    if (!config || !config.enableLogin) {
+      return <>{children}</>;
+    }
+    return <div>Error loading authentication configuration</div>;
+  }
+
+  // This is separate from VITE_API_BASE_URL which is the HTTP API endpoint
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+
+  // Logto requires absolute URIs for resource indicators
+  // If apiBase is relative, combine with origin to make it absolute
+  const resourceUri = apiBase.startsWith('http')
+    ? apiBase
+    : `${window.location.origin}${apiBase.startsWith('/') ? '' : '/'}${apiBase}`;
+
+  // Prepare Logto configuration
+  const logtoConfig = {
+    endpoint: config.endpoint,
+    appId: config.appId,
+    resources: [resourceUri],
   };
 
   // Validate configuration
-  if (!config.endpoint || !config.appId) {
+  if (!logtoConfig.endpoint || !logtoConfig.appId) {
     console.error(
-      'Logto configuration missing. Please set VITE_LOGTO_ENDPOINT and VITE_LOGTO_APP_ID in .env file'
+      'Logto configuration missing. Please set endpoint and appId in settings or .env file'
     );
   }
 
   return (
-    <LogtoReactProvider config={config}>
+    <LogtoReactProvider config={logtoConfig}>
       {children}
     </LogtoReactProvider>
   );

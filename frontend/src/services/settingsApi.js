@@ -26,6 +26,11 @@ export const settingsApi = {
         return await parseResponse(res)
     },
 
+    async getLogtoConfig() {
+        const res = await buildRequest('/settings/logto-config')
+        return await parseResponse(res)
+    },
+
     // Credentials
 
     async getCredentials() {

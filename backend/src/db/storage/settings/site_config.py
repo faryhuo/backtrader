@@ -66,15 +66,10 @@ class SiteConfigMixin:
         Returns:
             Dict with site configuration and sources
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as session:
             normalized_user_id = self._normalize_user_id(user_id)
             
-            settings = db.query(UserSettingsModel).filter(
+            settings = session.query(UserSettingsModel).filter(
                 UserSettingsModel.user_id == normalized_user_id
             ).first()
 
@@ -100,10 +95,6 @@ class SiteConfigMixin:
 
             return {"config": result, "sources": sources}
 
-        finally:
-            if close_db:
-                db.close()
-
     def save_site_config(
         self,
         config: Dict[str, str],
@@ -121,32 +112,23 @@ class SiteConfigMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
-            settings = self._get_or_create_settings(normalized_user_id, db)
+                for field in self.SITE_CONFIG_FIELDS:
+                    if field in config:
+                        setattr(settings, field, config[field])
 
-            for field in self.SITE_CONFIG_FIELDS:
-                if field in config:
-                    setattr(settings, field, config[field])
+                settings.updated_at = datetime.utcnow()
+                
+                logger.info(f"Saved site config for user {normalized_user_id}")
+                return True
 
-            settings.updated_at = datetime.utcnow()
-            db.commit()
-            
-            logger.info(f"Saved site config for user {normalized_user_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save site config: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save site config: {e}")
+                return False
 
     def reset_site_config(
         self,
@@ -163,31 +145,22 @@ class SiteConfigMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                if settings:
+                    for field in self.SITE_CONFIG_FIELDS:
+                        setattr(settings, field, None)
+                    settings.updated_at = datetime.utcnow()
+                    logger.info(f"Reset site config for user {normalized_user_id}")
 
-            if settings:
-                for field in self.SITE_CONFIG_FIELDS:
-                    setattr(settings, field, None)
-                settings.updated_at = datetime.utcnow()
-                db.commit()
-                logger.info(f"Reset site config for user {normalized_user_id}")
+                return True
 
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to reset site config: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to reset site config: {e}")
+                return False

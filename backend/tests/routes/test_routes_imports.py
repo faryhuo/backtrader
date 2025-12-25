@@ -4,10 +4,16 @@ import importlib
 def test_routes_modules_import_and_expose_router():
     modules = [
         "src.routes.ai_routes",
-        "src.routes.api_routes",
+        "src.routes.backtest_routes",
         "src.routes.frontend_routes",
         "src.routes.live_routes",
+        "src.routes.market_data_routes",
+        "src.routes.portfolio_routes",
+        "src.routes.report_routes",
         "src.routes.settings_routes",
+        "src.routes.site_config_routes",
+        "src.routes.strategy_routes",
+        "src.routes.task_routes",
         "src.routes.walkforward_routes",
         "src.routes.websocket_routes",
     ]

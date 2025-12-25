@@ -52,62 +52,51 @@ class SessionStorage(BaseStorage):
             session: TradingSession to save
             db: Optional database session (creates new if None)
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as db_session:
+            try:
+                # Check if session exists
+                existing = db_session.query(TradingSessionModel).filter(
+                    TradingSessionModel.session_id == session.session_id
+                ).first()
 
-        try:
-            # Check if session exists
-            existing = db.query(TradingSessionModel).filter(
-                TradingSessionModel.session_id == session.session_id
-            ).first()
+                if existing:
+                    # Update existing
+                    existing.status = SessionStatusEnum[session.status.name]
+                    existing.end_time = session.end_time
+                    existing.total_pnl = session.current_pnl
+                    existing.total_trades = session.total_trades
+                    existing.positions = session.positions
+                    existing.error_message = session.error_message
+                    existing.updated_at = datetime.utcnow()
 
-            if existing:
-                # Update existing
-                existing.status = SessionStatusEnum[session.status.name]
-                existing.end_time = session.end_time
-                existing.total_pnl = session.current_pnl
-                existing.total_trades = session.total_trades
-                existing.positions = session.positions
-                existing.error_message = session.error_message
-                existing.updated_at = datetime.utcnow()
+                    logger.debug(f"Updated session {session.session_id} in database")
 
-                logger.debug(f"Updated session {session.session_id} in database")
+                else:
+                    # Create new
+                    new_session = TradingSessionModel(
+                        session_id=session.session_id,
+                        strategy_name=session.strategy_name,
+                        symbol=session.symbol,
+                        exchange=session.exchange,
+                        mode=session.mode,
+                        timeframe=session.timeframe,
+                        status=SessionStatusEnum[session.status.name],
+                        start_time=session.start_time,
+                        end_time=session.end_time,
+                        initial_cash=session.initial_cash,
+                        commission=session.commission,
+                        total_pnl=session.current_pnl,
+                        total_trades=session.total_trades,
+                        positions=session.positions,
+                        error_message=session.error_message
+                    )
 
-            else:
-                # Create new
-                db_session = TradingSessionModel(
-                    session_id=session.session_id,
-                    strategy_name=session.strategy_name,
-                    symbol=session.symbol,
-                    exchange=session.exchange,
-                    mode=session.mode,
-                    timeframe=session.timeframe,
-                    status=SessionStatusEnum[session.status.name],
-                    start_time=session.start_time,
-                    end_time=session.end_time,
-                    initial_cash=session.initial_cash,
-                    commission=session.commission,
-                    total_pnl=session.current_pnl,
-                    total_trades=session.total_trades,
-                    positions=session.positions,
-                    error_message=session.error_message
-                )
+                    db_session.add(new_session)
+                    logger.debug(f"Created session {session.session_id} in database")
 
-                db.add(db_session)
-                logger.debug(f"Created session {session.session_id} in database")
-
-            db.commit()
-
-        except Exception as e:
-            logger.error(f"Failed to save session {session.session_id}: {e}")
-            db.rollback()
-            raise
-
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save session {session.session_id}: {e}")
+                raise
 
     def load_session(self, session_id: str, db: Optional[Session] = None) -> Optional[TradingSession]:
         """
@@ -120,43 +109,34 @@ class SessionStorage(BaseStorage):
         Returns:
             TradingSession if found, None otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            db_session = db.query(TradingSessionModel).filter(
+        with self.managed_session(db, commit_on_success=False) as db_session:
+            db_record = db_session.query(TradingSessionModel).filter(
                 TradingSessionModel.session_id == session_id
             ).first()
 
-            if not db_session:
+            if not db_record:
                 return None
 
             # Convert database model to TradingSession
             session = TradingSession(
-                session_id=db_session.session_id,
-                strategy_name=db_session.strategy_name,
-                symbol=db_session.symbol,
-                exchange=db_session.exchange,
-                mode=db_session.mode,
-                timeframe=db_session.timeframe,
-                initial_cash=db_session.initial_cash,
-                commission=db_session.commission,
-                status=SessionStatus[db_session.status.name],
-                start_time=db_session.start_time,
-                end_time=db_session.end_time,
-                current_pnl=db_session.total_pnl,
-                total_trades=db_session.total_trades,
-                positions=db_session.positions or [],
+                session_id=db_record.session_id,
+                strategy_name=db_record.strategy_name,
+                symbol=db_record.symbol,
+                exchange=db_record.exchange,
+                mode=db_record.mode,
+                timeframe=db_record.timeframe,
+                initial_cash=db_record.initial_cash,
+                commission=db_record.commission,
+                status=SessionStatus[db_record.status.name],
+                start_time=db_record.start_time,
+                end_time=db_record.end_time,
+                current_pnl=db_record.total_pnl,
+                total_trades=db_record.total_trades,
+                positions=db_record.positions or [],
                 orders=[]  # Orders loaded separately if needed
             )
 
             return session
-
-        finally:
-            if close_db:
-                db.close()
 
     def list_sessions(
         self,
@@ -177,13 +157,8 @@ class SessionStorage(BaseStorage):
         Returns:
             List of TradingSessions
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(TradingSessionModel).order_by(
+        with self.managed_session(db, commit_on_success=False) as db_session:
+            query = db_session.query(TradingSessionModel).order_by(
                 TradingSessionModel.start_time.desc()
             )
 
@@ -195,30 +170,26 @@ class SessionStorage(BaseStorage):
             query = query.offset(offset).limit(limit)
 
             sessions = []
-            for db_session in query.all():
+            for db_record in query.all():
                 session = TradingSession(
-                    session_id=db_session.session_id,
-                    strategy_name=db_session.strategy_name,
-                    symbol=db_session.symbol,
-                    exchange=db_session.exchange,
-                    mode=db_session.mode,
-                    timeframe=db_session.timeframe,
-                    initial_cash=db_session.initial_cash,
-                    commission=db_session.commission,
-                    status=SessionStatus[db_session.status.name],
-                    start_time=db_session.start_time,
-                    end_time=db_session.end_time,
-                    current_pnl=db_session.total_pnl,
-                    total_trades=db_session.total_trades,
-                    positions=db_session.positions or []
+                    session_id=db_record.session_id,
+                    strategy_name=db_record.strategy_name,
+                    symbol=db_record.symbol,
+                    exchange=db_record.exchange,
+                    mode=db_record.mode,
+                    timeframe=db_record.timeframe,
+                    initial_cash=db_record.initial_cash,
+                    commission=db_record.commission,
+                    status=SessionStatus[db_record.status.name],
+                    start_time=db_record.start_time,
+                    end_time=db_record.end_time,
+                    current_pnl=db_record.total_pnl,
+                    total_trades=db_record.total_trades,
+                    positions=db_record.positions or []
                 )
                 sessions.append(session)
 
             return sessions
-
-        finally:
-            if close_db:
-                db.close()
 
     def delete_session(self, session_id: str, db: Optional[Session] = None) -> bool:
         """
@@ -231,28 +202,17 @@ class SessionStorage(BaseStorage):
         Returns:
             bool: True if deleted, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as db_session:
+            try:
+                result = db_session.query(TradingSessionModel).filter(
+                    TradingSessionModel.session_id == session_id
+                ).delete()
 
-        try:
-            result = db.query(TradingSessionModel).filter(
-                TradingSessionModel.session_id == session_id
-            ).delete()
+                return result > 0
 
-            db.commit()
-
-            return result > 0
-
-        except Exception as e:
-            logger.error(f"Failed to delete session {session_id}: {e}")
-            db.rollback()
-            return False
-
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to delete session {session_id}: {e}")
+                return False
 
     def save_order(self, order_dict: dict, db: Optional[Session] = None) -> None:
         """
@@ -262,42 +222,32 @@ class SessionStorage(BaseStorage):
             order_dict: Order data dictionary
             db: Optional database session
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as db_session:
+            try:
+                order = OrderModel(
+                    order_id=order_dict['order_id'],
+                    session_id=order_dict['session_id'],
+                    exchange_order_id=order_dict.get('exchange_order_id'),
+                    symbol=order_dict['symbol'],
+                    side=order_dict['side'],
+                    type=order_dict['type'],
+                    size=order_dict['size'],
+                    price=order_dict.get('price'),
+                    status=OrderStatusEnum[order_dict['status'].upper()],
+                    filled_size=order_dict.get('filled_size', 0),
+                    filled_price=order_dict.get('filled_price'),
+                    commission=order_dict.get('commission', 0),
+                    cost=order_dict.get('cost'),
+                    pnl=order_dict.get('pnl')
+                )
 
-        try:
-            order = OrderModel(
-                order_id=order_dict['order_id'],
-                session_id=order_dict['session_id'],
-                exchange_order_id=order_dict.get('exchange_order_id'),
-                symbol=order_dict['symbol'],
-                side=order_dict['side'],
-                type=order_dict['type'],
-                size=order_dict['size'],
-                price=order_dict.get('price'),
-                status=OrderStatusEnum[order_dict['status'].upper()],
-                filled_size=order_dict.get('filled_size', 0),
-                filled_price=order_dict.get('filled_price'),
-                commission=order_dict.get('commission', 0),
-                cost=order_dict.get('cost'),
-                pnl=order_dict.get('pnl')
-            )
+                db_session.add(order)
 
-            db.add(order)
-            db.commit()
+                logger.debug(f"Saved order {order_dict['order_id']} to database")
 
-            logger.debug(f"Saved order {order_dict['order_id']} to database")
-
-        except Exception as e:
-            logger.error(f"Failed to save order: {e}")
-            db.rollback()
-            raise
-
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save order: {e}")
+                raise
 
     def get_session_orders(
         self,
@@ -314,13 +264,8 @@ class SessionStorage(BaseStorage):
         Returns:
             List of order dictionaries
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            orders = db.query(OrderModel).filter(
+        with self.managed_session(db, commit_on_success=False) as db_session:
+            orders = db_session.query(OrderModel).filter(
                 OrderModel.session_id == session_id
             ).order_by(OrderModel.created_at).all()
 
@@ -342,10 +287,6 @@ class SessionStorage(BaseStorage):
                 for o in orders
             ]
 
-        finally:
-            if close_db:
-                db.close()
-
     def get_session_count(self, db: Optional[Session] = None) -> dict:
         """
         Get count of sessions by status.
@@ -356,24 +297,15 @@ class SessionStorage(BaseStorage):
         Returns:
             dict: {status: count}
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as db_session:
             counts = {}
 
             for status in SessionStatusEnum:
-                count = db.query(TradingSessionModel).filter(
+                count = db_session.query(TradingSessionModel).filter(
                     TradingSessionModel.status == status
                 ).count()
                 counts[status.value] = count
 
-            counts['total'] = db.query(TradingSessionModel).count()
+            counts['total'] = db_session.query(TradingSessionModel).count()
 
             return counts
-
-        finally:
-            if close_db:
-                db.close()

@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from src.config.settings import LIVE_TRADING_ENABLED
 from src.service.live_engine import run_live, stop_live, get_session_status
 from src.service.session_manager import SessionStatus, get_session_manager
-from src.utils.auth import get_current_user
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.utils.config_loader import list_enabled_exchanges, load_broker_config, validate_symbol, validate_timeframe
 from src.utils.request_context import get_request_id, set_trace_id
 
@@ -103,7 +103,7 @@ class ExchangeInfo(BaseModel):
 @router.post("/live/start", response_model=dict, tags=["Live Trading"])
 async def start_live_trading(
     request: StartLiveRequest,
-    user: dict = Depends(get_current_user)
+    user_id: str = Depends(get_optional_user_id)
 ):
     """
     Start a new live/paper trading session.
@@ -126,7 +126,7 @@ async def start_live_trading(
     - Session status and configuration
     """
     # Extract user ID for credential lookup
-    user_id = user.get("sub") if user else None
+    
     
     # Validate mode first
     if request.mode not in ['paper', 'live']:
@@ -148,7 +148,7 @@ async def start_live_trading(
 
         # Validate exchange
         from src.utils.config_loader import get_exchange_config
-        ex_config = get_exchange_config(request.exchange, config)
+        get_exchange_config(request.exchange, config)  # Validates exchange exists
 
         # Validate symbol format
         validate_symbol(request.symbol, request.exchange, config)
@@ -219,24 +219,22 @@ async def stop_live_trading(request: StopLiveRequest):
     - Final P&L
     """
     try:
+        from src.utils.exception_handlers import ValidationError
+        
         session_manager = get_session_manager()
 
         # Check session exists
         session = session_manager.get_session(request.session_id)
         if not session:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {request.session_id} not found"
-            )
+            from src.utils.exception_handlers import SessionNotFoundError
+            raise SessionNotFoundError(f"Session {request.session_id} not found")
 
-        # Check session is active
+        # Check session is active  
         if not session.is_active():
-            return {
-                'session_id': request.session_id,
-                'status': session.status.value,
-                'message': f'Session already {session.status.value}',
-                'final_pnl': session.current_pnl
-            }
+            from src.utils.exception_handlers import SessionAlreadyStoppedError
+            raise SessionAlreadyStoppedError(
+                f'Session already {session.status.value}'
+            )
 
         # Stop session
         logger.info(f"Stopping session {request.session_id}")
@@ -244,9 +242,8 @@ async def stop_live_trading(request: StopLiveRequest):
         success = session_manager.stop_session(request.session_id, timeout=10.0)
 
         if not success:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to stop session {request.session_id}. Check logs for details."
+            raise ValidationError(
+                f"Failed to stop session {request.session_id}. Check logs for details."
             )
 
         # Return updated session info
@@ -261,12 +258,16 @@ async def stop_live_trading(request: StopLiveRequest):
             'end_time': session.end_time.isoformat() if session.end_time else None
         }
 
-    except HTTPException:
-        raise
+    except ValueError as e:
+        # Configuration or validation error
+        from src.utils.exception_handlers import ValidationError as VError
+        raise VError(str(e))
 
-    except Exception as e:
-        logger.exception(f"Failed to stop session {request.session_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop session: {str(e)}")
+    except FileNotFoundError as e:
+        # Strategy not found
+        from src.utils.exception_handlers import StrategyNotFoundError
+        raise StrategyNotFoundError(str(e))
+
 
 
 @router.get("/live/status/{session_id}", response_model=SessionResponse, tags=["Live Trading"])
@@ -281,24 +282,15 @@ async def get_live_status(session_id: str):
     - Current positions
     - Open orders
     """
-    try:
-        session_manager = get_session_manager()
+    from src.utils.exception_handlers import SessionNotFoundError
+    
+    session_manager = get_session_manager()
 
-        session = session_manager.get_session(session_id)
-        if not session:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {session_id} not found"
-            )
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise SessionNotFoundError(f"Session {session_id} not found")
 
-        return SessionResponse(**session.to_dict())
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        logger.exception(f"Failed to get status for session {session_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+    return SessionResponse(**session.to_dict())
 
 
 @router.get("/live/sessions", response_model=List[SessionResponse], tags=["Live Trading"])
@@ -319,38 +311,31 @@ async def list_live_sessions(
     - List of sessions with full details
     - Ordered by start time (newest first)
     """
-    try:
-        session_manager = get_session_manager()
+    from src.utils.exception_handlers import ValidationError
+    
+    session_manager = get_session_manager()
 
-        # Parse status filter
-        status_filter = None
-        if status:
-            try:
-                status_filter = SessionStatus(status.lower())
-            except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid status: '{status}'. Valid: starting, running, stopping, stopped, error"
-                )
+    # Parse status filter
+    status_filter = None
+    if status:
+        try:
+            status_filter = SessionStatus(status.lower())
+        except ValueError:
+            raise ValidationError(
+                f"Invalid status: '{status}'. Valid: starting, running, stopping, stopped, error"
+            )
 
-        # Get sessions
-        sessions = session_manager.list_sessions(
-            status_filter=status_filter,
-            active_only=active_only
-        )
+    # Get sessions
+    sessions = session_manager.list_sessions(
+        status_filter=status_filter,
+        active_only=active_only
+    )
 
-        # Limit results
-        sessions = sessions[:limit]
+    # Limit results
+    sessions = sessions[:limit]
 
-        # Convert to response models
-        return [SessionResponse(**s.to_dict()) for s in sessions]
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        logger.exception(f"Failed to list sessions: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list sessions: {str(e)}")
+    # Convert to response models
+    return [SessionResponse(**s.to_dict()) for s in sessions]
 
 
 @router.get("/live/exchanges", response_model=List[ExchangeInfo], tags=["Live Trading"])
@@ -363,13 +348,8 @@ async def get_exchanges():
     - Supported markets (spot, futures, etc.)
     - Paper mode availability
     """
-    try:
-        exchanges = list_enabled_exchanges()
-        return [ExchangeInfo(**ex) for ex in exchanges]
-
-    except Exception as e:
-        logger.exception(f"Failed to get exchanges: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get exchanges: {str(e)}")
+    exchanges = list_enabled_exchanges()
+    return [ExchangeInfo(**ex) for ex in exchanges]
 
 
 @router.get("/live/orders/{session_id}", response_model=List[dict], tags=["Live Trading"])
@@ -384,25 +364,16 @@ async def get_session_orders(session_id: str):
     - Fill details (filled size, price, commission)
     - Timestamps
     """
-    try:
-        session_manager = get_session_manager()
+    from src.utils.exception_handlers import SessionNotFoundError
+    
+    session_manager = get_session_manager()
 
-        session = session_manager.get_session(session_id)
-        if not session:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {session_id} not found"
-            )
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise SessionNotFoundError(f"Session {session_id} not found")
 
-        # Return orders from session
-        return session.orders
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        logger.exception(f"Failed to get orders for session {session_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get orders: {str(e)}")
+    # Return orders from session
+    return session.orders
 
 
 @router.get("/live/health", response_model=dict, tags=["Live Trading"])

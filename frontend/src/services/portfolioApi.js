@@ -2,6 +2,7 @@
  * Portfolio Backtest API
  */
 import { buildRequest, parseResponse } from './apiCore'
+import { normalizePortfolioResult, normalizePortfolioHistory } from './normalizers/portfolioNormalizer'
 
 export const portfolioApi = {
     async runPortfolioBacktest(params) {
@@ -9,7 +10,8 @@ export const portfolioApi = {
             method: 'POST',
             body: JSON.stringify(params)
         })
-        return await parseResponse(res)
+        const data = await parseResponse(res)
+        return normalizePortfolioResult(data)
     },
 
     async getPortfolioHistory(params = {}) {
@@ -23,12 +25,21 @@ export const portfolioApi = {
         const path = query ? `/portfolio/history?${query}` : '/portfolio/history'
 
         const res = await buildRequest(path)
-        return await parseResponse(res)
+        const data = await parseResponse(res)
+        // Normalize history items if response is an array or has items property
+        if (Array.isArray(data)) {
+            return normalizePortfolioHistory(data)
+        }
+        if (data?.items) {
+            return { ...data, items: normalizePortfolioHistory(data.items) }
+        }
+        return data
     },
 
     async getPortfolioDetail(portfolioId) {
         const res = await buildRequest(`/portfolio/${portfolioId}`)
-        return await parseResponse(res)
+        const data = await parseResponse(res)
+        return normalizePortfolioResult(data)
     },
 
     async deletePortfolio(portfolioId) {

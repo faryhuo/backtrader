@@ -18,10 +18,11 @@ from typing import Any, Callable, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR
+from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR, PROJECT_ROOT, load_report_config
 from src.db.storage import BacktestStorage, PortfolioStorage, WalkForwardStorage, get_report_storage
 from src.db.models import ReportStatus
 from src.utils.report_i18n import get_translations, get_report_type_name, DEFAULT_LANGUAGE
+from src.service.echarts_theme import build_equity_chart, build_comparison_bar_chart
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +40,30 @@ class ReportGenerator:
     - ECharts configuration for interactive charts
     - Support for single and comparison reports
     - Progress callbacks for background task integration
+    - Configurable via report_config.json
     """
 
     def __init__(self):
-        """Initialize the report generator with Jinja2 environment."""
+        """Initialize the report generator with Jinja2 environment and config."""
+        # Load report configuration
+        self.config = load_report_config()
+        logger.debug(f"Loaded report config version: {self.config.get('version', 'unknown')}")
+        
+        # Set output directory from config, with fallback to default REPORTS_DIR
+        output_dir_config = self.config.get("report", {}).get("output_directory", "")
+        if output_dir_config:
+            output_path = Path(output_dir_config)
+            # Handle relative paths - make them relative to PROJECT_ROOT
+            if not output_path.is_absolute():
+                output_path = PROJECT_ROOT / output_path
+            self.output_dir = output_path
+        else:
+            self.output_dir = REPORTS_DIR
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Report output directory: {self.output_dir}")
+        
         template_path = TEMPLATES_DIR / "reports"
         template_path.mkdir(parents=True, exist_ok=True)
 
@@ -58,6 +79,7 @@ class ReportGenerator:
         self.portfolio_storage = PortfolioStorage()
         self.walkforward_storage = WalkForwardStorage()
         self.report_storage = get_report_storage()
+
 
     async def generate_report(
         self,
@@ -143,9 +165,9 @@ class ReportGenerator:
             if progress_callback:
                 await progress_callback(80, "Saving report...")
 
-            # Save to file
+            # Save to file using configured output directory
             html_filename = f"{report_id}.html"
-            html_path = REPORTS_DIR / html_filename
+            html_path = self.output_dir / html_filename
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
@@ -580,8 +602,13 @@ class ReportGenerator:
         report_type: str,
         source_data: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Add ECharts configuration to context."""
-        # Equity curve chart
+        """
+        Add ECharts configuration to context.
+        
+        Uses chart builder functions from echarts_theme module to create
+        consistent, theme-aware chart configurations.
+        """
+        # Equity curve chart for backtest reports
         if report_type == "backtest" and source_data:
             metrics = source_data[0].get("metrics", {})
             equity_curve = metrics.get("equity_curve", {})
@@ -589,112 +616,20 @@ class ReportGenerator:
             if equity_curve:
                 dates = list(equity_curve.keys())
                 values = list(equity_curve.values())
+                context["equity_chart"] = build_equity_chart(dates, values)
 
-                # Calculate label interval to avoid overcrowding
-                label_interval = max(0, len(dates) // 15) if len(dates) > 15 else 0
-
-                context["equity_chart"] = {
-                    "tooltip": {
-                        "trigger": "axis",
-                        "backgroundColor": "rgba(24, 24, 27, 0.95)",
-                        "borderColor": "rgba(255, 255, 255, 0.1)",
-                        "textStyle": {"color": "#fafafa"},
-                    },
-                    "xAxis": {
-                        "type": "category",
-                        "data": dates,
-                        "axisLabel": {
-                            "color": "#a1a1aa",
-                            "rotate": 45,
-                            "interval": label_interval,
-                            "fontSize": 11,
-                        },
-                        "axisLine": {"lineStyle": {"color": "rgba(255, 255, 255, 0.1)"}},
-                        "axisTick": {"lineStyle": {"color": "rgba(255, 255, 255, 0.1)"}},
-                    },
-                    "yAxis": {
-                        "type": "value",
-                        "axisLabel": {"color": "#a1a1aa", "fontSize": 11},
-                        "axisLine": {"lineStyle": {"color": "rgba(255, 255, 255, 0.1)"}},
-                        "splitLine": {"lineStyle": {"color": "rgba(255, 255, 255, 0.05)"}},
-                    },
-                    "series": [{
-                        "data": values,
-                        "type": "line",
-                        "smooth": True,
-                        "lineStyle": {"color": "#22d3ee", "width": 2},
-                        "areaStyle": {
-                            "color": {
-                                "type": "linear",
-                                "x": 0, "y": 0, "x2": 0, "y2": 1,
-                                "colorStops": [
-                                    {"offset": 0, "color": "rgba(34, 211, 238, 0.3)"},
-                                    {"offset": 1, "color": "rgba(34, 211, 238, 0.02)"},
-                                ],
-                            }
-                        },
-                        "symbol": "none",
-                    }],
-                    "grid": {
-                        "left": "3%",
-                        "right": "4%",
-                        "top": "10%",
-                        "bottom": "18%",
-                        "containLabel": True,
-                    },
-                    "dataZoom": [
-                        {"type": "inside", "start": 0, "end": 100},
-                        {
-                            "type": "slider",
-                            "start": 0,
-                            "end": 100,
-                            "height": 20,
-                            "bottom": 5,
-                            "borderColor": "transparent",
-                            "backgroundColor": "rgba(255, 255, 255, 0.05)",
-                            "fillerColor": "rgba(34, 211, 238, 0.2)",
-                            "handleStyle": {"color": "#22d3ee"},
-                            "textStyle": {"color": "#a1a1aa"},
-                        },
-                    ],
-                }
-
-        # Comparison charts
+        # Comparison bar chart for multi-result comparison reports
         if report_type == "comparison" and len(source_data) > 1:
-            # Metrics bar chart
-            names = [r.get("name", f"Result {i+1}") for i, r in enumerate(context.get("results", []))]
-            returns = [r.get("total_return", 0) for r in context.get("results", [])]
-            sharpes = [r.get("sharpe_ratio", 0) or 0 for r in context.get("results", [])]
+            results = context.get("results", [])
+            names = [r.get("name", f"Result {i+1}") for i, r in enumerate(results)]
+            returns = [r.get("total_return", 0) for r in results]
+            sharpes = [r.get("sharpe_ratio", 0) or 0 for r in results]
 
-            context["metrics_bar_chart"] = {
-                "tooltip": {"trigger": "axis"},
-                "legend": {"data": ["Return %", "Sharpe"], "textStyle": {"color": "#a1a1aa"}},
-                "xAxis": {
-                    "type": "category",
-                    "data": names,
-                    "axisLabel": {"color": "#a1a1aa", "rotate": 45},
-                },
-                "yAxis": [
-                    {"type": "value", "name": "Return %", "axisLabel": {"color": "#a1a1aa"}},
-                    {"type": "value", "name": "Sharpe", "axisLabel": {"color": "#a1a1aa"}},
-                ],
-                "series": [
-                    {
-                        "name": "Return %",
-                        "type": "bar",
-                        "data": returns,
-                        "itemStyle": {"color": "#22d3ee"},
-                    },
-                    {
-                        "name": "Sharpe",
-                        "type": "bar",
-                        "yAxisIndex": 1,
-                        "data": sharpes,
-                        "itemStyle": {"color": "#22c55e"},
-                    },
-                ],
-                "grid": {"left": "3%", "right": "4%", "bottom": "15%", "containLabel": True},
-            }
+            context["metrics_bar_chart"] = build_comparison_bar_chart(
+                categories=names,
+                returns=returns,
+                sharpes=sharpes,
+            )
 
         return context
 

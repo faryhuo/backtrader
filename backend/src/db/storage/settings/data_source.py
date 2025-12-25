@@ -42,15 +42,10 @@ class DataSourceMixin:
         Returns:
             Dict with data_source_priority list and eodhd_api_key (masked)
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as session:
             normalized_user_id = self._normalize_user_id(user_id)
 
-            settings = db.query(UserSettingsModel).filter(
+            settings = session.query(UserSettingsModel).filter(
                 UserSettingsModel.user_id == normalized_user_id
             ).first()
 
@@ -80,10 +75,6 @@ class DataSourceMixin:
 
             return result
 
-        finally:
-            if close_db:
-                db.close()
-
     def get_data_source_priority(
         self,
         user_id: Optional[str] = None,
@@ -99,15 +90,10 @@ class DataSourceMixin:
         Returns:
             List of data source names in priority order
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
+        with self.managed_session(db, commit_on_success=False) as session:
             normalized_user_id = self._normalize_user_id(user_id)
 
-            settings = db.query(UserSettingsModel).filter(
+            settings = session.query(UserSettingsModel).filter(
                 UserSettingsModel.user_id == normalized_user_id
             ).first()
 
@@ -118,10 +104,6 @@ class DataSourceMixin:
                 return [s for s in priority if s in self.VALID_DATA_SOURCES]
 
             return self.DEFAULT_DATA_SOURCE_PRIORITY.copy()
-
-        finally:
-            if close_db:
-                db.close()
 
     def get_eodhd_api_key(
         self,
@@ -163,41 +145,32 @@ class DataSourceMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
-            settings = self._get_or_create_settings(normalized_user_id, db)
+                if data_source_priority is not None:
+                    valid_priority = [s for s in data_source_priority if s in self.VALID_DATA_SOURCES]
+                    if not valid_priority:
+                        valid_priority = self.DEFAULT_DATA_SOURCE_PRIORITY.copy()
+                    settings.data_source_priority = valid_priority
+                    flag_modified(settings, "data_source_priority")
 
-            if data_source_priority is not None:
-                valid_priority = [s for s in data_source_priority if s in self.VALID_DATA_SOURCES]
-                if not valid_priority:
-                    valid_priority = self.DEFAULT_DATA_SOURCE_PRIORITY.copy()
-                settings.data_source_priority = valid_priority
-                flag_modified(settings, "data_source_priority")
+                if eodhd_api_key is not None:
+                    if eodhd_api_key:
+                        settings.eodhd_api_key = encrypt_value(eodhd_api_key)
+                    else:
+                        settings.eodhd_api_key = None
 
-            if eodhd_api_key is not None:
-                if eodhd_api_key:
-                    settings.eodhd_api_key = encrypt_value(eodhd_api_key)
-                else:
-                    settings.eodhd_api_key = None
+                settings.updated_at = datetime.utcnow()
 
-            settings.updated_at = datetime.utcnow()
-            db.commit()
+                logger.info(f"Saved data source settings for user {normalized_user_id}")
+                return True
 
-            logger.info(f"Saved data source settings for user {normalized_user_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save data source settings: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save data source settings: {e}")
+                return False
 
     def reset_data_source_settings(
         self,
@@ -214,31 +187,22 @@ class DataSourceMixin:
         Returns:
             True if successful, False otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
 
-        try:
-            normalized_user_id = self._normalize_user_id(user_id)
+                settings = session.query(UserSettingsModel).filter(
+                    UserSettingsModel.user_id == normalized_user_id
+                ).first()
 
-            settings = db.query(UserSettingsModel).filter(
-                UserSettingsModel.user_id == normalized_user_id
-            ).first()
+                if settings:
+                    settings.data_source_priority = None
+                    settings.eodhd_api_key = None
+                    settings.updated_at = datetime.utcnow()
+                    logger.info(f"Reset data source settings for user {normalized_user_id}")
 
-            if settings:
-                settings.data_source_priority = None
-                settings.eodhd_api_key = None
-                settings.updated_at = datetime.utcnow()
-                db.commit()
-                logger.info(f"Reset data source settings for user {normalized_user_id}")
+                return True
 
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to reset data source settings: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to reset data source settings: {e}")
+                return False

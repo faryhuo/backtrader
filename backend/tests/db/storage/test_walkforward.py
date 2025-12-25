@@ -48,7 +48,11 @@ def test_walkforward_storage_create_update_and_save_result(tmp_path):
         combined_test_metrics={"total_return": 0.5},
     )
 
-    saved = storage.save_optimization_result(result, user_id="u1")
-    assert saved.optimization_id == "o1"
-    assert saved.status == "completed"
+    storage.save_optimization_result(result, user_id="u1")
+
+    # Verify via get_optimization to avoid detached instance issues
+    saved = storage.get_optimization("o1", user_id="u1")
+    assert saved is not None
+    assert saved["optimization_id"] == "o1"
+    assert saved["status"] == "completed"
 

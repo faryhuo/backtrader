@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from src.db.models.task import TaskType, TaskStatus
 from src.service.task_manager import get_task_manager
-from src.utils.auth import get_current_user, get_optional_user
+from src.routes.common.auth_dependencies import get_optional_user_id, get_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ async def list_tasks(
     offset: int = 0,
     sort_by: str = "created_at",
     sort_order: str = "desc",
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     List tasks with optional filtering.
@@ -101,7 +101,6 @@ async def list_tasks(
     - **total**: Total count matching filters
     """
     try:
-        user_id = user.get("sub") if user else None
         manager = get_task_manager()
 
         # Validate task_type if provided
@@ -136,7 +135,7 @@ async def list_tasks(
 
 
 @router.get("/stats", response_model=TaskStatsResponse)
-async def get_task_stats(user: dict = Depends(get_optional_user)):
+async def get_task_stats(user_id: str = Depends(get_optional_user_id)):
     """
     Get task manager statistics.
 
@@ -158,7 +157,7 @@ async def get_task_stats(user: dict = Depends(get_optional_user)):
 @router.get("/{task_id}")
 async def get_task(
     task_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Get task details by ID.
@@ -170,7 +169,6 @@ async def get_task(
     Task object with full details including configuration and logs.
     """
     try:
-        user_id = user.get("sub") if user else None
         manager = get_task_manager()
 
         task = manager.get_task(task_id, user_id)
@@ -189,7 +187,7 @@ async def get_task(
 @router.post("/{task_id}/cancel")
 async def cancel_task(
     task_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_user_id),
 ):
     """
     Cancel a pending or running task.
@@ -206,7 +204,6 @@ async def cancel_task(
     - 400: Task cannot be cancelled (already completed/failed/cancelled)
     """
     try:
-        user_id = user.get("sub") if user else None
         manager = get_task_manager()
 
         # Check task exists
@@ -237,7 +234,7 @@ async def cancel_task(
 @router.post("/{task_id}/retry")
 async def retry_task(
     task_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_user_id),
 ):
     """
     Retry a failed or cancelled task.
@@ -255,7 +252,6 @@ async def retry_task(
     - 400: Task cannot be retried (not failed/cancelled)
     """
     try:
-        user_id = user.get("sub") if user else None
         manager = get_task_manager()
 
         # Check task exists
@@ -295,7 +291,7 @@ async def retry_task(
 async def delete_task(
     task_id: str,
     force: bool = False,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_user_id),
 ):
     """
     Delete a task record.
@@ -317,7 +313,6 @@ async def delete_task(
     - 400: Task cannot be deleted (still running)
     """
     try:
-        user_id = user.get("sub") if user else None
         manager = get_task_manager()
 
         # Check task exists

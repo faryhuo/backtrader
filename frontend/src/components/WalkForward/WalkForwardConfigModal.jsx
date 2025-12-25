@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import PropTypes from 'prop-types'
 import {
     Modal,
     Form,
@@ -19,7 +20,8 @@ import {
 } from 'antd'
 import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { api } from '../../services/api'
+import { useStrategies } from '../../hooks/useStrategies'
+import { useStrategyParams } from '../../hooks/useStrategyParams'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -28,59 +30,59 @@ const { Text } = Typography
 const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const { t } = useTranslation()
     const [form] = Form.useForm()
-    const [strategies, setStrategies] = useState([])
     const [loading, setLoading] = useState(false)
-    const [loadingParams, setLoadingParams] = useState(false)
-    const [_paramFields, setParamFields] = useState([{ name: '', values: '' }])
+    const [selectedStrategy, setSelectedStrategy] = useState('')
+
+    const {
+        strategies,
+        loading: loadingStrategies,
+        error: strategiesError,
+    } = useStrategies({ enabled: visible, autoSelectFirst: false })
+
+    const {
+        strategyParams,
+        paramOverrides,
+        loading: loadingParams,
+    } = useStrategyParams(selectedStrategy, { enabled: visible, includeCode: false })
 
     useEffect(() => {
         if (visible) {
-            loadStrategies()
             form.resetFields()
-            setParamFields([{ name: '', values: '' }])
+            setSelectedStrategy('')
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible])
 
-    const loadStrategies = async () => {
-        try {
-            const data = await api.getStrategies()
-            setStrategies(data)
-        } catch (_error) {
-            message.error(t('walkforward.config.loadStrategiesError'))
-        }
-    }
+    useEffect(() => {
+        if (!visible) return
+        if (!strategiesError) return
+        message.error(t('walkforward.config.loadStrategiesError'))
+    }, [visible, strategiesError, t])
 
     // Fetch strategy params when strategy changes
-    const handleStrategyChange = async (strategyName) => {
-        if (!strategyName) {
+    const handleStrategyChange = (strategyName) => {
+        setSelectedStrategy(strategyName || '')
+    }
+
+    useEffect(() => {
+        if (!visible) return
+
+        if (!selectedStrategy) {
             form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
             return
         }
 
-        setLoadingParams(true)
-        try {
-            const data = await api.getStrategyParams(strategyName)
-            const params = data.params || []
-
-            if (params.length > 0) {
-                // Populate parameter grid with strategy params
-                const parameterFields = params.map(p => ({
-                    name: p.name,
-                    values: String(p.value) // Pre-fill with default value as starting point
-                }))
-                form.setFieldsValue({ parameters: parameterFields })
-            } else {
-                // No params found, reset to empty
-                form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
-            }
-        } catch (err) {
-            console.warn('Failed to fetch strategy params:', err)
-            // Keep current params on error
-        } finally {
-            setLoadingParams(false)
+        const params = strategyParams || []
+        if (params.length > 0) {
+            const parameterFields = params.map(p => ({
+                name: p.name,
+                values: String(paramOverrides?.[p.name] ?? p.value ?? '')
+            }))
+            form.setFieldsValue({ parameters: parameterFields })
+        } else {
+            form.setFieldsValue({ parameters: [{ name: '', values: '' }] })
         }
-    }
+    }, [visible, selectedStrategy, strategyParams, paramOverrides, form])
 
     const handleSubmit = async () => {
         try {
@@ -96,7 +98,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                         const trimmed = v.trim()
                         // Try to parse as number
                         const num = Number(trimmed)
-                        return isNaN(num) ? trimmed : num
+                        return Number.isNaN(num) ? trimmed : num
                     })
                     param_grid[param.name] = valuesList
                 }
@@ -168,7 +170,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             <Select
                                 placeholder={t('walkforward.config.selectStrategy')}
                                 onChange={handleStrategyChange}
-                                loading={loadingParams}
+                                loading={loadingParams || loadingStrategies}
                             >
                                 {strategies.map(s => (
                                     <Option key={s} value={s}>{s}</Option>
@@ -211,7 +213,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             name="train_period_days"
                             rules={[{ required: true }]}
                         >
-                            <InputNumber min={30} max={1825} addonAfter={t('walkforward.config.days')} style={{ width: '100%' }} />
+                            <InputNumber min={30} max={1825} suffix={t('walkforward.config.days')} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -227,7 +229,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             name="test_period_days"
                             rules={[{ required: true }]}
                         >
-                            <InputNumber min={7} max={365} addonAfter={t('walkforward.config.days')} style={{ width: '100%' }} />
+                            <InputNumber min={7} max={365} suffix={t('walkforward.config.days')} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -331,6 +333,12 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
             </Form>
         </Modal>
     )
+}
+
+WalkForwardConfigModal.propTypes = {
+    visible: PropTypes.bool.isRequired,
+    onCancel: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func.isRequired
 }
 
 export default WalkForwardConfigModal

@@ -16,19 +16,24 @@ class DataFixtures:
     """Test data generator for common test scenarios."""
 
     @staticmethod
-    def simple_strategy_code(strategy_name: str = "TestStrategy") -> str:
+    def simple_strategy_code(strategy_name: str = "UserStrategy") -> str:
         """
         Generate a simple valid strategy code.
 
+        The class name must always be 'UserStrategy' as required by the backtest
+        worker. The strategy_name parameter is kept for backward compatibility
+        but the class name is always 'UserStrategy'.
+
         Args:
-            strategy_name: Name of the strategy class
+            strategy_name: Ignored - class is always named UserStrategy
 
         Returns:
             Python code as string
         """
-        return f'''import backtrader as bt
+        # Class must be named 'UserStrategy' for backtest worker compatibility
+        return '''import backtrader as bt
 
-class {strategy_name}(bt.Strategy):
+class UserStrategy(bt.Strategy):
     """Simple test strategy."""
     
     params = (
@@ -63,10 +68,14 @@ class BrokenStrategy(bt.Strategy):
 
     @staticmethod
     def strategy_with_params() -> str:
-        """Generate strategy with multiple parameters."""
+        """Generate strategy with multiple parameters.
+        
+        Class is always named 'UserStrategy' as required by the backtest worker.
+        """
         return '''import backtrader as bt
 
-class ParamStrategy(bt.Strategy):
+class UserStrategy(bt.Strategy):
+    """Strategy with multiple parameters for testing."""
     params = (
         ('fast_period', 10),
         ('slow_period', 30),

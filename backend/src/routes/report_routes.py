@@ -16,11 +16,11 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel, Field
 
-from src.config.settings import REPORTS_DIR
+# Note: REPORTS_DIR no longer imported - using generator.output_dir instead
 from src.db.storage.report import get_report_storage
 from src.db.models.report import ReportStatus, ReportType
 from src.service.report_generator import get_report_generator
-from src.utils.auth import get_current_user
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.utils.share_token import generate_share_token, verify_share_token
 
 logger = logging.getLogger(__name__)
@@ -117,13 +117,12 @@ def list_reports(
     sort_order: str = "desc",
     limit: int = 50,
     offset: int = 0,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     List generated reports with filtering and pagination.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     return storage.list_reports(
         report_type=report_type,
@@ -139,15 +138,14 @@ def list_reports(
 async def generate_report(
     request: ReportGenerateRequest,
     background_tasks: BackgroundTasks,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Generate a new report as a background task.
-    
+
     Returns the report ID immediately; poll status via GET /reports/{id}.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     # Validate report type
     try:
@@ -205,13 +203,12 @@ async def generate_report(
 @router.get("/{report_id}")
 def get_report(
     report_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Get report details including HTML content if completed.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     report = storage.get_report(report_id, user_id=user_id)
     if not report:
@@ -223,13 +220,12 @@ def get_report(
 @router.delete("/{report_id}")
 def delete_report(
     report_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Delete a report and its generated files.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     deleted = storage.delete_report(report_id, user_id=user_id)
     if not deleted:
@@ -244,13 +240,12 @@ def delete_report(
 @router.get("/{report_id}/download")
 def download_report(
     report_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Download the generated HTML report file.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     report = storage.get_report(report_id, user_id=user_id)
     if not report:
@@ -266,7 +261,9 @@ def download_report(
     if not html_filename:
         raise HTTPException(status_code=404, detail="Report file not found")
 
-    file_path = REPORTS_DIR / html_filename
+    # Get output directory from generator config
+    generator = get_report_generator()
+    file_path = generator.output_dir / html_filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Report file not found on disk")
 
@@ -287,15 +284,14 @@ def download_report(
 def create_share_link(
     report_id: str,
     request: ShareLinkRequest,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Generate a share link for a completed report.
-    
+
     Returns a signed URL that expires after the specified duration.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     report = storage.get_report(report_id, user_id=user_id)
     if not report:
@@ -332,13 +328,12 @@ def create_share_link(
 @router.delete("/{report_id}/share")
 def revoke_share_link(
     report_id: str,
-    user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_optional_user_id),
 ) -> dict:
     """
     Revoke an existing share link for a report.
     """
     storage = get_report_storage()
-    user_id = user.get("sub") if user else None
 
     report = storage.get_report(report_id, user_id=user_id)
     if not report:
@@ -380,10 +375,11 @@ def get_shared_report(share_token: str) -> HTMLResponse:
     # Return HTML content
     html_content = report.get("html_content")
     if not html_content:
-        # Try to read from file
+        # Try to read from file using configured output directory
         html_filename = report.get("html_filename")
         if html_filename:
-            file_path = REPORTS_DIR / html_filename
+            generator = get_report_generator()
+            file_path = generator.output_dir / html_filename
             if file_path.exists():
                 with open(file_path, "r", encoding="utf-8") as f:
                     html_content = f.read()

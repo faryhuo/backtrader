@@ -73,7 +73,7 @@ const WalkForwardOptimization = () => {
 
     const handleConfigSubmit = async (values) => {
         try {
-            const _response = await api.startWalkForward(values)
+            await api.startWalkForward(values)
             message.success(t('walkforward.startSuccess'))
             setConfigModalVisible(false)
             loadOptimizations()
@@ -186,7 +186,7 @@ const WalkForwardOptimization = () => {
             key: 'avg_train_performance',
             width: 120,
             align: 'right',
-            render: (val) => val != null ? val.toFixed(4) : '-'
+            render: (val) => val == null ? '-' : val.toFixed(4)
         },
         {
             title: t('walkforward.table.testPerf'),
@@ -194,7 +194,7 @@ const WalkForwardOptimization = () => {
             key: 'avg_test_performance',
             width: 120,
             align: 'right',
-            render: (val) => val != null ? val.toFixed(4) : '-'
+            render: (val) => val == null ? '-' : val.toFixed(4)
         },
         {
             title: t('walkforward.table.degradation'),
@@ -202,7 +202,7 @@ const WalkForwardOptimization = () => {
             key: 'avg_degradation_pct',
             width: 120,
             align: 'right',
-            render: (val) => val != null ? `${val.toFixed(2)}%` : '-'
+            render: (val) => val == null ? '-' : `${val.toFixed(2)}%`
         },
         {
             title: t('walkforward.table.overfitting'),

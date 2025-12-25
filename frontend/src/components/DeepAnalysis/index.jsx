@@ -36,11 +36,11 @@ const DeepAnalysis = ({ backtest }) => {
             if (data.status === 'ok') {
                 setAnalysisData(data)
             } else {
-                setError(data.detail || t('deep_analysis.deep_analysis.error'))
+                setError(data.detail || t('deep_analysis.error'))
             }
         } catch (err) {
             console.error('Failed to load deep analysis:', err)
-            setError(err.message || t('deep_analysis.deep_analysis.error'))
+            setError(err.message || t('deep_analysis.error'))
         } finally {
             setLoading(false)
         }
@@ -51,7 +51,7 @@ const DeepAnalysis = ({ backtest }) => {
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
                 <Spin size="large" />
                 <div style={{ marginTop: 16, color: '#888' }}>
-                    {t('deep_analysis.deep_analysis.loading')}
+                    {t('deep_analysis.loading')}
                 </div>
             </div>
         )
@@ -62,7 +62,7 @@ const DeepAnalysis = ({ backtest }) => {
             <Alert
                 type="warning"
                 showIcon
-                message={t('deep_analysis.deep_analysis.error')}
+                message={t('deep_analysis.error')}
                 description={error}
                 style={{ margin: 20 }}
             />
@@ -74,7 +74,7 @@ const DeepAnalysis = ({ backtest }) => {
             <Alert
                 type="info"
                 showIcon
-                message={t('deep_analysis.deep_analysis.no_data')}
+                message={t('deep_analysis.no_data')}
                 style={{ margin: 20 }}
             />
         )

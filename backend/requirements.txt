@@ -1,5 +1,5 @@
 fastapi>=0.124.4
-daphne>=4.2.1
+uvicorn[standard]>=0.32.0
 backtrader>=1.9.78.123
 yfinance>=0.2.66
 pandas>=2.3.3

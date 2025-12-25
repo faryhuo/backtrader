@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
+import { useLogtoConfig } from '../../contexts/LogtoConfigContext';
 import { TrendingUp, Menu, X, Globe } from 'lucide-react';
 
 /**
@@ -12,6 +13,7 @@ export function Navbar() {
     const { t, i18n } = useTranslation();
     const isZh = i18n.language?.startsWith('zh');
     const { signIn, loginEnabled } = useAuth();
+    const { config } = useLogtoConfig();
     const navigate = useNavigate();
 
     const navLinks = [
@@ -30,8 +32,10 @@ export function Navbar() {
             navigate('/strategy');
             return;
         }
-        const redirectUri = import.meta.env.VITE_LOGTO_REDIRECT_URI;
-        signIn(redirectUri);
+        const redirectUri = config?.redirectUri;
+        if (redirectUri) {
+            signIn(redirectUri);
+        }
     };
 
     const handleGetStarted = () => {
@@ -39,8 +43,10 @@ export function Navbar() {
             navigate('/strategy');
             return;
         }
-        const redirectUri = import.meta.env.VITE_LOGTO_REDIRECT_URI;
-        signIn(redirectUri);
+        const redirectUri = config?.redirectUri;
+        if (redirectUri) {
+            signIn(redirectUri);
+        }
     };
 
     const scrollToSection = (e, href) => {

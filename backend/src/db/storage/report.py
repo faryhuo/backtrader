@@ -63,40 +63,31 @@ class ReportStorage(BaseStorage):
         Returns:
             Created report as dict
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                record = ReportModel(
+                    report_id=report_id,
+                    report_type=report_type,
+                    title=title,
+                    description=description,
+                    source_ids=source_ids,
+                    source_type=source_type,
+                    status=ReportStatus.PENDING.value,
+                    progress=0,
+                    user_id=user_id,
+                    config=config,
+                    created_at=datetime.utcnow(),
+                )
 
-        try:
-            record = ReportModel(
-                report_id=report_id,
-                report_type=report_type,
-                title=title,
-                description=description,
-                source_ids=source_ids,
-                source_type=source_type,
-                status=ReportStatus.PENDING.value,
-                progress=0,
-                user_id=user_id,
-                config=config,
-                created_at=datetime.utcnow(),
-            )
+                session.add(record)
+                session.flush()
 
-            db.add(record)
-            db.commit()
-            db.refresh(record)
+                logger.info(f"Created report {report_id}")
+                return self._record_to_dict(record)
 
-            logger.info(f"Created report {report_id}")
-            return self._record_to_dict(record)
-
-        except Exception as e:
-            logger.error(f"Failed to create report {report_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to create report {report_id}: {e}")
+                raise
 
     def get_report(
         self,
@@ -117,13 +108,8 @@ class ReportStorage(BaseStorage):
         Returns:
             Report dict or None if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(ReportModel).filter(
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(ReportModel).filter(
                 ReportModel.report_id == report_id
             )
 
@@ -136,10 +122,6 @@ class ReportStorage(BaseStorage):
                 return None
 
             return self._record_to_dict(record, include_html=include_html)
-
-        finally:
-            if close_db:
-                db.close()
 
     def get_report_by_share_token(
         self,
@@ -156,13 +138,8 @@ class ReportStorage(BaseStorage):
         Returns:
             Report dict with HTML content, or None if not found/expired
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            record = db.query(ReportModel).filter(
+        with self.managed_session(db, commit_on_success=False) as session:
+            record = session.query(ReportModel).filter(
                 ReportModel.share_token == share_token
             ).first()
 
@@ -174,10 +151,6 @@ class ReportStorage(BaseStorage):
                 return None
 
             return self._record_to_dict(record, include_html=True)
-
-        finally:
-            if close_db:
-                db.close()
 
     def list_reports(
         self,
@@ -210,13 +183,8 @@ class ReportStorage(BaseStorage):
         Returns:
             Dict with 'reports' list and 'total' count
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(ReportModel)
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(ReportModel)
 
             # Apply filters
             if user_id:
@@ -250,10 +218,6 @@ class ReportStorage(BaseStorage):
 
             return {"reports": reports, "total": total}
 
-        finally:
-            if close_db:
-                db.close()
-
     def update_status(
         self,
         report_id: str,
@@ -277,43 +241,34 @@ class ReportStorage(BaseStorage):
         Returns:
             True if updated, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(ReportModel).filter(
+                    ReportModel.report_id == report_id
+                )
 
-        try:
-            query = db.query(ReportModel).filter(
-                ReportModel.report_id == report_id
-            )
+                if user_id:
+                    query = query.filter(ReportModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(ReportModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                record.status = status
+                if progress is not None:
+                    record.progress = progress
+                if error_message is not None:
+                    record.error_message = error_message
+                if status == ReportStatus.COMPLETED.value:
+                    record.completed_at = datetime.utcnow()
+
+                logger.debug(f"Updated report {report_id} status to {status}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to update report status {report_id}: {e}")
                 return False
-
-            record.status = status
-            if progress is not None:
-                record.progress = progress
-            if error_message is not None:
-                record.error_message = error_message
-            if status == ReportStatus.COMPLETED.value:
-                record.completed_at = datetime.utcnow()
-
-            db.commit()
-            logger.debug(f"Updated report {report_id} status to {status}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to update report status {report_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def save_content(
         self,
@@ -338,44 +293,35 @@ class ReportStorage(BaseStorage):
         Returns:
             True if saved, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(ReportModel).filter(
+                    ReportModel.report_id == report_id
+                )
 
-        try:
-            query = db.query(ReportModel).filter(
-                ReportModel.report_id == report_id
-            )
+                if user_id:
+                    query = query.filter(ReportModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(ReportModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                record.html_content = html_content
+                if html_filename:
+                    record.html_filename = html_filename
+                if metrics_summary:
+                    record.metrics_summary = metrics_summary
+                record.status = ReportStatus.COMPLETED.value
+                record.progress = 100
+                record.completed_at = datetime.utcnow()
+
+                logger.info(f"Saved content for report {report_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to save report content {report_id}: {e}")
                 return False
-
-            record.html_content = html_content
-            if html_filename:
-                record.html_filename = html_filename
-            if metrics_summary:
-                record.metrics_summary = metrics_summary
-            record.status = ReportStatus.COMPLETED.value
-            record.progress = 100
-            record.completed_at = datetime.utcnow()
-
-            db.commit()
-            logger.info(f"Saved content for report {report_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save report content {report_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def set_share_token(
         self,
@@ -398,38 +344,29 @@ class ReportStorage(BaseStorage):
         Returns:
             True if set, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(ReportModel).filter(
+                    ReportModel.report_id == report_id
+                )
 
-        try:
-            query = db.query(ReportModel).filter(
-                ReportModel.report_id == report_id
-            )
+                if user_id:
+                    query = query.filter(ReportModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(ReportModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                record.share_token = share_token
+                record.share_expires_at = expires_at
+
+                logger.info(f"Set share token for report {report_id}, expires at {expires_at}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to set share token for {report_id}: {e}")
                 return False
-
-            record.share_token = share_token
-            record.share_expires_at = expires_at
-
-            db.commit()
-            logger.info(f"Set share token for report {report_id}, expires at {expires_at}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to set share token for {report_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def clear_share_token(
         self,
@@ -448,38 +385,29 @@ class ReportStorage(BaseStorage):
         Returns:
             True if cleared, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(ReportModel).filter(
+                    ReportModel.report_id == report_id
+                )
 
-        try:
-            query = db.query(ReportModel).filter(
-                ReportModel.report_id == report_id
-            )
+                if user_id:
+                    query = query.filter(ReportModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(ReportModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                record.share_token = None
+                record.share_expires_at = None
+
+                logger.info(f"Cleared share token for report {report_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to clear share token for {report_id}: {e}")
                 return False
-
-            record.share_token = None
-            record.share_expires_at = None
-
-            db.commit()
-            logger.info(f"Cleared share token for report {report_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to clear share token for {report_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def delete_report(
         self,
@@ -498,47 +426,38 @@ class ReportStorage(BaseStorage):
         Returns:
             True if deleted, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(ReportModel).filter(
+                    ReportModel.report_id == report_id
+                )
 
-        try:
-            query = db.query(ReportModel).filter(
-                ReportModel.report_id == report_id
-            )
+                if user_id:
+                    query = query.filter(ReportModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(ReportModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                # Delete HTML file if exists
+                if record.html_filename:
+                    html_path = REPORTS_DIR / record.html_filename
+                    if html_path.exists():
+                        try:
+                            os.remove(html_path)
+                            logger.debug(f"Deleted report file: {html_path}")
+                        except Exception as e:
+                            logger.warning(f"Failed to delete report file {html_path}: {e}")
+
+                session.delete(record)
+
+                logger.info(f"Deleted report {report_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to delete report {report_id}: {e}")
                 return False
-
-            # Delete HTML file if exists
-            if record.html_filename:
-                html_path = REPORTS_DIR / record.html_filename
-                if html_path.exists():
-                    try:
-                        os.remove(html_path)
-                        logger.debug(f"Deleted report file: {html_path}")
-                    except Exception as e:
-                        logger.warning(f"Failed to delete report file {html_path}: {e}")
-
-            db.delete(record)
-            db.commit()
-
-            logger.info(f"Deleted report {report_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to delete report {report_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def _record_to_dict(
         self,

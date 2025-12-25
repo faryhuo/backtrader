@@ -1,9 +1,9 @@
 """
-E2E tests for settings API.
+E2E tests for Settings API.
 
 Tests cover:
-- User settings management
-- Credential management
+- User settings management (get/update/reset)
+- Credential management (get/update/test)
 - Data source configuration
 """
 
@@ -16,177 +16,202 @@ libs_path = Path(__file__).parent.parent / "libs"
 sys.path.insert(0, str(libs_path))
 
 from assertions import assert_api_response, assert_api_error
+import api_paths
 
+
+# ========== User Settings Tests ==========
 
 @pytest.mark.api
 @pytest.mark.requires_auth
-class TestSettingsAPI:
+class TestUserSettings:
     """API tests for user settings."""
 
     def test_get_user_settings(self, api_client):
-        """Test getting user settings."""
-        response = api_client.get("/api/settings")
+        """Get user settings returns proper structure."""
+        response = api_client.get(api_paths.SETTINGS)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
-        assert "status" in data
-        assert "settings" in data
+        assert "status" in data, "Response must contain 'status'"
+        assert "settings" in data, "Response must contain 'settings'"
 
-    def test_update_user_settings(self, api_client, data_fixtures):
-        """Test updating user settings."""
+    def test_update_user_settings_success(self, api_client, data_fixtures):
+        """Update user settings with valid data succeeds."""
         settings = data_fixtures.settings_config()
-
-        response = api_client.put("/api/settings", json=settings)
+        
+        response = api_client.put(api_paths.SETTINGS, json=settings)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
-        assert "status" in data
-        assert data["status"] == "ok"
+        assert data.get("status") == "ok"
 
     def test_update_user_settings_empty_models(self, api_client):
-        """Test updating settings with empty model list."""
+        """Update settings with empty model list fails validation."""
         settings = {
-            "selected_models": [],  # Invalid - must have at least one
+            "selected_models": [],  # Invalid - min_length=1
             "code_analysis_prompt": "Test prompt",
             "code_rewrite_prompt": "Test prompt",
-            "full_strategy_analysis_prompt": "Test prompt",
+            "full_strategy_analysis_prompt": "Test prompt"
         }
-
-        response = api_client.put("/api/settings", json=settings)
+        
+        response = api_client.put(api_paths.SETTINGS, json=settings)
+        
         # Should fail validation
-        assert response.status_code in [400, 422]
+        assert response.status_code in [400, 422], (
+            f"Expected 400/422 for empty models list, got {response.status_code}"
+        )
 
     def test_reset_user_settings(self, api_client):
-        """Test resetting user settings to defaults."""
-        response = api_client.post("/api/settings/reset")
+        """Reset user settings returns defaults."""
+        response = api_client.post(api_paths.SETTINGS_RESET)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
         assert "status" in data
         assert "settings" in data
 
+
+# ========== Credential Management Tests ==========
 
 @pytest.mark.api
 @pytest.mark.requires_auth
-class TestCredentialsAPI:
+class TestCredentials:
     """API tests for credential management."""
 
-    def test_get_credentials(self, api_client):
-        """Test getting credentials (masked)."""
-        response = api_client.get("/api/settings/credentials")
+    def test_get_credentials_masked(self, api_client):
+        """Get credentials returns masked sensitive values."""
+        response = api_client.get(api_paths.SETTINGS_CREDENTIALS)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
         assert "status" in data
         assert "credentials" in data
-        # Sensitive values should be masked
-        creds = data["credentials"]
-        assert isinstance(creds, dict)
+        assert isinstance(data["credentials"], dict)
 
     def test_update_credentials_openai(self, api_client):
-        """Test updating OpenAI credentials."""
-        # Use test/placeholder values
+        """Update OpenAI base URL (non-sensitive) succeeds."""
         update = {
             "openai_base_url": "https://api.openai.com/v1"
         }
-
-        response = api_client.put("/api/settings/credentials", json=update)
+        
+        response = api_client.put(api_paths.SETTINGS_CREDENTIALS, json=update)
+        
         assert_api_response(response, expected_status=200)
 
-    def test_update_ccxt_credentials(self, api_client):
-        """Test updating CCXT exchange credentials."""
+    def test_update_ccxt_credentials_no_fields(self, api_client):
+        """Update CCXT credentials with no credential fields fails."""
+        update = {
+            "exchange": "binance",
+            "mode": "paper"
+            # No api_key, secret, or passphrase
+        }
+        
+        response = api_client.put(api_paths.SETTINGS_CREDENTIALS_CCXT, json=update)
+        
+        # Should fail - at least one credential field required
+        assert_api_error(response, expected_status=400)
+
+    def test_update_ccxt_credentials_with_key(self, api_client):
+        """Update CCXT credentials with api_key succeeds or handles gracefully."""
         update = {
             "exchange": "binance",
             "mode": "paper",
             "api_key": "test_api_key_placeholder"
         }
-
-        response = api_client.put("/api/settings/credentials/ccxt", json=update)
-        # May succeed or fail if credentials not valid
+        
+        response = api_client.put(api_paths.SETTINGS_CREDENTIALS_CCXT, json=update)
+        
+        # May succeed or fail based on encryption key availability
         assert response.status_code in [200, 400, 500]
 
-    def test_update_ccxt_credentials_empty(self, api_client):
-        """Test updating CCXT credentials with no fields."""
-        update = {
-            "exchange": "binance",
-            "mode": "paper"
-            # No credentials provided
-        }
-
-        response = api_client.put("/api/settings/credentials/ccxt", json=update)
-        # Should fail - at least one credential required
-        assert_api_error(response, expected_status=400)
-
     def test_reset_credential(self, api_client):
-        """Test resetting a credential to .env value."""
-        response = api_client.delete("/api/settings/credentials/openai_base_url")
-        # Should succeed or fail if credential doesn't exist
+        """Reset credential to .env value."""
+        response = api_client.delete(
+            api_paths.settings_credential_reset("openai_base_url")
+        )
+        
+        # Should succeed or credential doesn't exist
         assert response.status_code in [200, 500]
 
     def test_test_credentials_invalid_type(self, api_client):
-        """Test credentials with invalid type."""
+        """Test credentials with invalid type returns 400."""
         request = {
-            "credential_type": "invalid_type"
+            "credential_type": "invalid_type_xyz"
         }
-
-        response = api_client.post("/api/settings/credentials/test", json=request)
+        
+        response = api_client.post(api_paths.SETTINGS_CREDENTIALS_TEST, json=request)
+        
         assert_api_error(response, expected_status=400)
 
     def test_test_credentials_proxy(self, api_client):
-        """Test proxy credentials validation."""
+        """Test proxy credentials returns validation result."""
         request = {
             "credential_type": "proxy",
             "proxy_url": "http://invalid-proxy:8080"
         }
-
-        response = api_client.post("/api/settings/credentials/test", json=request)
-        # Will likely fail with connection error but should return response
-        assert response.status_code in [200]
+        
+        response = api_client.post(api_paths.SETTINGS_CREDENTIALS_TEST, json=request)
+        
+        # Will return result (likely invalid but should return 200 with valid=false)
+        assert response.status_code == 200
+        
         data = response.json()
         assert "valid" in data
 
 
+# ========== Data Source Configuration Tests ==========
+
 @pytest.mark.api
 @pytest.mark.requires_auth
-class TestDataSourceAPI:
+class TestDataSourceSettings:
     """API tests for data source configuration."""
 
     def test_get_data_source_settings(self, api_client):
-        """Test getting data source settings."""
-        response = api_client.get("/api/settings/data-source")
+        """Get data source settings returns structure."""
+        response = api_client.get(api_paths.SETTINGS_DATA_SOURCE)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
         assert "status" in data
         assert "settings" in data
 
-    def test_update_data_source_settings(self, api_client):
-        """Test updating data source priority."""
+    def test_update_data_source_priority(self, api_client):
+        """Update data source priority succeeds."""
         update = {
             "data_source_priority": ["yahoo", "database"]
         }
-
-        response = api_client.put("/api/settings/data-source", json=update)
+        
+        response = api_client.put(api_paths.SETTINGS_DATA_SOURCE, json=update)
+        
         assert_api_response(response, expected_status=200)
 
     def test_update_data_source_invalid_source(self, api_client):
-        """Test updating with invalid data source."""
+        """Update with invalid data source name returns 400."""
         update = {
-            "data_source_priority": ["yahoo", "invalid_source"]
+            "data_source_priority": ["yahoo", "invalid_source_xyz"]
         }
-
-        response = api_client.put("/api/settings/data-source", json=update)
+        
+        response = api_client.put(api_paths.SETTINGS_DATA_SOURCE, json=update)
+        
         assert_api_error(response, expected_status=400)
 
     def test_reset_data_source_settings(self, api_client):
-        """Test resetting data source settings to defaults."""
-        response = api_client.post("/api/settings/data-source/reset")
+        """Reset data source settings returns defaults."""
+        response = api_client.post(api_paths.SETTINGS_DATA_SOURCE_RESET)
+        
         assert_api_response(response, expected_status=200)
-
+        
         data = response.json()
         assert "status" in data
         assert "settings" in data
 
+
+# ========== UI Tests ==========
 
 @pytest.mark.ui
 @pytest.mark.slow

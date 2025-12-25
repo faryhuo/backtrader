@@ -38,21 +38,11 @@ function StrategyConfigForm({
     error,
     strategyParams = [],
     paramOverrides = {},
-    setParamOverrides = () => { }
+    onParamChange = () => { }
 }) {
     const { t } = useTranslation();
     const [paramsExpanded, setParamsExpanded] = useState(true);
     const [isFormCollapsed, setIsFormCollapsed] = useState(false);
-
-    const handleParamChange = (name, value, type) => {
-        let parsedValue = value;
-        if (type === 'int') {
-            parsedValue = parseInt(value, 10) || 0;
-        } else if (type === 'float') {
-            parsedValue = parseFloat(value) || 0;
-        }
-        setParamOverrides({ ...paramOverrides, [name]: parsedValue });
-    };
 
     return (
         <section className="card form-card-enhanced">
@@ -208,7 +198,7 @@ function StrategyConfigForm({
                                                 type="number"
                                                 step={param.type === 'float' ? '0.01' : '1'}
                                                 value={paramOverrides[param.name] ?? param.value}
-                                                onChange={(e) => handleParamChange(param.name, e.target.value, param.type)}
+                                                onChange={(e) => onParamChange(param.name, e.target.value, param.type)}
                                             />
                                         </div>
                                     ))}
@@ -259,7 +249,7 @@ StrategyConfigForm.propTypes = {
     error: PropTypes.string,
     strategyParams: PropTypes.array,
     paramOverrides: PropTypes.object,
-    setParamOverrides: PropTypes.func
+    onParamChange: PropTypes.func
 };
 
 export default StrategyConfigForm;

@@ -54,6 +54,12 @@ class UserSettingsModel(Base):
     logto_audience = Column(String(500), nullable=True)  # Audience (not encrypted)
     logto_required_scopes = Column(String(500), nullable=True)  # Space-separated scopes (not encrypted)
     enable_login = Column(Boolean, nullable=True)  # Enable/disable login (not encrypted)
+    
+    # Logto Frontend Configuration (for React app)
+    logto_endpoint = Column(String(500), nullable=True)  # Logto server endpoint (not encrypted)
+    logto_app_id = Column(String(500), nullable=True)  # Logto application (client) ID (not encrypted)
+    logto_redirect_uri = Column(String(500), nullable=True)  # OAuth redirect URI (not encrypted)
+    logto_post_logout_redirect_uri = Column(String(500), nullable=True)  # Post-logout redirect URI (not encrypted)
 
     # Proxy Configuration (not encrypted - just URLs)
     http_proxy = Column(String(500), nullable=True)

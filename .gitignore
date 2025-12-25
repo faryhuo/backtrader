@@ -13,10 +13,16 @@ backend/coverage.xml
 backend/resources/frontend
 backend/venv_new
 backend/data
+backend/.coverage
+backend/.coveragerc
 
 frontend/.env
 frontend/.envprod
 frontend/.env.prod
 frontend/node_modules
 frontend/dist
+
+auto_test/.env
+auto_test/test_screenshots
+auto_test/test/trading_sessions.db
 

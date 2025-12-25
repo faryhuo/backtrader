@@ -3,14 +3,40 @@ Sandbox Configuration Module
 
 Provides configuration for strategy execution sandbox with support for
 multiple isolation modes: soft, subprocess, and docker.
+
+Configuration is loaded from strategy_config.json.
 """
 
-import os
-from dataclasses import dataclass, field
+import json
+import logging
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, Optional
+
+from src.config.settings import CONFIG_DIR, PROJECT_ROOT
+
+logger = logging.getLogger(__name__)
 
 # Type alias for sandbox modes
 SandboxMode = Literal["soft", "subprocess", "docker"]
+
+
+@dataclass
+class StrategyConfig:
+    """
+    Configuration for strategy file paths.
+    
+    Attributes:
+        file_path: Directory path for user strategy files (relative to PROJECT_ROOT)
+    """
+    file_path: str = "data/strategies/"
+    
+    def get_absolute_path(self) -> Path:
+        """Get the absolute path for strategy files."""
+        path = Path(self.file_path)
+        if path.is_absolute():
+            return path
+        return PROJECT_ROOT / path
 
 
 @dataclass
@@ -45,70 +71,116 @@ class SandboxConfig:
     enable_caching: bool = True  # Cache compiled strategy bytecode
 
 
-def _parse_bool(value: str) -> bool:
-    """Parse boolean from environment variable string."""
-    return value.lower() in ("true", "1", "yes", "on")
+def _parse_bool(value) -> bool:
+    """Parse boolean from JSON boolean or string."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes", "on")
+    return bool(value)
+
+
+def _load_strategy_config_json() -> dict:
+    """
+    Load strategy configuration from strategy_config.json.
+    
+    Returns:
+        dict: Parsed JSON configuration or empty dict if file not found
+    """
+    config_file = CONFIG_DIR / "strategy_config.json"
+    
+    if config_file.exists():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                logger.debug(f"Loaded strategy config from {config_file}")
+                return config
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"Failed to load strategy_config.json: {e}")
+    
+    return {}
+
+
+def get_strategy_config() -> StrategyConfig:
+    """
+    Load strategy configuration from strategy_config.json.
+    
+    Returns:
+        StrategyConfig: Strategy file path configuration
+    """
+    config_data = _load_strategy_config_json()
+    strategy_data = config_data.get("strategy", {})
+    
+    return StrategyConfig(
+        file_path=strategy_data.get("filePath", "data/strategies/"),
+    )
 
 
 def get_sandbox_config() -> SandboxConfig:
     """
-    Load sandbox configuration from environment variables.
-    
-    Environment Variables:
-        SANDBOX_MODE: soft | subprocess | docker (default: subprocess)
-        SANDBOX_TIMEOUT_SECONDS: float (default: 30.0)
-        SANDBOX_MAX_MEMORY_MB: int (default: 512)
-        SANDBOX_MAX_CPU_PERCENT: int (default: 100)
-        SANDBOX_ALLOW_NETWORK: bool (default: false)
-        SANDBOX_ALLOW_FILE_WRITE: bool (default: false)
-        SANDBOX_DOCKER_IMAGE: str (default: python:3.11-slim)
-        SANDBOX_DOCKER_NETWORK: str (default: none)
-        SANDBOX_PROCESS_POOL_SIZE: int (default: 2)
-        SANDBOX_ENABLE_CACHING: bool (default: true)
+    Load sandbox configuration from strategy_config.json.
     
     Returns:
         SandboxConfig: Loaded configuration
     """
-    mode_str = os.getenv("SANDBOX_MODE", "subprocess").lower()
+    config_data = _load_strategy_config_json()
+    sandbox_data = config_data.get("sandbox", {})
+    
+    # Get mode with validation
+    mode_str = str(sandbox_data.get("mode", "subprocess")).lower()
     if mode_str not in ("soft", "subprocess", "docker"):
         mode_str = "subprocess"
     
     return SandboxConfig(
         mode=mode_str,  # type: ignore
-        timeout_seconds=float(os.getenv("SANDBOX_TIMEOUT_SECONDS", "30.0")),
-        max_memory_mb=int(os.getenv("SANDBOX_MAX_MEMORY_MB", "512")),
-        max_cpu_percent=int(os.getenv("SANDBOX_MAX_CPU_PERCENT", "100")),
-        allow_network=_parse_bool(os.getenv("SANDBOX_ALLOW_NETWORK", "false")),
-        allow_file_write=_parse_bool(os.getenv("SANDBOX_ALLOW_FILE_WRITE", "false")),
-        docker_image=os.getenv("SANDBOX_DOCKER_IMAGE", "python:3.11-slim"),
-        docker_network=os.getenv("SANDBOX_DOCKER_NETWORK", "none"),
-        process_pool_size=int(os.getenv("SANDBOX_PROCESS_POOL_SIZE", "2")),
-        enable_caching=_parse_bool(os.getenv("SANDBOX_ENABLE_CACHING", "true")),
+        timeout_seconds=float(sandbox_data.get("timeoutSeconds", 30.0)),
+        max_memory_mb=int(sandbox_data.get("maxMemoryMB", 512)),
+        max_cpu_percent=int(sandbox_data.get("maxCpuPercent", 100)),
+        allow_network=_parse_bool(sandbox_data.get("allowNetwork", False)),
+        allow_file_write=_parse_bool(sandbox_data.get("allowFileWrite", False)),
+        docker_image=str(sandbox_data.get("dockerImage", "python:3.11-slim")),
+        docker_network=str(sandbox_data.get("dockerNetwork", "none")),
+        process_pool_size=int(sandbox_data.get("processPoolSize", 2)),
+        enable_caching=_parse_bool(sandbox_data.get("enableCaching", True)),
     )
 
 
-# Global singleton instance (lazy loaded)
-_config: Optional[SandboxConfig] = None
+# Global singleton instances (lazy loaded)
+_sandbox_config: Optional[SandboxConfig] = None
+_strategy_config: Optional[StrategyConfig] = None
 
 
 def get_config() -> SandboxConfig:
     """Get the global sandbox configuration (singleton)."""
-    global _config
-    if _config is None:
-        _config = get_sandbox_config()
-    return _config
+    global _sandbox_config
+    if _sandbox_config is None:
+        _sandbox_config = get_sandbox_config()
+    return _sandbox_config
+
+
+def get_strategy_config_singleton() -> StrategyConfig:
+    """Get the global strategy configuration (singleton)."""
+    global _strategy_config
+    if _strategy_config is None:
+        _strategy_config = get_strategy_config()
+    return _strategy_config
 
 
 def reset_config() -> None:
     """Reset the global configuration (useful for testing)."""
-    global _config
-    _config = None
+    global _sandbox_config, _strategy_config
+    _sandbox_config = None
+    _strategy_config = None
 
 
 __all__ = [
     "SandboxConfig",
     "SandboxMode",
+    "StrategyConfig",
     "get_sandbox_config",
+    "get_strategy_config",
+    "get_strategy_config_singleton",
     "get_config",
     "reset_config",
 ]
+

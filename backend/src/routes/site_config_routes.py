@@ -12,23 +12,12 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from src.db.storage.settings import SettingsStorage
+from src.routes.common.dependencies import get_settings_storage
 from src.utils.auth import get_current_user, get_optional_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["site"])
-
-# Singleton storage instance
-_settings_storage: Optional[SettingsStorage] = None
-
-
-def get_settings_storage() -> SettingsStorage:
-    """Get or create settings storage singleton."""
-    global _settings_storage
-    if _settings_storage is None:
-        _settings_storage = SettingsStorage()
-    return _settings_storage
 
 
 def get_env(key: str, default: str = "") -> str:

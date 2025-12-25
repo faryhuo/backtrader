@@ -14,6 +14,7 @@ import yfinance as yf
 from sqlalchemy import text, select
 
 from src.config.settings import DATABASE_URL, DEFAULT_DB_URL
+from src.contracts.exceptions import DataLoadError
 from src.db.models import MarketDataModel, init_database
 
 logger = logging.getLogger(__name__)
@@ -30,10 +31,6 @@ def _get_engine_and_session():
     if _ENGINE is None or _SESSION_LOCAL is None:
         _ENGINE, _SESSION_LOCAL = init_database(_DB_URL)
     return _ENGINE, _SESSION_LOCAL
-
-
-class DataLoadError(Exception):
-    """Raised when market data cannot be loaded."""
 
 
 def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> bool:
@@ -124,8 +121,8 @@ def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> boo
             saved_count = result.rowcount if result.rowcount is not None and result.rowcount >= 0 else len(records)
             skipped_count = max(0, len(records) - saved_count)
         else:
-            min_date = df['_date'].min()
-            max_date = df['_date'].max()
+            min_date = df['tmp_date'].min()
+            max_date = df['tmp_date'].max()
             with session.begin():
                 existing_dates = {
                     date for (date,) in session.execute(

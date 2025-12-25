@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useLogtoConfig } from '../../contexts/LogtoConfigContext';
 import { useSiteConfig } from '../../contexts/SiteConfigContext';
-import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, Github, Sparkles } from 'lucide-react';
 
 /**
  * Hero section with headline, stats, and CTA buttons
@@ -10,6 +11,7 @@ import { ArrowRight, Play, Sparkles } from 'lucide-react';
 export function HeroSection() {
     const { t } = useTranslation();
     const { config } = useSiteConfig();
+    const { config: logtoConfig } = useLogtoConfig();
     const { signIn, loginEnabled } = useAuth();
     const navigate = useNavigate();
 
@@ -18,19 +20,16 @@ export function HeroSection() {
             navigate('/strategy');
             return;
         }
-        const redirectUri = import.meta.env.VITE_LOGTO_REDIRECT_URI;
-        signIn(redirectUri);
+        const redirectUri = logtoConfig?.redirectUri;
+        if (redirectUri) {
+            signIn(redirectUri);
+        }
     };
 
-    const scrollToDocs = (e) => {
+    const openGitHub = (e) => {
         e.preventDefault();
-        if (config.links.docs) {
-            window.open(config.links.docs, '_blank');
-        } else {
-            const element = document.querySelector('#docs');
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-            }
+        if (config.links.github) {
+            window.open(config.links.github, '_blank');
         }
     };
 
@@ -73,9 +72,9 @@ export function HeroSection() {
                         {t('landing.hero.cta.start')}
                         <ArrowRight />
                     </button>
-                    <button className="landing-btn landing-btn-glass landing-btn-xl" onClick={scrollToDocs}>
-                        <Play />
-                        {t('landing.hero.cta.docs')}
+                    <button className="landing-btn landing-btn-glass landing-btn-xl" onClick={openGitHub}>
+                        <Github />
+                        GitHub
                     </button>
                 </div>
 

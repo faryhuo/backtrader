@@ -59,11 +59,17 @@ export function useCredentials() {
                 });
             } else if (credentialType === 'logto') {
                 response = await api.updateCredentials({
+                    // Server-side JWT validation settings
                     logto_issuer: credentials.logto_issuer,
                     logto_jwks_uri: credentials.logto_jwks_uri,
                     logto_audience: credentials.logto_audience,
                     logto_required_scopes: credentials.logto_required_scopes,
-                    enable_login: credentials.enable_login
+                    enable_login: credentials.enable_login,
+                    // Frontend OAuth configuration
+                    logto_endpoint: credentials.logto_endpoint,
+                    logto_app_id: credentials.logto_app_id,
+                    logto_redirect_uri: credentials.logto_redirect_uri,
+                    logto_post_logout_redirect_uri: credentials.logto_post_logout_redirect_uri
                 });
             } else if (credentialType === 'proxy') {
                 response = await api.updateCredentials({
@@ -79,6 +85,16 @@ export function useCredentials() {
             if (response.status === 'ok') {
                 message.success(t('settings.credentials.saved', 'Credentials saved successfully'));
                 await loadCredentials();
+
+                // Show restart confirmation dialog for settings that require server restart
+                if (['logto', 'proxy'].includes(credentialType)) {
+                    const { Modal } = await import('antd');
+                    Modal.info({
+                        title: t('settings.restart_required', 'Server Restart Required'),
+                        content: t('settings.restart_hint', 'These settings require a server restart to take effect. Please restart the backend server manually.'),
+                        okText: t('common.ok', 'OK')
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to save credentials:', error);

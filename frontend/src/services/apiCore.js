@@ -1,10 +1,15 @@
 /**
  * Core API utilities - authentication, request building, response parsing
  */
-import { LOGIN_ENABLED } from '../config/auth'
 
-// API base URL for HTTP requests (separate from Logto resource identifier)
-export const API_URL = import.meta.env.VITE_API_BASE_URL
+// API base URL for HTTP requests (also used as Logto resource identifier)
+// Logto requires absolute URIs for resource indicators
+const envApiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+export const API_URL = envApiUrl.startsWith('http')
+    ? envApiUrl
+    : (typeof window !== 'undefined'
+        ? `${window.location.origin}${envApiUrl.startsWith('/') ? '' : '/'}${envApiUrl}`
+        : envApiUrl);
 
 // Token getter function (set by App component)
 let getTokenFn = null
@@ -23,7 +28,8 @@ export function setTokenGetter(fn) {
 export const buildRequest = async (path, options = {}) => {
     const headers = new Headers(options.headers || {})
 
-    if (options.body && !headers.has('Content-Type')) {
+    // Set Content-Type for JSON body, but not for FormData (browser sets it with boundary)
+    if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
     }
 
@@ -55,13 +61,10 @@ export const getAccessToken = async () => {
 }
 
 export const parseResponse = async (response) => {
-    // Handle 401 Unauthorized first (before trying to parse body)
-    if (response.status === 401 && LOGIN_ENABLED) {
-        console.error('Unauthorized - redirecting to login')
-        const loginPath = '/login'
-        if (window.location.pathname !== loginPath) {
-            window.location.href = loginPath
-        }
+    // Handle 401 Unauthorized
+    // Note: Auth redirect is handled by PrivateRoute component, not here
+    if (response.status === 401) {
+        console.warn('Unauthorized request')
         throw new Error('Unauthorized')
     }
 

@@ -61,59 +61,50 @@ class BacktestStorage(BaseStorage):
         Returns:
             Saved BacktestHistoryModel instance
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                # Extract key metrics for indexing
+                final_value = metrics.get("final_value", 0.0)
+                total_return = metrics.get("returns", 0.0)
 
-        try:
-            # Extract key metrics for indexing
-            final_value = metrics.get("final_value", 0.0)
-            total_return = metrics.get("returns", 0.0)
+                record = BacktestHistoryModel(
+                    backtest_id=backtest_id,
+                    user_id=user_id,
+                    ticker=config["ticker"],
+                    start_date=config["start_date"],
+                    end_date=config["end_date"],
+                    initial_cash=config.get("initial_cash", 100000.0),
+                    commission=config.get("commission", 0.0005),
+                    stake=config.get("stake", 100),
+                    strategy_name=config.get("strategy_name", "unknown"),
+                    created_at=datetime.utcnow(),
+                    final_value=final_value,
+                    total_return=total_return,
+                    sharpe_ratio=metrics.get("sharpe"),
+                    max_drawdown=metrics.get("drawdown", 0.0),
+                    total_trades=metrics.get("trade_details", {}).get("total_trades", 0),
+                    winning_trades=metrics.get("trade_details", {}).get("winning_trades", 0),
+                    losing_trades=metrics.get("trade_details", {}).get("losing_trades", 0),
+                    metrics=metrics,
+                    ai_analysis=ai_analysis,
+                    strategy_code=strategy_code,
+                    plot_filename=plot_filename,
+                    params=config.get("params"),
+                )
 
-            record = BacktestHistoryModel(
-                backtest_id=backtest_id,
-                user_id=user_id,
-                ticker=config["ticker"],
-                start_date=config["start_date"],
-                end_date=config["end_date"],
-                initial_cash=config.get("initial_cash", 100000.0),
-                commission=config.get("commission", 0.0005),
-                stake=config.get("stake", 100),
-                strategy_name=config.get("strategy_name", "unknown"),
-                created_at=datetime.utcnow(),
-                final_value=final_value,
-                total_return=total_return,
-                sharpe_ratio=metrics.get("sharpe"),
-                max_drawdown=metrics.get("drawdown", 0.0),
-                total_trades=metrics.get("trade_details", {}).get("total_trades", 0),
-                winning_trades=metrics.get("trade_details", {}).get("winning_trades", 0),
-                losing_trades=metrics.get("trade_details", {}).get("losing_trades", 0),
-                metrics=metrics,
-                ai_analysis=ai_analysis,
-                strategy_code=strategy_code,
-                plot_filename=plot_filename,
-                params=config.get("params"),
-            )
+                session.add(record)
+                session.flush()  # Get ID before commit
 
-            db.add(record)
-            db.commit()
-            db.refresh(record)
+                logger.info(f"Saved backtest {backtest_id} to database")
 
-            logger.info(f"Saved backtest {backtest_id} to database")
+                # Auto-cleanup old records
+                self._cleanup_old_records(session)
 
-            # Auto-cleanup old records
-            self._cleanup_old_records(db)
+                return record
 
-            return record
-
-        except Exception as e:
-            logger.error(f"Failed to save backtest {backtest_id}: {e}")
-            db.rollback()
-            raise
-        finally:
-            if close_db:
-                db.close()
+            except Exception as e:
+                logger.error(f"Failed to save backtest {backtest_id}: {e}")
+                raise
 
     def _cleanup_old_records(self, db: Session) -> None:
         """
@@ -212,13 +203,8 @@ class BacktestStorage(BaseStorage):
         Returns:
             Dict with 'backtests' list and 'total' count
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(BacktestHistoryModel)
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(BacktestHistoryModel)
 
             # Apply filters
             if user_id:
@@ -253,7 +239,7 @@ class BacktestStorage(BaseStorage):
             except Exception as e:
                 logger.error(f"Failed to fetch backtest records due to data corruption: {e}")
                 # If JSON deserialization fails, try to clean up corrupted records
-                self._cleanup_corrupted_records(db)
+                self._cleanup_corrupted_records(session)
                 # Retry the query
                 records = query.all()
 
@@ -262,10 +248,6 @@ class BacktestStorage(BaseStorage):
 
             return {"backtests": backtests, "total": total}
 
-        finally:
-            if close_db:
-                db.close()
-
     def get_backtest(
         self,
         backtest_id: str,
@@ -273,13 +255,8 @@ class BacktestStorage(BaseStorage):
         db: Optional[Session] = None,
     ) -> Optional[Dict[str, Any]]:
         """Get single backtest by ID."""
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(BacktestHistoryModel).filter(
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(BacktestHistoryModel).filter(
                 BacktestHistoryModel.backtest_id == backtest_id
             )
 
@@ -293,10 +270,6 @@ class BacktestStorage(BaseStorage):
 
             return self._record_to_dict(record, include_full_metrics=True)
 
-        finally:
-            if close_db:
-                db.close()
-
     def delete_backtest(
         self,
         backtest_id: str,
@@ -309,47 +282,38 @@ class BacktestStorage(BaseStorage):
         Returns:
             True if deleted, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(BacktestHistoryModel).filter(
+                    BacktestHistoryModel.backtest_id == backtest_id
+                )
 
-        try:
-            query = db.query(BacktestHistoryModel).filter(
-                BacktestHistoryModel.backtest_id == backtest_id
-            )
+                if user_id:
+                    query = query.filter(BacktestHistoryModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(BacktestHistoryModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                # Delete plot file if exists
+                if record.plot_filename:
+                    plot_path = IMAGES_DIR / record.plot_filename
+                    if plot_path.exists():
+                        try:
+                            os.remove(plot_path)
+                            logger.debug(f"Deleted plot file: {plot_path}")
+                        except Exception as e:
+                            logger.warning(f"Failed to delete plot {plot_path}: {e}")
+
+                session.delete(record)
+
+                logger.info(f"Deleted backtest {backtest_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to delete backtest {backtest_id}: {e}")
                 return False
-
-            # Delete plot file if exists
-            if record.plot_filename:
-                plot_path = IMAGES_DIR / record.plot_filename
-                if plot_path.exists():
-                    try:
-                        os.remove(plot_path)
-                        logger.debug(f"Deleted plot file: {plot_path}")
-                    except Exception as e:
-                        logger.warning(f"Failed to delete plot {plot_path}: {e}")
-
-            db.delete(record)
-            db.commit()
-
-            logger.info(f"Deleted backtest {backtest_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to delete backtest {backtest_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def update_ai_analysis(
         self,
@@ -374,43 +338,34 @@ class BacktestStorage(BaseStorage):
         Returns:
             True if updated, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(BacktestHistoryModel).filter(
+                    BacktestHistoryModel.backtest_id == backtest_id
+                )
 
-        try:
-            query = db.query(BacktestHistoryModel).filter(
-                BacktestHistoryModel.backtest_id == backtest_id
-            )
+                if user_id:
+                    query = query.filter(BacktestHistoryModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(BacktestHistoryModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                # Get existing analyses or create new dict
+                existing_analyses = record.ai_analysis if record.ai_analysis else {}
+
+                # Update with new analysis for this model
+                existing_analyses[model_name] = analysis_content
+
+                record.ai_analysis = existing_analyses
+
+                logger.info(f"Updated AI analysis ({model_name}) for backtest {backtest_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to update AI analysis for {backtest_id}: {e}")
                 return False
-
-            # Get existing analyses or create new dict
-            existing_analyses = record.ai_analysis if record.ai_analysis else {}
-
-            # Update with new analysis for this model
-            existing_analyses[model_name] = analysis_content
-
-            record.ai_analysis = existing_analyses
-            db.commit()
-
-            logger.info(f"Updated AI analysis ({model_name}) for backtest {backtest_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to update AI analysis for {backtest_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def update_deep_analysis(
         self,
@@ -431,37 +386,28 @@ class BacktestStorage(BaseStorage):
         Returns:
             True if updated, False if not found
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
+        with self.managed_session(db) as session:
+            try:
+                query = session.query(BacktestHistoryModel).filter(
+                    BacktestHistoryModel.backtest_id == backtest_id
+                )
 
-        try:
-            query = db.query(BacktestHistoryModel).filter(
-                BacktestHistoryModel.backtest_id == backtest_id
-            )
+                if user_id:
+                    query = query.filter(BacktestHistoryModel.user_id == user_id)
 
-            if user_id:
-                query = query.filter(BacktestHistoryModel.user_id == user_id)
+                record = query.first()
 
-            record = query.first()
+                if not record:
+                    return False
 
-            if not record:
+                record.deep_analysis = deep_analysis
+
+                logger.info(f"Updated deep analysis for backtest {backtest_id}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to update deep analysis for {backtest_id}: {e}")
                 return False
-
-            record.deep_analysis = deep_analysis
-            db.commit()
-
-            logger.info(f"Updated deep analysis for backtest {backtest_id}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to update deep analysis for {backtest_id}: {e}")
-            db.rollback()
-            return False
-        finally:
-            if close_db:
-                db.close()
 
     def get_deep_analysis(
         self,
@@ -475,13 +421,8 @@ class BacktestStorage(BaseStorage):
         Returns:
             Deep analysis dict if cached, None otherwise
         """
-        close_db = False
-        if db is None:
-            db = self.get_db_session()
-            close_db = True
-
-        try:
-            query = db.query(BacktestHistoryModel).filter(
+        with self.managed_session(db, commit_on_success=False) as session:
+            query = session.query(BacktestHistoryModel).filter(
                 BacktestHistoryModel.backtest_id == backtest_id
             )
 
@@ -494,10 +435,6 @@ class BacktestStorage(BaseStorage):
                 return None
 
             return record.deep_analysis
-
-        finally:
-            if close_db:
-                db.close()
 
     def _record_to_dict(
         self, record: BacktestHistoryModel, include_full_metrics: bool = False

@@ -8,16 +8,20 @@ Provides endpoints for:
 - Deleting optimizations
 """
 
+import asyncio
 import logging
 import uuid
+from functools import partial
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from src.db import WalkForwardStorage
+from src.service.task_manager import get_task_manager
+from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
+from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.walkforward_optimizer import WalkForwardOptimizer
-from src.utils.auth import get_current_user, get_optional_user
 from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
@@ -28,16 +32,7 @@ router = APIRouter()
 storage = WalkForwardStorage()
 
 
-def _get_task_storage():
-    """Lazy import to avoid circular dependency."""
-    from src.db.storage.task import get_task_storage
-    return get_task_storage()
 
-
-def _get_task_status():
-    """Lazy import to avoid circular dependency."""
-    from src.db.models.task import TaskStatus
-    return TaskStatus
 
 
 # Request/Response Models
@@ -75,89 +70,61 @@ class WalkForwardListResponse(BaseModel):
     total: int
 
 
-# Helper Functions
-
-def run_optimization_task(
-    optimization_id: str,
-    task_id: str,
-    strategy_name: str,
-    ticker: str,
-    start_date: str,
-    end_date: str,
-    param_grid: Dict[str, List[Any]],
-    train_period_days: int,
-    test_period_days: int,
-    anchored: bool,
-    optimization_metric: str,
-    initial_cash: float,
-    commission: float,
-    stake: int,
-):
+async def _walkforward_executor(config: dict, progress_callback) -> dict:
     """
-    Background task to run walk-forward optimization.
-
-    Updates database with progress and results.
+    Executor function for walk-forward optimization tasks.
+    
+    Args:
+        config: Walk-forward configuration from task
+        progress_callback: Callback for progress updates
+        
+    Returns:
+        Dictionary with optimization results
     """
-    task_storage = _get_task_storage()
-    task_status_enum = _get_task_status()
-
-    try:
-        # Update status to running
-        storage.update_optimization_status(optimization_id, "running")
-        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=10)
-
-        logger.info(f"Starting walk-forward optimization {optimization_id}")
-
-        # Create optimizer
-        optimizer = WalkForwardOptimizer(
-            strategy_name=strategy_name,
-            ticker=ticker,
-            start_date=start_date,
-            end_date=end_date,
-            param_grid=param_grid,
-            initial_cash=initial_cash,
-            commission=commission,
-            stake=stake,
-            train_period_days=train_period_days,
-            test_period_days=test_period_days,
-            anchored=anchored,
-        )
-
-        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=30)
-
-        # Run walk-forward analysis
-        result = optimizer.run_walkforward(
-            optimization_metric=optimization_metric,
+    optimization_id = config["optimization_id"]
+    
+    await progress_callback(10, "Initializing walk-forward optimizer")
+    
+    # Create optimizer
+    optimizer = WalkForwardOptimizer(
+        strategy_name=config["strategy_name"],
+        ticker=config["ticker"],
+        start_date=config["start_date"],
+        end_date=config["end_date"],
+        param_grid=config["param_grid"],
+        initial_cash=config.get("initial_cash", 100000.0),
+        commission=config.get("commission", 0.0005),
+        stake=config.get("stake", 100),
+        train_period_days=config.get("train_period_days", 365),
+        test_period_days=config.get("test_period_days", 90),
+        anchored=config.get("anchored", False),
+    )
+    
+    await progress_callback(30, "Running walk-forward analysis")
+    
+    # Run walk-forward analysis in thread pool to avoid blocking event loop
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,  # Use default ThreadPoolExecutor
+        partial(
+            optimizer.run_walkforward,
+            optimization_metric=config.get("optimization_metric", "sharpe_ratio"),
             optimization_id=optimization_id,
         )
-
-        task_storage.update_status(task_id, task_status_enum.RUNNING.value, progress=90)
-
-        # Save results to database
-        storage.save_optimization_result(result)
-
-        # Mark task as completed
-        task_storage.update_status(
-            task_id, task_status_enum.COMPLETED.value,
-            progress=100,
-            result_id=optimization_id,
-            result_type="walkforward",
-        )
-
-        logger.info(f"Walk-forward optimization {optimization_id} completed successfully")
-
-    except Exception as e:
-        logger.error(f"Walk-forward optimization {optimization_id} failed: {e}", exc_info=True)
-        storage.update_optimization_status(
-            optimization_id,
-            "failed",
-            error_message=str(e),
-        )
-        task_storage.update_status(
-            task_id, task_status_enum.FAILED.value,
-            progress=100,
-            error_message=str(e),
-        )
+    )
+    
+    await progress_callback(90, "Saving optimization results")
+    
+    # Save results to database
+    storage.save_optimization_result(result)
+    
+    await progress_callback(100, "Walk-forward optimization completed")
+    
+    return {
+        "id": optimization_id,
+        "optimization_id": optimization_id,
+        "result": result,
+    }
 
 
 # API Endpoints
@@ -165,8 +132,7 @@ def run_optimization_task(
 @router.post("/walkforward/start", response_model=WalkForwardOptimizationResponse)
 async def start_walkforward_optimization(
     request: WalkForwardOptimizationRequest,
-    background_tasks: BackgroundTasks,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Start a new walk-forward optimization.
@@ -214,36 +180,21 @@ async def start_walkforward_optimization(
     try:
         # Generate optimization ID
         optimization_id = str(uuid.uuid4())
-        set_trace_id(optimization_id)  # Set trace ID for logging correlation
-        
+        set_trace_id(optimization_id)
+
         request_id = get_request_id()
         logger.info(
-            f"[{request_id}] Starting walk-forward optimization trace_id={optimization_id} "
+            f"[{request_id}] Starting walk-forward optimization: "
             f"strategy={request.strategy_name} ticker={request.ticker}"
         )
 
-        # Get user ID if authenticated
-        user_id = user.get("sub") if user else None
-
-        # Create task record
-        task_storage = _get_task_storage()
-        task_name = f"Walk-Forward: {request.strategy_name} on {request.ticker}"
-        task_config = {
-            "strategy_name": request.strategy_name,
-            "ticker": request.ticker,
-            "start_date": request.start_date,
-            "end_date": request.end_date,
-            "param_grid": request.param_grid,
-            "train_period_days": request.train_period_days,
-            "test_period_days": request.test_period_days,
-        }
-        task = task_storage.create_task(
-            task_type="walkforward",
-            config=task_config,
-            user_id=user_id,
-            name=task_name,
-        )
-        task_id = task["task_id"]
+        # Create task configuration
+        task_config = create_task_config(request, "walkforward")
+        task_config["user_id"] = user_id
+        task_config["optimization_id"] = optimization_id
+        
+        # Generate task name
+        task_name = generate_task_name("walkforward", task_config)
 
         # Create optimization record in database
         storage.create_optimization(
@@ -263,37 +214,29 @@ async def start_walkforward_optimization(
             user_id=user_id,
         )
 
-        # Start background task
-        background_tasks.add_task(
-            run_optimization_task,
-            optimization_id=optimization_id,
-            task_id=task_id,
-            strategy_name=request.strategy_name,
-            ticker=request.ticker,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            param_grid=request.param_grid,
-            train_period_days=request.train_period_days,
-            test_period_days=request.test_period_days,
-            anchored=request.anchored,
-            optimization_metric=request.optimization_metric,
-            initial_cash=request.initial_cash,
-            commission=request.commission,
-            stake=request.stake,
+        # Submit to TaskManager
+        task_manager = get_task_manager()
+        task = await task_manager.submit(
+            task_type="walkforward",
+            executor=_walkforward_executor,
+            config=task_config,
+            user_id=user_id,
+            name=task_name,
         )
 
-        logger.info(f"Started walk-forward optimization {optimization_id}")
+        logger.info(f"Walk-forward optimization {optimization_id} submitted as task {task['task_id']}")
 
         return WalkForwardOptimizationResponse(
             optimization_id=optimization_id,
             status="pending",
             message="Walk-forward optimization started successfully",
-            task_id=task_id,
+            task_id=task["task_id"],
         )
 
     except Exception as e:
-        logger.error(f"Failed to start walk-forward optimization: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Failed to start walk-forward optimization: {e}")
+        http_exc = map_exception_to_http(e)
+        raise http_exc
 
 
 @router.get("/walkforward/list", response_model=WalkForwardListResponse)
@@ -305,7 +248,7 @@ async def list_walkforward_optimizations(
     sort_order: str = "desc",
     limit: int = 100,
     offset: int = 0,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     List walk-forward optimizations with optional filtering.
@@ -324,8 +267,6 @@ async def list_walkforward_optimizations(
     - **total**: Total count of matching records
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.list_optimizations(
             ticker=ticker,
             strategy_name=strategy_name,
@@ -347,7 +288,7 @@ async def list_walkforward_optimizations(
 @router.get("/walkforward/{optimization_id}")
 async def get_walkforward_optimization(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Get detailed results for a specific walk-forward optimization.
@@ -364,8 +305,6 @@ async def get_walkforward_optimization(
     - Combined test performance metrics
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.get_optimization(
             optimization_id=optimization_id,
             user_id=user_id,
@@ -386,7 +325,7 @@ async def get_walkforward_optimization(
 @router.delete("/walkforward/{optimization_id}")
 async def delete_walkforward_optimization(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Delete a walk-forward optimization.
@@ -398,8 +337,6 @@ async def delete_walkforward_optimization(
     - **message**: Success message
     """
     try:
-        user_id = user.get("sub") if user else None
-
         success = storage.delete_optimization(
             optimization_id=optimization_id,
             user_id=user_id,
@@ -420,7 +357,7 @@ async def delete_walkforward_optimization(
 @router.get("/walkforward/{optimization_id}/status")
 async def get_walkforward_status(
     optimization_id: str,
-    user: dict = Depends(get_optional_user),
+    user_id: str = Depends(get_optional_user_id),
 ):
     """
     Get the current status of a walk-forward optimization.
@@ -435,8 +372,6 @@ async def get_walkforward_status(
     - **progress**: Progress information if available (optional)
     """
     try:
-        user_id = user.get("sub") if user else None
-
         result = storage.get_optimization(
             optimization_id=optimization_id,
             user_id=user_id,

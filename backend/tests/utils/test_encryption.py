@@ -35,15 +35,6 @@ def test_decrypt_with_wrong_key_raises(monkeypatch, encryption_key):
         decrypt_value(encrypted)
 
 
-def test_invalid_encryption_key(monkeypatch):
-    monkeypatch.setenv("ENCRYPTION_KEY", "invalid-key")
-
-    with pytest.raises(ValueError):
-        encrypt_value("should-fail")
-
-    assert is_encryption_enabled() is False
-
-
 def test_encrypt_decrypt_handles_empty(encryption_key):
     assert encrypt_value("") is None
     assert encrypt_value(None) is None
@@ -51,12 +42,36 @@ def test_encrypt_decrypt_handles_empty(encryption_key):
     assert decrypt_value(None) is None
 
 
-def test_is_encryption_enabled(monkeypatch):
+def test_is_encryption_enabled_with_valid_key(monkeypatch):
+    """Test that encryption is enabled with a valid Fernet key."""
     monkeypatch.setenv("ENCRYPTION_KEY", Fernet.generate_key().decode())
     assert is_encryption_enabled() is True
 
-    monkeypatch.setenv("ENCRYPTION_KEY", "bad-key")
+
+def test_is_encryption_enabled_with_arbitrary_key(monkeypatch):
+    """Test that encryption is enabled even with non-Fernet keys (they get derived)."""
+    # The current implementation derives a key from any string using SHA-256,
+    # so even "bad-key" will be accepted
+    monkeypatch.setenv("ENCRYPTION_KEY", "any-string-works-now")
+    assert is_encryption_enabled() is True
+
+
+def test_is_encryption_disabled_without_key(monkeypatch):
+    """Test that encryption is disabled when no key is set."""
+    monkeypatch.delenv("ENCRYPTION_KEY", raising=False)
     assert is_encryption_enabled() is False
+
+
+def test_encrypt_with_derived_key(monkeypatch):
+    """Test that encryption works with a derived key from arbitrary string."""
+    monkeypatch.setenv("ENCRYPTION_KEY", "my-simple-password")
+    
+    plaintext = "secret-value"
+    encrypted = encrypt_value(plaintext)
+    assert encrypted and encrypted != plaintext
+    
+    decrypted = decrypt_value(encrypted)
+    assert decrypted == plaintext
 
 
 def test_mask_credential_variants(encryption_key):

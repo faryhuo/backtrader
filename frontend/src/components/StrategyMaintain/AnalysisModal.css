@@ -1,0 +1,271 @@
+/* Analysis Modal Styles */
+.analysis-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: analysisModalFadeIn 0.25s ease-out;
+    padding: 2rem;
+}
+
+.analysis-modal-content {
+    background: linear-gradient(145deg, rgba(26, 27, 35, 0.95) 0%, rgba(17, 20, 28, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 720px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(34, 211, 238, 0.1);
+    animation: analysisModalSlideUp 0.3s ease-out;
+    overflow: hidden;
+}
+
+.analysis-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.analysis-modal-header h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.analysis-modal-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.analysis-modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    transform: scale(1.05);
+}
+
+.analysis-modal-close-btn:active {
+    transform: scale(0.95);
+}
+
+.analysis-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+/* Markdown Styling for Analysis */
+.analysis-markdown-body {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+}
+
+.analysis-markdown-body h1,
+.analysis-markdown-body h2,
+.analysis-markdown-body h3,
+.analysis-markdown-body h4 {
+    color: var(--primary-color);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.analysis-markdown-body h1 {
+    font-size: 1.375rem;
+    border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.analysis-markdown-body h2 {
+    font-size: 1.125rem;
+    color: var(--teal-400);
+}
+
+.analysis-markdown-body h3 {
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.analysis-markdown-body h4 {
+    font-size: 0.9375rem;
+    color: var(--text-main);
+}
+
+.analysis-markdown-body p {
+    margin-bottom: 1rem;
+}
+
+.analysis-markdown-body strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.analysis-markdown-body em {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.analysis-markdown-body ul,
+.analysis-markdown-body ol {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.analysis-markdown-body li {
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.analysis-markdown-body li::marker {
+    color: var(--primary-color);
+}
+
+.analysis-markdown-body code {
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--primary-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    border: 1px solid rgba(34, 211, 238, 0.15);
+}
+
+.analysis-markdown-body pre {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.analysis-markdown-body pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--text-main);
+    display: block;
+    line-height: 1.6;
+}
+
+.analysis-markdown-body blockquote {
+    border-left: 3px solid var(--primary-color);
+    margin: 1rem 0;
+    padding: 0.5rem 0 0.5rem 1rem;
+    background: rgba(34, 211, 238, 0.05);
+    border-radius: 0 8px 8px 0;
+    color: var(--text-secondary);
+}
+
+.analysis-markdown-body hr {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1.5rem 0;
+}
+
+.analysis-markdown-body a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.analysis-markdown-body a:hover {
+    color: var(--teal-400);
+    text-decoration: underline;
+}
+
+.analysis-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Animations */
+@keyframes analysisModalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes analysisModalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Custom scrollbar for modal body */
+.analysis-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.analysis-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.analysis-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.analysis-modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Button loading state */
+.btn-secondary.loading {
+    background: rgba(34, 211, 238, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .analysis-modal-overlay {
+        padding: 1rem;
+    }
+    
+    .analysis-modal-content {
+        max-height: 90vh;
+    }
+    
+    .analysis-modal-body {
+        padding: 1rem;
+    }
+}

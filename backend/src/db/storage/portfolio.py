@@ -26,10 +26,6 @@ class PortfolioStorage(BaseStorage):
         """Initialize storage with database connection."""
         super().__init__(database_url or _DB_URL)
 
-    def _get_session(self):
-        """Get database session (alias for backward compatibility)."""
-        return self.get_db_session()
-
     def save_result(self, result: dict, user_id: Optional[str] = None) -> str:
         """
         Save a portfolio backtest result to the database.
@@ -41,45 +37,42 @@ class PortfolioStorage(BaseStorage):
         Returns:
             str: Portfolio ID of saved result
         """
-        session = self._get_session()
-        try:
-            portfolio_metrics = result.get("portfolio_metrics", {})
-            
-            model = PortfolioResultModel(
-                portfolio_id=result.get("id"),
-                user_id=user_id,
-                tickers=result.get("tickers", []),
-                weights=result.get("weights", []),
-                start_date=result.get("start_date"),
-                end_date=result.get("end_date"),
-                initial_cash=portfolio_metrics.get("initial_cash", 0),
-                commission=portfolio_metrics.get("commission", 0.0005),
-                strategy_name=result.get("strategy_name"),
-                final_value=portfolio_metrics.get("final_value"),
-                total_return=portfolio_metrics.get("total_return"),
-                weighted_sharpe=portfolio_metrics.get("weighted_sharpe"),
-                max_drawdown=portfolio_metrics.get("max_drawdown"),
-                num_assets=portfolio_metrics.get("num_assets", 0),
-                successful_backtests=portfolio_metrics.get("successful_backtests", 0),
-                failed_backtests=portfolio_metrics.get("failed_backtests", 0),
-                portfolio_metrics=portfolio_metrics,
-                individual_results=result.get("individual_results", []),
-                correlation_matrix=result.get("correlation", {}),
-                optimization_suggestion=result.get("optimization", {}),
-                plot_filename=result.get("plot_filename"),
-                params=result.get("params"),
-            )
+        with self.managed_session() as session:
+            try:
+                portfolio_metrics = result.get("portfolio_metrics", {})
+                
+                model = PortfolioResultModel(
+                    portfolio_id=result.get("id"),
+                    user_id=user_id,
+                    tickers=result.get("tickers", []),
+                    weights=result.get("weights", []),
+                    start_date=result.get("start_date"),
+                    end_date=result.get("end_date"),
+                    initial_cash=portfolio_metrics.get("initial_cash", 0),
+                    commission=portfolio_metrics.get("commission", 0.0005),
+                    strategy_name=result.get("strategy_name"),
+                    final_value=portfolio_metrics.get("final_value"),
+                    total_return=portfolio_metrics.get("total_return"),
+                    weighted_sharpe=portfolio_metrics.get("weighted_sharpe"),
+                    max_drawdown=portfolio_metrics.get("max_drawdown"),
+                    num_assets=portfolio_metrics.get("num_assets", 0),
+                    successful_backtests=portfolio_metrics.get("successful_backtests", 0),
+                    failed_backtests=portfolio_metrics.get("failed_backtests", 0),
+                    portfolio_metrics=portfolio_metrics,
+                    individual_results=result.get("individual_results", []),
+                    correlation_matrix=result.get("correlation", {}),
+                    optimization_suggestion=result.get("optimization", {}),
+                    plot_filename=result.get("plot_filename"),
+                    params=result.get("params"),
+                )
 
-            session.add(model)
-            session.commit()
-            logger.info(f"Saved portfolio result {model.portfolio_id}")
-            return model.portfolio_id
-        except Exception as e:
-            session.rollback()
-            logger.error(f"Failed to save portfolio result: {e}")
-            raise
-        finally:
-            session.close()
+                session.add(model)
+                session.flush()
+                logger.info(f"Saved portfolio result {model.portfolio_id}")
+                return model.portfolio_id
+            except Exception as e:
+                logger.error(f"Failed to save portfolio result: {e}")
+                raise
 
     def get_by_id(self, portfolio_id: str, user_id: Optional[str] = None) -> Optional[dict]:
         """
@@ -92,8 +85,7 @@ class PortfolioStorage(BaseStorage):
         Returns:
             dict or None: Portfolio result dict
         """
-        session = self._get_session()
-        try:
+        with self.managed_session(commit_on_success=False) as session:
             query = session.query(PortfolioResultModel).filter(
                 PortfolioResultModel.portfolio_id == portfolio_id
             )
@@ -105,8 +97,6 @@ class PortfolioStorage(BaseStorage):
                 return None
             
             return self._model_to_dict(model)
-        finally:
-            session.close()
 
     def list_history(
         self,
@@ -129,8 +119,7 @@ class PortfolioStorage(BaseStorage):
         Returns:
             list: List of portfolio result dicts
         """
-        session = self._get_session()
-        try:
+        with self.managed_session(commit_on_success=False) as session:
             query = session.query(PortfolioResultModel)
             
             if user_id:
@@ -151,8 +140,6 @@ class PortfolioStorage(BaseStorage):
                 results.append(self._model_to_dict(model, summary=True))
             
             return results
-        finally:
-            session.close()
 
     def delete_by_id(self, portfolio_id: str, user_id: Optional[str] = None) -> bool:
         """
@@ -165,28 +152,24 @@ class PortfolioStorage(BaseStorage):
         Returns:
             bool: True if deleted, False if not found
         """
-        session = self._get_session()
-        try:
-            query = session.query(PortfolioResultModel).filter(
-                PortfolioResultModel.portfolio_id == portfolio_id
-            )
-            if user_id:
-                query = query.filter(PortfolioResultModel.user_id == user_id)
-            
-            model = query.first()
-            if not model:
-                return False
-            
-            session.delete(model)
-            session.commit()
-            logger.info(f"Deleted portfolio result {portfolio_id}")
-            return True
-        except Exception as e:
-            session.rollback()
-            logger.error(f"Failed to delete portfolio result: {e}")
-            raise
-        finally:
-            session.close()
+        with self.managed_session() as session:
+            try:
+                query = session.query(PortfolioResultModel).filter(
+                    PortfolioResultModel.portfolio_id == portfolio_id
+                )
+                if user_id:
+                    query = query.filter(PortfolioResultModel.user_id == user_id)
+                
+                model = query.first()
+                if not model:
+                    return False
+                
+                session.delete(model)
+                logger.info(f"Deleted portfolio result {portfolio_id}")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to delete portfolio result: {e}")
+                raise
 
     def _model_to_dict(self, model: PortfolioResultModel, summary: bool = False) -> dict:
         """Convert model to dict."""

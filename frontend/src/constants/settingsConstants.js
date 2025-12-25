@@ -22,11 +22,18 @@ export const AVAILABLE_MODELS = [
 export const DEFAULT_CREDENTIALS = {
     openai_api_key: '',
     openai_base_url: '',
+    // Server-side JWT validation
     logto_issuer: '',
     logto_jwks_uri: '',
     logto_audience: '',
     logto_required_scopes: '',
     enable_login: false,
+    // Frontend OAuth configuration
+    logto_endpoint: '',
+    logto_app_id: '',
+    logto_redirect_uri: '',
+    logto_post_logout_redirect_uri: '',
+    // Proxy settings
     http_proxy: '',
     https_proxy: '',
     ccxt: {}

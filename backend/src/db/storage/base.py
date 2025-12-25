@@ -70,6 +70,53 @@ class BaseStorage:
         finally:
             session.close()
 
+    @contextmanager
+    def managed_session(
+        self,
+        db: Optional[Session] = None,
+        commit_on_success: bool = True
+    ) -> Generator[Session, None, None]:
+        """
+        Context manager that handles session lifecycle uniformly.
+
+        This method supports both internal and external sessions:
+        - If db is None: creates a new session and manages its lifecycle
+        - If db is provided: uses the external session without closing it
+
+        Args:
+            db: Optional existing session (if provided, caller manages lifecycle)
+            commit_on_success: Whether to commit on successful completion
+                               (only applies when we own the session)
+
+        Usage:
+            # For write operations (auto-commit/rollback):
+            def save_item(self, item, db=None):
+                with self.managed_session(db) as session:
+                    session.add(item)
+
+            # For read operations (no commit needed):
+            def get_item(self, item_id, db=None):
+                with self.managed_session(db, commit_on_success=False) as session:
+                    return session.query(Model).filter_by(id=item_id).first()
+
+        Yields:
+            SQLAlchemy session
+        """
+        is_owner = db is None
+        session = db if db else self.get_db_session()
+
+        try:
+            yield session
+            if is_owner and commit_on_success:
+                session.commit()
+        except Exception:
+            if is_owner:
+                session.rollback()
+            raise
+        finally:
+            if is_owner:
+                session.close()
+
     def _manage_session(self, db: Optional[Session]):
         """
         Helper to determine if we should manage (close) a session.
