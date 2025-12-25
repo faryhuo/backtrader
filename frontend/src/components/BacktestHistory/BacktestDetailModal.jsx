@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Modal, Tabs, Descriptions, Tag, Button, Select, message } from 'antd'
+import { useState, useCallback } from 'react'
+import { Modal, Tabs, Descriptions, Tag, Button, Select } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { FileTextOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { performFullStrategyAnalysis } from '../../services/aiAnalysis'
 import { useSettingsContext } from '../../contexts/SettingsContext'
 import { api } from '../../services/api'
+import { useAIAnalysis } from '../../hooks/useAIAnalysis'
 import PerformanceOverview from '../RunStrategy/PerformanceOverview'
 import TradeLog from '../RunStrategy/TradeLog'
 import AIInsight from '../RunStrategy/AIInsight'
@@ -16,22 +16,39 @@ import DeepAnalysis from '../DeepAnalysis'
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t, i18n } = useTranslation()
     const { settings, getAvailableModels } = useSettingsContext()
-    const [aiLoading, setAiLoading] = useState(false)
     const [reportLoading, setReportLoading] = useState(false)
-    const [analyses, setAnalyses] = useState({})
-    const [activeTab, setActiveTab] = useState(null)
 
-    // Initialize available models from settings context
-    const availableModels = getAvailableModels()
-    const [selectedModel, setSelectedModel] = useState(availableModels[0] || 'gpt-4o')
+    // Persistence callback for saving AI analysis
+    const handleSaveAnalysis = useCallback(async (backtestId, modelName, analysis) => {
+        await api.updateBacktestAiAnalysis(backtestId, modelName, analysis)
+        // Update backtest object with new analysis
+        if (backtest) {
+            backtest.ai_analysis = { ...backtest.ai_analysis, [modelName]: analysis }
+        }
+        // Notify parent component to refresh data if callback provided
+        if (onAnalysisUpdate && backtest) {
+            onAnalysisUpdate(backtest.backtest_id, backtest.ai_analysis)
+        }
+    }, [backtest, onAnalysisUpdate])
+
+    // Use the unified AI analysis hook
+    const {
+        selectedModel,
+        setSelectedModel,
+        analyses,
+        activeTab,
+        setActiveTab,
+        aiLoading,
+        runAnalysis,
+        availableModels,
+    } = useAIAnalysis({
+        getAvailableModels,
+        settings,
+        initialAnalyses: backtest?.ai_analysis || {},
+        onAnalysisSaved: handleSaveAnalysis,
+    })
 
     if (!backtest) return null
-
-    // Load existing AI analyses from backtest data (stored as JSON: {model_name: analysis_content})
-    const savedAnalyses = backtest.ai_analysis || {}
-
-    // Merge saved analyses with new analyses from current session
-    const allAnalyses = { ...savedAnalyses, ...analyses }
 
     const tradeList = backtest.metrics?.trade_details?.trades || []
 
@@ -44,51 +61,16 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
         if (!backtest || !backtest.plot_url) {
             return
         }
-        setAiLoading(true)
-
-        try {
-            const data = await performFullStrategyAnalysis({
-                result: result,
-                strategyName: backtest.strategy_name,
-                ticker: backtest.ticker,
-                startDate: backtest.start_date,
-                endDate: backtest.end_date,
-                model: selectedModel,
-                initialStrategyCode: backtest.strategy_code,
-                settings: settings
-            })
-
-            setAnalyses(prev => {
-                const newState = { ...prev, [selectedModel]: data.analysis }
-                return newState
-            })
-            setActiveTab(selectedModel)
-
-            // Save AI analysis to backtest history
-            if (backtest.backtest_id) {
-                try {
-                    await api.updateBacktestAiAnalysis(backtest.backtest_id, selectedModel, data.analysis)
-                    message.success(t('history.ai_analysis_saved', 'AI analysis saved successfully'))
-
-                    // Update backtest object with new analysis
-                    backtest.ai_analysis = { ...backtest.ai_analysis, [selectedModel]: data.analysis }
-
-                    // Notify parent component to refresh data if callback provided
-                    if (onAnalysisUpdate) {
-                        onAnalysisUpdate(backtest.backtest_id, backtest.ai_analysis)
-                    }
-                } catch (err) {
-                    console.error("Failed to save AI analysis to history:", err)
-                    message.error(t('history.ai_analysis_save_error', 'Failed to save AI analysis'))
-                }
-            }
-
-        } catch (err) {
-            console.error(err)
-            message.error(t('history.ai_analysis_failed', { error: err.message }))
-        } finally {
-            setAiLoading(false)
-        }
+        await runAnalysis({
+            result,
+            strategyName: backtest.strategy_name,
+            ticker: backtest.ticker,
+            startDate: backtest.start_date,
+            endDate: backtest.end_date,
+            strategyCode: backtest.strategy_code,
+            backtestId: backtest.backtest_id,
+            t,
+        })
     }
 
     const handleGenerateReport = async () => {
@@ -105,14 +87,17 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                 title: reportTitle,
                 source_ids: [backtest.backtest_id],
                 config: {
-                    include_ai_analysis: Object.keys(allAnalyses).length > 0
+                    include_ai_analysis: Object.keys(analyses).length > 0
                 },
                 language: i18n.language?.startsWith('zh') ? 'zh' : 'en'
             })
 
+            // Use message from imported antd
+            const { message } = await import('antd')
             message.success(t('history.report_generating', 'Report generation started. You can view it in the Report Center.'))
         } catch (err) {
             console.error('Failed to generate report:', err)
+            const { message } = await import('antd')
             message.error(t('history.report_generation_failed', 'Failed to generate report'))
         } finally {
             setReportLoading(false)
@@ -232,10 +217,10 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                         </div>
 
                         {/* AI Analysis Results */}
-                        {Object.keys(allAnalyses).length > 0 ? (
+                        {Object.keys(analyses).length > 0 ? (
                             <AIInsight
-                                analyses={allAnalyses}
-                                activeTab={activeTab || Object.keys(allAnalyses)[0]}
+                                analyses={analyses}
+                                activeTab={activeTab || Object.keys(analyses)[0]}
                                 onTabChange={setActiveTab}
                             />
                         ) : (

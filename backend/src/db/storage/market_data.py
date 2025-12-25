@@ -121,8 +121,8 @@ def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> boo
             saved_count = result.rowcount if result.rowcount is not None and result.rowcount >= 0 else len(records)
             skipped_count = max(0, len(records) - saved_count)
         else:
-            min_date = df['_date'].min()
-            max_date = df['_date'].max()
+            min_date = df['tmp_date'].min()
+            max_date = df['tmp_date'].max()
             with session.begin():
                 existing_dates = {
                     date for (date,) in session.execute(
