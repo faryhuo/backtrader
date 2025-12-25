@@ -22,5 +22,7 @@
   "depth_duration": "深度与持续时间",
   "longest_duration": "最长持续时间",
   "net_pnl": "净盈亏",
-  "bars": "根K线"
+  "bars": "根K线",
+  "calmar": "卡玛比率",
+  "vwr": "波动加权收益"
 }

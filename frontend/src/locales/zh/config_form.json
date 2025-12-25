@@ -13,5 +13,9 @@
   "select_strategy_hint": "请在上方配置参数并点击“运行回测”以查看AI智能分析结果。",
   "initial_cash": "初始资金",
   "stake": "交易单位",
-  "ticker": "标的代码"
+  "ticker": "标的代码",
+  "sizer_type": "仓位管理",
+  "sizer_percent": "仓位比例 %",
+  "sizer_risk": "单笔风险 %",
+  "timeframe": "数据间隔"
 }

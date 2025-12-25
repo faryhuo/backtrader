@@ -10,5 +10,9 @@
   "order_size": "Order Size (shares/contracts)",
   "run_backtest": "Run Backtest",
   "ready_to_run": "Ready to Backtest",
-  "select_strategy_hint": "Configure your parameters above and hit \"Run Backtest\" to see AI-powered analysis."
+  "select_strategy_hint": "Configure your parameters above and hit \"Run Backtest\" to see AI-powered analysis.",
+  "sizer_type": "Position Sizing",
+  "sizer_percent": "Position %",
+  "sizer_risk": "Risk per Trade %",
+  "timeframe": "Data Interval"
 }

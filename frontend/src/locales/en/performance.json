@@ -22,5 +22,7 @@
   "depth_duration": "depth and duration",
   "longest_duration": "Longest Duration",
   "net_pnl": "Net PnL",
-  "bars": "bars"
+  "bars": "bars",
+  "calmar": "Calmar Ratio",
+  "vwr": "VWR"
 }

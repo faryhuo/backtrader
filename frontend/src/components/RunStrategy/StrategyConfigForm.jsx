@@ -13,8 +13,28 @@ import {
     DownOutlined,
     RightOutlined,
     ExpandAltOutlined,
-    ShrinkOutlined
+    ShrinkOutlined,
+    PieChartOutlined,
+    ClockCircleOutlined
 } from '@ant-design/icons';
+
+// Sizer type options
+const SIZER_OPTIONS = [
+    { value: 'fixed_size', label: 'Fixed Size' },
+    { value: 'percent_sizer', label: 'Percent Sizer' },
+    { value: 'all_in_sizer', label: 'All In' },
+    { value: 'risk_sizer', label: 'Risk Control' },
+    { value: 'kelly_sizer', label: 'Kelly Criterion' },
+];
+
+// Timeframe options
+const TIMEFRAME_OPTIONS = [
+    { value: '1d', label: 'Daily' },
+    { value: '1h', label: 'Hourly' },
+    { value: '15m', label: '15 Min' },
+    { value: '5m', label: '5 Min' },
+    { value: '1m', label: '1 Min' },
+];
 
 function StrategyConfigForm({
     strategies,
@@ -33,6 +53,12 @@ function StrategyConfigForm({
     setCommission,
     stake,
     setStake,
+    sizerType = 'fixed_size',
+    setSizerType = () => { },
+    sizerConfig = {},
+    setSizerConfig = () => { },
+    timeframe = '1d',
+    setTimeframe = () => { },
     loading,
     onSubmit,
     error,
@@ -43,6 +69,11 @@ function StrategyConfigForm({
     const { t } = useTranslation();
     const [paramsExpanded, setParamsExpanded] = useState(true);
     const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+
+    // Handle sizer config changes
+    const updateSizerConfig = (key, value) => {
+        setSizerConfig(prev => ({ ...prev, [key]: value }));
+    };
 
     return (
         <section className="card form-card-enhanced">
@@ -156,18 +187,100 @@ function StrategyConfigForm({
                             </div>
                         </div>
 
+                        {/* Sizer Type Selector - First */}
                         <div className="form-group">
-                            <label htmlFor="stake">{t('config_form.order_size')}</label>
-                            <div className="input-with-icon">
-                                <NumberOutlined className="input-icon" />
-                                <input
-                                    id="stake"
-                                    type="number"
-                                    value={stake}
-                                    onChange={(e) => setStake(e.target.value)}
-                                    required
-                                />
+                            <label htmlFor="sizer-type">
+                                <PieChartOutlined /> {t('config_form.sizer_type', 'Position Sizing')}
+                            </label>
+                            <select
+                                id="sizer-type"
+                                value={sizerType}
+                                onChange={(e) => setSizerType(e.target.value)}
+                                className="styled-select"
+                            >
+                                {SIZER_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {t(`sizer.${opt.value}`, opt.label)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Sizer Config - Only render the relevant one */}
+                        {sizerType === 'fixed_size' && (
+                            <div className="form-group">
+                                <label htmlFor="stake">{t('config_form.order_size')}</label>
+                                <div className="input-with-icon">
+                                    <NumberOutlined className="input-icon" />
+                                    <input
+                                        id="stake"
+                                        type="number"
+                                        value={stake}
+                                        onChange={(e) => setStake(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </div>
+                        )}
+
+                        {sizerType === 'percent_sizer' && (
+                            <div className="form-group">
+                                <label htmlFor="sizer-percents">
+                                    <PercentageOutlined /> {t('config_form.sizer_percent', 'Position %')}
+                                </label>
+                                <div className="input-with-icon">
+                                    <PercentageOutlined className="input-icon" />
+                                    <input
+                                        id="sizer-percents"
+                                        type="number"
+                                        step="0.1"
+                                        min="0.1"
+                                        max="100"
+                                        value={sizerConfig.percents || 10}
+                                        onChange={(e) => updateSizerConfig('percents', parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {(sizerType === 'risk_sizer' || sizerType === 'kelly_sizer') && (
+                            <div className="form-group">
+                                <label htmlFor="sizer-risk">
+                                    <PercentageOutlined /> {t('config_form.sizer_risk', 'Risk per Trade %')}
+                                </label>
+                                <div className="input-with-icon">
+                                    <PercentageOutlined className="input-icon" />
+                                    <input
+                                        id="sizer-risk"
+                                        type="number"
+                                        step="0.1"
+                                        min="0.1"
+                                        max="100"
+                                        value={sizerConfig.risk_percent || 2}
+                                        onChange={(e) => updateSizerConfig('risk_percent', parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+
+                        {/* Timeframe Selector */}
+                        <div className="form-group">
+                            <label htmlFor="timeframe">
+                                <ClockCircleOutlined /> {t('config_form.timeframe', 'Data Interval')}
+                            </label>
+                            <select
+                                id="timeframe"
+                                value={timeframe}
+                                onChange={(e) => setTimeframe(e.target.value)}
+                                className="styled-select"
+                            >
+                                {TIMEFRAME_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {t(`timeframe.${opt.value}`, opt.label)}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
@@ -244,6 +357,12 @@ StrategyConfigForm.propTypes = {
     setCommission: PropTypes.func.isRequired,
     stake: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     setStake: PropTypes.func.isRequired,
+    sizerType: PropTypes.string,
+    setSizerType: PropTypes.func,
+    sizerConfig: PropTypes.object,
+    setSizerConfig: PropTypes.func,
+    timeframe: PropTypes.string,
+    setTimeframe: PropTypes.func,
     loading: PropTypes.bool.isRequired,
     onSubmit: PropTypes.func.isRequired,
     error: PropTypes.string,
@@ -251,6 +370,7 @@ StrategyConfigForm.propTypes = {
     paramOverrides: PropTypes.object,
     onParamChange: PropTypes.func
 };
+
 
 export default StrategyConfigForm;
 

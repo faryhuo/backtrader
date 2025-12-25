@@ -115,7 +115,20 @@ function PerformanceOverview({ result }) {
                     label={t('performance.dd_duration')}
                     value={isNumber(maxDrawDuration) ? `${Math.round(maxDrawDuration)} ${t('performance.bars')}` : t('common.na')}
                 />
+                <MetricCard
+                    icon={<LineChartOutlined />}
+                    label={t('performance.calmar', 'Calmar Ratio')}
+                    value={formatNumber(metrics.calmar)}
+                    bgVariant="neutral-bg"
+                />
+                <MetricCard
+                    icon={<BarChartOutlined />}
+                    label={t('performance.vwr', 'VWR')}
+                    value={formatNumber(metrics.vwr)}
+                    bgVariant="neutral-bg"
+                />
             </div>
+
 
             {/* Details Two-Column Layout */}
             <div className="details-two-column">

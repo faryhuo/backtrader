@@ -1,0 +1,7 @@
+{
+    "fixed_size": "Fixed Size",
+    "percent_sizer": "Percent Sizer",
+    "all_in_sizer": "All In",
+    "risk_sizer": "Risk Control",
+    "kelly_sizer": "Kelly Criterion"
+}

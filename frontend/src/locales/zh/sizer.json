@@ -1,0 +1,7 @@
+{
+    "fixed_size": "固定手数",
+    "percent_sizer": "百分比仓位",
+    "all_in_sizer": "全仓",
+    "risk_sizer": "风险控制",
+    "kelly_sizer": "凯利公式"
+}

@@ -20,6 +20,39 @@ setup_worker_logging()
 logger = logging.getLogger(__name__)
 
 
+def _add_sizer(cerebro, task) -> None:
+    """
+    Add appropriate sizer based on task configuration.
+    
+    Args:
+        cerebro: Backtrader Cerebro instance
+        task: BacktestTask with sizer configuration
+    """
+    import backtrader as bt
+    
+    sizer_type = getattr(task, 'sizer_type', 'fixed_size') or 'fixed_size'
+    sizer_config = getattr(task, 'sizer_config', None) or {}
+    default_stake = getattr(task, 'stake', 100)
+    
+    if sizer_type == "percent_sizer":
+        percents = sizer_config.get("percents", 10)
+        cerebro.addsizer(bt.sizers.PercentSizer, percents=percents)
+    elif sizer_type == "all_in_sizer":
+        cerebro.addsizer(bt.sizers.AllInSizerInt)
+    elif sizer_type == "risk_sizer":
+        # Use PercentSizerInt with risk-based percentage
+        risk_percent = sizer_config.get("risk_percent", 2)
+        cerebro.addsizer(bt.sizers.PercentSizerInt, percents=risk_percent)
+    elif sizer_type == "kelly_sizer":
+        # Kelly sizing approximated via percent sizer
+        # In practice, Kelly requires win rate and win/loss ratio from strategy
+        kelly_fraction = sizer_config.get("percents", 25)  # Conservative Kelly
+        cerebro.addsizer(bt.sizers.PercentSizer, percents=kelly_fraction)
+    else:  # fixed_size or unknown
+        stake = sizer_config.get("stake", default_stake)
+        cerebro.addsizer(bt.sizers.FixedSize, stake=stake)
+
+
 def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
     """
     Execute a backtest task in the worker process.
@@ -94,7 +127,8 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         
         # 3. Load market data
         try:
-            data = get_bt_feed(task.ticker, task.start_date, task.end_date)
+            timeframe = getattr(task, 'timeframe', '1d') or '1d'
+            data = get_bt_feed(task.ticker, task.start_date, task.end_date, timeframe=timeframe)
         except Exception as e:
             return BacktestResult.error_result(
                 task_id,
@@ -113,9 +147,11 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         cerebro.adddata(data)
         cerebro.broker.setcash(task.initial_cash)
         cerebro.broker.setcommission(commission=task.commission)
-        cerebro.addsizer(bt.sizers.FixedSize, stake=task.stake)
         
-        # Add analyzers
+        # Dynamic sizer selection
+        _add_sizer(cerebro, task)
+        
+        # Add basic analyzers
         cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
         cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
         cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
@@ -123,6 +159,10 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
         cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
         cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturns")
+        
+        # Add advanced analyzers
+        cerebro.addanalyzer(bt.analyzers.Calmar, _name="calmar")
+        cerebro.addanalyzer(bt.analyzers.VWR, _name="vwr")
         
         # Add custom trade recorder
         from src.service.backtest_engine import TradeRecorder
@@ -162,7 +202,11 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
             "trades": _serialize_trade_analysis(strat.analyzers.trades.get_analysis()),
             "trade_details": trade_details,
             "equity_curve": equity_curve,
+            # Advanced metrics
+            "calmar": strat.analyzers.calmar.get_analysis().get("calmar"),
+            "vwr": strat.analyzers.vwr.get_analysis().get("vwr"),
         }
+
         
         # 7. Generate chart if requested
         chart_path = None

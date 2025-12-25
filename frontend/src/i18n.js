@@ -25,6 +25,8 @@ import landingEn from './locales/en/landing.json';
 import datamanagementEn from './locales/en/datamanagement.json';
 import reportcenterEn from './locales/en/report_center.json';
 import taskcenterEn from './locales/en/task_center.json';
+import sizerEn from './locales/en/sizer.json';
+import timeframeEn from './locales/en/timeframe.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -49,6 +51,8 @@ import landingZh from './locales/zh/landing.json';
 import datamanagementZh from './locales/zh/datamanagement.json';
 import reportcenterZh from './locales/zh/report_center.json';
 import taskcenterZh from './locales/zh/task_center.json';
+import sizerZh from './locales/zh/sizer.json';
+import timeframeZh from './locales/zh/timeframe.json';
 
 const en = {
   app: appEn,
@@ -73,6 +77,8 @@ const en = {
   datamanagement: datamanagementEn,
   reportcenter: reportcenterEn,
   taskcenter: taskcenterEn,
+  sizer: sizerEn,
+  timeframe: timeframeEn,
 };
 
 const zh = {
@@ -97,7 +103,9 @@ const zh = {
   landing: landingZh,
   datamanagement: datamanagementZh,
   reportcenter: reportcenterZh,
-  taskcenter: taskcenterZh
+  taskcenter: taskcenterZh,
+  sizer: sizerZh,
+  timeframe: timeframeZh,
 };
 
 i18n

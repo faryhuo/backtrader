@@ -61,6 +61,9 @@ export function useBacktest() {
             initialCash,
             commission,
             stake,
+            sizerType,
+            sizerConfig,
+            timeframe,
             selectedStrategy,
             paramOverrides,
         } = params;
@@ -85,6 +88,9 @@ export function useBacktest() {
                 initial_cash: parseFloat(initialCash),
                 commission: parseFloat(commission),
                 stake: parseInt(stake, 10),
+                sizer_type: sizerType || 'fixed_size',
+                sizer_config: sizerConfig || null,
+                timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy,
                 params: paramsToSend
             });

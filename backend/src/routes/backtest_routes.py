@@ -48,6 +48,11 @@ class BacktestRequest(BaseModel):
     initial_cash: float
     commission: float | None = 0.0005
     stake: int | None = 100
+    # Sizer configuration
+    sizer_type: str | None = "fixed_size"  # fixed_size, percent_sizer, all_in_sizer, risk_sizer, kelly_sizer
+    sizer_config: dict | None = None  # Type-specific config (percents, risk_percent, etc.)
+    # Data configuration
+    timeframe: str | None = "1d"  # 1d, 1h, 15m, 5m, 1m
     strategy_name: str | None = None
     params: dict | None = None  # Strategy parameter overrides
 

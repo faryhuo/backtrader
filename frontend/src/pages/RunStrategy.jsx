@@ -29,6 +29,11 @@ function RunStrategy() {
     const [initialCash, setInitialCash] = useState(100000.0);
     const [commission, setCommission] = useState(0.0005);
     const [stake, setStake] = useState(100);
+    // Sizer configuration
+    const [sizerType, setSizerType] = useState('fixed_size');
+    const [sizerConfig, setSizerConfig] = useState({ stake: 100, percents: 10, risk_percent: 2 });
+    // Data timeframe
+    const [timeframe, setTimeframe] = useState('1d');
 
     const {
         strategies,
@@ -77,6 +82,9 @@ function RunStrategy() {
             initialCash,
             commission,
             stake,
+            sizerType,
+            sizerConfig,
+            timeframe,
             selectedStrategy,
             paramOverrides,
         }, t);
@@ -146,6 +154,12 @@ function RunStrategy() {
                 setCommission={setCommission}
                 stake={stake}
                 setStake={setStake}
+                sizerType={sizerType}
+                setSizerType={setSizerType}
+                sizerConfig={sizerConfig}
+                setSizerConfig={setSizerConfig}
+                timeframe={timeframe}
+                setTimeframe={setTimeframe}
                 loading={loading}
                 onSubmit={handleBacktest}
                 error={error}

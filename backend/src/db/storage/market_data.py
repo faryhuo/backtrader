@@ -346,11 +346,38 @@ def get_data(
     raise DataLoadError(error_msg)
 
 
-def get_bt_feed(ticker: str, start: str, end: str) -> bt.feeds.PandasData:
+def get_bt_feed(
+    ticker: str, start: str, end: str, timeframe: str = "1d"
+) -> bt.feeds.PandasData:
     """
     Wrapper to get data as a Backtrader feed.
+    
+    Args:
+        ticker: Symbol ticker
+        start: Start date (YYYY-MM-DD)
+        end: End date (YYYY-MM-DD)
+        timeframe: Data timeframe (1d, 1h, 15m, 5m, 1m)
+        
+    Returns:
+        Backtrader PandasData feed
+        
+    Note:
+        Yahoo Finance primarily provides daily data. For minute-level data,
+        ensure your data source supports the requested resolution.
     """
     data = get_data(ticker, start, end)
+    
+    # If timeframe is not daily, try to resample
+    # Note: Resampling to finer granularity is not supported
+    # This primarily serves as documentation for future data sources
+    if timeframe != "1d":
+        try:
+            from src.db.storage.resampler import resample_ohlcv, validate_resample_path
+            # For now, log a warning - Yahoo data is daily
+            logger.debug(f"Timeframe {timeframe} requested but source data may be daily")
+        except ImportError:
+            pass
+    
     return bt.feeds.PandasData(dataname=data)
 
 

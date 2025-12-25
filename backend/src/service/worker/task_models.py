@@ -40,6 +40,11 @@ class BacktestTask:
     initial_cash: float = 100000.0
     commission: float = 0.0005
     stake: int = 100
+    # Sizer configuration
+    sizer_type: str = "fixed_size"
+    sizer_config: Optional[Dict[str, Any]] = None
+    # Data timeframe
+    timeframe: str = "1d"
     params: Optional[Dict[str, Any]] = None
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
@@ -55,6 +60,9 @@ class BacktestTask:
             "initial_cash": self.initial_cash,
             "commission": self.commission,
             "stake": self.stake,
+            "sizer_type": self.sizer_type,
+            "sizer_config": self.sizer_config,
+            "timeframe": self.timeframe,
             "params": self.params,
             "generate_chart": self.generate_chart,
             "chart_save_path": self.chart_save_path,
