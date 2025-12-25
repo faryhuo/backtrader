@@ -24,7 +24,8 @@
       "Bash(do if ! grep -q \"task_helpers\" \"$file\")",
       "Bash(then basename \"$file\")",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(wc:*)"
     ]
   }
 }

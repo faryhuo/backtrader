@@ -9,28 +9,11 @@ This module defines the database table for tracking:
 """
 
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import Column, DateTime, Float, Integer, String, Text
 
 from src.db.models.base import Base, SafeJSON
-
-
-class TaskType(str, Enum):
-    """Supported task types."""
-    BACKTEST = "backtest"
-    PORTFOLIO = "portfolio"
-    WALKFORWARD = "walkforward"
-    DEEP_ANALYSIS = "deep_analysis"
-
-
-class TaskStatus(str, Enum):
-    """Task status values."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+from src.contracts.task import TaskType, TaskStatus
 
 
 class TaskModel(Base):

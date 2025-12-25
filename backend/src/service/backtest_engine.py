@@ -6,6 +6,7 @@ import backtrader as bt
 
 from src.config.settings import IMAGES_DIR, ensure_resource_dirs
 from src.config.worker_config import get_config as get_worker_config
+from src.contracts.exceptions import StrategyLoadError
 from src.db.storage.market_data import get_raw_data_json
 from src.service.backtest_runner import BacktestRunnerError, run_backtest_legacy, run_backtest_worker
 from src.service.strategy_loader import StrategyLoaderError, load_user_strategy as _load_user_strategy
@@ -20,10 +21,6 @@ from src.service.strategy_repo import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_STRATEGY_NAME = None
-
-
-class StrategyLoadError(Exception):
-    """Raised when the user strategy cannot be loaded."""
 
 
 def ensure_resource_files() -> None:

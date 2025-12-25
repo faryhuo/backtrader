@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from pydantic import BaseModel
 
+from src.contracts.exceptions import StrategyLoadError, DataLoadError
+
 
 def get_user_id(user: Optional[dict]) -> Optional[str]:
     """
@@ -151,10 +153,6 @@ def map_exception_to_http(exc: Exception) -> HTTPException:
     Returns:
         HTTPException with appropriate status code and message
     """
-    # Import here to avoid circular dependencies
-    from src.service.backtest_engine import StrategyLoadError
-    from src.db.storage.market_data import DataLoadError
-    
     # Map specific exception types to HTTP status codes
     if isinstance(exc, StrategyLoadError):
         return HTTPException(status_code=400, detail=str(exc))

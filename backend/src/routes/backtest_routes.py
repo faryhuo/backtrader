@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
+from src.contracts.task import TaskStatus
 from src.service.task_manager import get_task_manager
 from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
 from src.routes.common.auth_dependencies import get_optional_user_id
@@ -35,18 +36,6 @@ from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _get_task_storage():
-    """Lazy import to avoid circular dependency."""
-    from src.db.storage.task import get_task_storage
-    return get_task_storage()
-
-
-def _get_task_status():
-    """Lazy import to avoid circular dependency."""
-    from src.db.models.task import TaskStatus
-    return TaskStatus
 
 
 # ========== Pydantic Models ==========

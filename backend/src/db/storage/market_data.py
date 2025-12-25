@@ -14,6 +14,7 @@ import yfinance as yf
 from sqlalchemy import text, select
 
 from src.config.settings import DATABASE_URL, DEFAULT_DB_URL
+from src.contracts.exceptions import DataLoadError
 from src.db.models import MarketDataModel, init_database
 
 logger = logging.getLogger(__name__)
@@ -30,10 +31,6 @@ def _get_engine_and_session():
     if _ENGINE is None or _SESSION_LOCAL is None:
         _ENGINE, _SESSION_LOCAL = init_database(_DB_URL)
     return _ENGINE, _SESSION_LOCAL
-
-
-class DataLoadError(Exception):
-    """Raised when market data cannot be loaded."""
 
 
 def save_to_db(ticker: str, data: pd.DataFrame, source: str = "yfinance") -> bool:
