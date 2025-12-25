@@ -72,7 +72,7 @@ RUN pip install --upgrade pip \
 COPY backend /app
 
 # Copy frontend build artifacts from frontend-builder stage
-COPY --from=frontend-builder /frontend/dist /app/resources/frontend
+COPY --from=frontend-builder /frontend/dist/. /app/resources/frontend/
 
 # Create .env from template if it doesn't exist
 RUN if [ ! -f /app/.env ] && [ -f /app/.env.template ]; then \
