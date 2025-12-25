@@ -8,7 +8,7 @@ COPY frontend/package*.json ./
 RUN npm install
 
 COPY frontend/ ./
-RUN npm run build
+RUN npm run build && ls -la dist
 
 # Stage 2: Python Builder
 # Lock to Debian Bookworm (stable) for consistent package availability
