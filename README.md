@@ -52,7 +52,6 @@
 - Node.js 18 或更高版本
 - (可选) Docker & Docker Compose
 
-### 方式一：本地开发环境
 
 #### 1. 克隆仓库
 
@@ -95,9 +94,13 @@ npm run dev
 
 打开浏览器访问：`http://localhost:5173`
 
-### 方式二：一键启动（开发模式）
+### 方式1：一键启动（开发模式）
 
 Windows 用户可以使用批处理脚本快速启动：
+
+```git
+git clone https://github.com/faryhuo/backtrader.git
+```
 
 ```bash
 # 完整构建（安装依赖 + 构建前端 + 复制静态资源）
@@ -107,192 +110,20 @@ build.bat
 start_dev.bat
 ```
 
-### 方式三：Docker 部署
+### 方式2：Docker 部署
+
+```git
+git clone https://github.com/faryhuo/backtrader.git
+```
 
 ```bash
-# 构建并启动容器（默认端口 8020）
-docker-compose up --build
+cd backtrader && bash docker-build-optimized.sh
 
 # 后台运行
 docker-compose up -d
 ```
 
 访问：`http://localhost:8020`
-
----
-
-## 📦 部署方式
-
-### 生产环境部署
-
-#### 1. 使用完整构建脚本
-
-```bash
-# Windows
-build.bat
-
-# Linux/Mac
-chmod +x docker-build-optimized.sh
-./docker-build-optimized.sh
-```
-
-### 2. 配置生产环境变量
-
-编辑 `backend/.env`（首次使用请从 `.env.template` 复制）：
-
-```env
-# ============================================================================
-# 加密密钥（必需）
-# ============================================================================
-# 用于加密数据库中的敏感凭证（API Key、Secret 等）
-# 生成方法：python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-ENCRYPTION_KEY=your-generated-encryption-key
-
-# ============================================================================
-# 数据库配置
-# ============================================================================
-DATABASE_URL=sqlite:///./trading_sessions.db
-
-# ============================================================================
-# 认证配置（可选）
-# ============================================================================
-ENABLE_LOGIN=false
-LOGTO_ISSUER=https://your-logto-domain
-LOGTO_JWKS_URI=https://your-logto-domain/oidc/jwks
-
-# ============================================================================
-# OpenAI 配置（可选）
-# ============================================================================
-OPENAI_API_KEY=
-OPENAI_BASE_URL=https://api.openai.com/v1
-
-# ============================================================================
-# 策略沙箱安全配置
-# ============================================================================
-# 沙箱模式：soft（不隔离）、subprocess（进程隔离，推荐）、docker（容器隔离）
-SANDBOX_MODE=subprocess
-SANDBOX_TIMEOUT_SECONDS=30.0
-SANDBOX_MAX_MEMORY_MB=512
-SANDBOX_ALLOW_NETWORK=false
-SANDBOX_ALLOW_FILE_WRITE=false
-
-# ============================================================================
-# 交易所凭证（根据需要配置）
-# ============================================================================
-# CCXT 格式: CCXT_{交易所}_{模式}_API_KEY/SECRET
-CCXT_BINANCE_PAPER_API_KEY=
-CCXT_BINANCE_PAPER_SECRET=
-CCXT_BINANCE_LIVE_API_KEY=
-CCXT_BINANCE_LIVE_SECRET=
-
-# ============================================================================
-# IBKR 配置
-# ============================================================================
-IBKR_PAPER_HOST=127.0.0.1
-IBKR_PAPER_PORT=4002
-IBKR_LIVE_HOST=127.0.0.1
-IBKR_LIVE_PORT=4001
-```
-
-**重要安全提示**：
-1. **必须设置 `ENCRYPTION_KEY`**：用于加密存储在数据库中的交易所 API 凭证
-2. **不要提交 `.env` 文件到版本控制**：`.env` 文件已在 `.gitignore` 中
-3. **凭证可通过 UI 配置**：在"设置"页面配置的凭证会加密后存储在数据库中，优先级高于 `.env`
-4. **建议使用 subprocess 沙箱模式**：防止不受信任的策略代码执行危险操作
-
-#### 3. 配置交易所参数
-
-编辑 `backend/resources/config/broker_config.json`：
-
-```json
-{
-  "binance": {
-    "adapter": "ccxt",
-    "exchange_id": "binance",
-    "risk_limits": {
-      "max_position_pct": 0.3,
-      "max_trade_qty": 1000
-    }
-  },
-  "ibkr": {
-    "adapter": "ibkr",
-    "risk_limits": {
-      "max_position_pct": 0.5,
-      "max_trade_qty": 100
-    }
-  }
-}
-```
-
----
-
-## 📖 使用文档
-
-### 策略开发
-
-策略文件存放在 `backend/resources/strategy/` 目录，使用 Backtrader 语法编写：
-
-```python
-import backtrader as bt
-
-class MyStrategy(bt.Strategy):
-    params = (
-        ('period', 20),
-    )
-    
-    def __init__(self):
-        self.sma = bt.indicators.SMA(self.data.close, period=self.params.period)
-    
-    def next(self):
-        if not self.position:
-            if self.data.close > self.sma:
-                self.buy(size=1)
-        else:
-            if self.data.close < self.sma:
-                self.sell(size=1)
-```
-
-### 内置策略模板
-
-系统提供了多个经典策略模板：
-
-- `sma_cross.py` - 双均线交叉策略
-- `rsi_reversion.py` - RSI 均值回归策略
-- `breakout.py` - 突破策略
-- `buy_and_hold.py` - 买入持有策略
-
-### 回测执行
-
-1. 进入"运行策略"页面
-2. 配置回测参数：
-   - 选择策略文件
-   - 设置股票代码/交易对
-   - 配置起止时间
-   - 设置初始资金和手续费
-3. 点击"运行回测"
-4. 查看结果（收益曲线、夏普比率、最大回撤等）
-
-### 实盘交易
-
-1. 配置交易所凭证（`.env` 文件）
-2. 配置 `broker_config.json` 风控参数
-3. 进入"实盘交易"页面
-4. 创建交易会话：
-   - 选择交易所和模式（Paper/Live）
-   - 选择策略和交易对
-   - 设置资金和参数
-5. 启动会话并监控实时状态
-
-### Walk-Forward 优化
-
-1. 进入"参数优化"页面
-2. 配置优化参数：
-   - 训练集周期
-   - 验证集周期
-   - 步进窗口
-   - 参数范围
-3. 运行优化并查看结果
-4. 识别过拟合风险
 
 ---
 ## 👨‍💻 开发指南

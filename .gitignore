@@ -2,6 +2,8 @@
 **/.pytest_cache/
 **/resources/images/*
 .codex
+.claude
+
 backend/.env
 backend/.envprod
 backend/.env.prod
