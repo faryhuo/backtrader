@@ -55,11 +55,9 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         }
     ]
 
-    // Prepare individual results data
+    // Prepare individual results data (pre-normalized by services layer)
     const getIndividualResults = () => {
-        if (!portfolio.individual_results || !Array.isArray(portfolio.individual_results)) return []
-
-        return portfolio.individual_results
+        return (portfolio.individual_results || [])
             .filter(item => item && item.success)
             .map(item => ({
                 key: item.ticker,
@@ -72,10 +70,9 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             }))
     }
 
-    // Render correlation matrix
+    // Render correlation matrix (pre-normalized by services layer)
     const renderCorrelationMatrix = () => {
-        // Backend returns 'correlation' field, not 'correlation_matrix'
-        const correlationData = portfolio.correlation || portfolio.correlation_matrix
+        const correlationData = portfolio.correlation
         if (!correlationData || !correlationData.matrix) {
             return <Empty description="No correlation data available" />
         }
@@ -126,10 +123,9 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         )
     }
 
-    // Render optimization suggestions
+    // Render optimization suggestions (pre-normalized by services layer)
     const renderOptimization = () => {
-        // Backend returns 'optimization' field, not 'optimization_suggestion'
-        const optimizationData = portfolio.optimization || portfolio.optimization_suggestion
+        const optimizationData = portfolio.optimization
         if (!optimizationData) {
             return <Empty description="No optimization suggestions available" />
         }
