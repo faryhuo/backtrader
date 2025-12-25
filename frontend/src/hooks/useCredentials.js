@@ -85,6 +85,16 @@ export function useCredentials() {
             if (response.status === 'ok') {
                 message.success(t('settings.credentials.saved', 'Credentials saved successfully'));
                 await loadCredentials();
+
+                // Show restart confirmation dialog for settings that require server restart
+                if (['logto', 'proxy'].includes(credentialType)) {
+                    const { Modal } = await import('antd');
+                    Modal.info({
+                        title: t('settings.restart_required', 'Server Restart Required'),
+                        content: t('settings.restart_hint', 'These settings require a server restart to take effect. Please restart the backend server manually.'),
+                        okText: t('common.ok', 'OK')
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to save credentials:', error);

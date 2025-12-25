@@ -37,14 +37,18 @@ class LogtoConfigMixin:
         """
         with self.managed_session(db, commit_on_success=False) as session:
             try:
+                # Logto frontend config is a global setting, always use anonymous user
+                # This ensures all users see the same login enabled/disabled state
+                global_user_id = None
+                
                 # Get individual credentials with fallback
-                endpoint, _ = self.get_credential_with_fallback("logto_endpoint", user_id, session)
-                app_id, _ = self.get_credential_with_fallback("logto_app_id", user_id, session)
-                redirect_uri, _ = self.get_credential_with_fallback("logto_redirect_uri", user_id, session)
+                endpoint, _ = self.get_credential_with_fallback("logto_endpoint", global_user_id, session)
+                app_id, _ = self.get_credential_with_fallback("logto_app_id", global_user_id, session)
+                redirect_uri, _ = self.get_credential_with_fallback("logto_redirect_uri", global_user_id, session)
                 post_logout_redirect_uri, _ = self.get_credential_with_fallback(
-                    "logto_post_logout_redirect_uri", user_id, session
+                    "logto_post_logout_redirect_uri", global_user_id, session
                 )
-                enable_login, _ = self.get_credential_with_fallback("enable_login", user_id, session)
+                enable_login, _ = self.get_credential_with_fallback("enable_login", global_user_id, session)
 
                 # Fallback to environment variables if database values are None
                 if endpoint is None:

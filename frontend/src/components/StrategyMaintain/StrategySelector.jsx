@@ -1,16 +1,16 @@
 import React from 'react'
-import { ReloadOutlined, SyncOutlined, RobotOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { ReloadOutlined, SyncOutlined, RobotOutlined, ThunderboltOutlined, LoadingOutlined } from '@ant-design/icons'
 
-const StrategySelector = ({ 
-    strategies, 
-    selectedStrategy, 
-    onSelectStrategy, 
-    onReload, 
-    onRefreshList, 
+const StrategySelector = ({
+    strategies,
+    selectedStrategy,
+    onSelectStrategy,
+    onReload,
+    onRefreshList,
     onAIAnalysis,
     onAIRewrite,
-    loading, 
-    t 
+    loading,
+    t
 }) => {
     return (
         <>
@@ -55,12 +55,12 @@ const StrategySelector = ({
             <div className="toolbar-actions">
                 <button
                     type="button"
-                    className="btn-secondary"
+                    className={`btn-secondary ${loading ? 'loading' : ''}`}
                     onClick={onAIAnalysis}
                     disabled={loading}
-                    title="Analyze code structure and logic"
+                    title={t('maintain.ai_analysis')}
                 >
-                    <RobotOutlined /> {t('maintain.ai_analysis')}
+                    {loading ? <LoadingOutlined spin /> : <RobotOutlined />} {loading ? t('maintain.analyzing') : t('maintain.ai_analysis')}
                 </button>
                 <button
                     type="button"

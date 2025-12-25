@@ -7,6 +7,7 @@
   "reload": "重新加载",
   "refresh_list": "刷新列表",
   "ai_analysis": "AI 分析",
+  "analyzing": "分析中...",
   "ai_rewrite": "AI 重写",
   "save_strategy": "保存策略",
   "saving": "保存中...",
