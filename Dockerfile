@@ -8,7 +8,7 @@ COPY frontend/package*.json ./
 RUN npm install
 
 COPY frontend/ ./
-RUN npm run build && ls -la dist
+RUN npm run build
 
 # Stage 2: Python Builder
 # Lock to Debian Bookworm (stable) for consistent package availability
@@ -73,7 +73,6 @@ COPY backend /app
 
 # Copy frontend build artifacts from frontend-builder stage
 COPY --from=frontend-builder /frontend/dist/. /app/resources/frontend/
-RUN echo "=== Frontend files after COPY ===" && ls -la /app/resources/frontend/ && ls -la /app/resources/frontend/assets/ || echo "assets dir not found"
 
 # Create .env from template if it doesn't exist
 RUN if [ ! -f /app/.env ] && [ -f /app/.env.template ]; then \
