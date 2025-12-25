@@ -119,13 +119,21 @@ class CredentialUpdate(BaseModel):
     """Request model for updating general credentials."""
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
+    # Server-side JWT validation settings
     logto_issuer: Optional[str] = None
     logto_jwks_uri: Optional[str] = None
     logto_audience: Optional[str] = None
     logto_required_scopes: Optional[str] = None
     enable_login: Optional[bool] = None
+    # Frontend OAuth configuration
+    logto_endpoint: Optional[str] = None
+    logto_app_id: Optional[str] = None
+    logto_redirect_uri: Optional[str] = None
+    logto_post_logout_redirect_uri: Optional[str] = None
+    # Proxy settings
     http_proxy: Optional[str] = None
     https_proxy: Optional[str] = None
+
 
 
 class CCXTCredentialUpdate(BaseModel):
@@ -171,11 +179,18 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
     credentials_flat = {
         "openai_api_key": credentials_nested["openai"]["api_key"],
         "openai_base_url": credentials_nested["openai"]["base_url"],
+        # Server-side JWT validation
         "logto_issuer": credentials_nested["logto"]["issuer"],
         "logto_jwks_uri": credentials_nested["logto"]["jwks_uri"],
         "logto_audience": credentials_nested["logto"]["audience"],
         "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
         "enable_login": credentials_nested["logto"]["enable_login"],
+        # Frontend OAuth configuration
+        "logto_endpoint": credentials_nested["logto"]["endpoint"],
+        "logto_app_id": credentials_nested["logto"]["app_id"],
+        "logto_redirect_uri": credentials_nested["logto"]["redirect_uri"],
+        "logto_post_logout_redirect_uri": credentials_nested["logto"]["post_logout_redirect_uri"],
+        # Proxy settings
         "http_proxy": credentials_nested["proxies"]["http_proxy"],
         "https_proxy": credentials_nested["proxies"]["https_proxy"],
         "ccxt": credentials_nested["exchanges"]
@@ -185,11 +200,18 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
     sources = {
         "openai_api_key": credentials_nested["openai"]["api_key_source"],
         "openai_base_url": credentials_nested["openai"]["base_url_source"],
+        # Server-side JWT validation sources
         "logto_issuer": credentials_nested["logto"]["issuer_source"],
         "logto_jwks_uri": credentials_nested["logto"]["jwks_uri_source"],
         "logto_audience": credentials_nested["logto"]["audience_source"],
         "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
         "enable_login": credentials_nested["logto"]["enable_login_source"],
+        # Frontend OAuth configuration sources
+        "logto_endpoint": credentials_nested["logto"]["endpoint_source"],
+        "logto_app_id": credentials_nested["logto"]["app_id_source"],
+        "logto_redirect_uri": credentials_nested["logto"]["redirect_uri_source"],
+        "logto_post_logout_redirect_uri": credentials_nested["logto"]["post_logout_redirect_uri_source"],
+        # Proxy settings sources
         "http_proxy": credentials_nested["proxies"]["http_proxy_source"],
         "https_proxy": credentials_nested["proxies"]["https_proxy_source"],
     }

@@ -2,8 +2,14 @@
  * Core API utilities - authentication, request building, response parsing
  */
 
-// API base URL for HTTP requests (separate from Logto resource identifier)
-export const API_URL = import.meta.env.VITE_API_BASE_URL
+// API base URL for HTTP requests (also used as Logto resource identifier)
+// Logto requires absolute URIs for resource indicators
+const envApiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+export const API_URL = envApiUrl.startsWith('http')
+    ? envApiUrl
+    : (typeof window !== 'undefined'
+        ? `${window.location.origin}${envApiUrl.startsWith('/') ? '' : '/'}${envApiUrl}`
+        : envApiUrl);
 
 // Token getter function (set by App component)
 let getTokenFn = null

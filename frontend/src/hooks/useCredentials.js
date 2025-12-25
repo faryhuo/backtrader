@@ -59,11 +59,17 @@ export function useCredentials() {
                 });
             } else if (credentialType === 'logto') {
                 response = await api.updateCredentials({
+                    // Server-side JWT validation settings
                     logto_issuer: credentials.logto_issuer,
                     logto_jwks_uri: credentials.logto_jwks_uri,
                     logto_audience: credentials.logto_audience,
                     logto_required_scopes: credentials.logto_required_scopes,
-                    enable_login: credentials.enable_login
+                    enable_login: credentials.enable_login,
+                    // Frontend OAuth configuration
+                    logto_endpoint: credentials.logto_endpoint,
+                    logto_app_id: credentials.logto_app_id,
+                    logto_redirect_uri: credentials.logto_redirect_uri,
+                    logto_post_logout_redirect_uri: credentials.logto_post_logout_redirect_uri
                 });
             } else if (credentialType === 'proxy') {
                 response = await api.updateCredentials({

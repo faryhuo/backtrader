@@ -32,11 +32,17 @@ export function LogtoProvider({ children }) {
   // This is separate from VITE_API_BASE_URL which is the HTTP API endpoint
   const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
 
+  // Logto requires absolute URIs for resource indicators
+  // If apiBase is relative, combine with origin to make it absolute
+  const resourceUri = apiBase.startsWith('http')
+    ? apiBase
+    : `${window.location.origin}${apiBase.startsWith('/') ? '' : '/'}${apiBase}`;
+
   // Prepare Logto configuration
   const logtoConfig = {
     endpoint: config.endpoint,
     appId: config.appId,
-    resources: [apiBase],
+    resources: [resourceUri],
   };
 
   // Validate configuration

@@ -152,20 +152,32 @@ class CredentialsMixin:
         db: Optional[Session] = None
     ) -> Tuple[Any, str]:
         """
-        Get credential value with fallback to environment variable.
-
+        Get credential value with fallback chain:
+        1. User-specific database value
+        2. Global (anonymous) database value
+        3. Environment variable
+        
         Args:
             credential_key: Credential field name
             user_id: User identifier
             db: Optional database session
 
         Returns:
-            Tuple of (value, source) where source is 'database', 'env', or 'none'
+            Tuple of (value, source) where source is 'database', 'database_global', 'env', or 'none'
         """
+        # 1. Try user-specific value from database
         db_value = self.get_credential(credential_key, user_id, db)
         if db_value is not None:
             return db_value, 'database'
 
+        # 2. If user is not anonymous, try global (anonymous) user value
+        normalized_user_id = self._normalize_user_id(user_id)
+        if normalized_user_id != "anonymous":
+            global_value = self.get_credential(credential_key, None, db)  # None -> anonymous
+            if global_value is not None:
+                return global_value, 'database_global'
+
+        # 3. Fall back to environment variable
         env_key = credential_key.upper()
         env_value = os.getenv(env_key)
         if env_value:
@@ -209,8 +221,11 @@ class CredentialsMixin:
             result["openai"]["base_url"] = base_url
             result["openai"]["base_url_source"] = base_url_source
 
-            # Logto credentials
-            logto_fields = ["logto_issuer", "logto_jwks_uri", "logto_audience", "logto_required_scopes"]
+            # Logto credentials (both server-side and frontend OAuth)
+            logto_fields = [
+                "logto_issuer", "logto_jwks_uri", "logto_audience", "logto_required_scopes",
+                "logto_endpoint", "logto_app_id", "logto_redirect_uri", "logto_post_logout_redirect_uri"
+            ]
             for field in logto_fields:
                 value, source = self.get_credential_with_fallback(field, user_id, session)
                 key = field.replace("logto_", "")
