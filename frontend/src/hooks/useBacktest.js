@@ -130,6 +130,9 @@ export function useBacktest() {
             initialCash,
             commission,
             stake,
+            sizerType,
+            sizerConfig,
+            timeframe,
             selectedStrategy,
             paramOverrides,
         } = params;
@@ -156,9 +159,13 @@ export function useBacktest() {
                 initial_cash: initialCash,
                 commission: commission,
                 stake: stake,
+                sizer_type: sizerType || 'fixed_size',
+                sizer_config: sizerConfig || null,
+                timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy || null,
                 params: paramsToSend
             });
+
 
             // Handle async task-based response
             if (taskResponse.task_id) {

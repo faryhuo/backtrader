@@ -35,7 +35,10 @@ function PortfolioBacktest() {
     const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')]);
     const [initialCash, setInitialCash] = useState(100000);
     const [commission, setCommission] = useState(0.0005);
-    const [stake] = useState(100);
+    const [stake, setStake] = useState(100);
+    const [sizerType, setSizerType] = useState('fixed_size');
+    const [sizerConfig, setSizerConfig] = useState({ percents: 10, risk_percent: 2 });
+    const [timeframe, setTimeframe] = useState('1d');
 
     const {
         strategies,
@@ -86,6 +89,9 @@ function PortfolioBacktest() {
             initialCash,
             commission,
             stake,
+            sizerType,
+            sizerConfig,
+            timeframe,
             selectedStrategy,
             paramOverrides,
         }, t);
@@ -126,6 +132,14 @@ function PortfolioBacktest() {
                     setInitialCash={setInitialCash}
                     commission={commission}
                     setCommission={setCommission}
+                    stake={stake}
+                    setStake={setStake}
+                    sizerType={sizerType}
+                    setSizerType={setSizerType}
+                    sizerConfig={sizerConfig}
+                    setSizerConfig={setSizerConfig}
+                    timeframe={timeframe}
+                    setTimeframe={setTimeframe}
                 />
 
                 {strategyParams.length > 0 && (

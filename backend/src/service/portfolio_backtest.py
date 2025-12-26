@@ -212,7 +212,10 @@ def _run_single_backtest(
     commission: float,
     stake: int,
     strategy_name: str,
-    params: Optional[dict]
+    params: Optional[dict],
+    sizer_type: str = "fixed_size",
+    sizer_config: Optional[dict] = None,
+    timeframe: str = "1d",
 ) -> dict:
     """
     Run backtest for a single ticker.
@@ -229,7 +232,10 @@ def _run_single_backtest(
             stake=stake,
             strategy_name=strategy_name,
             save_path=None,  # Don't save individual plots
-            params=params
+            params=params,
+            sizer_type=sizer_type,
+            sizer_config=sizer_config,
+            timeframe=timeframe,
         )
         return {
             "ticker": ticker,
@@ -256,6 +262,9 @@ def run_portfolio_backtest(
     strategy_name: Optional[str] = None,
     params: Optional[dict] = None,
     save_path: Optional[Path] = None,
+    sizer_type: str = "fixed_size",
+    sizer_config: Optional[dict] = None,
+    timeframe: str = "1d",
 ) -> dict:
     """
     Run parallel backtests for multiple tickers and combine into portfolio.
@@ -309,7 +318,10 @@ def run_portfolio_backtest(
                 commission,
                 stake,
                 strategy_name,
-                params
+                params,
+                sizer_type,
+                sizer_config,
+                timeframe,
             ): (ticker, weight, cash_alloc)
             for ticker, weight, cash_alloc in zip(tickers, weights, cash_allocations)
         }

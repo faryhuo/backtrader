@@ -45,6 +45,9 @@ class PortfolioBacktestRequest(BaseModel):
     stake: int = Field(100, description="Fixed stake per trade")
     strategy_name: str | None = Field(None, description="Strategy to use for all tickers")
     params: dict | None = Field(None, description="Strategy parameters")
+    sizer_type: str = Field("fixed_size", description="Position sizing type")
+    sizer_config: dict | None = Field(None, description="Sizer configuration")
+    timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
 
 class PortfolioHistoryQuery(BaseModel):
@@ -87,6 +90,9 @@ async def _portfolio_executor(config: dict, progress_callback) -> dict:
             strategy_name=config.get("strategy_name"),
             params=config.get("params"),
             save_path=save_path,
+            sizer_type=config.get("sizer_type", "fixed_size"),
+            sizer_config=config.get("sizer_config"),
+            timeframe=config.get("timeframe", "1d"),
         )
     )
     

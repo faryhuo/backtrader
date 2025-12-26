@@ -106,7 +106,11 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "stake": config.get("stake"),
             "strategy_name": config.get("strategy_name"),
             "params": config.get("params"),
+            "sizer_type": config.get("sizer_type", "fixed_size"),
+            "sizer_config": config.get("sizer_config"),
+            "timeframe": config.get("timeframe", "1d"),
         }
+
     
     elif task_type == "portfolio":
         return {
@@ -119,6 +123,9 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "stake": config.get("stake"),
             "strategy_name": config.get("strategy_name"),
             "params": config.get("params"),
+            "sizer_type": config.get("sizer_type", "fixed_size"),
+            "sizer_config": config.get("sizer_config"),
+            "timeframe": config.get("timeframe", "1d"),
         }
     
     elif task_type == "walkforward":
@@ -135,6 +142,9 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "initial_cash": config.get("initial_cash"),
             "commission": config.get("commission"),
             "stake": config.get("stake"),
+            "sizer_type": config.get("sizer_type", "fixed_size"),
+            "sizer_config": config.get("sizer_config"),
+            "timeframe": config.get("timeframe", "1d"),
         }
     
     # Default: return all fields
