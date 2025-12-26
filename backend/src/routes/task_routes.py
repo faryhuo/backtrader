@@ -406,15 +406,53 @@ def _get_executor_for_task_type(task_type: str):
             return walkforward_executor
 
         elif task_type == TaskType.DEEP_ANALYSIS.value:
-            from src.service.deep_analysis import compute_deep_analysis
+            from datetime import datetime
+
+            from src.db.storage.backtest import BacktestStorage
+            from src.service.deep_analysis import DEFAULT_BENCHMARKS, compute_deep_analysis
 
             def deep_analysis_executor(config, progress_callback):
-                return compute_deep_analysis(
-                    backtest_id=config.get("backtest_id"),
-                    benchmarks=config.get("benchmarks"),
+                if not config:
+                    raise ValueError("Missing deep analysis task config")
+
+                backtest_id = config.get("backtest_id")
+                if not backtest_id:
+                    raise ValueError("Missing backtest_id in deep analysis task config")
+
+                user_id = config.get("user_id")
+
+                storage = BacktestStorage()
+                backtest = storage.get_backtest(backtest_id, user_id=user_id)
+                if not backtest:
+                    raise ValueError("Backtest not found")
+
+                metrics = backtest.get("metrics") or {}
+                equity_curve = metrics.get("equity_curve") or {}
+                if not equity_curve:
+                    raise ValueError(
+                        "Equity curve data not available. Please re-run the backtest to generate deep analysis data."
+                    )
+
+                equity_curve_parsed = {}
+                for date_str, ret in equity_curve.items():
+                    try:
+                        date_obj = datetime.strptime(str(date_str), "%Y-%m-%d")
+                        equity_curve_parsed[date_obj] = float(ret)
+                    except (ValueError, TypeError):
+                        continue
+
+                analysis = compute_deep_analysis(
+                    equity_curve=equity_curve_parsed,
+                    start_date=backtest.get("start_date"),
+                    end_date=backtest.get("end_date"),
+                    initial_cash=backtest.get("initial_cash", 100000.0),
+                    benchmarks=config.get("benchmarks") or DEFAULT_BENCHMARKS,
                     rolling_window=config.get("rolling_window", 60),
                     risk_free_rate=config.get("risk_free_rate", 0.02),
                 )
+
+                storage.update_deep_analysis(backtest_id, analysis, user_id=user_id)
+                return {"id": backtest_id, "backtest_id": backtest_id}
 
             return deep_analysis_executor
 

@@ -90,8 +90,9 @@ def _backtest_worker_main(
         # Send error back if imports fail
         result_queue.put({
             "task_id": "INIT_ERROR",
-            "success": False,
+            "status": TaskStatus.FAILED.value,
             "error": f"Worker initialization failed: {e}",
+            "error_type": type(e).__name__,
         })
         return
     

@@ -54,6 +54,9 @@ class WalkForwardOptimizationRequest(BaseModel):
     initial_cash: float = Field(100000.0, description="Initial cash for backtesting", gt=0)
     commission: float = Field(0.0005, description="Commission rate", ge=0)
     stake: int = Field(100, description="Position size", gt=0)
+    sizer_type: str = Field("fixed_size", description="Position sizing type")
+    sizer_config: Optional[Dict[str, Any]] = Field(None, description="Sizer configuration")
+    timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
 
 class WalkForwardOptimizationResponse(BaseModel):
@@ -98,6 +101,9 @@ async def _walkforward_executor(config: dict, progress_callback) -> dict:
         train_period_days=config.get("train_period_days", 365),
         test_period_days=config.get("test_period_days", 90),
         anchored=config.get("anchored", False),
+        sizer_type=config.get("sizer_type", "fixed_size"),
+        sizer_config=config.get("sizer_config"),
+        timeframe=config.get("timeframe", "1d"),
     )
     
     await progress_callback(30, "Running walk-forward analysis")
