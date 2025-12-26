@@ -15,8 +15,10 @@ import {
     ExpandAltOutlined,
     ShrinkOutlined,
     PieChartOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 
 // Sizer type options
 const SIZER_OPTIONS = [
@@ -191,6 +193,9 @@ function StrategyConfigForm({
                         <div className="form-group">
                             <label htmlFor="sizer-type">
                                 <PieChartOutlined /> {t('config_form.sizer_type', 'Position Sizing')}
+                                <Tooltip title={t('config_form.sizer_type_desc', 'Control how position sizes are calculated for each trade')}>
+                                    <InfoCircleOutlined style={{ marginLeft: 6, color: '#64748b', cursor: 'help' }} />
+                                </Tooltip>
                             </label>
                             <select
                                 id="sizer-type"
@@ -268,6 +273,9 @@ function StrategyConfigForm({
                         <div className="form-group">
                             <label htmlFor="timeframe">
                                 <ClockCircleOutlined /> {t('config_form.timeframe', 'Data Interval')}
+                                <Tooltip title={t('config_form.timeframe_desc', 'Select the data frequency for backtesting (e.g., daily, hourly)')}>
+                                    <InfoCircleOutlined style={{ marginLeft: 6, color: '#64748b', cursor: 'help' }} />
+                                </Tooltip>
                             </label>
                             <select
                                 id="timeframe"
