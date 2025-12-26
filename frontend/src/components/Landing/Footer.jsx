@@ -12,7 +12,7 @@ export function Footer() {
     const footerLinks = {
         product: [
             { key: 'landing.footer.product.features', href: '#features' },
-            { key: 'landing.footer.product.pricing', href: '#' },
+            { key: 'landing.footer.product.workflow', href: '#workflow' },
             { key: 'landing.footer.product.roadmap', href: '#roadmap' },
             { key: 'landing.footer.product.changelog', href: '#' },
         ],
@@ -21,12 +21,6 @@ export function Footer() {
             { key: 'landing.footer.resources.api', href: '#' },
             { key: 'landing.footer.resources.templates', href: '#' },
             { key: 'landing.footer.resources.tutorials', href: '#' },
-        ],
-        company: [
-            { key: 'landing.footer.company.about', href: '#' },
-            { key: 'landing.footer.company.blog', href: '#' },
-            { key: 'landing.footer.company.contact', href: '#' },
-            { key: 'landing.footer.company.careers', href: '#' },
         ],
     };
 
@@ -107,17 +101,7 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* Company Links */}
-                    <div>
-                        <h4 className="landing-footer-column-title">{t('landing.footer.company')}</h4>
-                        <div className="landing-footer-links">
-                            {footerLinks.company.map((link) => (
-                                <a key={link.key} href={link.href} className="landing-footer-link">
-                                    {t(link.key)}
-                                </a>
-                            ))}
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Bottom */}
