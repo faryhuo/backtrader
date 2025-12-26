@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Shield, GitBranch, BarChart3, Calendar, Users, Activity, Cpu, Zap } from 'lucide-react';
+import { Shield, Calendar, Users, Cpu, TrendingUp, Clock, DollarSign, Filter } from 'lucide-react';
 
 /**
  * Roadmap section with priority-based feature cards
@@ -8,69 +8,72 @@ export function RoadmapSection() {
     const { t } = useTranslation();
 
     const roadmapItems = [
+        // P0 - 安全性与可运营性
         {
             priority: 'P0',
-            titleKey: 'landing.roadmap.item5.title',
-            descriptionKey: 'landing.roadmap.item5.description',
+            titleKey: 'landing.roadmap.risk.title',
+            descriptionKey: 'landing.roadmap.risk.description',
             icon: Shield,
             statusKey: 'landing.status.planned',
             statusType: 'planned',
         },
-        {
-            priority: 'P0',
-            titleKey: 'landing.roadmap.item6.title',
-            descriptionKey: 'landing.roadmap.item6.description',
-            icon: GitBranch,
-            statusKey: 'landing.status.in_dev',
-            statusType: 'dev',
-        },
+        // P1 - 体验与分析能力增强
         {
             priority: 'P1',
-            titleKey: 'landing.roadmap.item1.title',
-            descriptionKey: 'landing.roadmap.item1.description',
-            icon: BarChart3,
-            statusKey: 'landing.status.done',
-            statusType: 'done',
-        },
-        {
-            priority: 'P1',
-            titleKey: 'landing.roadmap.item7.title',
-            descriptionKey: 'landing.roadmap.item7.description',
-            icon: Calendar,
+            titleKey: 'landing.roadmap.advancedOrders.title',
+            descriptionKey: 'landing.roadmap.advancedOrders.description',
+            icon: TrendingUp,
             statusKey: 'landing.status.planned',
             statusType: 'planned',
         },
         {
+            priority: 'P1',
+            titleKey: 'landing.roadmap.multiTimeframe.title',
+            descriptionKey: 'landing.roadmap.multiTimeframe.description',
+            icon: Clock,
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
+        },
+        {
+            priority: 'P1',
+            titleKey: 'landing.roadmap.costSlippage.title',
+            descriptionKey: 'landing.roadmap.costSlippage.description',
+            icon: DollarSign,
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
+        },
+        {
+            priority: 'P1',
+            titleKey: 'landing.roadmap.filters.title',
+            descriptionKey: 'landing.roadmap.filters.description',
+            icon: Filter,
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
+        },
+        {
+            priority: 'P1',
+            titleKey: 'landing.roadmap.scheduler.title',
+            descriptionKey: 'landing.roadmap.scheduler.description',
+            icon: Calendar,
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
+        },
+        // P2 - 多租户与平台化
+        {
             priority: 'P2',
-            titleKey: 'landing.roadmap.item8.title',
-            descriptionKey: 'landing.roadmap.item8.description',
+            titleKey: 'landing.roadmap.team.title',
+            descriptionKey: 'landing.roadmap.team.description',
             icon: Users,
             statusKey: 'landing.status.planned',
             statusType: 'planned',
         },
         {
             priority: 'P2',
-            titleKey: 'landing.roadmap.item2.title',
-            descriptionKey: 'landing.roadmap.item2.description',
-            icon: Activity,
-            statusKey: 'landing.status.done',
-            statusType: 'done',
-        },
-        {
-            priority: 'P2',
-            titleKey: 'landing.roadmap.item3.title',
-            descriptionKey: 'landing.roadmap.item3.description',
+            titleKey: 'landing.roadmap.ml.title',
+            descriptionKey: 'landing.roadmap.ml.description',
             icon: Cpu,
-            statusKey: 'landing.status.done',
-            statusType: 'done',
-        },
-        {
-            priority: 'P2',
-            titleKey: 'landing.roadmap.item4.title',
-            descriptionKey: 'landing.roadmap.item4.description',
-            icon: Zap,
-            statusKey: 'landing.status.done',
-            statusType: 'done',
+            statusKey: 'landing.status.planned',
+            statusType: 'planned',
         },
     ];
 

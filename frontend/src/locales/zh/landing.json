@@ -46,6 +46,22 @@
             "title": "实盘交易",
             "description": "支持模拟/实盘交易，WebSocket 实时推送，订单与持仓管理，安全稳定。"
         },
+        "versioning": {
+            "title": "策略版本管理",
+            "description": "版本历史、Diff 对比、一键回滚，策略版本管理更轻松。"
+        },
+        "report": {
+            "title": "报告中心",
+            "description": "生成专业 HTML 报告，支持下载与分享链接，包含关键指标与可视化图表。"
+        },
+        "pyfolio": {
+            "title": "PyFolio 集成",
+            "description": "导出 PyFolio 兼容数据，QuantStats 在线报告，专业级绩效分析指标。"
+        },
+        "taskcenter": {
+            "title": "任务中心",
+            "description": "统一管理回测、优化、分析等后台任务，支持取消/重试，实时进度推送。"
+        },
         "realtime": {
             "title": "实时推送",
             "description": "WebSocket 实时通知，实时行情数据，订单执行实时反馈。"
@@ -53,10 +69,6 @@
         "security": {
             "title": "安全可靠",
             "description": "凭证加密存储、策略沙箱执行、可选 JWT 鉴权，保障交易安全。"
-        },
-        "versioning": {
-            "title": "策略版本管理",
-            "description": "版本历史、Diff 对比、一键回滚，策略版本管理更轻松。"
         }
     },
     "workflow": {
@@ -84,37 +96,37 @@
         "badge": "发展路线",
         "title": "持续进化的平台",
         "description": "我们正在不断完善平台功能，以下是近期规划",
-        "item1": {
-            "title": "核心回测引擎",
-            "description": "单标的回测、策略模板、结果持久化"
-        },
-        "item2": {
-            "title": "参数优化系统",
-            "description": "Walk-Forward、热力图、过拟合检测"
-        },
-        "item3": {
-            "title": "组合回测",
-            "description": "多标的组合、相关性分析、Markowitz 优化"
-        },
-        "item4": {
-            "title": "实盘交易",
-            "description": "模拟/实盘会话、WebSocket 推送、订单管理"
-        },
-        "item5": {
+        "risk": {
             "title": "风控模块",
-            "description": "仓位限制、止损护栏、风险告警"
+            "description": "仓位限制、止损护栏、最大回撤阈值、风险告警与 WebSocket 推送"
         },
-        "item6": {
-            "title": "策略版本管理",
-            "description": "版本历史、Diff 对比、一键回滚"
+        "advancedOrders": {
+            "title": "高级订单类型",
+            "description": "尾随止损 (StopTrail)、止损限价、括号单 (Bracket Orders)"
         },
-        "item7": {
+        "multiTimeframe": {
+            "title": "多时间框架",
+            "description": "同一策略接入多个 Timeframe 数据，支持跨周期信号"
+        },
+        "costSlippage": {
+            "title": "成本与滑点模型",
+            "description": "阶梯手续费、多品种不同费率、滑点模型、期货保证金"
+        },
+        "filters": {
+            "title": "数据过滤器",
+            "description": "盘外数据过滤 (SessionFilter)、Replay 模式、HeikinAshi K线"
+        },
+        "scheduler": {
             "title": "定时任务",
-            "description": "定时回测、报告生成、任务调度"
+            "description": "定时回测、报告生成、Walk-Forward 调度"
         },
-        "item8": {
+        "team": {
             "title": "多用户协作",
-            "description": "团队工作空间、策略分享、权限管理"
+            "description": "团队工作空间、策略分享、RBAC 权限管理"
+        },
+        "ml": {
+            "title": "机器学习工作流",
+            "description": "特征管道、训练/回测一体化、SHAP 可解释性"
         }
     },
     "cta": {

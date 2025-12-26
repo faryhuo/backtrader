@@ -26,7 +26,8 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(wc:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }
