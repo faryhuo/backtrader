@@ -1,0 +1,405 @@
+"""
+Multi-Asset Backtest Service - True multi-asset portfolio backtesting engine.
+
+This module provides functionality for:
+- Single Cerebro instance with multiple data feeds
+- Portfolio-level position sizing and cash management
+- Periodic rebalancing with multiple optimization methods
+- Unified portfolio equity curve generation
+- Per-asset strategy parameter configuration
+
+Unlike portfolio_backtest.py which runs parallel backtests and aggregates,
+this module runs a single unified backtest with portfolio-level logic.
+"""
+
+import logging
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import backtrader as bt
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from src.config.settings import IMAGES_DIR
+from src.contracts.exceptions import BacktestError
+from src.db.storage.market_data import get_bt_feed, DataLoadError
+from src.service.multi_asset_strategy_wrapper import (
+    MultiAssetPortfolioStrategy,
+    BuyAndHoldPortfolioStrategy,
+)
+from src.service.portfolio_analyzers import (
+    PortfolioValueAnalyzer,
+    RebalancingEventAnalyzer,
+    AssetContributionAnalyzer,
+    PortfolioMetricsAnalyzer,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class MultiAssetBacktestError(Exception):
+    """Raised when multi-asset backtest fails."""
+
+
+class DataAlignmentError(Exception):
+    """Raised when data feeds cannot be properly aligned."""
+
+
+def align_data_feeds(
+    tickers: list[str],
+    start_date: str,
+    end_date: str,
+    timeframe: str = "1d",
+    min_overlap: float = 0.8
+) -> dict[str, bt.feeds.PandasData]:
+    """
+    Load and align multiple data feeds to common trading dates.
+
+    Strategy: Use intersection of trading dates to ensure all assets have data
+    on the same days. This prevents lookahead bias and ensures fair portfolio
+    rebalancing.
+
+    Args:
+        tickers: List of ticker symbols to load
+        start_date: Start date string (YYYY-MM-DD)
+        end_date: End date string (YYYY-MM-DD)
+        timeframe: Data timeframe ('1d', '1h', '15m', '5m', '1m')
+        min_overlap: Minimum required overlap ratio (default 0.8 = 80%)
+
+    Returns:
+        Dictionary mapping tickers to aligned Backtrader data feeds
+
+    Raises:
+        DataAlignmentError: If data overlap is insufficient
+        DataLoadError: If data cannot be loaded for any ticker
+    """
+    logger.info(f"Aligning data feeds for {len(tickers)} tickers: {tickers}")
+
+    # Step 1: Load raw data for all tickers
+    raw_data = {}
+    for ticker in tickers:
+        try:
+            feed = get_bt_feed(ticker, start_date, end_date, timeframe)
+            if feed is None:
+                raise DataLoadError(f"Failed to load data for {ticker}")
+            raw_data[ticker] = feed
+        except Exception as e:
+            logger.error(f"Failed to load data for {ticker}: {e}")
+            raise DataLoadError(f"Cannot load {ticker}: {str(e)}") from e
+
+    logger.info(f"Successfully loaded data for {len(raw_data)} tickers")
+
+    # Step 2: Extract date indices from each feed's dataname (pandas DataFrame)
+    # Note: Backtrader feeds wrap pandas DataFrames accessible via feed._dataname
+    date_sets = {}
+    for ticker, feed in raw_data.items():
+        try:
+            # Access the underlying pandas DataFrame
+            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            if df is None or df.empty:
+                raise DataAlignmentError(f"Empty data for {ticker}")
+
+            # Get the index (should be DatetimeIndex)
+            dates = set(df.index)
+            date_sets[ticker] = dates
+            logger.debug(f"{ticker}: {len(dates)} trading days")
+        except Exception as e:
+            logger.error(f"Failed to extract dates for {ticker}: {e}")
+            raise DataAlignmentError(f"Cannot extract dates for {ticker}: {str(e)}") from e
+
+    # Step 3: Find intersection of all trading dates
+    common_dates = set.intersection(*date_sets.values())
+
+    if not common_dates:
+        raise DataAlignmentError(
+            f"No common trading dates found across {tickers}. "
+            f"Check if tickers trade on same exchanges/calendars."
+        )
+
+    logger.info(f"Found {len(common_dates)} common trading dates")
+
+    # Step 4: Check minimum overlap requirement
+    max_dates = max(len(dates) for dates in date_sets.values())
+    overlap_ratio = len(common_dates) / max_dates
+
+    if overlap_ratio < min_overlap:
+        logger.warning(
+            f"Data overlap ({overlap_ratio:.1%}) below threshold ({min_overlap:.1%}). "
+            f"Common dates: {len(common_dates)}, Max dates: {max_dates}"
+        )
+        raise DataAlignmentError(
+            f"Insufficient data overlap ({overlap_ratio:.1%}). "
+            f"Need at least {min_overlap:.1%} overlap. "
+            f"Consider adjusting date range or removing tickers with limited data."
+        )
+
+    logger.info(f"Data overlap: {overlap_ratio:.1%} (meets {min_overlap:.1%} threshold)")
+
+    # Step 5: Filter each feed to common dates
+    # We'll create new Backtrader feeds with aligned data
+    aligned_feeds = {}
+    common_dates_sorted = sorted(common_dates)
+
+    for ticker, feed in raw_data.items():
+        try:
+            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            # Filter to common dates
+            aligned_df = df.loc[df.index.isin(common_dates_sorted)].sort_index()
+
+            if aligned_df.empty:
+                raise DataAlignmentError(f"No data remaining for {ticker} after alignment")
+
+            # Create new Backtrader feed with aligned data
+            aligned_feed = bt.feeds.PandasData(
+                dataname=aligned_df,
+                datetime=None,  # Use index
+                open='open' if 'open' in aligned_df.columns else 'Open',
+                high='high' if 'high' in aligned_df.columns else 'High',
+                low='low' if 'low' in aligned_df.columns else 'Low',
+                close='close' if 'close' in aligned_df.columns else 'Close',
+                volume='volume' if 'volume' in aligned_df.columns else 'Volume',
+                openinterest=-1
+            )
+            aligned_feeds[ticker] = aligned_feed
+            logger.debug(f"{ticker}: Aligned to {len(aligned_df)} dates")
+
+        except Exception as e:
+            logger.error(f"Failed to align data for {ticker}: {e}")
+            raise DataAlignmentError(f"Cannot align {ticker}: {str(e)}") from e
+
+    logger.info(f"Successfully aligned {len(aligned_feeds)} data feeds")
+    return aligned_feeds
+
+
+def run_multi_asset_backtest(
+    tickers: list[str],
+    weights: list[float],
+    start_date: str,
+    end_date: str,
+    initial_cash: float = 100000.0,
+    commission: float = 0.0005,
+    strategy_name: Optional[str] = None,
+    per_asset_params: Optional[dict[str, dict]] = None,
+    rebalance_config: Optional[dict] = None,
+    optimization_method: str = "equal_weight",
+    timeframe: str = "1d",
+    save_path: Optional[Path] = None,
+) -> dict:
+    """
+    Run a true multi-asset portfolio backtest with unified Cerebro instance.
+
+    This function creates a single Backtrader Cerebro with multiple data feeds,
+    allowing portfolio-level position sizing, rebalancing, and equity curve tracking.
+
+    Args:
+        tickers: List of ticker symbols (e.g., ['AAPL', 'GOOGL', 'MSFT'])
+        weights: Initial allocation weights (must sum to ~1.0)
+        start_date: Backtest start date (YYYY-MM-DD)
+        end_date: Backtest end date (YYYY-MM-DD)
+        initial_cash: Starting portfolio cash (default: 100000.0)
+        commission: Commission rate per trade (default: 0.0005 = 0.05%)
+        strategy_name: Strategy file name (without .py). If None, uses buy-and-hold.
+        per_asset_params: Per-ticker strategy parameters
+            Example: {"AAPL": {"sma_period": 10}, "GOOGL": {"sma_period": 20}}
+        rebalance_config: Rebalancing configuration
+            Example: {"frequency": "monthly", "method": "risk_parity"}
+        optimization_method: Optimization method for rebalancing
+            Options: "equal_weight", "risk_parity", "min_variance", "markowitz"
+        timeframe: Data timeframe (default: "1d")
+        save_path: Optional path to save chart image
+
+    Returns:
+        Dictionary containing backtest results:
+        {
+            "final_value": float,
+            "total_return": float,
+            "sharpe_ratio": float,
+            "max_drawdown": float,
+            "equity_curve": {date: value},
+            "rebalancing_events": [{date, weights, orders}],
+            "asset_contributions": {ticker: contribution},
+            "metrics": {...}  # All other metrics
+        }
+
+    Raises:
+        MultiAssetBacktestError: If backtest execution fails
+        DataAlignmentError: If data cannot be aligned
+        ValueError: If input validation fails
+    """
+    # Validation
+    if not tickers:
+        raise ValueError("Must provide at least one ticker")
+
+    if len(tickers) > 20:
+        raise ValueError("Maximum 20 tickers allowed (memory limit)")
+
+    if len(weights) != len(tickers):
+        raise ValueError(f"Weights length ({len(weights)}) must match tickers length ({len(tickers)})")
+
+    weight_sum = sum(weights)
+    if not (0.99 <= weight_sum <= 1.01):
+        logger.warning(f"Weights sum to {weight_sum:.3f}, normalizing to 1.0")
+        weights = [w / weight_sum for w in weights]
+
+    if any(w < 0 for w in weights):
+        raise ValueError("All weights must be non-negative")
+
+    logger.info(f"Starting multi-asset backtest: {len(tickers)} assets, ${initial_cash:,.2f} capital")
+    logger.info(f"Tickers: {tickers}")
+    logger.info(f"Weights: {[f'{w:.2%}' for w in weights]}")
+    logger.info(f"Period: {start_date} to {end_date}")
+
+    try:
+        # Step 1: Align data feeds
+        logger.info("Step 1: Aligning data feeds...")
+        aligned_feeds = align_data_feeds(tickers, start_date, end_date, timeframe)
+
+        # Step 2: Create Cerebro instance
+        logger.info("Step 2: Creating Cerebro instance...")
+        cerebro = bt.Cerebro()
+
+        # Set initial cash
+        cerebro.broker.setcash(initial_cash)
+
+        # Set commission
+        cerebro.broker.setcommission(commission=commission)
+
+        # Step 3: Add all data feeds to Cerebro
+        logger.info("Step 3: Adding data feeds to Cerebro...")
+        for ticker in tickers:
+            feed = aligned_feeds[ticker]
+            cerebro.adddata(feed, name=ticker)
+            logger.debug(f"Added data feed: {ticker}")
+
+        # Step 4: Add strategy
+        logger.info("Step 4: Adding multi-asset portfolio strategy...")
+        cerebro.addstrategy(
+            BuyAndHoldPortfolioStrategy,  # Simple buy-and-hold for Phase 1
+            tickers=tickers,
+            initial_weights=weights,
+            per_asset_params=per_asset_params or {},
+            rebalance_config=rebalance_config,
+            optimization_method=optimization_method,
+        )
+        logger.info("Strategy added: BuyAndHoldPortfolioStrategy")
+
+        # Step 5: Add custom portfolio analyzers
+        logger.info("Step 5: Adding portfolio analyzers...")
+        cerebro.addanalyzer(PortfolioValueAnalyzer, _name="portfolio_value")
+        cerebro.addanalyzer(RebalancingEventAnalyzer, _name="rebalancing")
+        cerebro.addanalyzer(AssetContributionAnalyzer, _name="asset_contribution")
+        cerebro.addanalyzer(PortfolioMetricsAnalyzer, _name="portfolio_metrics")
+
+        # Add standard Backtrader analyzers for compatibility
+        cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
+        cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+        cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+
+        # Step 6: Run backtest
+        logger.info("Step 6: Running backtest...")
+        results = cerebro.run()
+        strat = results[0]
+
+        # Step 7: Extract metrics from analyzers
+        logger.info("Step 7: Extracting metrics from analyzers...")
+        final_value = cerebro.broker.getvalue()
+        total_return = ((final_value - initial_cash) / initial_cash) * 100
+
+        # Extract from standard analyzers
+        sharpe_ratio = strat.analyzers.sharpe.get_analysis().get('sharperatio', 0)
+        if sharpe_ratio is None:
+            sharpe_ratio = 0.0
+
+        drawdown_analysis = strat.analyzers.drawdown.get_analysis()
+        max_drawdown = drawdown_analysis.get('max', {}).get('drawdown', 0)
+
+        returns_analysis = strat.analyzers.returns.get_analysis()
+
+        # Extract from custom portfolio analyzers
+        portfolio_value_analysis = strat.analyzers.portfolio_value.get_analysis()
+        rebalancing_analysis = strat.analyzers.rebalancing.get_analysis()
+        asset_contribution_analysis = strat.analyzers.asset_contribution.get_analysis()
+        portfolio_metrics_analysis = strat.analyzers.portfolio_metrics.get_analysis()
+
+        # Build result dictionary
+        result = {
+            "final_value": final_value,
+            "total_return": total_return,
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown": max_drawdown,
+            "initial_cash": initial_cash,
+            "num_assets": len(tickers),
+            "tickers": tickers,
+            "weights": weights,
+            # From custom analyzers
+            "equity_curve": portfolio_value_analysis.get("equity_curve", {}),
+            "rebalancing_events": rebalancing_analysis.get("events", []),
+            "asset_contributions": asset_contribution_analysis.get("contributions", {}),
+            # Comprehensive metrics
+            "metrics": {
+                "returns": returns_analysis,
+                "drawdown": drawdown_analysis,
+                "portfolio_metrics": portfolio_metrics_analysis,
+                "optimization_method": optimization_method,
+                "rebalance_frequency": rebalance_config.get("frequency") if rebalance_config else None,
+                "total_transaction_costs": rebalancing_analysis.get("total_transaction_costs", 0.0),
+                "rebalancing_count": rebalancing_analysis.get("total_events", 0),
+            }
+        }
+
+        logger.info(f"Backtest complete! Final value: ${final_value:,.2f}")
+        logger.info(f"Total return: {total_return:.2f}%, Sharpe: {sharpe_ratio:.2f}, Max DD: {max_drawdown:.2f}%")
+        logger.info(f"Equity curve: {len(portfolio_value_analysis.get('equity_curve', {}))} days")
+        logger.info(f"Asset contributions: {len(asset_contribution_analysis.get('contributions', {}))} assets")
+
+        # Step 8: Generate chart (optional)
+        if save_path:
+            logger.info("Step 8: Generating chart...")
+            try:
+                fig = cerebro.plot(style='candlestick', volume=False)[0][0]
+                fig.savefig(save_path, dpi=150, bbox_inches='tight')
+                plt.close(fig)
+                logger.info(f"Chart saved to {save_path}")
+            except Exception as e:
+                logger.warning(f"Failed to generate chart: {e}")
+
+        return result
+
+    except DataAlignmentError:
+        raise
+    except Exception as e:
+        logger.error(f"Multi-asset backtest failed: {e}", exc_info=True)
+        raise MultiAssetBacktestError(f"Backtest execution failed: {str(e)}") from e
+
+
+def generate_portfolio_chart(
+    result: dict,
+    save_path: Path,
+    show_rebalances: bool = True
+) -> None:
+    """
+    Generate comprehensive portfolio visualization.
+
+    Creates a 4-panel chart showing:
+    1. Portfolio equity curve
+    2. Asset allocation over time (if rebalancing enabled)
+    3. Individual asset returns
+    4. Drawdown curve
+
+    Args:
+        result: Backtest result dictionary from run_multi_asset_backtest()
+        save_path: Path to save the PNG image
+        show_rebalances: Whether to mark rebalancing events on chart
+
+    Raises:
+        ValueError: If result data is invalid
+    """
+    # TODO: Implement comprehensive portfolio visualization
+    # For now, this is a placeholder
+    logger.warning("generate_portfolio_chart() not yet implemented")
+    pass

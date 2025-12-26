@@ -27,7 +27,8 @@
       "Bash(done)",
       "Bash(wc:*)",
       "Bash(cat:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(pip show:*)"
     ]
   }
 }
