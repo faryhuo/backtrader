@@ -61,5 +61,13 @@
   "params_override": "参数覆盖",
   "generate_report": "生成报告",
   "report_generating": "报告生成已启动。您可以在报告中心查看。",
-  "report_generation_failed": "生成报告失败"
+  "report_generation_failed": "生成报告失败",
+  "pyfolio_export": "PyFolio导出",
+  "pyfolio_export_data": "导出数据 (ZIP)",
+  "pyfolio_tearsheet": "生成分析报告",
+  "pyfolio_export_success": "PyFolio数据导出成功",
+  "pyfolio_export_failed": "导出PyFolio数据失败",
+  "tearsheet_generated": "分析报告生成成功",
+  "tearsheet_popup_blocked": "弹窗被阻止。请允许弹窗后重试。",
+  "tearsheet_failed": "生成分析报告失败。服务器可能未安装QuantStats。"
 }

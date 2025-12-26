@@ -25,7 +25,8 @@
       "Bash(then basename \"$file\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(cat:*)"
     ]
   }
 }

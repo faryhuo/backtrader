@@ -77,6 +77,18 @@
 - i18n：中英文双语报告（`backend/src/utils/report_i18n.py`）
 - ECharts主题：统一图表样式（`backend/src/service/echarts_theme.py`）
 
+#### [x] Backtrader 高级特性集成
+验收标准：
+- [x] **Sizer 可配置**：前端选择仓位管理策略（固定手数/百分比/全仓/风险控制/Kelly Criterion）。
+- [x] **更多 Analyzers**：集成 Calmar、VWR 分析器（Sortino 不支持）。
+- [x] **数据时间间隔选择**：支持 1d/1h/15m/5m/1m 时间粒度选择。
+- [x] **PyFolio 集成**：支持导出 PyFolio 兼容的分析数据，包括：
+  - ZIP 导出（returns.csv, transactions.csv, positions.csv）
+  - QuantStats 在线报告生成
+  - PyFolio 风格的性能指标（Sortino、Calmar、VaR/CVaR 等）
+
+落点：`backend/src/service/worker/backtest_worker.py` + `backend/src/service/pyfolio_exporter.py` + `frontend/src/components/RunStrategy/StrategyConfigForm.jsx`
+
 ---
 
 ## 部分完成（需要补齐）
@@ -116,16 +128,6 @@
 - **动态策略参数**：允许不同标的使用不同策略参数。
 
 落点：`backend/src/service/portfolio_backtest.py` + `frontend/src/pages/PortfolioBacktest.jsx`
-
-#### [~] Backtrader 高级特性集成
-验收标准：
-- [x] **Sizer 可配置**：前端选择仓位管理策略（固定手数/百分比/全仓/风险控制/Kelly Criterion）。
-- [x] **更多 Analyzers**：集成 Calmar、VWR 分析器（Sortino 不支持）。
-- [x] **数据时间间隔选择**：支持 1d/1h/15m/5m/1m 时间粒度选择。
-- [ ] **PyFolio 集成**：支持导出 PyFolio 兼容的分析数据（基础设施已就绪，待完善）。
-- [ ] ~~Bracket Orders~~：已移出本期范围。
-
-落点：`backend/src/service/worker/backtest_worker.py` + `frontend/src/components/RunStrategy/StrategyConfigForm.jsx`
 
 #### [ ] 交易复盘中心（Trade Journal）
 验收标准：

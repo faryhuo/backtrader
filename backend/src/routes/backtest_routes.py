@@ -11,7 +11,7 @@ import uuid
 import logging
 from functools import partial
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
@@ -28,6 +28,12 @@ from src.service.deep_analysis import (
     compute_deep_analysis,
     DeepAnalysisError,
     DEFAULT_BENCHMARKS,
+)
+from src.service.pyfolio_exporter import (
+    export_to_csv_zip,
+    generate_tear_sheet_html,
+    get_pyfolio_metrics,
+    PyFolioExportError,
 )
 from src.db.storage.market_data import DataLoadError
 from src.db.storage.backtest import BacktestStorage
@@ -77,6 +83,11 @@ class DeepAnalysisConfig(BaseModel):
     benchmarks: list[str] | None = None  # Default: ["SPY", "000300.SS"]
     rolling_window: int = 60
     risk_free_rate: float = 0.02
+
+
+class PyFolioExportConfig(BaseModel):
+    include_tear_sheet: bool = False  # Generate QuantStats tear sheet HTML
+    benchmark_ticker: str | None = None  # Optional benchmark for comparison
 
 
 # ========== Backtest Execution Endpoints ==========
@@ -395,3 +406,187 @@ def get_or_compute_deep_analysis(
     except Exception as e:
         logger.exception(f"Failed to compute deep analysis for {backtest_id}")
         raise HTTPException(status_code=500, detail=f"Failed to compute analysis: {str(e)}")
+
+
+# ========== PyFolio Export Endpoints ==========
+
+
+@router.get("/backtest/history/{backtest_id}/pyfolio-export")
+def export_pyfolio_data(
+    backtest_id: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> Response:
+    """
+    Export backtest data in PyFolio-compatible format as a ZIP file.
+
+    The ZIP file contains:
+    - returns.csv: Daily returns series (required for PyFolio)
+    - transactions.csv: Trade transactions
+    - positions.csv: Position values over time
+    - metadata.json: Export metadata and usage instructions
+    - README.md: Usage documentation
+
+    Returns:
+        ZIP file as attachment download
+    """
+    storage = get_backtest_storage()
+
+    # Get backtest details
+    backtest = storage.get_backtest(backtest_id, user_id=user_id)
+    if not backtest:
+        raise HTTPException(status_code=404, detail="Backtest not found")
+
+    # Get required data
+    metrics = backtest.get("metrics", {})
+    equity_curve = metrics.get("equity_curve")
+    trade_details = metrics.get("trade_details", {})
+    ticker = backtest.get("ticker", "UNKNOWN")
+    initial_cash = backtest.get("initial_cash", 100000.0)
+
+    if not equity_curve:
+        raise HTTPException(
+            status_code=400,
+            detail="Equity curve data not available. Please re-run the backtest.",
+        )
+
+    try:
+        # Generate ZIP file
+        zip_data = export_to_csv_zip(
+            equity_curve=equity_curve,
+            trade_details=trade_details,
+            ticker=ticker,
+            backtest_id=backtest_id,
+            initial_cash=initial_cash,
+        )
+
+        # Return as downloadable attachment
+        filename = f"pyfolio_export_{ticker}_{backtest_id[:8]}.zip"
+
+        return Response(
+            content=zip_data,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+
+    except PyFolioExportError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to export PyFolio data for {backtest_id}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+@router.get("/backtest/history/{backtest_id}/pyfolio-metrics")
+def get_pyfolio_style_metrics(
+    backtest_id: str,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
+    """
+    Get PyFolio-style performance metrics for a backtest.
+
+    Returns comprehensive metrics including:
+    - Annual return and volatility
+    - Sharpe and Sortino ratios
+    - Max drawdown and Calmar ratio
+    - VaR and CVaR (95%)
+    - Skewness and Kurtosis
+    - Win rate and total return
+    """
+    storage = get_backtest_storage()
+
+    # Get backtest details
+    backtest = storage.get_backtest(backtest_id, user_id=user_id)
+    if not backtest:
+        raise HTTPException(status_code=404, detail="Backtest not found")
+
+    # Get equity curve
+    metrics = backtest.get("metrics", {})
+    equity_curve = metrics.get("equity_curve")
+
+    if not equity_curve:
+        raise HTTPException(
+            status_code=400,
+            detail="Equity curve data not available.",
+        )
+
+    try:
+        pyfolio_metrics = get_pyfolio_metrics(equity_curve)
+        return {"status": "ok", "metrics": pyfolio_metrics}
+    except Exception as e:
+        logger.exception(f"Failed to compute PyFolio metrics for {backtest_id}")
+        raise HTTPException(status_code=500, detail=f"Failed to compute metrics: {str(e)}")
+
+
+@router.post("/backtest/history/{backtest_id}/pyfolio-tearsheet")
+def generate_pyfolio_tearsheet(
+    backtest_id: str,
+    config: PyFolioExportConfig | None = None,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
+    """
+    Generate a PyFolio-style tear sheet report using QuantStats.
+
+    This endpoint generates an HTML tear sheet that can be displayed
+    in the frontend or downloaded.
+
+    Args:
+        backtest_id: Backtest identifier
+        config: Optional configuration for the tear sheet
+
+    Returns:
+        Dict with HTML content of the tear sheet
+    """
+    storage = get_backtest_storage()
+
+    # Get backtest details
+    backtest = storage.get_backtest(backtest_id, user_id=user_id)
+    if not backtest:
+        raise HTTPException(status_code=404, detail="Backtest not found")
+
+    # Get required data
+    metrics = backtest.get("metrics", {})
+    equity_curve = metrics.get("equity_curve")
+    trade_details = metrics.get("trade_details", {})
+    ticker = backtest.get("ticker", "UNKNOWN")
+    strategy_name = backtest.get("strategy_name", "Strategy")
+    initial_cash = backtest.get("initial_cash", 100000.0)
+
+    if not equity_curve:
+        raise HTTPException(
+            status_code=400,
+            detail="Equity curve data not available.",
+        )
+
+    if config is None:
+        config = PyFolioExportConfig()
+
+    try:
+        html_content = generate_tear_sheet_html(
+            equity_curve=equity_curve,
+            trade_details=trade_details,
+            ticker=ticker,
+            strategy_name=strategy_name,
+            initial_cash=initial_cash,
+            benchmark_ticker=config.benchmark_ticker,
+        )
+
+        if html_content is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate tear sheet. QuantStats may not be installed.",
+            )
+
+        return {
+            "status": "ok",
+            "html": html_content,
+            "backtest_id": backtest_id,
+            "ticker": ticker,
+            "strategy_name": strategy_name,
+        }
+
+    except PyFolioExportError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to generate tear sheet for {backtest_id}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate tear sheet: {str(e)}")

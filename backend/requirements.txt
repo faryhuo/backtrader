@@ -24,3 +24,7 @@ ibapi>=9.81.1
 httpx>=0.28.0  # Required by newer packages, conflicts with investiny if installed
 pycares<5.0.0  # Version 5.0.0 has compatibility issues with aiodns
 aiodns>=3.6.1  # Required by aiohttp for async DNS resolution
+
+# Portfolio Analytics - PyFolio Integration
+pyfolio-reloaded>=0.9.5  # Maintained fork of pyfolio with modern Python support
+quantstats>=0.0.64  # Modern portfolio analytics library (alternative to pyfolio)

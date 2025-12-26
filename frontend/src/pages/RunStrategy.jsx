@@ -178,6 +178,8 @@ function RunStrategy() {
                     initialCash={initialCash}
                     paramOverrides={paramOverrides}
                     tabItems={tabItems}
+                    backtestId={result?.backtest_id}
+                    analyses={analyses}
                 />
             ) : loading && taskProgress ? (
                 <TaskProgressCard taskProgress={taskProgress} />
