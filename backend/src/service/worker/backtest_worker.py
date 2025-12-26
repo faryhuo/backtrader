@@ -163,6 +163,7 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         # Add advanced analyzers
         cerebro.addanalyzer(bt.analyzers.Calmar, _name="calmar")
         cerebro.addanalyzer(bt.analyzers.VWR, _name="vwr")
+        cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
         
         # Add custom trade recorder
         from src.service.backtest_engine import TradeRecorder
@@ -192,6 +193,17 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         max_dd = strat.analyzers.drawdown.get_analysis().get("max", {}).get("drawdown", 0.0)
         total_return = strat.analyzers.returns.get_analysis().get("rnorm100", 0.0)
         
+        # Extract Calmar from OrderedDict (Backtrader returns rolling values by month)
+        calmar_raw = strat.analyzers.calmar.get_analysis()
+        calmar_value = None
+        if calmar_raw:
+            # Get the last non-NaN value
+            import math
+            for v in reversed(list(calmar_raw.values())):
+                if isinstance(v, (int, float)) and not math.isnan(v):
+                    calmar_value = v
+                    break
+        
         metrics = {
             "final_value": final_value,
             "sharpe": sharpe,
@@ -202,8 +214,8 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
             "trades": _serialize_trade_analysis(strat.analyzers.trades.get_analysis()),
             "trade_details": trade_details,
             "equity_curve": equity_curve,
-            # Advanced metrics
-            "calmar": strat.analyzers.calmar.get_analysis().get("calmar"),
+            "time_drawdown": strat.analyzers.timedraw.get_analysis(),
+            "calmar": calmar_value,
             "vwr": strat.analyzers.vwr.get_analysis().get("vwr"),
         }
 
