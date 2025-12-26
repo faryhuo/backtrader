@@ -126,8 +126,12 @@ async def _backtest_executor(config: dict, progress_callback) -> dict:
             strategy_name=config.get("strategy_name"),
             save_path=save_path,
             params=config.get("params"),
+            sizer_type=config.get("sizer_type", "fixed_size"),
+            sizer_config=config.get("sizer_config"),
+            timeframe=config.get("timeframe", "1d"),
         )
     )
+
     
     if metrics is None:
         raise ValueError("Backtest failed - no metrics returned")

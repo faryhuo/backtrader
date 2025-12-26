@@ -167,6 +167,9 @@ def run_backtest(
     save_path: Optional[Path] = None,
     params: Optional[dict] = None,
     use_worker: Optional[bool] = None,
+    sizer_type: str = "fixed_size",
+    sizer_config: Optional[dict] = None,
+    timeframe: str = "1d",
 ) -> dict:
     """
     Run a backtest with the specified parameters.
@@ -218,6 +221,9 @@ def run_backtest(
                 strategy_name=strategy_name,
                 save_path=save_path,
                 params=params,
+                sizer_type=sizer_type,
+                sizer_config=sizer_config,
+                timeframe=timeframe,
             )
         except BacktestRunnerError as exc:
             raise StrategyLoadError(str(exc)) from exc
