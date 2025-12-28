@@ -552,17 +552,26 @@ def run_multi_asset_backtest(
                 import matplotlib.pyplot as plt
                 plt.ioff()
                 plt.switch_backend('Agg')
+                
+                # Monkey-patch plt.show to prevent Backtrader from opening GUI
+                # Backtrader's plot.py:821 calls self.mpyplot.show() which we need to suppress
+                original_show = plt.show
+                plt.show = lambda *args, **kwargs: None
 
-                figures = cerebro.plot(style='candlestick', volume=False, iplot=False)
-                first_fig = figures[0][0] if figures and figures[0] else None
-                if first_fig:
-                    first_fig.set_size_inches(18, 10)
-                    first_fig.savefig(save_path, bbox_inches='tight', dpi=150)
-                    plt.close(first_fig)
-                    logger.info(f"Chart saved to {save_path}")
-                    # Add plot_url to result for UI access
-                    result["plot_url"] = f"/images/{save_path.name}"
-                plt.close('all')
+                try:
+                    figures = cerebro.plot(style='candlestick', volume=False, iplot=False)
+                    first_fig = figures[0][0] if figures and figures[0] else None
+                    if first_fig:
+                        first_fig.set_size_inches(18, 10)
+                        first_fig.savefig(save_path, bbox_inches='tight', dpi=150)
+                        plt.close(first_fig)
+                        logger.info(f"Chart saved to {save_path}")
+                        # Add plot_url to result for UI access
+                        result["plot_url"] = f"/images/{save_path.name}"
+                finally:
+                    # Restore original plt.show
+                    plt.show = original_show
+                    plt.close('all')
             except Exception as e:
                 logger.warning(f"Failed to generate chart: {e}")
                 plt.close('all')
