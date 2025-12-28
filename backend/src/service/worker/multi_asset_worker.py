@@ -89,7 +89,6 @@ def execute_multi_asset_task(task: "MultiAssetBacktestTask") -> "MultiAssetBackt
             initial_cash=task.initial_cash,
             commission=task.commission,
             strategy_name=task.strategy_name,
-            per_asset_params=task.per_asset_params,
             rebalance_config=rebalance_config,
             optimization_method=task.optimization_method,
             timeframe=task.timeframe,

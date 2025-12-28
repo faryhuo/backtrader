@@ -346,7 +346,6 @@ def run_multi_asset_backtest(
     initial_cash: float = 100000.0,
     commission: float = 0.0005,
     strategy_name: Optional[str] = None,
-    per_asset_params: Optional[dict[str, dict]] = None,
     rebalance_config: Optional[dict] = None,
     optimization_method: str = "equal_weight",
     timeframe: str = "1d",
@@ -366,8 +365,6 @@ def run_multi_asset_backtest(
         initial_cash: Starting portfolio cash (default: 100000.0)
         commission: Commission rate per trade (default: 0.0005 = 0.05%)
         strategy_name: Strategy file name (without .py). If None, uses buy-and-hold.
-        per_asset_params: Per-ticker strategy parameters
-            Example: {"AAPL": {"sma_period": 10}, "GOOGL": {"sma_period": 20}}
         rebalance_config: Rebalancing configuration
             Example: {"frequency": "monthly", "method": "risk_parity"}
         optimization_method: Optimization method for rebalancing
@@ -444,7 +441,6 @@ def run_multi_asset_backtest(
             BuyAndHoldPortfolioStrategy,  # Simple buy-and-hold for Phase 1
             tickers=tickers,
             initial_weights=weights,
-            per_asset_params=per_asset_params or {},
             rebalance_config=rebalance_config,
             optimization_method=optimization_method,
         )

@@ -129,15 +129,10 @@ export function useBacktest() {
             endDate,
             initialCash,
             commission,
-            stake,
-            sizerType,
-            sizerConfig,
             timeframe,
             selectedStrategy,
-            paramOverrides,
-            paramMode,
-            globalIndicatorParams,
-            perAssetParams,
+            rebalanceEnabled,
+            rebalanceConfig,
         } = params;
 
         const validTickers = tickers.filter(ticker => ticker.trim());
@@ -152,22 +147,12 @@ export function useBacktest() {
         setTaskProgress(null);
 
         try {
-            const paramsToSend = Object.keys(paramOverrides || {}).length > 0 ? paramOverrides : null;
-
-            // Determine per-asset params based on paramMode
-            let perAssetParamsToSend = null;
-
-            if (paramMode === 'per_asset' && perAssetParams && Object.keys(perAssetParams).length > 0) {
-                // Per-asset mode: use individual params for each ticker
-                perAssetParamsToSend = perAssetParams;
-            } else if (paramMode === 'global' && globalIndicatorParams && Object.keys(globalIndicatorParams).length > 0) {
-                // Global mode: apply same params to all tickers
-                perAssetParamsToSend = {};
-                validTickers.forEach(ticker => {
-                    perAssetParamsToSend[ticker] = { ...globalIndicatorParams };
-                });
-            }
-            // Default mode: perAssetParamsToSend stays null, backend uses default values
+            // Build rebalance_config for API if enabled
+            const rebalance_config = rebalanceEnabled ? {
+                frequency: rebalanceConfig.frequency,
+                min_trade_threshold: rebalanceConfig.min_trade_threshold,
+                transaction_cost_pct: rebalanceConfig.transaction_cost_pct,
+            } : null;
 
             const taskResponse = await api.runPortfolioBacktest({
                 tickers: validTickers,
@@ -176,14 +161,12 @@ export function useBacktest() {
                 end_date: endDate,
                 initial_cash: initialCash,
                 commission: commission,
-                stake: stake,
-                sizer_type: sizerType || 'fixed_size',
-                sizer_config: sizerConfig || null,
                 timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy || null,
-                params: paramsToSend,
-                per_asset_params: perAssetParamsToSend
+                rebalance_config: rebalance_config,
+                optimization_method: rebalanceEnabled ? rebalanceConfig.optimization_method : 'equal_weight',
             });
+
 
 
             // Handle async task-based response

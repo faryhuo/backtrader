@@ -122,7 +122,6 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "initial_cash": config.get("initial_cash"),
             "commission": config.get("commission"),
             "strategy_name": config.get("strategy_name"),
-            "per_asset_params": config.get("per_asset_params"),
             "rebalance_config": config.get("rebalance_config"),
             "optimization_method": config.get("optimization_method", "equal_weight"),
             "timeframe": config.get("timeframe", "1d"),

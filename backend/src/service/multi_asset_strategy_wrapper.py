@@ -34,13 +34,11 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
     Portfolio-level strategy managing multiple data feeds.
 
     This strategy wraps around user-defined logic to provide portfolio-level
-    features like rebalancing, per-asset parameters, and equity curve tracking.
+    features like rebalancing and equity curve tracking.
 
     Parameters:
         tickers (list): List of ticker symbols matching data feed order
         initial_weights (list): Initial allocation weights
-        per_asset_params (dict): Per-ticker strategy parameters
-            Example: {"AAPL": {"sma_period": 10}, "GOOGL": {"sma_period": 20}}
         rebalance_config (dict): Rebalancing configuration
             Example: {"frequency": "monthly", "method": "risk_parity"}
         optimization_method (str): Optimization method for rebalancing
@@ -50,7 +48,6 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
     params = (
         ("tickers", []),
         ("initial_weights", []),
-        ("per_asset_params", {}),
         ("rebalance_config", None),
         ("optimization_method", "equal_weight"),
         ("returns_lookback", 252),
@@ -69,7 +66,6 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         logger.info(f"Initializing MultiAssetPortfolioStrategy for {len(self.p.tickers)} assets")
         logger.info(f"Tickers: {self.p.tickers}")
         logger.info(f"Initial weights: {[f'{w:.2%}' for w in self.p.initial_weights]}")
-        logger.info(f"Per-asset params: {self.p.per_asset_params}")
 
         # Validate inputs
         if len(self.p.tickers) != len(self.datas):
@@ -88,13 +84,10 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         self.ticker_data = dict(zip(self.p.tickers, self.datas))
         logger.debug(f"Mapped {len(self.ticker_data)} tickers to data feeds")
 
-        # Step 2: Create per-asset indicators
+        # Step 2: Create default indicators for all assets
         self.indicators = {}
         for ticker, data in self.ticker_data.items():
-            params = self.p.per_asset_params.get(ticker, {})
-            if params:
-                logger.info(f"{ticker}: Using custom params: {params}")
-            self.indicators[ticker] = self._create_indicators(ticker, data, params)
+            self.indicators[ticker] = self._create_indicators(ticker, data)
 
         logger.info(f"Created indicators for {len(self.indicators)} assets")
 
@@ -170,23 +163,18 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
             logger.info("Rebalancing scheduler ready")
 
     def _create_indicators(
-        self, ticker: str, data: bt.feeds.DataBase, params: dict
+        self, ticker: str, data: bt.feeds.DataBase
     ) -> dict:
         """
-        Create indicators for a single asset with custom parameters.
+        Create default indicators for a single asset.
 
-        Supports the following indicators with per-asset customization:
-        - SMA (Simple Moving Average): sma_period
-        - EMA (Exponential Moving Average): ema_period
-        - RSI (Relative Strength Index): rsi_period, rsi_oversold, rsi_overbought
-        - MACD: macd_fast, macd_slow, macd_signal
-        - Bollinger Bands: bb_period, bb_std
-        - ATR (Average True Range): atr_period
+        Creates standard indicators with default values:
+        - SMA (Simple Moving Average): period 20
+        - RSI (Relative Strength Index): period 14, oversold 30, overbought 70
 
         Args:
             ticker: Ticker symbol
             data: Backtrader data feed
-            params: Custom parameters for this asset
 
         Returns:
             Dictionary of indicators for this asset
@@ -194,66 +182,23 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         indicators = {}
         created_indicators = []
 
-        # SMA - Simple Moving Average (default if no indicators specified)
-        sma_period = params.get("sma_period", 20)
-        if sma_period:
-            indicators["sma"] = bt.indicators.SimpleMovingAverage(
-                data.close, period=sma_period
-            )
-            created_indicators.append(f"SMA({sma_period})")
+        # SMA - Simple Moving Average with default period
+        sma_period = 20
+        indicators["sma"] = bt.indicators.SimpleMovingAverage(
+            data.close, period=sma_period
+        )
+        created_indicators.append(f"SMA({sma_period})")
 
-        # EMA - Exponential Moving Average
-        ema_period = params.get("ema_period")
-        if ema_period:
-            indicators["ema"] = bt.indicators.ExponentialMovingAverage(
-                data.close, period=ema_period
-            )
-            created_indicators.append(f"EMA({ema_period})")
+        # RSI - Relative Strength Index with default values
+        rsi_period = 14
+        indicators["rsi"] = bt.indicators.RSI(data.close, period=rsi_period)
+        created_indicators.append(f"RSI({rsi_period})")
 
-        # RSI - Relative Strength Index (default if no indicators specified)
-        rsi_period = params.get("rsi_period", 14)
-        if rsi_period:
-            indicators["rsi"] = bt.indicators.RSI(data.close, period=rsi_period)
-            created_indicators.append(f"RSI({rsi_period})")
+        # Store RSI thresholds for strategy logic
+        indicators["rsi_oversold"] = 30
+        indicators["rsi_overbought"] = 70
 
-            # Store RSI thresholds for strategy logic (if provided)
-            rsi_oversold = params.get("rsi_oversold", 30)
-            rsi_overbought = params.get("rsi_overbought", 70)
-            indicators["rsi_oversold"] = rsi_oversold
-            indicators["rsi_overbought"] = rsi_overbought
-
-        # MACD - Moving Average Convergence Divergence
-        macd_fast = params.get("macd_fast")
-        macd_slow = params.get("macd_slow")
-        macd_signal = params.get("macd_signal")
-        if macd_fast and macd_slow and macd_signal:
-            indicators["macd"] = bt.indicators.MACD(
-                data.close,
-                period_me1=macd_fast,
-                period_me2=macd_slow,
-                period_signal=macd_signal,
-            )
-            created_indicators.append(f"MACD({macd_fast},{macd_slow},{macd_signal})")
-
-        # Bollinger Bands
-        bb_period = params.get("bb_period")
-        bb_std = params.get("bb_std", 2.0)
-        if bb_period:
-            indicators["bollinger"] = bt.indicators.BollingerBands(
-                data.close, period=bb_period, devfactor=bb_std
-            )
-            created_indicators.append(f"BB({bb_period},{bb_std})")
-
-        # ATR - Average True Range
-        atr_period = params.get("atr_period")
-        if atr_period:
-            indicators["atr"] = bt.indicators.ATR(data, period=atr_period)
-            created_indicators.append(f"ATR({atr_period})")
-
-        if created_indicators:
-            logger.debug(f"{ticker}: Created indicators: {', '.join(created_indicators)}")
-        else:
-            logger.debug(f"{ticker}: No indicators created (using defaults)")
+        logger.debug(f"{ticker}: Created indicators: {', '.join(created_indicators)}")
 
         return indicators
 
@@ -568,16 +513,20 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
 class BuyAndHoldPortfolioStrategy(MultiAssetPortfolioStrategy):
     """
-    Simple buy-and-hold portfolio strategy.
+    Simple buy-and-hold portfolio strategy with optional rebalancing.
 
     Buys initial positions based on weights and holds until end.
-    No rebalancing or active trading.
+    If rebalance_config is provided, it will periodically rebalance
+    to maintain target weights.
     """
 
     def next(self):
-        """Override to only establish initial positions, no rebalancing."""
-        self._update_returns()
-
-        if not self.initial_positions_set:
-            self._establish_initial_positions()
-            self.initial_positions_set = True
+        """
+        Main strategy logic - uses parent class for full functionality.
+        
+        Supports:
+        - Initial position establishment
+        - Periodic rebalancing (if configured)
+        """
+        # Use parent class implementation which includes rebalancing
+        super().next()

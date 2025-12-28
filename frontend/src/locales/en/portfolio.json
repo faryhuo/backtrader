@@ -82,56 +82,29 @@
   "contribution": "Contribution",
   "weight": "Weight",
   "not_set": "Not set",
-  "indicators": {
-    "groups": {
-      "trend": "TREND INDICATORS",
-      "momentum": "MOMENTUM INDICATORS",
-      "macd": "MACD",
-      "volatility": "VOLATILITY INDICATORS"
+  "rebalance": {
+    "title": "Rebalancing",
+    "frequency_label": "Frequency",
+    "frequency_tooltip": "How often to rebalance the portfolio",
+    "optimization_label": "Optimization Method",
+    "optimization_tooltip": "Method to calculate target weights during rebalancing",
+    "threshold_label": "Min Trade Threshold",
+    "threshold_tooltip": "Minimum position change % required to execute a trade (default 1%)",
+    "cost_label": "Transaction Cost",
+    "cost_tooltip": "Estimated transaction cost as % of trade value (default 0.1%)",
+    "disabled_hint": "Enable rebalancing to periodically adjust portfolio weights.",
+    "frequency": {
+      "monthly": "Monthly",
+      "monthly_first": "Monthly (First Day)",
+      "monthly_last": "Monthly (Last Day)",
+      "quarterly": "Quarterly",
+      "annually": "Annually"
     },
-    "sma_period": {
-      "label": "SMA Period",
-      "tooltip": "Simple Moving Average period"
-    },
-    "ema_period": {
-      "label": "EMA Period",
-      "tooltip": "Exponential Moving Average period"
-    },
-    "rsi_period": {
-      "label": "RSI Period",
-      "tooltip": "Relative Strength Index period"
-    },
-    "rsi_oversold": {
-      "label": "RSI Oversold",
-      "tooltip": "RSI oversold threshold"
-    },
-    "rsi_overbought": {
-      "label": "RSI Overbought",
-      "tooltip": "RSI overbought threshold"
-    },
-    "macd_fast": {
-      "label": "MACD Fast",
-      "tooltip": "MACD fast period"
-    },
-    "macd_slow": {
-      "label": "MACD Slow",
-      "tooltip": "MACD slow period"
-    },
-    "macd_signal": {
-      "label": "MACD Signal",
-      "tooltip": "MACD signal period"
-    },
-    "bb_period": {
-      "label": "BB Period",
-      "tooltip": "Bollinger Bands period"
-    },
-    "bb_std": {
-      "label": "BB StdDev",
-      "tooltip": "Bollinger Bands standard deviation"
-    },
-    "atr_period": {
-      "label": "ATR Period",
-      "tooltip": "Average True Range period"
+    "optimization": {
+      "equal_weight": "Equal Weight",
+      "risk_parity": "Risk Parity",
+      "min_variance": "Minimum Variance",
+      "markowitz": "Markowitz (Max Sharpe)"
     }
   }
 }

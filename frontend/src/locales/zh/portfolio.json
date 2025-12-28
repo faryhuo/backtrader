@@ -82,56 +82,29 @@
   "contribution": "贡献度",
   "weight": "权重",
   "not_set": "未设置",
-  "indicators": {
-    "groups": {
-      "trend": "趋势指标",
-      "momentum": "动量指标",
-      "macd": "MACD",
-      "volatility": "波动率指标"
+  "rebalance": {
+    "title": "再平衡配置",
+    "frequency_label": "频率",
+    "frequency_tooltip": "多久重新调整一次投资组合权重",
+    "optimization_label": "优化方法",
+    "optimization_tooltip": "再平衡时计算目标权重的方法",
+    "threshold_label": "最小交易阈值",
+    "threshold_tooltip": "触发交易所需的最小仓位变化百分比（默认1%）",
+    "cost_label": "交易成本",
+    "cost_tooltip": "预估交易成本占交易金额的百分比（默认0.1%）",
+    "disabled_hint": "启用再平衡以定期调整投资组合权重。",
+    "frequency": {
+      "monthly": "每月",
+      "monthly_first": "每月（月初）",
+      "monthly_last": "每月（月末）",
+      "quarterly": "每季度",
+      "annually": "每年"
     },
-    "sma_period": {
-      "label": "SMA周期",
-      "tooltip": "简单移动平均线周期"
-    },
-    "ema_period": {
-      "label": "EMA周期",
-      "tooltip": "指数移动平均线周期"
-    },
-    "rsi_period": {
-      "label": "RSI周期",
-      "tooltip": "相对强弱指标周期"
-    },
-    "rsi_oversold": {
-      "label": "RSI超卖",
-      "tooltip": "RSI超卖阈值"
-    },
-    "rsi_overbought": {
-      "label": "RSI超买",
-      "tooltip": "RSI超买阈值"
-    },
-    "macd_fast": {
-      "label": "MACD快线",
-      "tooltip": "MACD快线周期"
-    },
-    "macd_slow": {
-      "label": "MACD慢线",
-      "tooltip": "MACD慢线周期"
-    },
-    "macd_signal": {
-      "label": "MACD信号线",
-      "tooltip": "MACD信号线周期"
-    },
-    "bb_period": {
-      "label": "布林带周期",
-      "tooltip": "布林带周期"
-    },
-    "bb_std": {
-      "label": "布林带标准差",
-      "tooltip": "布林带标准差倍数"
-    },
-    "atr_period": {
-      "label": "ATR周期",
-      "tooltip": "平均真实波幅周期"
+    "optimization": {
+      "equal_weight": "等权重",
+      "risk_parity": "风险平价",
+      "min_variance": "最小方差",
+      "markowitz": "Markowitz（最大夏普）"
     }
   }
 }

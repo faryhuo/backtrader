@@ -43,22 +43,6 @@ class PortfolioHistoryQuery(BaseModel):
     offset: int = 0
 
 
-class PerAssetParams(BaseModel):
-    """Parameters for a single asset in portfolio backtest."""
-    sma_period: int | None = Field(None, ge=2, le=500, description="Simple Moving Average period")
-    ema_period: int | None = Field(None, ge=2, le=500, description="Exponential Moving Average period")
-    rsi_period: int | None = Field(None, ge=2, le=100, description="RSI period")
-    rsi_oversold: float | None = Field(None, ge=0, le=100, description="RSI oversold threshold")
-    rsi_overbought: float | None = Field(None, ge=0, le=100, description="RSI overbought threshold")
-    macd_fast: int | None = Field(None, ge=2, le=100, description="MACD fast period")
-    macd_slow: int | None = Field(None, ge=2, le=200, description="MACD slow period")
-    macd_signal: int | None = Field(None, ge=2, le=100, description="MACD signal period")
-    bb_period: int | None = Field(None, ge=2, le=100, description="Bollinger Bands period")
-    bb_std: float | None = Field(None, ge=0.1, le=5.0, description="Bollinger Bands standard deviation")
-    atr_period: int | None = Field(None, ge=2, le=100, description="ATR period")
-
-    class Config:
-        extra = "allow"  # Allow additional custom parameters
 
 
 class RebalanceConfig(BaseModel):
@@ -102,10 +86,6 @@ class MultiAssetBacktestRequest(BaseModel):
     initial_cash: float = Field(100000.0, ge=1000, le=100000000, description="Total initial cash for portfolio")
     commission: float = Field(0.0005, ge=0, le=0.1, description="Broker commission rate")
     strategy_name: str | None = Field(None, description="Strategy to use (None = buy-and-hold)")
-    per_asset_params: dict[str, PerAssetParams | dict[str, Any]] | None = Field(
-        None,
-        description="Per-ticker strategy parameters. Example: {'AAPL': {'sma_period': 10}, 'GOOGL': {'sma_period': 20}}"
-    )
     rebalance_config: RebalanceConfig | None = Field(
         None,
         description="Rebalancing configuration. Example: {'frequency': 'monthly', 'min_trade_threshold': 0.01}"
@@ -132,17 +112,7 @@ class MultiAssetBacktestRequest(BaseModel):
             raise ValueError(f"Invalid timeframe '{v}'. Must be one of: {', '.join(valid_timeframes)}")
         return v
 
-    @model_validator(mode='after')
-    def validate_per_asset_params_tickers(self) -> 'MultiAssetBacktestRequest':
-        """Validate that per_asset_params only contains valid tickers."""
-        if self.per_asset_params:
-            invalid_tickers = set(self.per_asset_params.keys()) - set(self.tickers)
-            if invalid_tickers:
-                raise ValueError(
-                    f"per_asset_params contains invalid tickers: {invalid_tickers}. "
-                    f"Valid tickers: {self.tickers}"
-                )
-        return self
+
 
 
 async def _multi_asset_executor(config: dict, progress_callback) -> dict:
@@ -174,7 +144,6 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
             initial_cash=config.get("initial_cash", 100000.0),
             commission=config.get("commission", 0.0005),
             strategy_name=config.get("strategy_name"),
-            per_asset_params=config.get("per_asset_params"),
             rebalance_config=config.get("rebalance_config"),
             optimization_method=config.get("optimization_method", "equal_weight"),
             timeframe=config.get("timeframe", "1d"),
@@ -201,7 +170,7 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "initial_cash": result["initial_cash"],
         "commission": config.get("commission", 0.0005),
         "strategy_name": result.get("strategy_name"),
-        "params": config.get("per_asset_params"),  # Store per-asset params
+        "params": None,  # No per-asset params
         "plot_filename": plot_filename,
         # Portfolio-level metrics
         "final_value": result["final_value"],
@@ -215,7 +184,7 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "asset_contributions": result.get("asset_contributions", {}),
         "rebalance_frequency": (config.get("rebalance_config") or {}).get("frequency"),
         "optimization_method": config.get("optimization_method", "equal_weight"),
-        "per_asset_params": config.get("per_asset_params"),
+        "per_asset_params": None,
         # Individual results for UI compatibility
         "individual_results": result.get("individual_results", []),
         # Correlation and optimization

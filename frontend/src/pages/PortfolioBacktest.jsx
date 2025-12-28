@@ -17,9 +17,8 @@ import {
     TickerWeightSection,
     ParametersSection,
     StrategyParamsSection,
+    RebalanceConfigSection,
     PortfolioResultsSection,
-    IndicatorParamsSection,
-    PARAM_MODES,
 } from '../components/PortfolioBacktest';
 import './PortfolioBacktest.css';
 
@@ -37,9 +36,6 @@ function PortfolioBacktest() {
     const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')]);
     const [initialCash, setInitialCash] = useState(100000);
     const [commission, setCommission] = useState(0.0005);
-    const [stake, setStake] = useState(100);
-    const [sizerType, setSizerType] = useState('fixed_size');
-    const [sizerConfig, setSizerConfig] = useState({ percents: 10, risk_percent: 2 });
     const [timeframe, setTimeframe] = useState('1d');
 
     const {
@@ -49,10 +45,14 @@ function PortfolioBacktest() {
     } = useStrategies();
     const [paramsExpanded, setParamsExpanded] = useState(true);
 
-    // Indicator parameters state
-    const [paramMode, setParamMode] = useState(PARAM_MODES.DEFAULT);
-    const [globalIndicatorParams, setGlobalIndicatorParams] = useState({});
-    const [perAssetParams, setPerAssetParams] = useState({});
+    // Rebalancing state
+    const [rebalanceEnabled, setRebalanceEnabled] = useState(false);
+    const [rebalanceConfig, setRebalanceConfig] = useState({
+        frequency: 'monthly',
+        optimization_method: 'equal_weight',
+        min_trade_threshold: 0.01,
+        transaction_cost_pct: 0.001,
+    });
 
     // Use custom hooks
     const {
@@ -95,15 +95,10 @@ function PortfolioBacktest() {
             endDate: dateRange[1].format('YYYY-MM-DD'),
             initialCash,
             commission,
-            stake,
-            sizerType,
-            sizerConfig,
             timeframe,
             selectedStrategy,
-            paramOverrides,
-            paramMode,
-            globalIndicatorParams,
-            perAssetParams,
+            rebalanceEnabled,
+            rebalanceConfig,
         }, t);
     };
 
@@ -142,12 +137,6 @@ function PortfolioBacktest() {
                     setInitialCash={setInitialCash}
                     commission={commission}
                     setCommission={setCommission}
-                    stake={stake}
-                    setStake={setStake}
-                    sizerType={sizerType}
-                    setSizerType={setSizerType}
-                    sizerConfig={sizerConfig}
-                    setSizerConfig={setSizerConfig}
                     timeframe={timeframe}
                     setTimeframe={setTimeframe}
                 />
@@ -163,15 +152,12 @@ function PortfolioBacktest() {
                     />
                 )}
 
-                <IndicatorParamsSection
+                <RebalanceConfigSection
                     t={t}
-                    tickers={validTickers}
-                    paramMode={paramMode}
-                    onParamModeChange={setParamMode}
-                    globalParams={globalIndicatorParams}
-                    onGlobalParamsChange={setGlobalIndicatorParams}
-                    perAssetParams={perAssetParams}
-                    onPerAssetParamsChange={setPerAssetParams}
+                    enabled={rebalanceEnabled}
+                    onEnabledChange={setRebalanceEnabled}
+                    config={rebalanceConfig}
+                    onConfigChange={setRebalanceConfig}
                 />
 
                 <div className="run-button-container">
