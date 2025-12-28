@@ -186,8 +186,7 @@ backend/
 │   │   ├── app.py                  # FastAPI app initialization
 │   │   ├── backtest_engine.py      # Core backtesting logic
 │   │   ├── backtest_runner.py      # Backtest execution wrapper
-│   │   ├── portfolio_backtest.py   # Portfolio-specific backtesting
-│   │   ├── multi_asset_backtest.py # Multi-asset backtesting
+│   │   ├── multi_asset_backtest.py # Multi-asset portfolio backtesting
 │   │   ├── multi_asset_strategy_wrapper.py # Strategy adapter
 │   │   ├── portfolio_analyzers.py  # Portfolio analysis tools
 │   │   ├── portfolio_rebalancer.py # Portfolio rebalancing logic
@@ -369,7 +368,7 @@ Frontend (RunStrategy) → POST /api/backtest → backtest_engine.py
 
 **Portfolio Backtest Flow**:
 ```
-Frontend (PortfolioBacktest) → POST /api/portfolio/backtest → portfolio_backtest.py
+Frontend (PortfolioBacktest) → POST /api/portfolio/backtest → multi_asset_backtest.py
   → Load strategy and multiple assets
   → Apply portfolio rebalancing strategy
   → Run multi-asset Cerebro

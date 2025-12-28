@@ -36,7 +36,7 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
     Generate standardized task names based on type and configuration.
     
     Args:
-        task_type: Type of task (backtest, portfolio, walkforward, deep_analysis)
+        task_type: Type of task (backtest, multi_asset, walkforward, deep_analysis)
         config: Task configuration dictionary
         
     Returns:
@@ -46,24 +46,13 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
         >>> generate_task_name("backtest", {"ticker": "AAPL", "strategy_name": "SMA"})
         "Backtest AAPL - SMA"
         
-        >>> generate_task_name("portfolio", {"tickers": ["AAPL", "MSFT", "GOOGL", "TSLA"]})
-        "Portfolio Backtest: AAPL, MSFT, GOOGL +1"
+        >>> generate_task_name("multi_asset", {"tickers": ["AAPL", "MSFT", "GOOGL", "TSLA"]})
+        "Multi-Asset: AAPL, MSFT, GOOGL +1"
     """
     if task_type == "backtest":
         ticker = config.get("ticker", "Unknown")
         strategy = config.get("strategy_name", "Default")
         return f"Backtest {ticker} - {strategy}"
-    
-    elif task_type == "portfolio":
-        tickers = config.get("tickers", [])
-        if not tickers:
-            return "Portfolio Backtest"
-
-        # Show first 3 tickers, add "+N" for remainder
-        display_tickers = ", ".join(tickers[:3])
-        if len(tickers) > 3:
-            display_tickers += f" +{len(tickers) - 3}"
-        return f"Portfolio Backtest: {display_tickers}"
 
     elif task_type == "multi_asset":
         tickers = config.get("tickers", [])
@@ -123,22 +112,6 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "timeframe": config.get("timeframe", "1d"),
         }
 
-    
-    elif task_type == "portfolio":
-        return {
-            "tickers": config.get("tickers"),
-            "weights": config.get("weights"),
-            "start_date": config.get("start_date"),
-            "end_date": config.get("end_date"),
-            "initial_cash": config.get("initial_cash"),
-            "commission": config.get("commission"),
-            "stake": config.get("stake"),
-            "strategy_name": config.get("strategy_name"),
-            "params": config.get("params"),
-            "sizer_type": config.get("sizer_type", "fixed_size"),
-            "sizer_config": config.get("sizer_config"),
-            "timeframe": config.get("timeframe", "1d"),
-        }
     
     elif task_type == "multi_asset":
         return {

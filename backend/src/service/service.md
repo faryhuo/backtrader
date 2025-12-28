@@ -6,7 +6,7 @@
 - `app.py`：兼容层入口（`app` 实例定义在 `backend/api.py`，此处仅转发导出，供历史导入路径使用）。
 - `backtest_engine.py`：回测引擎，支持策略加载、参数解析与回测执行。**默认通过 Worker Pool 隔离执行用户代码**。
 - `live_engine.py`：实盘/模拟盘运行引擎与 broker 选择。**支持 Worker Pool 隔离执行**。
-- `portfolio_backtest.py`：投资组合回测编排与执行。
+- `multi_asset_backtest.py`：多资产投资组合回测引擎（含相关性矩阵、Markowitz 优化）。
 - `session_manager.py`：回测/实盘会话生命周期管理。
 - `strategy_executor.py`：策略执行编排（统一回测/实盘调用入口、对接沙箱/引擎）。
 - `strategy_sandbox.py`：策略代码沙箱执行，安全加载用户策略（软隔离）。

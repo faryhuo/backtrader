@@ -1538,3 +1538,121 @@ Alive: False
 2025-12-28 22:42:37 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> running
 2025-12-28 22:42:37 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> completed
 2025-12-28 22:42:37 - src.service.task_manager - INFO - Task 99a9434c-f18f-4f1a-a72e-74c073d4f487 completed successfully
+2025-12-28 22:52:50 - api - INFO - Shutting down worker pool...
+2025-12-28 22:52:50 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:52:50 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:52:50 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:52:55 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:52:55 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:52:55 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:52:55 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:52:55 - api - INFO - Warming up worker pool...
+2025-12-28 22:52:55 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:52:56 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:52:56 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:53:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:33 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:53:33 - src.db.storage.task - INFO - Created task 0eaac5b2-5921-4eb4-91be-2a5a69120fed of type multi_asset
+2025-12-28 22:53:33 - src.service.task_manager - INFO - Submitted task 0eaac5b2-5921-4eb4-91be-2a5a69120fed of type multi_asset
+2025-12-28 22:53:33 - src.db.storage.task - INFO - Updated task 0eaac5b2-5921-4eb4-91be-2a5a69120fed status: pending -> running
+2025-12-28 22:53:33 - src.db.storage.task - INFO - Updated task 0eaac5b2-5921-4eb4-91be-2a5a69120fed status: running -> running
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:53:33 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:53:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:38 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:53:38 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:53:38 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:53:38 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:53:41 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:53:41 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:53:41 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Calculating correlation matrix...
+2025-12-28 22:53:41 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:53:41 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Calculating optimization suggestions...
+2025-12-28 22:53:41 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:53:41 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:53:41 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:53:41 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:53:43 - src.service.multi_asset_backtest - WARNING - Failed to generate chart: invalid command name ".!canvas"
+2025-12-28 22:53:43 - src.db.storage.task - INFO - Updated task 0eaac5b2-5921-4eb4-91be-2a5a69120fed status: running -> running
+2025-12-28 22:53:43 - src.db.storage.portfolio - INFO - Saved portfolio result 3f417b2c-34b5-4ac6-be44-269c2b8facc6
+2025-12-28 22:53:43 - src.db.storage.task - INFO - Updated task 0eaac5b2-5921-4eb4-91be-2a5a69120fed status: running -> running
+2025-12-28 22:53:43 - src.db.storage.task - INFO - Updated task 0eaac5b2-5921-4eb4-91be-2a5a69120fed status: running -> completed
+2025-12-28 22:53:43 - src.service.task_manager - INFO - Task 0eaac5b2-5921-4eb4-91be-2a5a69120fed completed successfully
+2025-12-28 22:57:15 - api - INFO - Shutting down worker pool...
+2025-12-28 22:57:15 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:57:16 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:57:16 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:58:50 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:58:50 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:58:50 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:58:50 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:58:50 - api - INFO - Warming up worker pool...
+2025-12-28 22:58:50 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:58:50 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:58:50 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:59:00 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:59:00 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db

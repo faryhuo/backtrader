@@ -31,7 +31,7 @@ class PortfolioStorage(BaseStorage):
         Save a portfolio backtest result to the database.
 
         Args:
-            result: Portfolio backtest result dict from run_portfolio_backtest()
+            result: Portfolio backtest result dict from run_multi_asset_backtest()
             user_id: Optional user ID for multi-user support
 
         Returns:

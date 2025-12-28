@@ -100,7 +100,12 @@ function PortfolioResultsSection({ t, result, columns }) {
 
     return (
         <div className="results-section">
-            <PortfolioMetricsCard t={t} metrics={result.portfolio_metrics} />
+            <PortfolioMetricsCard t={t} metrics={{
+                final_value: result.final_value ?? result.portfolio_metrics?.final_value,
+                total_return: result.total_return ?? result.portfolio_metrics?.total_return,
+                weighted_sharpe: result.weighted_sharpe ?? result.sharpe_ratio ?? result.portfolio_metrics?.weighted_sharpe,
+                max_drawdown: result.max_drawdown ?? result.portfolio_metrics?.max_drawdown,
+            }} />
 
             {hasMultiAssetData ? (
                 <Card className="multi-asset-results-card">

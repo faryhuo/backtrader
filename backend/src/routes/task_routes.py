@@ -367,19 +367,19 @@ def _get_executor_for_task_type(task_type: str):
             return backtest_executor
 
         elif task_type == TaskType.PORTFOLIO.value:
-            from src.service.portfolio_backtest import run_portfolio_backtest
+            from src.service.multi_asset_backtest import run_multi_asset_backtest
 
             def portfolio_executor(config, progress_callback):
-                return run_portfolio_backtest(
+                return run_multi_asset_backtest(
                     tickers=config.get("tickers"),
                     weights=config.get("weights"),
                     start_date=config.get("start_date"),
                     end_date=config.get("end_date"),
                     initial_cash=config.get("initial_cash", 100000),
                     commission=config.get("commission", 0.0005),
-                    stake=config.get("stake", 100),
                     strategy_name=config.get("strategy_name"),
-                    params=config.get("params"),
+                    per_asset_params=config.get("per_asset_params"),
+                    optimization_method=config.get("optimization_method", "equal_weight"),
                 )
 
             return portfolio_executor
