@@ -135,6 +135,9 @@ export function useBacktest() {
             timeframe,
             selectedStrategy,
             paramOverrides,
+            paramMode,
+            globalIndicatorParams,
+            perAssetParams,
         } = params;
 
         const validTickers = tickers.filter(ticker => ticker.trim());
@@ -151,6 +154,21 @@ export function useBacktest() {
         try {
             const paramsToSend = Object.keys(paramOverrides || {}).length > 0 ? paramOverrides : null;
 
+            // Determine per-asset params based on paramMode
+            let perAssetParamsToSend = null;
+
+            if (paramMode === 'per_asset' && perAssetParams && Object.keys(perAssetParams).length > 0) {
+                // Per-asset mode: use individual params for each ticker
+                perAssetParamsToSend = perAssetParams;
+            } else if (paramMode === 'global' && globalIndicatorParams && Object.keys(globalIndicatorParams).length > 0) {
+                // Global mode: apply same params to all tickers
+                perAssetParamsToSend = {};
+                validTickers.forEach(ticker => {
+                    perAssetParamsToSend[ticker] = { ...globalIndicatorParams };
+                });
+            }
+            // Default mode: perAssetParamsToSend stays null, backend uses default values
+
             const taskResponse = await api.runPortfolioBacktest({
                 tickers: validTickers,
                 weights: weights.slice(0, validTickers.length),
@@ -163,7 +181,8 @@ export function useBacktest() {
                 sizer_config: sizerConfig || null,
                 timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy || null,
-                params: paramsToSend
+                params: paramsToSend,
+                per_asset_params: perAssetParamsToSend
             });
 
 

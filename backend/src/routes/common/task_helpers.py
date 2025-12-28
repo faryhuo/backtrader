@@ -58,13 +58,25 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
         tickers = config.get("tickers", [])
         if not tickers:
             return "Portfolio Backtest"
-        
+
         # Show first 3 tickers, add "+N" for remainder
         display_tickers = ", ".join(tickers[:3])
         if len(tickers) > 3:
             display_tickers += f" +{len(tickers) - 3}"
         return f"Portfolio Backtest: {display_tickers}"
-    
+
+    elif task_type == "multi_asset":
+        tickers = config.get("tickers", [])
+        opt_method = config.get("optimization_method", "equal_weight")
+        if not tickers:
+            return "Multi-Asset Backtest"
+
+        # Show first 3 tickers, add "+N" for remainder
+        display_tickers = ", ".join(tickers[:3])
+        if len(tickers) > 3:
+            display_tickers += f" +{len(tickers) - 3}"
+        return f"Multi-Asset: {display_tickers} ({opt_method})"
+
     elif task_type == "walkforward":
         strategy = config.get("strategy_name", "Unknown")
         ticker = config.get("ticker", "Unknown")
@@ -128,6 +140,21 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "timeframe": config.get("timeframe", "1d"),
         }
     
+    elif task_type == "multi_asset":
+        return {
+            "tickers": config.get("tickers"),
+            "weights": config.get("weights"),
+            "start_date": config.get("start_date"),
+            "end_date": config.get("end_date"),
+            "initial_cash": config.get("initial_cash"),
+            "commission": config.get("commission"),
+            "strategy_name": config.get("strategy_name"),
+            "per_asset_params": config.get("per_asset_params"),
+            "rebalance_config": config.get("rebalance_config"),
+            "optimization_method": config.get("optimization_method", "equal_weight"),
+            "timeframe": config.get("timeframe", "1d"),
+        }
+
     elif task_type == "walkforward":
         return {
             "strategy_name": config.get("strategy_name"),
@@ -146,7 +173,7 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "sizer_config": config.get("sizer_config"),
             "timeframe": config.get("timeframe", "1d"),
         }
-    
+
     # Default: return all fields
     return config
 

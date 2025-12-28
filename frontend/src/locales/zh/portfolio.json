@@ -26,6 +26,22 @@
   "chart": "组合净值图",
   "chart_alt": "组合净值图",
   "empty_state": "请在上方配置投资组合并运行回测以查看结果",
+  "per_asset_params": "单资产参数",
+  "per_asset_hint": "为每个资产配置不同的指标参数。留空则使用默认值。",
+  "global_indicator_params": "指标参数",
+  "global_indicator_hint": "配置应用于所有资产的统一指标参数。留空则使用默认值。",
+  "indicator_params": "指标参数",
+  "no_tickers_hint": "请先在上方添加标的以配置单资产参数。",
+  "param_mode": {
+    "default": "默认",
+    "global": "全局自定义",
+    "per_asset": "单资产",
+    "default_hint": "使用内置的默认指标参数值。"
+  },
+  "reset_all": "全部重置",
+  "reset": "重置",
+  "apply_to_all": "应用到所有标的",
+  "custom": "自定义",
   "validation": {
     "no_ticker": "请至少输入一个标的",
     "no_date_range": "请选择日期范围"
@@ -46,6 +62,76 @@
     "expected_return": "预期收益",
     "expected_volatility": "预期波动率",
     "sharpe_ratio": "夏普比率"
+  },
+  "equity_curve": "净值曲线",
+  "no_equity_data": "暂无净值曲线数据",
+  "rebalances": "次再平衡",
+  "rebalancing": "再平衡",
+  "rebalancing_history": "再平衡历史",
+  "no_rebalancing": "暂无再平衡事件",
+  "transaction_cost": "费用",
+  "total_cost": "总费用",
+  "portfolio_value": "价值",
+  "weight_changes": "权重变化",
+  "events": "事件",
+  "buy": "买入",
+  "sell": "卖出",
+  "contributions": "贡献度",
+  "asset_contribution": "资产贡献度",
+  "no_contribution_data": "暂无贡献度数据",
+  "contribution": "贡献度",
+  "weight": "权重",
+  "not_set": "未设置",
+  "indicators": {
+    "groups": {
+      "trend": "趋势指标",
+      "momentum": "动量指标",
+      "macd": "MACD",
+      "volatility": "波动率指标"
+    },
+    "sma_period": {
+      "label": "SMA周期",
+      "tooltip": "简单移动平均线周期"
+    },
+    "ema_period": {
+      "label": "EMA周期",
+      "tooltip": "指数移动平均线周期"
+    },
+    "rsi_period": {
+      "label": "RSI周期",
+      "tooltip": "相对强弱指标周期"
+    },
+    "rsi_oversold": {
+      "label": "RSI超卖",
+      "tooltip": "RSI超卖阈值"
+    },
+    "rsi_overbought": {
+      "label": "RSI超买",
+      "tooltip": "RSI超买阈值"
+    },
+    "macd_fast": {
+      "label": "MACD快线",
+      "tooltip": "MACD快线周期"
+    },
+    "macd_slow": {
+      "label": "MACD慢线",
+      "tooltip": "MACD慢线周期"
+    },
+    "macd_signal": {
+      "label": "MACD信号线",
+      "tooltip": "MACD信号线周期"
+    },
+    "bb_period": {
+      "label": "布林带周期",
+      "tooltip": "布林带周期"
+    },
+    "bb_std": {
+      "label": "布林带标准差",
+      "tooltip": "布林带标准差倍数"
+    },
+    "atr_period": {
+      "label": "ATR周期",
+      "tooltip": "平均真实波幅周期"
+    }
   }
 }
-

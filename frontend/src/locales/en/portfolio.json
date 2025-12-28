@@ -26,6 +26,22 @@
   "chart": "Portfolio Chart",
   "chart_alt": "Portfolio Chart",
   "empty_state": "Configure your portfolio above and run a backtest to see results",
+  "per_asset_params": "Per-Asset Parameters",
+  "per_asset_hint": "Configure different indicator parameters for each asset. Leave empty to use defaults.",
+  "global_indicator_params": "Indicator Parameters",
+  "global_indicator_hint": "Configure indicator parameters that apply to all assets. Leave empty to use defaults.",
+  "indicator_params": "Indicator Parameters",
+  "no_tickers_hint": "Add tickers above to configure per-asset parameters.",
+  "param_mode": {
+    "default": "Default",
+    "global": "Global Custom",
+    "per_asset": "Per-Asset",
+    "default_hint": "Using built-in default parameter values for all indicators."
+  },
+  "reset_all": "Reset All",
+  "reset": "Reset",
+  "apply_to_all": "Apply to all tickers",
+  "custom": "custom",
   "validation": {
     "no_ticker": "Please enter at least one ticker",
     "no_date_range": "Please select a date range"
@@ -46,6 +62,76 @@
     "expected_return": "Expected Return",
     "expected_volatility": "Expected Volatility",
     "sharpe_ratio": "Sharpe Ratio"
+  },
+  "equity_curve": "Equity Curve",
+  "no_equity_data": "No equity curve data available",
+  "rebalances": "rebalances",
+  "rebalancing": "Rebalancing",
+  "rebalancing_history": "Rebalancing History",
+  "no_rebalancing": "No rebalancing events",
+  "transaction_cost": "Cost",
+  "total_cost": "Total Cost",
+  "portfolio_value": "Value",
+  "weight_changes": "Weight Changes",
+  "events": "events",
+  "buy": "BUY",
+  "sell": "SELL",
+  "contributions": "Contributions",
+  "asset_contribution": "Asset Contribution",
+  "no_contribution_data": "No contribution data available",
+  "contribution": "Contribution",
+  "weight": "Weight",
+  "not_set": "Not set",
+  "indicators": {
+    "groups": {
+      "trend": "TREND INDICATORS",
+      "momentum": "MOMENTUM INDICATORS",
+      "macd": "MACD",
+      "volatility": "VOLATILITY INDICATORS"
+    },
+    "sma_period": {
+      "label": "SMA Period",
+      "tooltip": "Simple Moving Average period"
+    },
+    "ema_period": {
+      "label": "EMA Period",
+      "tooltip": "Exponential Moving Average period"
+    },
+    "rsi_period": {
+      "label": "RSI Period",
+      "tooltip": "Relative Strength Index period"
+    },
+    "rsi_oversold": {
+      "label": "RSI Oversold",
+      "tooltip": "RSI oversold threshold"
+    },
+    "rsi_overbought": {
+      "label": "RSI Overbought",
+      "tooltip": "RSI overbought threshold"
+    },
+    "macd_fast": {
+      "label": "MACD Fast",
+      "tooltip": "MACD fast period"
+    },
+    "macd_slow": {
+      "label": "MACD Slow",
+      "tooltip": "MACD slow period"
+    },
+    "macd_signal": {
+      "label": "MACD Signal",
+      "tooltip": "MACD signal period"
+    },
+    "bb_period": {
+      "label": "BB Period",
+      "tooltip": "Bollinger Bands period"
+    },
+    "bb_std": {
+      "label": "BB StdDev",
+      "tooltip": "Bollinger Bands standard deviation"
+    },
+    "atr_period": {
+      "label": "ATR Period",
+      "tooltip": "Average True Range period"
+    }
   }
 }
-

@@ -48,14 +48,14 @@ class PortfolioStorage(BaseStorage):
                     weights=result.get("weights", []),
                     start_date=result.get("start_date"),
                     end_date=result.get("end_date"),
-                    initial_cash=portfolio_metrics.get("initial_cash", 0),
-                    commission=portfolio_metrics.get("commission", 0.0005),
+                    initial_cash=result.get("initial_cash") or portfolio_metrics.get("initial_cash", 0),
+                    commission=result.get("commission") or portfolio_metrics.get("commission", 0.0005),
                     strategy_name=result.get("strategy_name"),
-                    final_value=portfolio_metrics.get("final_value"),
-                    total_return=portfolio_metrics.get("total_return"),
-                    weighted_sharpe=portfolio_metrics.get("weighted_sharpe"),
-                    max_drawdown=portfolio_metrics.get("max_drawdown"),
-                    num_assets=portfolio_metrics.get("num_assets", 0),
+                    final_value=result.get("final_value") or portfolio_metrics.get("final_value"),
+                    total_return=result.get("total_return") or portfolio_metrics.get("total_return"),
+                    weighted_sharpe=result.get("weighted_sharpe") or portfolio_metrics.get("weighted_sharpe"),
+                    max_drawdown=result.get("max_drawdown") or portfolio_metrics.get("max_drawdown"),
+                    num_assets=result.get("num_assets") or portfolio_metrics.get("num_assets", 0),
                     successful_backtests=portfolio_metrics.get("successful_backtests", 0),
                     failed_backtests=portfolio_metrics.get("failed_backtests", 0),
                     portfolio_metrics=portfolio_metrics,
@@ -63,7 +63,10 @@ class PortfolioStorage(BaseStorage):
                     correlation_matrix=result.get("correlation", {}),
                     optimization_suggestion=result.get("optimization", {}),
                     plot_filename=result.get("plot_filename"),
-                    params=result.get("params"),
+                    # Multi-asset specific fields
+                    equity_curve=result.get("equity_curve", {}),
+                    rebalancing_events=result.get("rebalancing_events", []),
+                    asset_contributions=result.get("asset_contributions", {}),
                 )
 
                 session.add(model)
@@ -193,6 +196,7 @@ class PortfolioStorage(BaseStorage):
             "successful_backtests": model.successful_backtests,
             "failed_backtests": model.failed_backtests,
             "plot_filename": model.plot_filename,
+            "plot_url": f"/images/{model.plot_filename}" if model.plot_filename else None,
         }
         
         if not summary:
@@ -201,6 +205,10 @@ class PortfolioStorage(BaseStorage):
                 "individual_results": model.individual_results,
                 "correlation": model.correlation_matrix,
                 "optimization": model.optimization_suggestion,
+                # Multi-asset specific fields
+                "equity_curve": model.equity_curve or {},
+                "rebalancing_events": model.rebalancing_events or [],
+                "asset_contributions": model.asset_contributions or {},
             })
         
         return result

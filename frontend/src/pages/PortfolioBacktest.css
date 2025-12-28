@@ -359,6 +359,297 @@
     padding: 48px;
 }
 
+/* Global Indicator Parameters Section */
+.global-indicator-params-section,
+.indicator-params-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.indicator-params-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.param-mode-selector {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.param-mode-selector .ant-segmented {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.param-mode-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.global-params-content .param-group,
+.per-asset-params-content .param-group {
+    margin-bottom: 16px;
+}
+
+/* Global params panel - match per-asset collapse styling */
+.global-params-panel {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.global-params-panel .param-group {
+    margin-bottom: 16px;
+}
+
+.global-params-panel .param-group:last-child {
+    margin-bottom: 0;
+}
+
+.global-params-panel .param-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.global-params-panel .param-group-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.global-params-panel .ant-form-item {
+    margin-bottom: 0;
+}
+
+.global-params-panel .ant-form-item-label>label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.global-params-content .param-group:last-child,
+.per-asset-params-content .param-group:last-child {
+    margin-bottom: 0;
+}
+
+.global-params-content .param-group-title,
+.per-asset-params-content .param-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.global-params-content .param-group-inputs,
+.per-asset-params-content .param-group-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.global-params-content .ant-form-item,
+.per-asset-params-content .ant-form-item {
+    margin-bottom: 0;
+}
+
+.global-params-content .ant-form-item-label>label,
+.per-asset-params-content .ant-form-item-label>label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.global-indicator-params-section .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.global-indicator-params-section .section-header.clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.global-indicator-params-section .section-header.clickable:hover {
+    color: var(--primary-color);
+}
+
+.global-indicator-params-section .custom-badge,
+.indicator-params-section .custom-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+.global-indicator-params-content {
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.global-indicator-params-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.global-indicator-params-content .param-group {
+    margin-bottom: 16px;
+}
+
+.global-indicator-params-content .param-group:last-child {
+    margin-bottom: 0;
+}
+
+.global-indicator-params-content .param-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.global-indicator-params-content .param-group-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.global-indicator-params-content .ant-form-item {
+    margin-bottom: 0;
+}
+
+.global-indicator-params-content .ant-form-item-label>label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Per-Asset Parameters Section */
+.per-asset-params-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.per-asset-params-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+.per-asset-params-content {
+    margin-top: 16px;
+}
+
+.per-asset-params-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.per-asset-collapse .ant-collapse-item {
+    margin-bottom: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.per-asset-collapse .ant-collapse-header {
+    padding: 12px 16px !important;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.per-asset-collapse .ticker-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.per-asset-collapse .custom-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 10px;
+}
+
+.per-asset-collapse .ant-collapse-content-box {
+    padding: 16px;
+}
+
+.per-asset-collapse .param-group {
+    margin-bottom: 16px;
+}
+
+.per-asset-collapse .param-group:last-child {
+    margin-bottom: 0;
+}
+
+.per-asset-collapse .param-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.per-asset-collapse .param-group-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.per-asset-collapse .ant-form-item {
+    margin-bottom: 0;
+}
+
+.per-asset-collapse .ant-form-item-label>label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .portfolio-page {
@@ -375,5 +666,9 @@
 
     .metric-value {
         font-size: 18px;
+    }
+
+    .per-asset-collapse .param-group-inputs {
+        grid-template-columns: 1fr 1fr;
     }
 }

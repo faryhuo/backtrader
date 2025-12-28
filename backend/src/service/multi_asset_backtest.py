@@ -38,6 +38,10 @@ from src.service.portfolio_analyzers import (
     AssetContributionAnalyzer,
     PortfolioMetricsAnalyzer,
 )
+from src.service.portfolio_backtest import (
+    calculate_correlation_matrix,
+    calculate_optimal_weights,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -326,6 +330,30 @@ def run_multi_asset_backtest(
         asset_contribution_analysis = strat.analyzers.asset_contribution.get_analysis()
         portfolio_metrics_analysis = strat.analyzers.portfolio_metrics.get_analysis()
 
+        # Calculate correlation matrix and optimization suggestions
+        logger.info("Calculating correlation matrix...")
+        correlation = calculate_correlation_matrix(tickers, start_date, end_date)
+
+        logger.info("Calculating optimization suggestions...")
+        optimization = calculate_optimal_weights(tickers, start_date, end_date)
+
+        # Build individual results from asset contributions
+        contributions = asset_contribution_analysis.get("contributions", {})
+        individual_results = []
+        for i, ticker in enumerate(tickers):
+            contrib = contributions.get(ticker, {})
+            individual_results.append({
+                "ticker": ticker,
+                "weight": weights[i],
+                "success": True,
+                "initial_cash": initial_cash * weights[i],
+                "final_value": contrib.get("end_value", initial_cash * weights[i]),
+                "total_return": contrib.get("return_pct", 0),
+                "sharpe": None,  # Not available per-asset in unified backtest
+                "max_drawdown": None,
+                "total_trades": 0,
+            })
+
         # Build result dictionary
         result = {
             "final_value": final_value,
@@ -339,7 +367,12 @@ def run_multi_asset_backtest(
             # From custom analyzers
             "equity_curve": portfolio_value_analysis.get("equity_curve", {}),
             "rebalancing_events": rebalancing_analysis.get("events", []),
-            "asset_contributions": asset_contribution_analysis.get("contributions", {}),
+            "asset_contributions": contributions,
+            # Individual asset results (for UI compatibility)
+            "individual_results": individual_results,
+            # Correlation and optimization
+            "correlation": correlation,
+            "optimization": optimization,
             # Comprehensive metrics
             "metrics": {
                 "returns": returns_analysis,
@@ -361,12 +394,25 @@ def run_multi_asset_backtest(
         if save_path:
             logger.info("Step 8: Generating chart...")
             try:
-                fig = cerebro.plot(style='candlestick', volume=False)[0][0]
-                fig.savefig(save_path, dpi=150, bbox_inches='tight')
-                plt.close(fig)
-                logger.info(f"Chart saved to {save_path}")
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                # Force non-interactive backend to prevent popup
+                import matplotlib
+                matplotlib.use('Agg', force=True)
+                import matplotlib.pyplot as plt
+                plt.ioff()
+                plt.switch_backend('Agg')
+
+                figures = cerebro.plot(style='candlestick', volume=False, iplot=False)
+                first_fig = figures[0][0] if figures and figures[0] else None
+                if first_fig:
+                    first_fig.set_size_inches(18, 10)
+                    first_fig.savefig(save_path, bbox_inches='tight', dpi=150)
+                    plt.close(first_fig)
+                    logger.info(f"Chart saved to {save_path}")
+                plt.close('all')
             except Exception as e:
                 logger.warning(f"Failed to generate chart: {e}")
+                plt.close('all')
 
         return result
 

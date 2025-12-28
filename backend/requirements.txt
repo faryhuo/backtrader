@@ -3,6 +3,7 @@ uvicorn[standard]>=0.32.0
 backtrader>=1.9.78.123
 yfinance>=0.2.66
 pandas>=2.3.3
+scipy>=1.14.0
 matplotlib>=3.10.8
 python-dotenv>=1.0.1
 openai>=2.11.0

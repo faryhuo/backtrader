@@ -18,6 +18,8 @@ import {
     ParametersSection,
     StrategyParamsSection,
     PortfolioResultsSection,
+    IndicatorParamsSection,
+    PARAM_MODES,
 } from '../components/PortfolioBacktest';
 import './PortfolioBacktest.css';
 
@@ -46,6 +48,11 @@ function PortfolioBacktest() {
         setSelectedStrategy,
     } = useStrategies();
     const [paramsExpanded, setParamsExpanded] = useState(true);
+
+    // Indicator parameters state
+    const [paramMode, setParamMode] = useState(PARAM_MODES.DEFAULT);
+    const [globalIndicatorParams, setGlobalIndicatorParams] = useState({});
+    const [perAssetParams, setPerAssetParams] = useState({});
 
     // Use custom hooks
     const {
@@ -94,6 +101,9 @@ function PortfolioBacktest() {
             timeframe,
             selectedStrategy,
             paramOverrides,
+            paramMode,
+            globalIndicatorParams,
+            perAssetParams,
         }, t);
     };
 
@@ -152,6 +162,17 @@ function PortfolioBacktest() {
                         setParamsExpanded={setParamsExpanded}
                     />
                 )}
+
+                <IndicatorParamsSection
+                    t={t}
+                    tickers={validTickers}
+                    paramMode={paramMode}
+                    onParamModeChange={setParamMode}
+                    globalParams={globalIndicatorParams}
+                    onGlobalParamsChange={setGlobalIndicatorParams}
+                    perAssetParams={perAssetParams}
+                    onPerAssetParamsChange={setPerAssetParams}
+                />
 
                 <div className="run-button-container">
                     <Button

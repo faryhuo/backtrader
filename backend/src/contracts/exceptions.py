@@ -17,4 +17,9 @@ class DataLoadError(Exception):
     pass
 
 
-__all__ = ["StrategyLoadError", "DataLoadError"]
+class BacktestError(Exception):
+    """Raised when a backtest fails to execute."""
+    pass
+
+
+__all__ = ["StrategyLoadError", "DataLoadError", "BacktestError"]

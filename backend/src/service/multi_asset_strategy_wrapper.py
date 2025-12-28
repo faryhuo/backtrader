@@ -24,6 +24,7 @@ from src.service.portfolio_rebalancer import (
     RebalanceScheduler,
     PortfolioRebalancer,
 )
+from src.service.portfolio_optimizer import get_optimizer
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         logger.info(f"Initializing MultiAssetPortfolioStrategy for {len(self.p.tickers)} assets")
         logger.info(f"Tickers: {self.p.tickers}")
         logger.info(f"Initial weights: {[f'{w:.2%}' for w in self.p.initial_weights]}")
+        logger.info(f"Per-asset params: {self.p.per_asset_params}")
 
         # Validate inputs
         if len(self.p.tickers) != len(self.datas):
@@ -90,6 +92,8 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         self.indicators = {}
         for ticker, data in self.ticker_data.items():
             params = self.p.per_asset_params.get(ticker, {})
+            if params:
+                logger.info(f"{ticker}: Using custom params: {params}")
             self.indicators[ticker] = self._create_indicators(ticker, data, params)
 
         logger.info(f"Created indicators for {len(self.indicators)} assets")
@@ -118,10 +122,20 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     # Create scheduler
                     scheduler = RebalanceScheduler(frequency)
 
-                    # Create rebalancer (optimizer will be set in Phase 3)
+                    # Create optimizer if not using equal weights
+                    optimizer = None
+                    if self.p.optimization_method and self.p.optimization_method != "equal_weight":
+                        try:
+                            optimizer = get_optimizer(self.p.optimization_method)
+                            logger.info(f"Using optimizer: {self.p.optimization_method}")
+                        except ValueError as e:
+                            logger.warning(f"Failed to create optimizer: {e}. Using equal weights.")
+                            optimizer = None
+
+                    # Create rebalancer with optimizer
                     self.rebalancer = PortfolioRebalancer(
                         scheduler=scheduler,
-                        optimizer=None,  # Will be set in Phase 3
+                        optimizer=optimizer,
                         min_trade_threshold=self.p.rebalance_config.get("min_trade_threshold", 0.01),
                         transaction_cost_pct=self.p.rebalance_config.get("transaction_cost_pct", 0.001),
                     )
@@ -161,8 +175,13 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         """
         Create indicators for a single asset with custom parameters.
 
-        This is a simple example implementation. In a real system, you would
-        load the user's strategy and create their specific indicators.
+        Supports the following indicators with per-asset customization:
+        - SMA (Simple Moving Average): sma_period
+        - EMA (Exponential Moving Average): ema_period
+        - RSI (Relative Strength Index): rsi_period, rsi_oversold, rsi_overbought
+        - MACD: macd_fast, macd_slow, macd_signal
+        - Bollinger Bands: bb_period, bb_std
+        - ATR (Average True Range): atr_period
 
         Args:
             ticker: Ticker symbol
@@ -173,20 +192,68 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
             Dictionary of indicators for this asset
         """
         indicators = {}
+        created_indicators = []
 
-        # Example: Create SMA with custom period
+        # SMA - Simple Moving Average (default if no indicators specified)
         sma_period = params.get("sma_period", 20)
-        indicators["sma"] = bt.indicators.SimpleMovingAverage(
-            data.close, period=sma_period
-        )
+        if sma_period:
+            indicators["sma"] = bt.indicators.SimpleMovingAverage(
+                data.close, period=sma_period
+            )
+            created_indicators.append(f"SMA({sma_period})")
 
-        # Example: Create RSI with custom period
+        # EMA - Exponential Moving Average
+        ema_period = params.get("ema_period")
+        if ema_period:
+            indicators["ema"] = bt.indicators.ExponentialMovingAverage(
+                data.close, period=ema_period
+            )
+            created_indicators.append(f"EMA({ema_period})")
+
+        # RSI - Relative Strength Index (default if no indicators specified)
         rsi_period = params.get("rsi_period", 14)
-        indicators["rsi"] = bt.indicators.RSI(data.close, period=rsi_period)
+        if rsi_period:
+            indicators["rsi"] = bt.indicators.RSI(data.close, period=rsi_period)
+            created_indicators.append(f"RSI({rsi_period})")
 
-        logger.debug(
-            f"{ticker}: Created indicators (SMA={sma_period}, RSI={rsi_period})"
-        )
+            # Store RSI thresholds for strategy logic (if provided)
+            rsi_oversold = params.get("rsi_oversold", 30)
+            rsi_overbought = params.get("rsi_overbought", 70)
+            indicators["rsi_oversold"] = rsi_oversold
+            indicators["rsi_overbought"] = rsi_overbought
+
+        # MACD - Moving Average Convergence Divergence
+        macd_fast = params.get("macd_fast")
+        macd_slow = params.get("macd_slow")
+        macd_signal = params.get("macd_signal")
+        if macd_fast and macd_slow and macd_signal:
+            indicators["macd"] = bt.indicators.MACD(
+                data.close,
+                period_me1=macd_fast,
+                period_me2=macd_slow,
+                period_signal=macd_signal,
+            )
+            created_indicators.append(f"MACD({macd_fast},{macd_slow},{macd_signal})")
+
+        # Bollinger Bands
+        bb_period = params.get("bb_period")
+        bb_std = params.get("bb_std", 2.0)
+        if bb_period:
+            indicators["bollinger"] = bt.indicators.BollingerBands(
+                data.close, period=bb_period, devfactor=bb_std
+            )
+            created_indicators.append(f"BB({bb_period},{bb_std})")
+
+        # ATR - Average True Range
+        atr_period = params.get("atr_period")
+        if atr_period:
+            indicators["atr"] = bt.indicators.ATR(data, period=atr_period)
+            created_indicators.append(f"ATR({atr_period})")
+
+        if created_indicators:
+            logger.debug(f"{ticker}: Created indicators: {', '.join(created_indicators)}")
+        else:
+            logger.debug(f"{ticker}: No indicators created (using defaults)")
 
         return indicators
 

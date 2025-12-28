@@ -1,0 +1,1540 @@
+2025-12-28 16:58:10 - root - INFO - Logging configured with level: INFO
+2025-12-28 16:58:10 - test - INFO - Test message
+2025-12-28 16:59:54 - root - INFO - Logging configured with level: INFO
+2025-12-28 16:59:54 - test - INFO - Test works!
+2025-12-28 17:00:39 - root - INFO - Logging configured with level: INFO
+2025-12-28 17:00:39 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:00:39 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 17:00:39 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 17:00:39 - api - INFO - Warming up worker pool...
+2025-12-28 17:00:39 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 17:00:39 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 17:00:39 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 17:01:19 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:19 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:23 - src.db.storage.backtest - INFO - BacktestStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:26 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 17:01:26 - src.db.storage.task - INFO - Created task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 of type portfolio
+2025-12-28 17:01:26 - src.service.task_manager - INFO - Submitted task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 of type portfolio
+2025-12-28 17:01:26 - src.db.storage.task - INFO - Updated task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 status: pending -> running
+2025-12-28 17:01:26 - src.db.storage.task - INFO - Updated task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 status: running -> running
+2025-12-28 17:01:29 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:30 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 17:01:30 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 17:01:30 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 17:01:30 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 17:01:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 17:01:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 17:01:31 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 17:01:31 - src.db.storage.task - INFO - Updated task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 status: running -> running
+2025-12-28 17:01:31 - src.db.storage.portfolio - ERROR - Failed to save portfolio result: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7d717d14-a32e-4c1b-816e-4a5bc0136f1c', 'anonymous', '2025-12-28 09:01:31.936997', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_a7a91c68-8e39-455d-bd01-998915302fcd.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-28 17:01:31 - src.db.storage.task - INFO - Updated task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 status: running -> failed
+2025-12-28 17:01:31 - src.service.task_manager - ERROR - Task 47f0cc2e-e83e-48fc-8418-5f3b01e33e70 failed: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7d717d14-a32e-4c1b-816e-4a5bc0136f1c', 'anonymous', '2025-12-28 09:01:31.936997', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_a7a91c68-8e39-455d-bd01-998915302fcd.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table portfolio_results has no column named equity_curve
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Project\backtrader\backend\src\service\task_manager.py", line 153, in _execute_task
+    result = await executor(config, progress_callback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Project\backtrader\backend\src\routes\portfolio_routes.py", line 211, in _portfolio_executor
+    portfolio_id = storage.save_result(result, user_id=config.get("user_id"))
+  File "D:\Project\backtrader\backend\src\db\storage\portfolio.py", line 70, in save_result
+    session.flush()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4466, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7d717d14-a32e-4c1b-816e-4a5bc0136f1c', 'anonymous', '2025-12-28 09:01:31.936997', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_a7a91c68-8e39-455d-bd01-998915302fcd.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-28 17:01:43 - src.utils.config_loader - INFO - Loading broker configuration from D:\Project\backtrader\backend\resources\config\broker_config.json
+2025-12-28 17:01:43 - src.utils.config_loader - INFO - Loaded configuration v1.0
+2025-12-28 17:01:43 - src.utils.config_loader - INFO - Enabled exchanges: binance
+2025-12-28 17:01:48 - src.db.storage.data_cache - INFO - DataCacheStorage initialized
+2025-12-28 21:35:06 - src.db.storage.task - INFO - Created task fd72170f-294c-4752-8377-49fc2e503000 of type portfolio
+2025-12-28 21:35:06 - src.service.task_manager - INFO - Submitted task fd72170f-294c-4752-8377-49fc2e503000 of type portfolio
+2025-12-28 21:35:06 - src.db.storage.task - INFO - Updated task fd72170f-294c-4752-8377-49fc2e503000 status: pending -> running
+2025-12-28 21:35:06 - src.db.storage.task - INFO - Updated task fd72170f-294c-4752-8377-49fc2e503000 status: running -> running
+2025-12-28 21:35:09 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:35:09 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:35:09 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:35:09 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:35:09 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:35:09 - src.db.storage.task - INFO - Updated task fd72170f-294c-4752-8377-49fc2e503000 status: running -> running
+2025-12-28 21:35:09 - src.db.storage.portfolio - ERROR - Failed to save portfolio result: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7f57e63f-7839-4f6f-bd54-a929c5cf4e44', 'anonymous', '2025-12-28 13:35:09.727141', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_acfe1c01-ff96-4b0a-af66-60c60868a21f.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-28 21:35:09 - src.db.storage.task - INFO - Updated task fd72170f-294c-4752-8377-49fc2e503000 status: running -> failed
+2025-12-28 21:35:09 - src.service.task_manager - ERROR - Task fd72170f-294c-4752-8377-49fc2e503000 failed: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7f57e63f-7839-4f6f-bd54-a929c5cf4e44', 'anonymous', '2025-12-28 13:35:09.727141', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_acfe1c01-ff96-4b0a-af66-60c60868a21f.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table portfolio_results has no column named equity_curve
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Project\backtrader\backend\src\service\task_manager.py", line 153, in _execute_task
+    result = await executor(config, progress_callback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Project\backtrader\backend\src\routes\portfolio_routes.py", line 211, in _portfolio_executor
+    portfolio_id = storage.save_result(result, user_id=config.get("user_id"))
+  File "D:\Project\backtrader\backend\src\db\storage\portfolio.py", line 70, in save_result
+    session.flush()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4466, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table portfolio_results has no column named equity_curve
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('7f57e63f-7839-4f6f-bd54-a929c5cf4e44', 'anonymous', '2025-12-28 13:35:09.727141', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 99578.74, -0.42, -0.3777, 9.69, 2, 2, 0, '{"initial_cash": 100000.0, "final_value": 99578.74, "total_return": -0.42, "weighted_sharpe": -0.3777, "max_drawdown": 9.69, "num_assets": 2, "successful_backtests": 2, "failed_backtests": 0}', '[{"ticker": "AAPL", "weight": 0.5, "success": true, "initial_cash": 50000.0, "final_value": 53383.47167129515, "total_return": 6.77, "sharpe_ratio":  ... (182 characters truncated) ... 46195.26993522644, "total_return": -7.61, "sharpe_ratio": -1.2273039936313392, "max_drawdown": 9.687599949978553, "total_trades": 12, "error": null}]', '{"matrix": [[1.0, 0.7041215342592501], [0.7041215342592501, 1.0]], "tickers": ["AAPL", "GOOGL"]}', '{"optimal_weights": [1.0, 0.0], "tickers": ["AAPL", "GOOGL"], "expected_return": 0.0704, "expected_volatility": 0.2907, "sharpe_ratio": 0.1735}', None, None, None, None, None, None, None, None, 'portfolio_acfe1c01-ff96-4b0a-af66-60c60868a21f.png')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-28 21:35:24 - api - INFO - Shutting down worker pool...
+2025-12-28 21:35:24 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 21:35:24 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 21:35:24 - api - INFO - Worker pool shutdown complete
+2025-12-28 21:35:45 - root - INFO - Logging configured with level: INFO
+2025-12-28 21:35:45 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:45 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 21:35:45 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 21:35:45 - api - INFO - Warming up worker pool...
+2025-12-28 21:35:45 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 21:35:45 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 21:35:45 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 21:35:48 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:35:48 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:36:29 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 21:36:29 - src.db.storage.task - INFO - Created task 6440f8b0-8205-47c7-9e90-a33c2b127388 of type portfolio
+2025-12-28 21:36:29 - src.service.task_manager - INFO - Submitted task 6440f8b0-8205-47c7-9e90-a33c2b127388 of type portfolio
+2025-12-28 21:36:29 - src.db.storage.task - INFO - Updated task 6440f8b0-8205-47c7-9e90-a33c2b127388 status: pending -> running
+2025-12-28 21:36:29 - src.db.storage.task - INFO - Updated task 6440f8b0-8205-47c7-9e90-a33c2b127388 status: running -> running
+2025-12-28 21:36:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:36:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:36:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:36:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:36:33 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:36:34 - src.db.storage.task - INFO - Updated task 6440f8b0-8205-47c7-9e90-a33c2b127388 status: running -> running
+2025-12-28 21:36:34 - src.db.storage.portfolio - INFO - Saved portfolio result f349e17e-f134-4064-b1f1-eb396edb3d21
+2025-12-28 21:36:34 - src.db.storage.task - INFO - Updated task 6440f8b0-8205-47c7-9e90-a33c2b127388 status: running -> running
+2025-12-28 21:36:34 - src.db.storage.task - INFO - Updated task 6440f8b0-8205-47c7-9e90-a33c2b127388 status: running -> completed
+2025-12-28 21:36:34 - src.service.task_manager - INFO - Task 6440f8b0-8205-47c7-9e90-a33c2b127388 completed successfully
+2025-12-28 21:42:49 - src.db.storage.backtest - INFO - BacktestStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:43:02 - src.utils.config_loader - INFO - Loading broker configuration from D:\Project\backtrader\backend\resources\config\broker_config.json
+2025-12-28 21:43:02 - src.utils.config_loader - INFO - Loaded configuration v1.0
+2025-12-28 21:43:02 - src.utils.config_loader - INFO - Enabled exchanges: binance
+2025-12-28 21:43:09 - src.routes.live_routes - INFO - [63408b06-cad1-4a94-9f06-35d6a6f9276d] Starting paper trading: ooo on BTC/USDT (binance)
+2025-12-28 21:43:09 - src.service.live_engine - INFO - Starting live trading session 00caeb4b-9693-463f-944f-e9e60eefda6c: ooo on BTC/USDT (binance paper)
+2025-12-28 21:43:09 - src.service.session_manager - INFO - Created session 00caeb4b-9693-463f-944f-e9e60eefda6c: ooo on BTC/USDT (binance paper) [user=anonymous]
+2025-12-28 21:43:09 - src.service.worker.worker_pool - INFO - Started live trading worker for session 00caeb4b-9693-463f-944f-e9e60eefda6c
+2025-12-28 21:43:09 - src.service.live_engine - INFO - Session 00caeb4b-9693-463f-944f-e9e60eefda6c started in worker pool
+2025-12-28 21:43:09 - src.routes.live_routes - INFO - [63408b06-cad1-4a94-9f06-35d6a6f9276d] Session 00caeb4b-9693-463f-944f-e9e60eefda6c started successfully
+2025-12-28 21:43:18 - src.routes.backtest_routes - INFO - [7149e475-a61d-4d72-8894-eb788cb67a2f] Submitting backtest: ticker=AAPL strategy=ooo
+2025-12-28 21:43:18 - src.db.storage.task - INFO - Created task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 of type backtest
+2025-12-28 21:43:18 - src.service.task_manager - INFO - Submitted task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 of type backtest
+2025-12-28 21:43:18 - src.routes.backtest_routes - INFO - [7149e475-a61d-4d72-8894-eb788cb67a2f] Backtest task submitted: 0df3f20f-d1d4-458c-b6f8-de8014f20d01
+2025-12-28 21:43:18 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: pending -> running
+2025-12-28 21:43:18 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: running -> running
+2025-12-28 21:43:18 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: running -> running
+2025-12-28 21:43:20 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: running -> running
+2025-12-28 21:43:20 - src.db.storage.backtest - INFO - Saved backtest f99a13e5-8cdb-4c44-bdc0-0e7bc45fafb4 to database
+2025-12-28 21:43:20 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: running -> running
+2025-12-28 21:43:20 - src.db.storage.task - INFO - Updated task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 status: running -> completed
+2025-12-28 21:43:20 - src.service.task_manager - INFO - Task 0df3f20f-d1d4-458c-b6f8-de8014f20d01 completed successfully
+2025-12-28 21:48:02 - src.routes.backtest_routes - INFO - [ba941b85-2cb7-41d4-8796-4257531e0afa] Submitting backtest: ticker=AAPL strategy=ooo
+2025-12-28 21:48:02 - src.db.storage.task - INFO - Created task e823b0be-1345-4b3b-afb5-6becae0a3373 of type backtest
+2025-12-28 21:48:02 - src.service.task_manager - INFO - Submitted task e823b0be-1345-4b3b-afb5-6becae0a3373 of type backtest
+2025-12-28 21:48:02 - src.routes.backtest_routes - INFO - [ba941b85-2cb7-41d4-8796-4257531e0afa] Backtest task submitted: e823b0be-1345-4b3b-afb5-6becae0a3373
+2025-12-28 21:48:02 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: pending -> running
+2025-12-28 21:48:02 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: running -> running
+2025-12-28 21:48:02 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: running -> running
+2025-12-28 21:48:03 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: running -> running
+2025-12-28 21:48:03 - src.db.storage.backtest - INFO - Saved backtest c1221478-3d74-47cd-83b1-471ac0a10fa7 to database
+2025-12-28 21:48:03 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: running -> running
+2025-12-28 21:48:03 - src.db.storage.task - INFO - Updated task e823b0be-1345-4b3b-afb5-6becae0a3373 status: running -> completed
+2025-12-28 21:48:03 - src.service.task_manager - INFO - Task e823b0be-1345-4b3b-afb5-6becae0a3373 completed successfully
+2025-12-28 21:48:32 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:48:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for SPY at 1d interval
+2025-12-28 21:48:33 - src.db.storage.market_data - INFO - Saved 501 records to DB for SPY (skipped 0 existing)
+2025-12-28 21:48:33 - src.db.storage.market_data - INFO - Successfully loaded data for SPY from yahoo
+2025-12-28 21:48:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:48:34 - src.db.storage.market_data - INFO - Loaded 484 records from Yahoo Finance for 000300.SS at 1d interval
+2025-12-28 21:48:34 - src.db.storage.market_data - INFO - Saved 484 records to DB for 000300.SS (skipped 0 existing)
+2025-12-28 21:48:34 - src.db.storage.market_data - INFO - Successfully loaded data for 000300.SS from yahoo
+2025-12-28 21:48:34 - src.db.storage.backtest - INFO - Updated deep analysis for backtest c1221478-3d74-47cd-83b1-471ac0a10fa7
+2025-12-28 21:49:24 - src.db.storage.task - INFO - Created task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 of type portfolio
+2025-12-28 21:49:24 - src.service.task_manager - INFO - Submitted task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 of type portfolio
+2025-12-28 21:49:24 - src.db.storage.task - INFO - Updated task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 status: pending -> running
+2025-12-28 21:49:24 - src.db.storage.task - INFO - Updated task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 status: running -> running
+2025-12-28 21:49:25 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:49:25 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:49:25 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:49:25 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:49:25 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:49:26 - src.db.storage.task - INFO - Updated task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 status: running -> running
+2025-12-28 21:49:26 - src.db.storage.portfolio - INFO - Saved portfolio result 6805f3e1-05e4-420b-9e69-51bfc8eab391
+2025-12-28 21:49:26 - src.db.storage.task - INFO - Updated task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 status: running -> running
+2025-12-28 21:49:26 - src.db.storage.task - INFO - Updated task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 status: running -> completed
+2025-12-28 21:49:26 - src.service.task_manager - INFO - Task f02f2628-ba56-44e5-b672-6c3ae4d16fb0 completed successfully
+2025-12-28 21:49:34 - src.db.storage.task - INFO - Created task c5df3207-09c6-42bf-88d3-0f53e352e4c4 of type portfolio
+2025-12-28 21:49:34 - src.service.task_manager - INFO - Submitted task c5df3207-09c6-42bf-88d3-0f53e352e4c4 of type portfolio
+2025-12-28 21:49:34 - src.db.storage.task - INFO - Updated task c5df3207-09c6-42bf-88d3-0f53e352e4c4 status: pending -> running
+2025-12-28 21:49:34 - src.db.storage.task - INFO - Updated task c5df3207-09c6-42bf-88d3-0f53e352e4c4 status: running -> running
+2025-12-28 21:49:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:49:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:49:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:49:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:49:46 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:49:46 - src.db.storage.task - INFO - Updated task c5df3207-09c6-42bf-88d3-0f53e352e4c4 status: running -> running
+2025-12-28 21:49:46 - src.db.storage.portfolio - INFO - Saved portfolio result bf33a395-8220-4de6-bd8f-78ae93d5d0a1
+2025-12-28 21:49:46 - src.db.storage.task - INFO - Updated task c5df3207-09c6-42bf-88d3-0f53e352e4c4 status: running -> running
+2025-12-28 21:49:46 - src.db.storage.task - INFO - Updated task c5df3207-09c6-42bf-88d3-0f53e352e4c4 status: running -> completed
+2025-12-28 21:49:46 - src.service.task_manager - INFO - Task c5df3207-09c6-42bf-88d3-0f53e352e4c4 completed successfully
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Created task 3d78424d-c8fa-4a40-8222-602f7d7e926c of type portfolio
+2025-12-28 21:50:43 - src.service.task_manager - INFO - Submitted task 3d78424d-c8fa-4a40-8222-602f7d7e926c of type portfolio
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Updated task 3d78424d-c8fa-4a40-8222-602f7d7e926c status: pending -> running
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Updated task 3d78424d-c8fa-4a40-8222-602f7d7e926c status: running -> running
+2025-12-28 21:50:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:43 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Updated task 3d78424d-c8fa-4a40-8222-602f7d7e926c status: running -> running
+2025-12-28 21:50:43 - src.db.storage.portfolio - INFO - Saved portfolio result 61779e2c-3cf6-453d-ad11-985135c74f4d
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Updated task 3d78424d-c8fa-4a40-8222-602f7d7e926c status: running -> running
+2025-12-28 21:50:43 - src.db.storage.task - INFO - Updated task 3d78424d-c8fa-4a40-8222-602f7d7e926c status: running -> completed
+2025-12-28 21:50:43 - src.service.task_manager - INFO - Task 3d78424d-c8fa-4a40-8222-602f7d7e926c completed successfully
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Created task 76b88da5-e6e6-4457-a475-767b3ef9e898 of type portfolio
+2025-12-28 21:50:47 - src.service.task_manager - INFO - Submitted task 76b88da5-e6e6-4457-a475-767b3ef9e898 of type portfolio
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Updated task 76b88da5-e6e6-4457-a475-767b3ef9e898 status: pending -> running
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Updated task 76b88da5-e6e6-4457-a475-767b3ef9e898 status: running -> running
+2025-12-28 21:50:47 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:47 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:47 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:47 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:47 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Updated task 76b88da5-e6e6-4457-a475-767b3ef9e898 status: running -> running
+2025-12-28 21:50:47 - src.db.storage.portfolio - INFO - Saved portfolio result 3976af8e-7617-420a-bb67-bfc436377437
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Updated task 76b88da5-e6e6-4457-a475-767b3ef9e898 status: running -> running
+2025-12-28 21:50:47 - src.db.storage.task - INFO - Updated task 76b88da5-e6e6-4457-a475-767b3ef9e898 status: running -> completed
+2025-12-28 21:50:47 - src.service.task_manager - INFO - Task 76b88da5-e6e6-4457-a475-767b3ef9e898 completed successfully
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Created task acf13c6f-90a2-43a0-99bf-a115a1468226 of type portfolio
+2025-12-28 21:50:51 - src.service.task_manager - INFO - Submitted task acf13c6f-90a2-43a0-99bf-a115a1468226 of type portfolio
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Updated task acf13c6f-90a2-43a0-99bf-a115a1468226 status: pending -> running
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Updated task acf13c6f-90a2-43a0-99bf-a115a1468226 status: running -> running
+2025-12-28 21:50:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:50:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:50:51 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Updated task acf13c6f-90a2-43a0-99bf-a115a1468226 status: running -> running
+2025-12-28 21:50:51 - src.db.storage.portfolio - INFO - Saved portfolio result d7c403d1-e566-4c26-8604-aa9f87b33068
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Updated task acf13c6f-90a2-43a0-99bf-a115a1468226 status: running -> running
+2025-12-28 21:50:51 - src.db.storage.task - INFO - Updated task acf13c6f-90a2-43a0-99bf-a115a1468226 status: running -> completed
+2025-12-28 21:50:51 - src.service.task_manager - INFO - Task acf13c6f-90a2-43a0-99bf-a115a1468226 completed successfully
+2025-12-28 21:51:35 - src.db.storage.task - INFO - Created task 215acd6e-2f47-485c-80dd-fb0704faf0ce of type portfolio
+2025-12-28 21:51:35 - src.service.task_manager - INFO - Submitted task 215acd6e-2f47-485c-80dd-fb0704faf0ce of type portfolio
+2025-12-28 21:51:35 - src.db.storage.task - INFO - Updated task 215acd6e-2f47-485c-80dd-fb0704faf0ce status: pending -> running
+2025-12-28 21:51:35 - src.db.storage.task - INFO - Updated task 215acd6e-2f47-485c-80dd-fb0704faf0ce status: running -> running
+2025-12-28 21:51:36 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:51:36 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:51:36 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:51:36 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:51:37 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:51:37 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:51:37 - src.db.storage.task - INFO - Updated task 215acd6e-2f47-485c-80dd-fb0704faf0ce status: running -> running
+2025-12-28 21:51:37 - src.db.storage.portfolio - INFO - Saved portfolio result b9ad8bef-8bb3-46aa-bdc7-92a3c96d1b10
+2025-12-28 21:51:37 - src.db.storage.task - INFO - Updated task 215acd6e-2f47-485c-80dd-fb0704faf0ce status: running -> running
+2025-12-28 21:51:37 - src.db.storage.task - INFO - Updated task 215acd6e-2f47-485c-80dd-fb0704faf0ce status: running -> completed
+2025-12-28 21:51:37 - src.service.task_manager - INFO - Task 215acd6e-2f47-485c-80dd-fb0704faf0ce completed successfully
+2025-12-28 21:51:45 - src.db.storage.task - INFO - Created task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 of type portfolio
+2025-12-28 21:51:45 - src.service.task_manager - INFO - Submitted task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 of type portfolio
+2025-12-28 21:51:45 - src.db.storage.task - INFO - Updated task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 status: pending -> running
+2025-12-28 21:51:45 - src.db.storage.task - INFO - Updated task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 status: running -> running
+2025-12-28 21:51:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:51:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:51:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:51:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:51:46 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:51:46 - src.db.storage.task - INFO - Updated task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 status: running -> running
+2025-12-28 21:51:46 - src.db.storage.portfolio - INFO - Saved portfolio result 5fcb6ea3-153d-4db2-958a-92b716217f75
+2025-12-28 21:51:46 - src.db.storage.task - INFO - Updated task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 status: running -> running
+2025-12-28 21:51:46 - src.db.storage.task - INFO - Updated task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 status: running -> completed
+2025-12-28 21:51:46 - src.service.task_manager - INFO - Task 3b74957a-e58b-44b0-a85e-e67fb99e6ba4 completed successfully
+2025-12-28 21:52:10 - src.db.storage.task - INFO - Created task d16603fb-3e29-4b3d-a536-c7731d316a42 of type portfolio
+2025-12-28 21:52:10 - src.service.task_manager - INFO - Submitted task d16603fb-3e29-4b3d-a536-c7731d316a42 of type portfolio
+2025-12-28 21:52:10 - src.db.storage.task - INFO - Updated task d16603fb-3e29-4b3d-a536-c7731d316a42 status: pending -> running
+2025-12-28 21:52:10 - src.db.storage.task - INFO - Updated task d16603fb-3e29-4b3d-a536-c7731d316a42 status: running -> running
+2025-12-28 21:52:12 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:52:12 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:52:12 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:52:12 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 21:52:13 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 21:52:13 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 21:52:13 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:52:13 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 21:52:13 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 21:52:13 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 21:52:13 - src.db.storage.task - INFO - Updated task d16603fb-3e29-4b3d-a536-c7731d316a42 status: running -> running
+2025-12-28 21:52:13 - src.db.storage.portfolio - INFO - Saved portfolio result e16ba49d-9ef7-4e39-ad73-45d80bdf95ec
+2025-12-28 21:52:13 - src.db.storage.task - INFO - Updated task d16603fb-3e29-4b3d-a536-c7731d316a42 status: running -> running
+2025-12-28 21:52:13 - src.db.storage.task - INFO - Updated task d16603fb-3e29-4b3d-a536-c7731d316a42 status: running -> completed
+2025-12-28 21:52:13 - src.service.task_manager - INFO - Task d16603fb-3e29-4b3d-a536-c7731d316a42 completed successfully
+2025-12-28 21:57:06 - api - INFO - Shutting down worker pool...
+2025-12-28 21:57:06 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 21:57:07 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 21:57:07 - api - INFO - Worker pool shutdown complete
+2025-12-28 21:57:14 - root - INFO - Logging configured with level: INFO
+2025-12-28 21:57:14 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:57:14 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 21:57:14 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 21:57:14 - api - INFO - Warming up worker pool...
+2025-12-28 21:57:14 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 21:57:14 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 21:57:14 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 21:57:24 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:57:24 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:58:52 - api - INFO - Shutting down worker pool...
+2025-12-28 21:58:52 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 21:58:53 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 21:58:53 - api - INFO - Worker pool shutdown complete
+2025-12-28 21:58:58 - root - INFO - Logging configured with level: INFO
+2025-12-28 21:58:58 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:58:58 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 21:58:58 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 21:58:58 - api - INFO - Warming up worker pool...
+2025-12-28 21:58:58 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 21:58:58 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 21:58:58 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 21:58:59 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 21:58:59 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:07 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:02:07 - src.db.storage.task - INFO - Created task e6b2b417-fa22-4523-978e-8f8273215d0d of type portfolio
+2025-12-28 22:02:07 - src.service.task_manager - INFO - Submitted task e6b2b417-fa22-4523-978e-8f8273215d0d of type portfolio
+2025-12-28 22:02:07 - src.db.storage.task - INFO - Updated task e6b2b417-fa22-4523-978e-8f8273215d0d status: pending -> running
+2025-12-28 22:02:07 - src.db.storage.task - INFO - Updated task e6b2b417-fa22-4523-978e-8f8273215d0d status: running -> running
+2025-12-28 22:02:09 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:02:11 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:02:11 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:02:11 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:02:11 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:02:12 - src.db.storage.task - INFO - Updated task e6b2b417-fa22-4523-978e-8f8273215d0d status: running -> running
+2025-12-28 22:02:12 - src.db.storage.portfolio - INFO - Saved portfolio result de4b5ffa-ccc0-4a1b-ad35-645fb0170ff0
+2025-12-28 22:02:12 - src.db.storage.task - INFO - Updated task e6b2b417-fa22-4523-978e-8f8273215d0d status: running -> running
+2025-12-28 22:02:12 - src.db.storage.task - INFO - Updated task e6b2b417-fa22-4523-978e-8f8273215d0d status: running -> completed
+2025-12-28 22:02:12 - src.service.task_manager - INFO - Task e6b2b417-fa22-4523-978e-8f8273215d0d completed successfully
+2025-12-28 22:02:19 - src.db.storage.task - INFO - Created task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 of type portfolio
+2025-12-28 22:02:19 - src.service.task_manager - INFO - Submitted task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 of type portfolio
+2025-12-28 22:02:19 - src.db.storage.task - INFO - Updated task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 status: pending -> running
+2025-12-28 22:02:19 - src.db.storage.task - INFO - Updated task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 status: running -> running
+2025-12-28 22:02:49 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:02:49 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:02:49 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:02:49 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:02:49 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:02:49 - src.db.storage.task - INFO - Updated task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 status: running -> running
+2025-12-28 22:02:49 - src.db.storage.portfolio - INFO - Saved portfolio result 2bd4bfc7-b8ec-45e6-aac1-e4341ea2ad1f
+2025-12-28 22:02:49 - src.db.storage.task - INFO - Updated task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 status: running -> running
+2025-12-28 22:02:49 - src.db.storage.task - INFO - Updated task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 status: running -> completed
+2025-12-28 22:02:49 - src.service.task_manager - INFO - Task 1bf54a3b-3e6a-47b3-8c1a-74fdc5bb2080 completed successfully
+2025-12-28 22:03:01 - src.db.storage.task - INFO - Created task 13665ca4-bf46-4584-a6f2-7b7a79f79399 of type portfolio
+2025-12-28 22:03:01 - src.service.task_manager - INFO - Submitted task 13665ca4-bf46-4584-a6f2-7b7a79f79399 of type portfolio
+2025-12-28 22:03:01 - src.db.storage.task - INFO - Updated task 13665ca4-bf46-4584-a6f2-7b7a79f79399 status: pending -> running
+2025-12-28 22:03:01 - src.db.storage.task - INFO - Updated task 13665ca4-bf46-4584-a6f2-7b7a79f79399 status: running -> running
+2025-12-28 22:03:02 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:02 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:03:02 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:03:02 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:03:02 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:02 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:03:03 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:03:03 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:03:03 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:03:03 - src.db.storage.task - INFO - Updated task 13665ca4-bf46-4584-a6f2-7b7a79f79399 status: running -> running
+2025-12-28 22:03:03 - src.db.storage.portfolio - INFO - Saved portfolio result 849e7e1e-1ebe-4f81-9682-37d3e11bb45d
+2025-12-28 22:03:03 - src.db.storage.task - INFO - Updated task 13665ca4-bf46-4584-a6f2-7b7a79f79399 status: running -> running
+2025-12-28 22:03:03 - src.db.storage.task - INFO - Updated task 13665ca4-bf46-4584-a6f2-7b7a79f79399 status: running -> completed
+2025-12-28 22:03:03 - src.service.task_manager - INFO - Task 13665ca4-bf46-4584-a6f2-7b7a79f79399 completed successfully
+2025-12-28 22:03:19 - api - INFO - Shutting down worker pool...
+2025-12-28 22:03:19 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:03:19 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:03:19 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:03:24 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:03:24 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:24 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:03:24 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:03:24 - api - INFO - Warming up worker pool...
+2025-12-28 22:03:24 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:03:24 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:03:24 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:03:58 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:03:58 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:06 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:04:06 - src.db.storage.task - INFO - Created task c951de47-0246-414f-8530-d5e4143d1eac of type portfolio
+2025-12-28 22:04:06 - src.service.task_manager - INFO - Submitted task c951de47-0246-414f-8530-d5e4143d1eac of type portfolio
+2025-12-28 22:04:06 - src.db.storage.task - INFO - Updated task c951de47-0246-414f-8530-d5e4143d1eac status: pending -> running
+2025-12-28 22:04:06 - src.db.storage.task - INFO - Updated task c951de47-0246-414f-8530-d5e4143d1eac status: running -> running
+2025-12-28 22:04:17 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:18 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:18 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:18 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:18 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:19 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:19 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:19 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:19 - src.db.storage.task - INFO - Updated task c951de47-0246-414f-8530-d5e4143d1eac status: running -> running
+2025-12-28 22:04:19 - src.db.storage.portfolio - INFO - Saved portfolio result c8d60568-a26d-4ec6-9688-39db01c553d4
+2025-12-28 22:04:19 - src.db.storage.task - INFO - Updated task c951de47-0246-414f-8530-d5e4143d1eac status: running -> running
+2025-12-28 22:04:19 - src.db.storage.task - INFO - Updated task c951de47-0246-414f-8530-d5e4143d1eac status: running -> completed
+2025-12-28 22:04:19 - src.service.task_manager - INFO - Task c951de47-0246-414f-8530-d5e4143d1eac completed successfully
+2025-12-28 22:04:27 - src.db.storage.task - INFO - Created task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 of type portfolio
+2025-12-28 22:04:27 - src.service.task_manager - INFO - Submitted task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 of type portfolio
+2025-12-28 22:04:27 - src.db.storage.task - INFO - Updated task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 status: pending -> running
+2025-12-28 22:04:27 - src.db.storage.task - INFO - Updated task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 status: running -> running
+2025-12-28 22:04:28 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:28 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:28 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:28 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:28 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:29 - src.db.storage.task - INFO - Updated task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 status: running -> running
+2025-12-28 22:04:29 - src.db.storage.portfolio - INFO - Saved portfolio result afa29652-ffd0-4929-930a-9ff34758bb2d
+2025-12-28 22:04:29 - src.db.storage.task - INFO - Updated task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 status: running -> running
+2025-12-28 22:04:29 - src.db.storage.task - INFO - Updated task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 status: running -> completed
+2025-12-28 22:04:29 - src.service.task_manager - INFO - Task e043c0c4-5b9b-40d8-81f0-e0eb44e28b46 completed successfully
+2025-12-28 22:04:51 - src.db.storage.task - INFO - Created task e641092d-0425-4055-ad76-9224941d5f81 of type portfolio
+2025-12-28 22:04:51 - src.service.task_manager - INFO - Submitted task e641092d-0425-4055-ad76-9224941d5f81 of type portfolio
+2025-12-28 22:04:51 - src.db.storage.task - INFO - Updated task e641092d-0425-4055-ad76-9224941d5f81 status: pending -> running
+2025-12-28 22:04:51 - src.db.storage.task - INFO - Updated task e641092d-0425-4055-ad76-9224941d5f81 status: running -> running
+2025-12-28 22:04:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:04:51 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:04:51 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:04:52 - src.db.storage.task - INFO - Updated task e641092d-0425-4055-ad76-9224941d5f81 status: running -> running
+2025-12-28 22:04:52 - src.db.storage.portfolio - INFO - Saved portfolio result 880101f4-b655-439a-8404-d62f02ce4be5
+2025-12-28 22:04:52 - src.db.storage.task - INFO - Updated task e641092d-0425-4055-ad76-9224941d5f81 status: running -> running
+2025-12-28 22:04:52 - src.db.storage.task - INFO - Updated task e641092d-0425-4055-ad76-9224941d5f81 status: running -> completed
+2025-12-28 22:04:52 - src.service.task_manager - INFO - Task e641092d-0425-4055-ad76-9224941d5f81 completed successfully
+2025-12-28 22:04:57 - src.db.storage.task - INFO - Created task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 of type portfolio
+2025-12-28 22:04:57 - src.service.task_manager - INFO - Submitted task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 of type portfolio
+2025-12-28 22:04:57 - src.db.storage.task - INFO - Updated task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 status: pending -> running
+2025-12-28 22:04:57 - src.db.storage.task - INFO - Updated task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 status: running -> running
+2025-12-28 22:05:07 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:05:08 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:05:08 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:05:08 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:05:08 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:05:08 - src.db.storage.task - INFO - Updated task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 status: running -> running
+2025-12-28 22:05:08 - src.db.storage.portfolio - INFO - Saved portfolio result dc3caa94-79f7-4bb2-a1a2-b0a21b88d5dd
+2025-12-28 22:05:08 - src.db.storage.task - INFO - Updated task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 status: running -> running
+2025-12-28 22:05:08 - src.db.storage.task - INFO - Updated task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 status: running -> completed
+2025-12-28 22:05:08 - src.service.task_manager - INFO - Task 2caf6f5c-93ca-4911-bb64-94b0b18b0668 completed successfully
+2025-12-28 22:22:06 - src.db.storage.task - INFO - Created task 473f76b4-2e9e-4499-836f-2d973f5f152e of type portfolio
+2025-12-28 22:22:06 - src.service.task_manager - INFO - Submitted task 473f76b4-2e9e-4499-836f-2d973f5f152e of type portfolio
+2025-12-28 22:22:06 - src.db.storage.task - INFO - Updated task 473f76b4-2e9e-4499-836f-2d973f5f152e status: pending -> running
+2025-12-28 22:22:06 - src.db.storage.task - INFO - Updated task 473f76b4-2e9e-4499-836f-2d973f5f152e status: running -> running
+2025-12-28 22:22:06 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:22:06 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:22:06 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:22:06 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:22:06 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:22:07 - src.db.storage.task - INFO - Updated task 473f76b4-2e9e-4499-836f-2d973f5f152e status: running -> running
+2025-12-28 22:22:07 - src.db.storage.portfolio - INFO - Saved portfolio result f809d05c-f5f9-4912-8ed3-368afe668104
+2025-12-28 22:22:07 - src.db.storage.task - INFO - Updated task 473f76b4-2e9e-4499-836f-2d973f5f152e status: running -> running
+2025-12-28 22:22:07 - src.db.storage.task - INFO - Updated task 473f76b4-2e9e-4499-836f-2d973f5f152e status: running -> completed
+2025-12-28 22:22:07 - src.service.task_manager - INFO - Task 473f76b4-2e9e-4499-836f-2d973f5f152e completed successfully
+2025-12-28 22:22:54 - api - INFO - Shutting down worker pool...
+2025-12-28 22:22:54 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:22:54 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:22:54 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:24:37 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:24:37 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:24:37 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:24:37 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:24:37 - api - INFO - Warming up worker pool...
+2025-12-28 22:24:37 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:24:37 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:24:37 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:24:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:24:43 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:24:46 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:24:46 - src.db.storage.task - INFO - Created task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 of type multi_asset
+2025-12-28 22:24:46 - src.service.task_manager - INFO - Submitted task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 of type multi_asset
+2025-12-28 22:24:46 - src.db.storage.task - INFO - Updated task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 status: pending -> running
+2025-12-28 22:24:46 - src.db.storage.task - INFO - Updated task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 status: running -> running
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:24:46 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:24:46 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:24:48 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:24:48 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:24:48 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:24:49 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:24:49 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:24:49 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:24:49 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:24:53 - src.service.multi_asset_backtest - INFO - Chart saved to D:\Project\backtrader\backend\resources\images\multi_asset_7770db24-5182-4f1d-8f0b-c1a7d275f4dc.png
+2025-12-28 22:24:53 - src.db.storage.task - INFO - Updated task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 status: running -> running
+2025-12-28 22:24:53 - src.db.storage.task - INFO - Updated task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 status: running -> failed
+2025-12-28 22:24:53 - src.service.task_manager - ERROR - Task 2df66039-1d46-4f1f-9faf-ee2f65d46c00 failed: 'NoneType' object has no attribute 'get'
+Traceback (most recent call last):
+  File "D:\Project\backtrader\backend\src\service\task_manager.py", line 153, in _execute_task
+    result = await executor(config, progress_callback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Project\backtrader\backend\src\routes\portfolio_routes.py", line 215, in _multi_asset_executor
+    "rebalance_frequency": config.get("rebalance_config", {}).get("frequency"),
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+2025-12-28 22:26:02 - api - INFO - Shutting down worker pool...
+2025-12-28 22:26:02 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:26:02 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:26:02 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:27:42 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:27:42 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:27:42 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:27:42 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:27:42 - api - INFO - Warming up worker pool...
+2025-12-28 22:27:42 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:27:42 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:27:42 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:28:11 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:11 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:13 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:28:13 - src.db.storage.task - INFO - Created task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 of type multi_asset
+2025-12-28 22:28:13 - src.service.task_manager - INFO - Submitted task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 of type multi_asset
+2025-12-28 22:28:13 - src.db.storage.task - INFO - Updated task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 status: pending -> running
+2025-12-28 22:28:13 - src.db.storage.task - INFO - Updated task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 status: running -> running
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:28:13 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:13 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:14 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:28:14 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:28:14 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:28:14 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:15 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:28:15 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:28:15 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:28:15 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:28:15 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:28:15 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:28:15 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:28:18 - src.service.multi_asset_backtest - WARNING - Failed to generate chart: invalid command name ".!canvas"
+2025-12-28 22:28:18 - src.db.storage.task - INFO - Updated task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 status: running -> running
+2025-12-28 22:28:18 - src.db.storage.portfolio - ERROR - Failed to save portfolio result: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:18.280915', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_ed07baca-8215-4af7-b4bb-db9dcbaaea9d.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2025-12-28 22:28:18 - src.db.storage.task - INFO - Updated task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 status: running -> failed
+2025-12-28 22:28:18 - src.service.task_manager - ERROR - Task 61b36fdc-a16f-40b3-8e04-a3ab6ac59b12 failed: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:18.280915', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_ed07baca-8215-4af7-b4bb-db9dcbaaea9d.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+Traceback (most recent call last):
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: NOT NULL constraint failed: portfolio_results.portfolio_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Project\backtrader\backend\src\service\task_manager.py", line 153, in _execute_task
+    result = await executor(config, progress_callback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Project\backtrader\backend\src\routes\portfolio_routes.py", line 222, in _multi_asset_executor
+    portfolio_id = storage.save_result(storage_result, user_id=config.get("user_id"))
+  File "D:\Project\backtrader\backend\src\db\storage\portfolio.py", line 73, in save_result
+    session.flush()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4466, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:18.280915', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_ed07baca-8215-4af7-b4bb-db9dcbaaea9d.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2025-12-28 22:28:31 - api - INFO - Shutting down worker pool...
+2025-12-28 22:28:31 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:28:31 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:28:31 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:28:45 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:28:45 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:45 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:28:45 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:28:45 - api - INFO - Warming up worker pool...
+2025-12-28 22:28:45 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:28:45 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:28:45 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:28:52 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:52 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:54 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:28:54 - src.db.storage.task - INFO - Created task 541f35e1-d1e3-40a4-b782-81a914d6a598 of type multi_asset
+2025-12-28 22:28:54 - src.service.task_manager - INFO - Submitted task 541f35e1-d1e3-40a4-b782-81a914d6a598 of type multi_asset
+2025-12-28 22:28:54 - src.db.storage.task - INFO - Updated task 541f35e1-d1e3-40a4-b782-81a914d6a598 status: pending -> running
+2025-12-28 22:28:54 - src.db.storage.task - INFO - Updated task 541f35e1-d1e3-40a4-b782-81a914d6a598 status: running -> running
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:28:54 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:54 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Saved 501 records to DB for AAPL (skipped 0 existing)
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:28:56 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Saved 501 records to DB for GOOGL (skipped 0 existing)
+2025-12-28 22:28:56 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:28:56 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:28:57 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:28:57 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:28:57 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:28:57 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:28:59 - src.service.multi_asset_backtest - WARNING - Failed to generate chart: invalid command name ".!canvas"
+2025-12-28 22:28:59 - src.db.storage.task - INFO - Updated task 541f35e1-d1e3-40a4-b782-81a914d6a598 status: running -> running
+2025-12-28 22:28:59 - src.db.storage.portfolio - ERROR - Failed to save portfolio result: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:59.855208', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_813011eb-9212-4f05-bc69-596f0c3c18b4.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2025-12-28 22:28:59 - src.db.storage.task - INFO - Updated task 541f35e1-d1e3-40a4-b782-81a914d6a598 status: running -> failed
+2025-12-28 22:28:59 - src.service.task_manager - ERROR - Task 541f35e1-d1e3-40a4-b782-81a914d6a598 failed: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:59.855208', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_813011eb-9212-4f05-bc69-596f0c3c18b4.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+Traceback (most recent call last):
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: NOT NULL constraint failed: portfolio_results.portfolio_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Project\backtrader\backend\src\service\task_manager.py", line 153, in _execute_task
+    result = await executor(config, progress_callback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Project\backtrader\backend\src\routes\portfolio_routes.py", line 222, in _multi_asset_executor
+    portfolio_id = storage.save_result(storage_result, user_id=config.get("user_id"))
+  File "D:\Project\backtrader\backend\src\db\storage\portfolio.py", line 73, in save_result
+    session.flush()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4466, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\session.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\fary\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: portfolio_results.portfolio_id
+[SQL: INSERT INTO portfolio_results (portfolio_id, user_id, created_at, tickers, weights, start_date, end_date, initial_cash, commission, stake, strategy_name, final_value, total_return, weighted_sharpe, max_drawdown, num_assets, successful_backtests, failed_backtests, portfolio_metrics, individual_results, correlation_matrix, optimization_suggestion, equity_curve, rebalancing_events, asset_contributions, optimization_history, rebalance_frequency, optimization_method, per_asset_params, params, plot_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (None, 'anonymous', '2025-12-28 14:28:59.855208', '["AAPL", "GOOGL"]', '[0.5, 0.5]', '2022-01-01', '2023-12-31', 100000.0, 0.0005, 100, 'ooo', 105271.83779270935, 5.271837792709353, 0.17692231218405294, 15.215226458190319, 2, 0, 0, '{"returns": {"rtot": 0.05137575001873031, "ravg": 0.00010254640722301459, "rnorm": 0.026178486039467347, "rnorm100": 2.617848603946735}, "drawdown":  ... (419 characters truncated) ... 618518, "num_days": 500}, "optimization_method": "equal_weight", "rebalance_frequency": null, "total_transaction_costs": 0.0, "rebalancing_count": 0}', '[]', '{}', '{}', '{"2022-01-03": 100000.0, "2022-01-04": 100000.0, "2022-01-05": 100000.0, "2022-01-06": 100000.0, "2022-01-07": 100000.0, "2022-01-10": 100000.0, "202 ... (16139 characters truncated) ... .85988743592, "2023-12-26": 105420.55901463318, "2023-12-27": 105449.15639622498, "2023-12-28": 105572.13866551209, "2023-12-29": 105271.83779270935}', '[]', '{"AAPL": {"return_pct": 5.779904724993455, "avg_weight": 0.5, "contribution_pct": 2.8899523624967274, "start_price": 182.00999450683594, "end_price": ... (119 characters truncated) ... 0.5, "contribution_pct": -1.8282100612250072, "start_price": 144.9915008544922, "end_price": 139.69000244140625, "start_shares": 0, "end_shares": 0}}', None, None, None, None, None, 'multi_asset_813011eb-9212-4f05-bc69-596f0c3c18b4.png')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2025-12-28 22:30:29 - api - INFO - Shutting down worker pool...
+2025-12-28 22:30:29 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:30:29 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:30:29 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:30:34 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:30:34 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:30:34 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:30:34 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:30:34 - api - INFO - Warming up worker pool...
+2025-12-28 22:30:34 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:30:34 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:30:34 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:30:36 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:30:36 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:30:37 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:30:37 - src.db.storage.task - INFO - Created task 51dc18f1-e21d-4926-8309-409bf4862723 of type multi_asset
+2025-12-28 22:30:37 - src.service.task_manager - INFO - Submitted task 51dc18f1-e21d-4926-8309-409bf4862723 of type multi_asset
+2025-12-28 22:30:37 - src.db.storage.task - INFO - Updated task 51dc18f1-e21d-4926-8309-409bf4862723 status: pending -> running
+2025-12-28 22:30:37 - src.db.storage.task - INFO - Updated task 51dc18f1-e21d-4926-8309-409bf4862723 status: running -> running
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:30:37 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:30:37 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:30:40 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:30:40 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:30:40 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:30:41 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:30:41 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:30:41 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:30:41 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:30:43 - src.service.multi_asset_backtest - WARNING - Failed to generate chart: invalid command name ".!canvas"
+2025-12-28 22:30:43 - src.db.storage.task - INFO - Updated task 51dc18f1-e21d-4926-8309-409bf4862723 status: running -> running
+2025-12-28 22:30:43 - src.db.storage.portfolio - INFO - Saved portfolio result 75af7fe3-e345-4b50-9688-d5b75130635b
+2025-12-28 22:30:43 - src.db.storage.task - INFO - Updated task 51dc18f1-e21d-4926-8309-409bf4862723 status: running -> running
+2025-12-28 22:30:43 - src.db.storage.task - INFO - Updated task 51dc18f1-e21d-4926-8309-409bf4862723 status: running -> completed
+2025-12-28 22:30:43 - src.service.task_manager - INFO - Task 51dc18f1-e21d-4926-8309-409bf4862723 completed successfully
+2025-12-28 22:34:20 - src.routes.backtest_routes - INFO - [efadcefb-99ac-424f-94df-8d7d895d07c9] Submitting backtest: ticker=AAPL strategy=ooo
+2025-12-28 22:34:20 - src.db.storage.task - INFO - Created task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 of type backtest
+2025-12-28 22:34:20 - src.service.task_manager - INFO - Submitted task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 of type backtest
+2025-12-28 22:34:20 - src.routes.backtest_routes - INFO - [efadcefb-99ac-424f-94df-8d7d895d07c9] Backtest task submitted: ad340a96-b57c-4bfe-9b63-9a69e6f7ce81
+2025-12-28 22:34:20 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: pending -> running
+2025-12-28 22:34:20 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: running -> running
+2025-12-28 22:34:20 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: running -> running
+2025-12-28 22:34:23 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: running -> running
+2025-12-28 22:34:23 - src.db.storage.backtest - INFO - BacktestStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:34:23 - src.db.storage.backtest - INFO - Saved backtest 4e4fd6d4-2fcb-4557-9d11-7bc71e31b783 to database
+2025-12-28 22:34:23 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: running -> running
+2025-12-28 22:34:24 - src.db.storage.task - INFO - Updated task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 status: running -> completed
+2025-12-28 22:34:24 - src.service.task_manager - INFO - Task ad340a96-b57c-4bfe-9b63-9a69e6f7ce81 completed successfully
+2025-12-28 22:38:06 - api - INFO - Shutting down worker pool...
+2025-12-28 22:38:06 - src.service.worker.worker_pool - INFO - Shutting down worker pool...
+2025-12-28 22:38:06 - src.service.worker.worker_pool - INFO - Worker pool shutdown complete
+2025-12-28 22:38:06 - api - INFO - Worker pool shutdown complete
+2025-12-28 22:38:12 - root - INFO - Logging configured with level: INFO
+2025-12-28 22:38:12 - root - INFO - Database URL: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:38:12 - root - INFO - Database absolute path: D:\Project\backtrader\backend\trading_sessions.db
+2025-12-28 22:38:12 - root - INFO - Starting Uvicorn server on 0.0.0.0:8000 with log level INFO
+2025-12-28 22:38:12 - api - INFO - Warming up worker pool...
+2025-12-28 22:38:12 - src.service.worker.worker_pool - INFO - Starting worker pool with 4 workers, timeout=300.0s, memory=1024MB
+2025-12-28 22:38:12 - src.service.worker.worker_pool - INFO - Worker pool started with 4 workers
+2025-12-28 22:38:12 - api - INFO - Worker pool warmed up: {'enabled': True, 'running': True, 'backtest_workers': 4, 'backtest_workers_alive': 4, 'live_sessions': 0, 'pending_results': 0, 'config': {'pool_size': 4, 'task_timeout': 300.0, 'max_memory_mb': 1024}}
+2025-12-28 22:42:29 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:29 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:31 - src.service.task_manager - INFO - TaskManager initialized with max_concurrent=3
+2025-12-28 22:42:31 - src.db.storage.task - INFO - Created task 99a9434c-f18f-4f1a-a72e-74c073d4f487 of type multi_asset
+2025-12-28 22:42:31 - src.service.task_manager - INFO - Submitted task 99a9434c-f18f-4f1a-a72e-74c073d4f487 of type multi_asset
+2025-12-28 22:42:31 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: pending -> running
+2025-12-28 22:42:31 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> running
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Starting multi-asset backtest: 2 assets, $100,000.00 capital
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Weights: ['50.00%', '50.00%']
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Period: 2022-01-01 to 2023-12-31
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Step 1: Aligning data feeds...
+2025-12-28 22:42:31 - src.service.multi_asset_backtest - INFO - Aligning data feeds for 2 tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:42:31 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:33 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:42:33 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:42:33 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:42:33 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Successfully loaded data for 2 tickers
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Found 501 common trading dates
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Data overlap: 100.0% (meets 80.0% threshold)
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Successfully aligned 2 data feeds
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 2: Creating Cerebro instance...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 3: Adding data feeds to Cerebro...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 4: Adding multi-asset portfolio strategy...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Strategy added: BuyAndHoldPortfolioStrategy
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 5: Adding portfolio analyzers...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 6: Running backtest...
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Initializing MultiAssetPortfolioStrategy for 2 assets
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Tickers: ['AAPL', 'GOOGL']
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Initial weights: ['50.00%', '50.00%']
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Per-asset params: {}
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Created indicators for 2 assets
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - MultiAssetPortfolioStrategy initialization complete
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Establishing initial positions on 2022-01-31
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Total portfolio value: $100,000.00
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: Buying 286 shares @ $174.78 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - GOOGL: Buying 369 shares @ $135.30 (target: $50,000.00, weight: 50.00%)
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - WARNING - GOOGL ORDER 7: Ref: 2
+OrdType: 0
+OrdType: Buy
+Status: 7
+Status: Margin
+Size: 369
+Price: None
+Price Limit: None
+TrailAmount: None
+TrailPercent: None
+ExecType: 0
+ExecType: Market
+CommInfo: None
+End of Session: 738186.9999999999
+Info: AutoOrderedDict()
+Broker: None
+Alive: False
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - Backtest complete. Final portfolio value: $105,271.84
+2025-12-28 22:42:34 - src.service.multi_asset_strategy_wrapper - INFO - AAPL: 286 shares @ $192.53 = $55,063.58
+2025-12-28 22:42:34 - src.service.portfolio_analyzers - INFO - PortfolioValueAnalyzer complete: $100,000.00 → $105,271.84 (501 days)
+2025-12-28 22:42:34 - src.service.portfolio_analyzers - INFO - Calculating asset contributions...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 7: Extracting metrics from analyzers...
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Calculating correlation matrix...
+2025-12-28 22:42:34 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:42:34 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Calculating optimization suggestions...
+2025-12-28 22:42:34 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for AAPL at 1d interval
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Saved 0 records to DB for AAPL (skipped 501 existing)
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Successfully loaded data for AAPL from yahoo
+2025-12-28 22:42:34 - src.db.storage.settings.base - INFO - SettingsStorage initialized with database: sqlite:///D:\Project\backtrader\backend\data\trading_sessions.db
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Loaded 501 records from Yahoo Finance for GOOGL at 1d interval
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Saved 0 records to DB for GOOGL (skipped 501 existing)
+2025-12-28 22:42:34 - src.db.storage.market_data - INFO - Successfully loaded data for GOOGL from yahoo
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Backtest complete! Final value: $105,271.84
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Total return: 5.27%, Sharpe: 0.18, Max DD: 15.22%
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Equity curve: 501 days
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Asset contributions: 2 assets
+2025-12-28 22:42:34 - src.service.multi_asset_backtest - INFO - Step 8: Generating chart...
+2025-12-28 22:42:37 - src.service.multi_asset_backtest - WARNING - Failed to generate chart: invalid command name ".!canvas"
+2025-12-28 22:42:37 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> running
+2025-12-28 22:42:37 - src.db.storage.portfolio - INFO - Saved portfolio result 57c945a0-81c6-412f-87f5-6475e1a11268
+2025-12-28 22:42:37 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> running
+2025-12-28 22:42:37 - src.db.storage.task - INFO - Updated task 99a9434c-f18f-4f1a-a72e-74c073d4f487 status: running -> completed
+2025-12-28 22:42:37 - src.service.task_manager - INFO - Task 99a9434c-f18f-4f1a-a72e-74c073d4f487 completed successfully
