@@ -418,6 +418,8 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     target_weights=target_weights,
                     orders=orders_executed,
                     transaction_cost=rebalance_plan['estimated_cost'],
+                    pre_weights=rebalance_plan.get('pre_rebalance_weights', {}),
+                    prices=current_prices,
                 )
             except Exception as e:
                 logger.warning(f"Failed to notify rebalancing analyzer: {e}")

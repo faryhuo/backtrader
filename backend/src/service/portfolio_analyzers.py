@@ -139,6 +139,8 @@ class RebalancingEventAnalyzer(bt.Analyzer):
         target_weights: dict[str, float],
         orders: dict[str, int],
         transaction_cost: float,
+        pre_weights: dict[str, float] = None,
+        prices: dict[str, float] = None,
     ):
         """
         Record a rebalancing event.
@@ -153,14 +155,32 @@ class RebalancingEventAnalyzer(bt.Analyzer):
             target_weights: New target allocation
             orders: Share delta for each ticker
             transaction_cost: Total transaction cost
+            pre_weights: Weights before rebalancing
+            prices: Current prices for each ticker
         """
+        # Build trades array with details
+        trades = []
+        for ticker, shares in orders.items():
+            trade = {
+                "ticker": ticker,
+                "shares": shares,
+                "action": "buy" if shares > 0 else "sell",
+            }
+            if prices and ticker in prices:
+                trade["price"] = prices[ticker]
+                trade["value"] = abs(shares) * prices[ticker]
+            trades.append(trade)
+
         event = {
             "date": date.isoformat(),
             "trigger": trigger,
             "pre_rebalance_value": float(pre_value),
             "post_rebalance_value": float(post_value),
+            "portfolio_value": float(pre_value),  # For frontend display
             "target_weights": {k: float(v) for k, v in target_weights.items()},
+            "pre_weights": {k: float(v) for k, v in pre_weights.items()} if pre_weights else {},
             "orders": {k: int(v) for k, v in orders.items()},
+            "trades": trades,
             "transaction_cost": float(transaction_cost),
         }
 
@@ -169,7 +189,7 @@ class RebalancingEventAnalyzer(bt.Analyzer):
 
         logger.info(
             f"Rebalancing event recorded: {date} ({trigger}), "
-            f"cost=${transaction_cost:.2f}"
+            f"cost=${transaction_cost:.2f}, {len(trades)} trades"
         )
 
     def get_analysis(self):
