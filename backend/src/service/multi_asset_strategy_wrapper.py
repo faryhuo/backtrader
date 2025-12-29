@@ -148,6 +148,9 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
         # Step 7: Rebalancing event log (for analyzer)
         self.rebalancing_events = []
+        
+        # Step 8: All trades log (includes initial positions and rebalancing trades)
+        self.all_trades = []
 
         logger.info("MultiAssetPortfolioStrategy initialization complete")
 
@@ -267,30 +270,96 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         logger.info(f"Establishing initial positions on {self.datetime.date(0)}")
 
         total_value = self.broker.getvalue()
-        logger.info(f"Total portfolio value: ${total_value:,.2f}")
+        available_cash = self.broker.getcash()
+        logger.info(f"Total portfolio value: ${total_value:,.2f}, Available cash: ${available_cash:,.2f}")
 
+        # First pass: calculate all target shares and total required value
+        order_plan = {}
+        total_required = 0.0
+        
         for ticker in self.p.tickers:
             target_weight = self.current_weights[ticker]
             data = self.ticker_data[ticker]
+            
+            # Check if data is valid
+            if len(data) == 0:
+                logger.error(f"{ticker}: No data available! Cannot establish position.")
+                continue
+                
             current_price = data.close[0]
+            
+            # Validate price
+            if current_price is None or current_price <= 0:
+                logger.error(f"{ticker}: Invalid price ({current_price})! Cannot establish position.")
+                continue
 
-            # Calculate target position value
-            target_value = total_value * target_weight
+            # Calculate target position value based on AVAILABLE CASH, not total value
+            # This ensures we don't try to spend more than we have
+            target_value = available_cash * target_weight
 
             # Calculate number of shares (round down to whole shares)
             target_shares = int(target_value / current_price)
+            required_value = target_shares * current_price
 
             if target_shares > 0:
+                order_plan[ticker] = {
+                    'data': data,
+                    'shares': target_shares,
+                    'price': current_price,
+                    'value': required_value,
+                    'weight': target_weight,
+                }
+                total_required += required_value
+                
+            logger.info(
+                f"{ticker}: price=${current_price:.2f}, target_weight={target_weight:.2%}, "
+                f"target_value=${target_value:,.2f}, target_shares={target_shares}, "
+                f"required_value=${required_value:,.2f}"
+            )
+
+        # Safety check: if total required exceeds available cash, scale down proportionally
+        if total_required > available_cash * 0.99:  # Leave 1% buffer
+            scale_factor = (available_cash * 0.98) / total_required
+            logger.warning(
+                f"Total required (${total_required:,.2f}) exceeds available cash (${available_cash:,.2f}). "
+                f"Scaling down by factor {scale_factor:.4f}"
+            )
+            for ticker in order_plan:
+                old_shares = order_plan[ticker]['shares']
+                new_shares = int(old_shares * scale_factor)
+                order_plan[ticker]['shares'] = new_shares
+                order_plan[ticker]['value'] = new_shares * order_plan[ticker]['price']
+                logger.info(f"{ticker}: Reduced shares from {old_shares} to {new_shares}")
+
+        # Second pass: place orders and record trades
+        orders_placed = []
+        current_date = self.datetime.date(0)
+        
+        for ticker, plan in order_plan.items():
+            if plan['shares'] > 0:
                 logger.info(
-                    f"{ticker}: Buying {target_shares} shares @ ${current_price:.2f} "
-                    f"(target: ${target_value:,.2f}, weight: {target_weight:.2%})"
+                    f"{ticker}: Buying {plan['shares']} shares @ ${plan['price']:.2f} "
+                    f"(value: ${plan['value']:,.2f}, weight: {plan['weight']:.2%})"
                 )
-                self.buy(data=data, size=target_shares)
-            else:
-                logger.warning(
-                    f"{ticker}: Skipping buy (target weight {target_weight:.2%} "
-                    f"= ${target_value:.2f} too small for 1 share @ ${current_price:.2f})"
-                )
+                order = self.buy(data=plan['data'], size=plan['shares'])
+                if order:
+                    orders_placed.append((ticker, plan['shares'], order))
+                    logger.info(f"{ticker}: Order placed successfully, order ref: {order.ref}")
+                    
+                    # Record the trade in all_trades
+                    self.all_trades.append({
+                        "date": current_date.isoformat(),
+                        "ticker": ticker,
+                        "action": "buy",
+                        "shares": plan['shares'],
+                        "price": plan['price'],
+                        "value": plan['value'],
+                        "trigger": "initial_position",
+                    })
+                else:
+                    logger.error(f"{ticker}: Buy order returned None!")
+        
+        logger.info(f"Initial positions: {len(orders_placed)} orders placed for {len(self.p.tickers)} tickers")
 
     def _should_rebalance(self) -> bool:
         """
@@ -356,8 +425,28 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         }
         pre_rebalance_value = self.broker.getvalue()
 
-        logger.debug(f"Pre-rebalance value: ${pre_rebalance_value:,.2f}")
-        logger.debug(f"Current positions: {current_positions}")
+        # Calculate actual pre-rebalance weights based on actual positions
+        # This shows true portfolio state - important for accurate reporting
+        actual_pre_weights = {}
+        total_position_value = 0.0
+        for ticker in self.p.tickers:
+            position_size = current_positions.get(ticker, 0)
+            price = current_prices.get(ticker, 0)
+            position_value = position_size * price if position_size > 0 and price > 0 else 0
+            total_position_value += position_value
+            actual_pre_weights[ticker] = position_value  # Store value first
+        
+        # Convert to percentages
+        for ticker in self.p.tickers:
+            if pre_rebalance_value > 0:
+                actual_pre_weights[ticker] = actual_pre_weights[ticker] / pre_rebalance_value
+            else:
+                actual_pre_weights[ticker] = 0.0
+
+        logger.info(f"Pre-rebalance value: ${pre_rebalance_value:,.2f}")
+        logger.info(f"Current positions: {current_positions}")
+        logger.info(f"Actual pre-weights: {actual_pre_weights}")
+        logger.info(f"Total position value: ${total_position_value:,.2f}, Cash: ${pre_rebalance_value - total_position_value:,.2f}")
 
         # Step 2: Calculate target weights
         returns_df = self._get_returns_dataframe()
@@ -373,21 +462,46 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
             target_weights,
         )
 
-        # Step 4: Execute trades
+        # Step 4: Execute trades - IMPORTANT: Execute sells first to free up cash for buys
         orders_executed = {}
+        
+        # First, execute all sell orders
         for ticker, delta in rebalance_plan['orders'].items():
-            data = self.ticker_data[ticker]
-
-            if delta > 0:
-                # Buy
-                order = self.buy(data=data, size=abs(delta))
-                orders_executed[ticker] = delta
-                logger.info(f"BUY {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
-            elif delta < 0:
-                # Sell
+            if delta < 0:
+                data = self.ticker_data[ticker]
                 order = self.sell(data=data, size=abs(delta))
                 orders_executed[ticker] = delta
                 logger.info(f"SELL {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
+                
+                # Record the trade
+                self.all_trades.append({
+                    "date": current_date.date().isoformat(),
+                    "ticker": ticker,
+                    "action": "sell",
+                    "shares": abs(delta),
+                    "price": current_prices[ticker],
+                    "value": abs(delta) * current_prices[ticker],
+                    "trigger": "rebalance",
+                })
+        
+        # Then, execute all buy orders (now cash should be available from sells)
+        for ticker, delta in rebalance_plan['orders'].items():
+            if delta > 0:
+                data = self.ticker_data[ticker]
+                order = self.buy(data=data, size=abs(delta))
+                orders_executed[ticker] = delta
+                logger.info(f"BUY {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
+                
+                # Record the trade
+                self.all_trades.append({
+                    "date": current_date.date().isoformat(),
+                    "ticker": ticker,
+                    "action": "buy",
+                    "shares": abs(delta),
+                    "price": current_prices[ticker],
+                    "value": abs(delta) * current_prices[ticker],
+                    "trigger": "rebalance",
+                })
 
         # Note: Post-rebalance value will be calculated after orders execute
         # For now, estimate with transaction costs
@@ -418,7 +532,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     target_weights=target_weights,
                     orders=orders_executed,
                     transaction_cost=rebalance_plan['estimated_cost'],
-                    pre_weights=rebalance_plan.get('pre_rebalance_weights', {}),
+                    pre_weights=actual_pre_weights,  # Use our calculated pre_weights
                     prices=current_prices,
                 )
             except Exception as e:

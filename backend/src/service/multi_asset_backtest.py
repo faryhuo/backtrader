@@ -493,16 +493,25 @@ def run_multi_asset_backtest(
         individual_results = []
         for i, ticker in enumerate(tickers):
             contrib = contributions.get(ticker, {})
+            # Use start_value and end_value from contributions if available
+            start_value = contrib.get("start_value", initial_cash * weights[i])
+            end_value = contrib.get("end_value", initial_cash * weights[i])
+            
+            # Calculate return based on actual values
+            asset_return = 0.0
+            if start_value > 0:
+                asset_return = ((end_value - start_value) / start_value) * 100
+            
             individual_results.append({
                 "ticker": ticker,
                 "weight": weights[i],
                 "success": True,
-                "initial_cash": initial_cash * weights[i],
-                "final_value": contrib.get("end_value", initial_cash * weights[i]),
-                "total_return": contrib.get("return_pct", 0),
+                "initial_cash": start_value,
+                "final_value": end_value,
+                "total_return": asset_return,
                 "sharpe": None,  # Not available per-asset in unified backtest
                 "max_drawdown": None,
-                "total_trades": 0,
+                "total_trades": contrib.get("end_shares", 0),  # Use end_shares as proxy
             })
 
         # Build result dictionary
@@ -518,6 +527,7 @@ def run_multi_asset_backtest(
             # From custom analyzers
             "equity_curve": portfolio_value_analysis.get("equity_curve", {}),
             "rebalancing_events": rebalancing_analysis.get("events", []),
+            "all_trades": getattr(strat, 'all_trades', []),  # All trades including initial positions
             "asset_contributions": contributions,
             # Individual asset results (for UI compatibility)
             "individual_results": individual_results,

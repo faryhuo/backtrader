@@ -308,6 +308,25 @@ class AssetContributionAnalyzer(bt.Analyzer):
                 # Calculate contribution
                 contribution_pct = asset_return_pct * avg_weight
 
+                # Calculate start/end values for the asset
+                # Use initial weight to estimate start value
+                initial_weight = 0.0
+                if hasattr(self.strategy, 'p') and hasattr(self.strategy.p, 'initial_weights'):
+                    tickers_list = self.strategy.p.tickers
+                    if ticker in tickers_list:
+                        idx = tickers_list.index(ticker)
+                        if idx < len(self.strategy.p.initial_weights):
+                            initial_weight = self.strategy.p.initial_weights[idx]
+
+                # Estimate start value based on initial weight and portfolio start value
+                start_portfolio_value = getattr(self.strategy.broker, '_cash', 100000)
+                if hasattr(self.strategy, 'analyzers') and hasattr(self.strategy.analyzers, 'portfolio_value'):
+                    pv_analysis = self.strategy.analyzers.portfolio_value.get_analysis()
+                    start_portfolio_value = pv_analysis.get('start_value', 100000)
+
+                estimated_start_value = start_portfolio_value * initial_weight if initial_weight > 0 else 0
+                end_value = current_position_value
+
                 contributions[ticker] = {
                     "return_pct": float(asset_return_pct),
                     "avg_weight": float(avg_weight),
@@ -316,6 +335,8 @@ class AssetContributionAnalyzer(bt.Analyzer):
                     "end_price": float(end_price),
                     "start_shares": 0,  # TODO: Track from strategy initialization
                     "end_shares": int(position.size) if position.size > 0 else 0,
+                    "start_value": float(estimated_start_value),
+                    "end_value": float(end_value),
                 }
 
                 logger.debug(
