@@ -1,5 +1,5 @@
 import { Card, Image, Table, Tabs } from 'antd';
-import { LineChartOutlined, PieChartOutlined, TableOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { LineChartOutlined, PieChartOutlined, TableOutlined, UnorderedListOutlined, PictureOutlined } from '@ant-design/icons';
 import PortfolioMetricsCard from './PortfolioMetricsCard';
 import CorrelationCard from './CorrelationCard';
 import OptimizationCard from './OptimizationCard';
@@ -96,6 +96,28 @@ function PortfolioResultsSection({ t, result, columns }) {
         ),
     });
 
+    // Add portfolio chart tab if available
+    if (result.plot_url) {
+        tabItems.push({
+            key: 'chart',
+            label: (
+                <span>
+                    <PictureOutlined />
+                    {t('portfolio.chart', 'Chart')}
+                </span>
+            ),
+            children: (
+                <div style={{ textAlign: 'center', padding: 16 }}>
+                    <Image
+                        src={result.plot_url}
+                        alt={t('portfolio.chart_alt', 'Portfolio Chart')}
+                        style={{ maxWidth: '100%', maxHeight: 600 }}
+                    />
+                </div>
+            ),
+        });
+    }
+
     return (
         <div className="results-section">
             <PortfolioMetricsCard t={t} metrics={{
@@ -135,11 +157,7 @@ function PortfolioResultsSection({ t, result, columns }) {
                 <OptimizationCard t={t} optimization={result.optimization} />
             )}
 
-            {result.plot_url && (
-                <Card className="chart-card" title={t('portfolio.chart', 'Portfolio Chart')}>
-                    <Image src={result.plot_url} alt={t('portfolio.chart_alt', 'Portfolio Chart')} className="portfolio-chart" style={{ maxWidth: '100%' }} />
-                </Card>
-            )}
+
         </div>
     );
 }
