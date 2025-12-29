@@ -1,5 +1,5 @@
 """
-MACD Crossover Strategy - Trend Following
+MACD Crossover Strategy - Trend Following (Multi-Data Support)
 
 This strategy uses the Moving Average Convergence Divergence (MACD) indicator
 to identify trend direction and momentum. It generates buy signals on golden cross
@@ -27,20 +27,32 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.macd = bt.indicators.MACD(
-            self.data.close,
-            period_me1=self.p.fast_period,
-            period_me2=self.p.slow_period,
-            period_signal=self.p.signal_period
-        )
-        self.crossover = bt.indicators.CrossOver(self.macd.macd, self.macd.signal)
+        self.indicators = {}
+        
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            macd = bt.indicators.MACD(
+                d.close,
+                period_me1=self.p.fast_period,
+                period_me2=self.p.slow_period,
+                period_signal=self.p.signal_period
+            )
+            self.indicators[d] = {
+                'macd': macd,
+                'crossover': bt.indicators.CrossOver(macd.macd, macd.signal)
+            }
 
     def next(self):
-        if not self.position:
-            # Golden cross: MACD line crosses above signal line
-            if self.crossover > 0:
-                self.buy()
-        else:
-            # Death cross: MACD line crosses below signal line
-            if self.crossover < 0:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            
+            if not pos.size:
+                # Golden cross: MACD line crosses above signal line
+                if ind['crossover'] > 0:
+                    self.buy(data=d)
+            else:
+                # Death cross: MACD line crosses below signal line
+                if ind['crossover'] < 0:
+                    self.close(data=d)

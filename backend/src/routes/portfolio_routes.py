@@ -26,10 +26,10 @@ from src.service.multi_asset_backtest import (
     MultiAssetBacktestError,
 )
 from src.db import get_portfolio_storage
+from src.service.strategy_repo import list_strategies
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
-
 
 
 
@@ -85,7 +85,8 @@ class MultiAssetBacktestRequest(BaseModel):
     end_date: str = Field(..., description="End date (YYYY-MM-DD)")
     initial_cash: float = Field(100000.0, ge=1000, le=100000000, description="Total initial cash for portfolio")
     commission: float = Field(0.0005, ge=0, le=0.1, description="Broker commission rate")
-    strategy_name: str | None = Field(None, description="Strategy to use (None = buy-and-hold)")
+    strategy_name: str = Field(..., description="Strategy file name (required - use multi-asset template)")
+    params: dict | None = Field(None, description="Strategy parameters (applied globally)")
     rebalance_config: RebalanceConfig | None = Field(
         None,
         description="Rebalancing configuration. Example: {'frequency': 'monthly', 'min_trade_threshold': 0.01}"
@@ -143,7 +144,8 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
             end_date=config["end_date"],
             initial_cash=config.get("initial_cash", 100000.0),
             commission=config.get("commission", 0.0005),
-            strategy_name=config.get("strategy_name"),
+            strategy_name=config["strategy_name"],
+            params=config.get("params"),
             rebalance_config=config.get("rebalance_config"),
             optimization_method=config.get("optimization_method", "equal_weight"),
             timeframe=config.get("timeframe", "1d"),
@@ -182,6 +184,7 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "equity_curve": result.get("equity_curve", {}),
         "rebalancing_events": result.get("rebalancing_events", []),
         "asset_contributions": result.get("asset_contributions", {}),
+        "all_trades": result.get("all_trades", []),  # Trade log from PortfolioTradeRecorder
         "rebalance_frequency": (config.get("rebalance_config") or {}).get("frequency"),
         "optimization_method": config.get("optimization_method", "equal_weight"),
         "per_asset_params": None,
@@ -243,10 +246,19 @@ async def multi_asset_backtest(
             detail="Maximum 20 tickers allowed (memory limit)"
         )
 
+    # Validate strategy exists
+    available_strategies = list_strategies()
+    if request.strategy_name not in available_strategies:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Strategy '{request.strategy_name}' not found. Available strategies: {', '.join(available_strategies)}"
+        )
+
     try:
         # Create task configuration
         task_config = create_task_config(request, "multi_asset")
         task_config["user_id"] = user_id
+        task_config["params"] = request.params or {}
 
         # Generate task name
         task_name = generate_task_name("multi_asset", task_config)

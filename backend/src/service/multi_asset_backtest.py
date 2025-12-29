@@ -34,7 +34,9 @@ from src.service.portfolio_analyzers import (
     RebalancingEventAnalyzer,
     AssetContributionAnalyzer,
     PortfolioMetricsAnalyzer,
+    PortfolioTradeRecorder,
 )
+from src.service.strategy_loader import load_user_strategy
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +344,8 @@ def run_multi_asset_backtest(
     end_date: str,
     initial_cash: float = 100000.0,
     commission: float = 0.0005,
-    strategy_name: Optional[str] = None,
+    strategy_name: str = ...,  # Required parameter
+    params: Optional[dict] = None,
     rebalance_config: Optional[dict] = None,
     optimization_method: str = "equal_weight",
     timeframe: str = "1d",
@@ -361,7 +364,8 @@ def run_multi_asset_backtest(
         end_date: Backtest end date (YYYY-MM-DD)
         initial_cash: Starting portfolio cash (default: 100000.0)
         commission: Commission rate per trade (default: 0.0005 = 0.05%)
-        strategy_name: Strategy file name (without .py). If None, uses buy-and-hold.
+        strategy_name: Strategy file name (without .py) - REQUIRED. Must be multi-data aware.
+        params: Strategy parameters (dict) - passed to strategy's params
         rebalance_config: Rebalancing configuration
             Example: {"frequency": "monthly", "method": "risk_parity"}
         optimization_method: Optimization method for rebalancing
@@ -385,7 +389,7 @@ def run_multi_asset_backtest(
     Raises:
         MultiAssetBacktestError: If backtest execution fails
         DataAlignmentError: If data cannot be aligned
-        ValueError: If input validation fails
+        ValueError: If input validation fails or strategy not found
     """
     # Validation
     if not tickers:
@@ -432,23 +436,36 @@ def run_multi_asset_backtest(
             cerebro.adddata(feed, name=ticker)
             logger.debug(f"Added data feed: {ticker}")
 
-        # Step 4: Add strategy
-        logger.info("Step 4: Adding multi-asset portfolio strategy...")
-        cerebro.addstrategy(
-            BuyAndHoldPortfolioStrategy,  # Simple buy-and-hold for Phase 1
-            tickers=tickers,
-            initial_weights=weights,
-            rebalance_config=rebalance_config,
-            optimization_method=optimization_method,
-        )
-        logger.info("Strategy added: BuyAndHoldPortfolioStrategy")
+        # Step 4: Load and add user strategy
+        logger.info(f"Step 4: Loading user strategy: {strategy_name}...")
+        try:
+            strategy_cls = load_user_strategy(strategy_name)
+            logger.info(f"Successfully loaded strategy class: {strategy_cls.__name__}")
+
+            # Add strategy to Cerebro with user params only
+            # Don't pollute strategy params with portfolio metadata
+            cerebro.addstrategy(
+                strategy_cls,
+                **(params or {})
+            )
+            logger.info(f"Strategy {strategy_name} added with params: {params}")
+
+        except Exception as e:
+            logger.error(f"Failed to load strategy {strategy_name}: {e}")
+            raise MultiAssetBacktestError(f"Strategy load failed: {str(e)}") from e
 
         # Step 5: Add custom portfolio analyzers
         logger.info("Step 5: Adding portfolio analyzers...")
         cerebro.addanalyzer(PortfolioValueAnalyzer, _name="portfolio_value")
         cerebro.addanalyzer(RebalancingEventAnalyzer, _name="rebalancing")
-        cerebro.addanalyzer(AssetContributionAnalyzer, _name="asset_contribution")
+        cerebro.addanalyzer(
+            AssetContributionAnalyzer,
+            _name="asset_contribution",
+            tickers=tickers,  # Pass portfolio metadata to analyzer
+            initial_weights=weights
+        )
         cerebro.addanalyzer(PortfolioMetricsAnalyzer, _name="portfolio_metrics")
+        cerebro.addanalyzer(PortfolioTradeRecorder, _name="trade_recorder")
 
         # Add standard Backtrader analyzers for compatibility
         cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
@@ -480,6 +497,7 @@ def run_multi_asset_backtest(
         rebalancing_analysis = strat.analyzers.rebalancing.get_analysis()
         asset_contribution_analysis = strat.analyzers.asset_contribution.get_analysis()
         portfolio_metrics_analysis = strat.analyzers.portfolio_metrics.get_analysis()
+        trade_recorder_analysis = strat.analyzers.trade_recorder.get_analysis()
 
         # Calculate correlation matrix and optimization suggestions
         logger.info("Calculating correlation matrix...")
@@ -493,16 +511,25 @@ def run_multi_asset_backtest(
         individual_results = []
         for i, ticker in enumerate(tickers):
             contrib = contributions.get(ticker, {})
+            # Use start_value and end_value from contributions if available
+            start_value = contrib.get("start_value", initial_cash * weights[i])
+            end_value = contrib.get("end_value", initial_cash * weights[i])
+            
+            # Calculate return based on actual values
+            asset_return = 0.0
+            if start_value > 0:
+                asset_return = ((end_value - start_value) / start_value) * 100
+            
             individual_results.append({
                 "ticker": ticker,
                 "weight": weights[i],
                 "success": True,
-                "initial_cash": initial_cash * weights[i],
-                "final_value": contrib.get("end_value", initial_cash * weights[i]),
-                "total_return": contrib.get("return_pct", 0),
+                "initial_cash": start_value,
+                "final_value": end_value,
+                "total_return": asset_return,
                 "sharpe": None,  # Not available per-asset in unified backtest
                 "max_drawdown": None,
-                "total_trades": 0,
+                "total_trades": contrib.get("end_shares", 0),  # Use end_shares as proxy
             })
 
         # Build result dictionary
@@ -518,6 +545,7 @@ def run_multi_asset_backtest(
             # From custom analyzers
             "equity_curve": portfolio_value_analysis.get("equity_curve", {}),
             "rebalancing_events": rebalancing_analysis.get("events", []),
+            "all_trades": trade_recorder_analysis.get("trades", []),  # All trades from TradeRecorder analyzer
             "asset_contributions": contributions,
             # Individual asset results (for UI compatibility)
             "individual_results": individual_results,
@@ -540,6 +568,7 @@ def run_multi_asset_backtest(
         logger.info(f"Total return: {total_return:.2f}%, Sharpe: {sharpe_ratio:.2f}, Max DD: {max_drawdown:.2f}%")
         logger.info(f"Equity curve: {len(portfolio_value_analysis.get('equity_curve', {}))} days")
         logger.info(f"Asset contributions: {len(asset_contribution_analysis.get('contributions', {}))} assets")
+        logger.info(f"All trades: {len(trade_recorder_analysis.get('trades', []))} trades")
 
         # Step 8: Generate chart (optional)
         if save_path:

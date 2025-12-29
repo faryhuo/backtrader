@@ -293,15 +293,18 @@ Strategies are written as Backtrader strategies in `backend/resources/strategy/*
 - **Live**: `live_engine.py` uses same strategy loader with CCXT/IBKR data feeds
 - **Storage**: Strategies are files on disk, editable via frontend Monaco editor
 
-#### 3. **Portfolio Backtesting (NEW)**
+#### 3. **Portfolio Backtesting (Strategy-Driven)**
 
-Multi-asset portfolio backtesting with rebalancing support:
+Multi-asset portfolio backtesting where user strategy code controls buy/sell decisions:
 
-- **Multi-Asset Engine**: `multi_asset_backtest.py` handles multiple data feeds
-- **Strategy Wrapper**: `multi_asset_strategy_wrapper.py` adapts strategies for portfolio use
-- **Rebalancing**: `portfolio_rebalancer.py` implements various rebalancing strategies
+- **Multi-Asset Engine**: `multi_asset_backtest.py` loads user strategies via `strategy_loader.py`
+- **Multi-Data Pattern**: Strategies access multiple assets via `self.datas[0]`, `self.datas[1]`, etc.
+- **Strategy-Controlled Sizing**: User specifies exact position sizes (no automatic weight enforcement)
+- **Rebalancing**: `portfolio_rebalancer.py` runs alongside strategy signals (if configured)
 - **Analyzers**: `portfolio_analyzers.py` provides portfolio-specific metrics
 - **Storage**: Results stored via `portfolio.py` storage module
+- **Template**: See [multi_asset_template.py](backend/resources/strategy/multi_asset_template.py) for examples
+- **Guide**: Full documentation in [PORTFOLIO_STRATEGY_GUIDE.md](docs/PORTFOLIO_STRATEGY_GUIDE.md)
 
 #### 4. **Walk-Forward Optimization (NEW)**
 
@@ -368,10 +371,15 @@ Frontend (RunStrategy) → POST /api/backtest → backtest_engine.py
 
 **Portfolio Backtest Flow**:
 ```
-Frontend (PortfolioBacktest) → POST /api/portfolio/backtest → multi_asset_backtest.py
-  → Load strategy and multiple assets
-  → Apply portfolio rebalancing strategy
-  → Run multi-asset Cerebro
+Frontend (PortfolioBacktest) → POST /api/portfolio/multi-asset/backtest → multi_asset_backtest.py
+  → Validate strategy_name exists (REQUIRED parameter)
+  → Load user strategy from resources/strategy/ via strategy_loader
+  → Align multiple data feeds to common trading dates
+  → Create single Cerebro with all data feeds
+  → Add user strategy with params (strategy accesses via self.datas[i])
+  → Add portfolio analyzers
+  → Run backtest (strategy controls all buy/sell via next() method)
+  → Apply rebalancing on schedule (if configured)
   → Calculate portfolio-level metrics
   → Store results and return analysis
 ```

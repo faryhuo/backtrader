@@ -1,5 +1,5 @@
 """
-Donchian Channel Breakout Strategy - Trend Following
+Donchian Channel Breakout Strategy - Trend Following (Multi-Data Support)
 
 The Donchian Channel uses the highest high and lowest low over N periods.
 This strategy enters on breakouts above the upper channel (bullish) and
@@ -25,20 +25,30 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        # Entry channel (longer period)
-        self.upper_entry = bt.indicators.Highest(self.data.high, period=self.p.entry_period)
-        self.lower_entry = bt.indicators.Lowest(self.data.low, period=self.p.entry_period)
+        self.indicators = {}
         
-        # Exit channel (shorter period)
-        self.upper_exit = bt.indicators.Highest(self.data.high, period=self.p.exit_period)
-        self.lower_exit = bt.indicators.Lowest(self.data.low, period=self.p.exit_period)
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                # Entry channel (longer period)
+                'upper_entry': bt.indicators.Highest(d.high, period=self.p.entry_period),
+                'lower_entry': bt.indicators.Lowest(d.low, period=self.p.entry_period),
+                # Exit channel (shorter period)
+                'upper_exit': bt.indicators.Highest(d.high, period=self.p.exit_period),
+                'lower_exit': bt.indicators.Lowest(d.low, period=self.p.exit_period),
+            }
 
     def next(self):
-        if not self.position:
-            # Breakout above entry channel - buy
-            if self.data.close[0] > self.upper_entry[-1]:
-                self.buy()
-        else:
-            # Break below exit channel - close position
-            if self.data.close[0] < self.lower_exit[-1]:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            
+            if not pos.size:
+                # Breakout above entry channel - buy
+                if d.close[0] > ind['upper_entry'][-1]:
+                    self.buy(data=d)
+            else:
+                # Break below exit channel - close position
+                if d.close[0] < ind['lower_exit'][-1]:
+                    self.close(data=d)

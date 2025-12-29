@@ -1,5 +1,5 @@
 """
-Stochastic Oscillator Strategy - Momentum
+Stochastic Oscillator Strategy - Momentum (Multi-Data Support)
 
 This strategy uses the Stochastic Oscillator to identify overbought and oversold
 conditions. The oscillator compares closing price to the high-low range over a
@@ -29,22 +29,34 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.stoch = bt.indicators.Stochastic(
-            self.data,
-            period=self.p.period_k,
-            period_dfast=self.p.period_d
-        )
+        self.indicators = {}
+        
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                'stoch': bt.indicators.Stochastic(
+                    d,
+                    period=self.p.period_k,
+                    period_dfast=self.p.period_d
+                )
+            }
         
     def next(self):
-        if not self.position:
-            # Buy when %K crosses above %D in oversold zone
-            if (self.stoch.percK[-1] < self.stoch.percD[-1] and 
-                self.stoch.percK[0] > self.stoch.percD[0] and
-                self.stoch.percK[0] < self.p.oversold + 10):
-                self.buy()
-        else:
-            # Sell when %K crosses below %D in overbought zone
-            if (self.stoch.percK[-1] > self.stoch.percD[-1] and 
-                self.stoch.percK[0] < self.stoch.percD[0] and
-                self.stoch.percK[0] > self.p.overbought - 10):
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            stoch = ind['stoch']
+            
+            if not pos.size:
+                # Buy when %K crosses above %D in oversold zone
+                if (stoch.percK[-1] < stoch.percD[-1] and 
+                    stoch.percK[0] > stoch.percD[0] and
+                    stoch.percK[0] < self.p.oversold + 10):
+                    self.buy(data=d)
+            else:
+                # Sell when %K crosses below %D in overbought zone
+                if (stoch.percK[-1] > stoch.percD[-1] and 
+                    stoch.percK[0] < stoch.percD[0] and
+                    stoch.percK[0] > self.p.overbought - 10):
+                    self.close(data=d)

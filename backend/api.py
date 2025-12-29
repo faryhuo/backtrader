@@ -6,6 +6,7 @@ from src.config.settings import (
     CORS_ALLOW_ORIGINS,
     CORS_ALLOW_ORIGIN_REGEX,
     DEBUG,
+    ensure_database_dir,
     ensure_resource_dirs,
 )
 from src.routes.ai_routes import router as ai_router
@@ -26,7 +27,6 @@ from src.utils.request_context import RequestContextMiddleware
 from src.service.worker.worker_pool import get_worker_pool, shutdown_worker_pool
 
 prefix = "/api"
-ensure_resource_dirs()
 
 app = FastAPI()
 
@@ -34,14 +34,33 @@ app = FastAPI()
 @app.on_event("startup")
 async def startup_warmup():
     """
-    Application startup handler - Warmup worker pool.
+    Application startup handler - Initialize resources and warmup worker pool.
     
-    Pre-initializes the worker pool to eliminate cold start delays
-    when users submit their first backtest.
+    1. Ensures required resource directories exist
+    2. Ensures database directory exists
+    3. Pre-initializes the worker pool to eliminate cold start delays
     """
     import logging
     logger = logging.getLogger(__name__)
     
+    # Ensure resource directories exist
+    try:
+        logger.info("Ensuring resource directories exist...")
+        ensure_resource_dirs()
+        logger.info("Resource directories initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to create resource directories: {e}")
+        raise RuntimeError(f"Application startup failed: Cannot create required directories. {e}")
+
+    # Ensure database directory exists
+    try:
+        logger.info("Ensuring database directory exists...")
+        ensure_database_dir()
+        logger.info("Database directory initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database directory: {e}")
+        raise RuntimeError(f"Application startup failed: Cannot create database directory. {e}")
+
     try:
         logger.info("Warming up worker pool...")
         pool = get_worker_pool()

@@ -52,48 +52,6 @@
 - Node.js 18 或更高版本
 - (可选) Docker & Docker Compose
 
-
-#### 1. 克隆仓库
-
-```bash
-git clone <repository-url>
-cd backtrader
-```
-
-#### 2. 后端设置
-
-```bash
-# 进入后端目录
-cd backend
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 配置环境变量
-cp .env.template .env
-# 编辑 .env 文件，填入必要的配置
-
-# 启动后端服务（默认端口 8000）
-python main.py
-```
-
-#### 3. 前端设置
-
-```bash
-# 进入前端目录
-cd frontend
-
-# 安装依赖
-npm install
-
-# 启动开发服务器（默认端口 5173）
-npm run dev
-```
-
-#### 4. 访问应用
-
-打开浏览器访问：`http://localhost:5173`
-
 ### 方式1：一键启动（开发模式）
 
 Windows 用户可以使用批处理脚本快速启动：

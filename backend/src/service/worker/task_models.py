@@ -172,7 +172,8 @@ class MultiAssetBacktestTask:
     end_date: str
     initial_cash: float = 100000.0
     commission: float = 0.0005
-    strategy_name: Optional[str] = None
+    strategy_name: str = ""  # Required - must provide strategy
+    params: Optional[Dict[str, Any]] = None  # Strategy parameters
     rebalance_config: Optional[Dict[str, Any]] = None
     optimization_method: str = "equal_weight"
     timeframe: str = "1d"
@@ -190,6 +191,7 @@ class MultiAssetBacktestTask:
             "initial_cash": self.initial_cash,
             "commission": self.commission,
             "strategy_name": self.strategy_name,
+            "params": self.params,
             "rebalance_config": self.rebalance_config,
             "optimization_method": self.optimization_method,
             "timeframe": self.timeframe,

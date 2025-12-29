@@ -245,7 +245,7 @@ class TestGetDataFromYahoo:
         assert result is not None
         assert len(result) == 5
         mock_download.assert_called_once_with("AAPL", start="2024-01-01", end="2024-01-05",
-                                              progress=False, auto_adjust=False)
+                                              interval="1d", progress=False, auto_adjust=False)
         mock_save.assert_called_once()
 
     @patch('yfinance.download')
@@ -448,7 +448,7 @@ class TestGetBtFeed:
         result = get_bt_feed("AAPL", "2024-01-01", "2024-01-05")
 
         assert isinstance(result, bt.feeds.PandasData)
-        mock_get_data.assert_called_once_with("AAPL", "2024-01-01", "2024-01-05")
+        mock_get_data.assert_called_once_with("AAPL", "2024-01-01", "2024-01-05", interval="1d")
 
     @patch('src.db.storage.market_data.get_data')
     def test_get_bt_feed_propagates_exception(self, mock_get_data):

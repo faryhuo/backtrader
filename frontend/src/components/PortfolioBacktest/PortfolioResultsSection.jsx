@@ -1,11 +1,12 @@
 import { Card, Table, Tabs } from 'antd';
-import { LineChartOutlined, PieChartOutlined, SyncOutlined, TableOutlined } from '@ant-design/icons';
+import { LineChartOutlined, PieChartOutlined, SyncOutlined, TableOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import PortfolioMetricsCard from './PortfolioMetricsCard';
 import CorrelationCard from './CorrelationCard';
 import OptimizationCard from './OptimizationCard';
 import EquityCurveChart from './EquityCurveChart';
 import RebalancingTimeline from './RebalancingTimeline';
 import AssetContributionChart from './AssetContributionChart';
+import PortfolioTradeLog from './PortfolioTradeLog';
 
 /**
  * Results section displaying all portfolio backtest results
@@ -15,7 +16,8 @@ function PortfolioResultsSection({ t, result, columns }) {
     const hasEquityCurve = result.equity_curve && Object.keys(result.equity_curve).length > 0;
     const hasRebalancing = result.rebalancing_events && result.rebalancing_events.length > 0;
     const hasContributions = result.asset_contributions && Object.keys(result.asset_contributions).length > 0;
-    const hasMultiAssetData = hasEquityCurve || hasRebalancing || hasContributions;
+    const hasTrades = (result.all_trades && result.all_trades.length > 0) || hasRebalancing;
+    const hasMultiAssetData = hasEquityCurve || hasRebalancing || hasContributions || hasTrades;
 
     // Build tab items for multi-asset results
     const tabItems = [];
@@ -95,6 +97,24 @@ function PortfolioResultsSection({ t, result, columns }) {
                     columns={columns}
                 />
             </Card>
+        ),
+    });
+
+    // Always add trade log tab (shows trades from rebalancing events or initial positions)
+    tabItems.push({
+        key: 'trades',
+        label: (
+            <span>
+                <UnorderedListOutlined />
+                {t('portfolio.trade_log', 'Trade Log')}
+            </span>
+        ),
+        children: (
+            <PortfolioTradeLog
+                allTrades={result.all_trades}
+                rebalancingEvents={result.rebalancing_events}
+                t={t}
+            />
         ),
     });
 

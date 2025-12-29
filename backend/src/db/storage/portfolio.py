@@ -67,6 +67,7 @@ class PortfolioStorage(BaseStorage):
                     equity_curve=result.get("equity_curve", {}),
                     rebalancing_events=result.get("rebalancing_events", []),
                     asset_contributions=result.get("asset_contributions", {}),
+                    all_trades=result.get("all_trades", []),
                 )
 
                 session.add(model)
@@ -209,6 +210,7 @@ class PortfolioStorage(BaseStorage):
                 "equity_curve": model.equity_curve or {},
                 "rebalancing_events": model.rebalancing_events or [],
                 "asset_contributions": model.asset_contributions or {},
+                "all_trades": model.all_trades or [],
             })
         
         return result

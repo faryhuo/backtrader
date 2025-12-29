@@ -66,6 +66,18 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
             display_tickers += f" +{len(tickers) - 3}"
         return f"Multi-Asset: {display_tickers} ({opt_method})"
 
+    elif task_type == "portfolio":
+        # Portfolio is an alias for multi-asset backtest
+        tickers = config.get("tickers", [])
+        if not tickers:
+            return "Portfolio Backtest"
+
+        # Show first 3 tickers, add "+N" for remainder
+        display_tickers = ", ".join(tickers[:3])
+        if len(tickers) > 3:
+            display_tickers += f" +{len(tickers) - 3}"
+        return f"Portfolio Backtest: {display_tickers}"
+
     elif task_type == "walkforward":
         strategy = config.get("strategy_name", "Unknown")
         ticker = config.get("ticker", "Unknown")

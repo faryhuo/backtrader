@@ -268,8 +268,8 @@ export function getIndividualResultsColumns({ t }) {
         },
         {
             title: t('portfolio.table.return', 'Return'),
-            dataIndex: 'return',
-            render: r => r != null
+            dataIndex: 'total_return',
+            render: r => r != null && r !== 0
                 ? <span className={r >= 0 ? 'positive' : 'negative'}>{r.toFixed(2)}%</span>
                 : '-',
         },

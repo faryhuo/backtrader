@@ -1,5 +1,5 @@
 """
-EMA Crossover Strategy - Trend Following
+EMA Crossover Strategy - Trend Following (Multi-Data Support)
 
 This strategy uses Exponential Moving Average (EMA) crossovers to identify
 trend changes. EMA gives more weight to recent prices, making it more
@@ -25,16 +25,30 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.fast_ema = bt.indicators.EMA(self.data.close, period=self.p.fast_period)
-        self.slow_ema = bt.indicators.EMA(self.data.close, period=self.p.slow_period)
-        self.crossover = bt.indicators.CrossOver(self.fast_ema, self.slow_ema)
+        self.indicators = {}
+        
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                'fast_ema': bt.indicators.EMA(d.close, period=self.p.fast_period),
+                'slow_ema': bt.indicators.EMA(d.close, period=self.p.slow_period),
+            }
+            self.indicators[d]['crossover'] = bt.indicators.CrossOver(
+                self.indicators[d]['fast_ema'],
+                self.indicators[d]['slow_ema']
+            )
 
     def next(self):
-        if not self.position:
-            # Fast EMA crosses above slow EMA - bullish signal
-            if self.crossover > 0:
-                self.buy()
-        else:
-            # Fast EMA crosses below slow EMA - bearish signal
-            if self.crossover < 0:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            
+            if not pos.size:
+                # Fast EMA crosses above slow EMA - bullish signal
+                if ind['crossover'] > 0:
+                    self.buy(data=d)
+            else:
+                # Fast EMA crosses below slow EMA - bearish signal
+                if ind['crossover'] < 0:
+                    self.close(data=d)

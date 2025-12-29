@@ -1,5 +1,5 @@
 """
-Keltner Channel Strategy - Mean Reversion
+Keltner Channel Strategy - Mean Reversion (Multi-Data Support)
 
 Keltner Channel uses EMA as the middle band and ATR for volatility measurement.
 It's smoother and more stable than Bollinger Bands. This strategy trades
@@ -27,22 +27,35 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.ema = bt.indicators.EMA(self.data.close, period=self.p.ema_period)
-        self.atr = bt.indicators.ATR(self.data, period=self.p.atr_period)
+        self.indicators = {}
         
-        # Calculate Keltner Channel bands
-        self.upper = self.ema + self.atr * self.p.atr_multiplier
-        self.lower = self.ema - self.atr * self.p.atr_multiplier
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            ema = bt.indicators.EMA(d.close, period=self.p.ema_period)
+            atr = bt.indicators.ATR(d, period=self.p.atr_period)
+            
+            self.indicators[d] = {
+                'ema': ema,
+                'atr': atr,
+                # Calculate Keltner Channel bands
+                'upper': ema + atr * self.p.atr_multiplier,
+                'lower': ema - atr * self.p.atr_multiplier,
+            }
 
     def next(self):
-        if not self.position:
-            # Price crosses below lower band - oversold, buy
-            if self.data.close[0] <= self.lower[0]:
-                self.buy()
-        else:
-            # Price crosses above upper band - overbought, sell
-            if self.data.close[0] >= self.upper[0]:
-                self.close()
-            # Exit at middle band
-            elif self.data.close[0] >= self.ema[0]:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            
+            if not pos.size:
+                # Price crosses below lower band - oversold, buy
+                if d.close[0] <= ind['lower'][0]:
+                    self.buy(data=d)
+            else:
+                # Price crosses above upper band - overbought, sell
+                if d.close[0] >= ind['upper'][0]:
+                    self.close(data=d)
+                # Exit at middle band
+                elif d.close[0] >= ind['ema'][0]:
+                    self.close(data=d)
