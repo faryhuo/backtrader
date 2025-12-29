@@ -5,7 +5,7 @@ This module provides the MultiAssetPortfolioStrategy class which wraps around
 user strategies to enable:
 - Managing multiple data feeds (self.datas[0], self.datas[1], ...)
 - Per-asset strategy parameter configuration
-- Rolling returns tracking for portfolio optimization
+- Rolling returns tracking for analysis
 
 The strategy acts as a portfolio manager that delegates to per-asset logic
 while maintaining portfolio-level control.
@@ -368,20 +368,17 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
 class BuyAndHoldPortfolioStrategy(MultiAssetPortfolioStrategy):
     """
-    Simple buy-and-hold portfolio strategy with optional rebalancing.
+    Simple buy-and-hold portfolio strategy.
 
     Buys initial positions based on weights and holds until end.
-    If rebalance_config is provided, it will periodically rebalance
-    to maintain target weights.
     """
 
     def next(self):
         """
         Main strategy logic - uses parent class for full functionality.
-        
+
         Supports:
         - Initial position establishment
-        - Periodic rebalancing (if configured)
         """
-        # Use parent class implementation which includes rebalancing
+        # Use parent class implementation
         super().next()

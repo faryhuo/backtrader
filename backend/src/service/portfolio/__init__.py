@@ -23,7 +23,6 @@ from .chart_generator import ChartGenerator
 from .events import (
     PortfolioEventType,
     PortfolioEvent,
-    RebalanceExecutedEvent,
     InitialPositionsEvent,
     TradeExecutedEvent,
     PortfolioValueEvent,
@@ -47,7 +46,6 @@ __all__ = [
     # Events
     "PortfolioEventType",
     "PortfolioEvent",
-    "RebalanceExecutedEvent",
     "InitialPositionsEvent",
     "TradeExecutedEvent",
     "PortfolioValueEvent",

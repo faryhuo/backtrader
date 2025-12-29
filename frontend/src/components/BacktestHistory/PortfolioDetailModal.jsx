@@ -3,7 +3,6 @@ import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty
 import {
     FileTextOutlined,
     LineChartOutlined,
-    SyncOutlined,
     PieChartOutlined,
     TableOutlined,
     AppstoreOutlined,
@@ -17,7 +16,6 @@ import { api } from '../../services/api'
 // Import reusable components from PortfolioBacktest
 import PortfolioMetricsCard from '../PortfolioBacktest/PortfolioMetricsCard'
 import EquityCurveChart from '../PortfolioBacktest/EquityCurveChart'
-import RebalancingTimeline from '../PortfolioBacktest/RebalancingTimeline'
 import AssetContributionChart from '../PortfolioBacktest/AssetContributionChart'
 import CorrelationCard from '../PortfolioBacktest/CorrelationCard'
 import OptimizationCard from '../PortfolioBacktest/OptimizationCard'
@@ -32,7 +30,6 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
 
     // Check for available data
     const hasEquityCurve = portfolio.equity_curve && Object.keys(portfolio.equity_curve).length > 0
-    const hasRebalancing = portfolio.rebalancing_events && portfolio.rebalancing_events.length > 0
     const hasContributions = portfolio.asset_contributions && Object.keys(portfolio.asset_contributions).length > 0
     const hasCorrelation = portfolio.correlation && !portfolio.correlation.error
     const hasOptimization = portfolio.optimization && !portfolio.optimization.error
@@ -181,26 +178,6 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             children: (
                 <EquityCurveChart
                     equityCurve={portfolio.equity_curve}
-                    rebalancingEvents={portfolio.rebalancing_events}
-                    t={t}
-                />
-            ),
-        })
-    }
-
-    // Add rebalancing tab if events exist
-    if (hasRebalancing) {
-        tabItems.push({
-            key: 'rebalancing',
-            label: (
-                <span>
-                    <SyncOutlined />
-                    {t('portfolio.rebalancing', 'Rebalancing')}
-                </span>
-            ),
-            children: (
-                <RebalancingTimeline
-                    rebalancingEvents={portfolio.rebalancing_events}
                     t={t}
                 />
             ),

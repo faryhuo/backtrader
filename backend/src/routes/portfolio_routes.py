@@ -137,15 +137,11 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "num_assets": result["num_assets"],
         # Multi-asset specific fields
         "equity_curve": result.get("equity_curve", {}),
-        "rebalancing_events": result.get("rebalancing_events", []),
         "asset_contributions": result.get("asset_contributions", {}),
         "all_trades": result.get("all_trades", []),  # Trade log from PortfolioTradeRecorder
         "per_asset_params": None,
         # Individual results for UI compatibility
         "individual_results": result.get("individual_results", []),
-        # Correlation and optimization
-        "correlation": result.get("correlation", {}),
-        "optimization": result.get("optimization", {}),
         # Additional metrics
         "portfolio_metrics": result.get("metrics", {}),
     }
@@ -172,13 +168,12 @@ async def multi_asset_backtest(
 
     Features:
     - Single Backtrader Cerebro instance managing multiple data feeds
-    - Periodic rebalancing with multiple optimization methods
     - Unified portfolio equity curve
     - Per-asset strategy parameter configuration
     - Transaction cost tracking
 
     This endpoint provides true multi-asset backtesting (not parallel backtests),
-    enabling portfolio-level features like rebalancing and optimization.
+    enabling portfolio-level features and comprehensive performance tracking.
     """
     # Validate inputs
     if len(request.tickers) != len(request.weights):
@@ -274,8 +269,8 @@ async def get_portfolio_history(
 async def get_portfolio_detail(portfolio_id: str, user_id: str = Depends(get_optional_user_id)):
     """
     Get detailed portfolio result by ID.
-    
-    Includes all metrics, correlation matrix, and optimization suggestions.
+
+    Includes all metrics, equity curve, and asset contributions.
     """
     try:
         

@@ -218,7 +218,6 @@ class CerebroBuilder:
 
         Adds custom analyzers for portfolio tracking:
         - PortfolioValueAnalyzer
-        - RebalancingEventAnalyzer
         - AssetContributionAnalyzer
         - PortfolioMetricsAnalyzer
         - PortfolioTradeRecorder
@@ -233,7 +232,6 @@ class CerebroBuilder:
         # Import here to avoid circular imports
         from src.service.portfolio_analyzers import (
             PortfolioValueAnalyzer,
-            RebalancingEventAnalyzer,
             AssetContributionAnalyzer,
             PortfolioMetricsAnalyzer,
             PortfolioTradeRecorder,
@@ -242,10 +240,6 @@ class CerebroBuilder:
         self.cerebro.addanalyzer(
             PortfolioValueAnalyzer,
             _name="portfolio_value"
-        )
-        self.cerebro.addanalyzer(
-            RebalancingEventAnalyzer,
-            _name="rebalancing"
         )
         self.cerebro.addanalyzer(
             AssetContributionAnalyzer,

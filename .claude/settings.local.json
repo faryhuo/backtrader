@@ -31,7 +31,8 @@
       "Bash(pip show:*)",
       "Bash(git -C \"d:\\\\Project\\\\backtrader\" log --oneline --decorate -20)",
       "Bash(xargs:*)",
-      "Bash(pushd:*)"
+      "Bash(pushd:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

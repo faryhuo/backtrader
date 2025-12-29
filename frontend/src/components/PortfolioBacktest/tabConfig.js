@@ -2,7 +2,6 @@ import React from 'react';
 import { Image } from 'antd';
 import {
     LineChartOutlined,
-    SyncOutlined,
     PieChartOutlined,
     TableOutlined,
     UnorderedListOutlined,
@@ -22,7 +21,6 @@ export function getAvailableData(result) {
     if (!result) {
         return {
             hasEquityCurve: false,
-            hasRebalancing: false,
             hasContributions: false,
             hasTrades: false,
             hasCorrelation: false,
@@ -34,10 +32,8 @@ export function getAvailableData(result) {
 
     return {
         hasEquityCurve: result.equity_curve && Object.keys(result.equity_curve).length > 0,
-        hasRebalancing: result.rebalancing_events && result.rebalancing_events.length > 0,
         hasContributions: result.asset_contributions && Object.keys(result.asset_contributions).length > 0,
-        hasTrades: (result.all_trades && result.all_trades.length > 0) ||
-            (result.rebalancing_events && result.rebalancing_events.length > 0),
+        hasTrades: result.all_trades && result.all_trades.length > 0,
         hasCorrelation: result.correlation && !result.correlation.error,
         hasOptimization: result.optimization && !result.optimization.error,
         hasIndividualResults: result.individual_results && result.individual_results.length > 0,
@@ -56,7 +52,6 @@ export function getAvailableData(result) {
  * @param {Function} params.t - Translation function
  * @param {Object} params.components - React component references
  * @param {React.ComponentType} params.components.EquityCurveChart - Equity curve chart component
- * @param {React.ComponentType} params.components.RebalancingTimeline - Rebalancing timeline component
  * @param {React.ComponentType} params.components.AssetContributionChart - Asset contribution chart
  * @param {React.ComponentType} params.components.CorrelationCard - Correlation matrix card
  * @param {React.ComponentType} params.components.OptimizationCard - Optimization suggestions card
@@ -72,7 +67,6 @@ export function getAvailableData(result) {
 export function buildPortfolioTabItems({ result, t, components, options = {} }) {
     const {
         EquityCurveChart,
-        RebalancingTimeline,
         AssetContributionChart,
         CorrelationCard,
         OptimizationCard,
@@ -103,32 +97,13 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
             children: (
                 <EquityCurveChart
                     equityCurve={result.equity_curve}
-                    rebalancingEvents={result.rebalancing_events}
                     t={t}
                 />
             ),
         });
     }
 
-    // 2. Rebalancing Tab
-    if (available.hasRebalancing && RebalancingTimeline) {
-        tabItems.push({
-            key: 'rebalancing',
-            label: (
-                <span>
-                    <SyncOutlined /> {t('portfolio.rebalancing', 'Rebalancing')}
-                </span>
-            ),
-            children: (
-                <RebalancingTimeline
-                    rebalancingEvents={result.rebalancing_events}
-                    t={t}
-                />
-            ),
-        });
-    }
-
-    // 3. Asset Contribution Tab
+    // 2. Asset Contribution Tab
     if (available.hasContributions && AssetContributionChart) {
         tabItems.push({
             key: 'contributions',
@@ -148,7 +123,7 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
         });
     }
 
-    // 4. Trade Log Tab
+    // 3. Trade Log Tab
     if (available.hasTrades && TradeLogTable) {
         tabItems.push({
             key: 'trades',
@@ -160,14 +135,13 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
             children: (
                 <TradeLogTable
                     trades={result.all_trades}
-                    rebalancingEvents={result.rebalancing_events}
                     t={t}
                 />
             ),
         });
     }
 
-    // 5. Individual Results Tab
+    // 4. Individual Results Tab
     if (available.hasIndividualResults && IndividualResultsTable) {
         tabItems.push({
             key: 'individual',
@@ -185,7 +159,7 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
         });
     }
 
-    // 6. Correlation Tab
+    // 5. Correlation Tab
     if (showCorrelation && available.hasCorrelation && CorrelationCard) {
         tabItems.push({
             key: 'correlation',
@@ -203,7 +177,7 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
         });
     }
 
-    // 7. Optimization Tab
+    // 6. Optimization Tab
     if (showOptimization && available.hasOptimization && OptimizationCard) {
         tabItems.push({
             key: 'optimization',
@@ -223,7 +197,7 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
         });
     }
 
-    // 8. Chart Tab (if plot_url available)
+    // 7. Chart Tab (if plot_url available)
     if (showChart && available.hasChart) {
         tabItems.push({
             key: 'chart',
@@ -256,9 +230,8 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
 export function getDefaultTabKey(result) {
     const available = getAvailableData(result);
 
-    // Priority: equity > rebalancing > contributions > trades > individual
+    // Priority: equity > contributions > trades > individual
     if (available.hasEquityCurve) return 'equity';
-    if (available.hasRebalancing) return 'rebalancing';
     if (available.hasContributions) return 'contributions';
     if (available.hasTrades) return 'trades';
     if (available.hasIndividualResults) return 'individual';

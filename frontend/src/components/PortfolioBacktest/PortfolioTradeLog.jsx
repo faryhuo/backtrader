@@ -130,10 +130,10 @@ const TradeEventItem = ({ trades, date, t }) => {
  * PortfolioTradeLog - Displays all trades from portfolio backtest
  * Supports two view modes: Table and Timeline
  */
-function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
+function PortfolioTradeLog({ allTrades, t }) {
     const [viewMode, setViewMode] = useState('table');
 
-    // Use all_trades directly if available, otherwise extract from rebalancing events
+    // Use all_trades directly if available
     let trades = [];
 
     if (allTrades && allTrades.length > 0) {

@@ -3,11 +3,9 @@ Portfolio Analyzers - Custom Backtrader analyzers for multi-asset portfolios.
 
 This module provides specialized analyzers for tracking portfolio-level metrics:
 - PortfolioValueAnalyzer: Daily equity curve
-- RebalancingEventAnalyzer: Rebalancing events and costs
 - AssetContributionAnalyzer: Per-asset return contribution
 - PortfolioMetricsAnalyzer: Comprehensive portfolio statistics
-
-The analyzers use EventBus for loose coupling with the strategy.
+- PortfolioTradeRecorder: Record all trades in portfolio
 """
 
 import logging
@@ -16,10 +14,6 @@ from typing import Optional
 
 import backtrader as bt
 
-from src.service.portfolio.events import (
-    PortfolioEventType,
-    RebalanceExecutedEvent,
-)
 from src.utils.backtrader_helpers import get_data_name, get_ticker_from_data_mapping
 
 logger = logging.getLogger(__name__)
@@ -99,116 +93,6 @@ class PortfolioValueAnalyzer(bt.Analyzer):
             "peak_value": float(self.peak_value) if self.peak_value else 0.0,
             "total_return_pct": float(total_return_pct),
             "num_days": len(self.equity_curve),
-        }
-
-
-class RebalancingEventAnalyzer(bt.Analyzer):
-    """
-    Track all portfolio rebalancing events.
-
-    Subscribes to EventBus for loose coupling with the strategy.
-
-    Records each rebalancing occurrence including:
-    - Date
-    - Target weights
-    - Orders executed
-    - Transaction costs
-    - Pre/post rebalance portfolio value
-
-    Results:
-        {
-            "events": [
-                {
-                    "date": "2023-01-31",
-                    "trigger": "monthly_schedule",
-                    "pre_rebalance_value": 105000.0,
-                    "post_rebalance_value": 104950.0,  # After transaction costs
-                    "target_weights": {"AAPL": 0.33, "GOOGL": 0.33, "MSFT": 0.34},
-                    "orders": {"AAPL": 10, "GOOGL": -5, "MSFT": 20},
-                    "transaction_cost": 50.0
-                },
-                ...
-            ],
-            "total_events": 12,
-            "total_transaction_costs": 600.0
-        }
-    """
-
-    def __init__(self):
-        """Initialize the analyzer."""
-        super().__init__()
-        self.events = []
-        self.total_transaction_costs = 0.0
-
-    def start(self):
-        """Subscribe to EventBus when the backtest starts."""
-        # Subscribe to rebalance events via EventBus (loose coupling)
-        if hasattr(self.strategy, 'event_bus'):
-            self.strategy.event_bus.subscribe(
-                PortfolioEventType.REBALANCE_EXECUTED,
-                self._on_rebalance_event
-            )
-            logger.debug("RebalancingEventAnalyzer subscribed to EventBus")
-
-    def _on_rebalance_event(self, event: RebalanceExecutedEvent):
-        """
-        Handle a rebalance event from the EventBus.
-
-        Args:
-            event: RebalanceExecutedEvent from the strategy
-        """
-        # Build trades array with details
-        trades = []
-        for ticker, shares in event.orders.items():
-            trade = {
-                "ticker": ticker,
-                "shares": shares,
-                "action": "buy" if shares > 0 else "sell",
-            }
-            if event.prices and ticker in event.prices:
-                trade["price"] = event.prices[ticker]
-                trade["value"] = abs(shares) * event.prices[ticker]
-            trades.append(trade)
-
-        # Format date
-        if hasattr(event.date, 'isoformat'):
-            date_str = event.date.isoformat()
-        else:
-            date_str = str(event.date)
-
-        event_record = {
-            "date": date_str,
-            "trigger": event.trigger,
-            "pre_rebalance_value": float(event.pre_value),
-            "post_rebalance_value": float(event.post_value),
-            "portfolio_value": float(event.pre_value),  # For frontend display
-            "target_weights": {k: float(v) for k, v in event.target_weights.items()},
-            "pre_weights": {k: float(v) for k, v in event.pre_weights.items()} if event.pre_weights else {},
-            "orders": {k: int(v) for k, v in event.orders.items()},
-            "trades": trades,
-            "transaction_cost": float(event.transaction_cost),
-            "prices": {k: float(v) for k, v in event.prices.items()} if event.prices else {},
-        }
-
-        self.events.append(event_record)
-        self.total_transaction_costs += event.transaction_cost
-
-        logger.info(
-            f"Rebalancing event recorded: {date_str} ({event.trigger}), "
-            f"cost=${event.transaction_cost:.2f}, {len(trades)} trades"
-        )
-
-    def get_analysis(self):
-        """
-        Return all rebalancing events and summary statistics.
-
-        Returns:
-            Dictionary with event list and totals
-        """
-        return {
-            "events": self.events,
-            "total_events": len(self.events),
-            "total_transaction_costs": float(self.total_transaction_costs),
         }
 
 
@@ -550,7 +434,6 @@ class PortfolioTradeRecorder(bt.Analyzer):
 
 __all__ = [
     "PortfolioValueAnalyzer",
-    "RebalancingEventAnalyzer",
     "AssetContributionAnalyzer",
     "PortfolioMetricsAnalyzer",
     "PortfolioTradeRecorder",

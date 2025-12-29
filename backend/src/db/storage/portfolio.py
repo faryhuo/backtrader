@@ -60,12 +60,9 @@ class PortfolioStorage(BaseStorage):
                     failed_backtests=portfolio_metrics.get("failed_backtests", 0),
                     portfolio_metrics=portfolio_metrics,
                     individual_results=result.get("individual_results", []),
-                    correlation_matrix=result.get("correlation", {}),
-                    optimization_suggestion=result.get("optimization", {}),
                     plot_filename=result.get("plot_filename"),
                     # Multi-asset specific fields
                     equity_curve=result.get("equity_curve", {}),
-                    rebalancing_events=result.get("rebalancing_events", []),
                     asset_contributions=result.get("asset_contributions", {}),
                     all_trades=result.get("all_trades", []),
                 )
@@ -204,11 +201,8 @@ class PortfolioStorage(BaseStorage):
             result.update({
                 "portfolio_metrics": model.portfolio_metrics,
                 "individual_results": model.individual_results,
-                "correlation": model.correlation_matrix,
-                "optimization": model.optimization_suggestion,
                 # Multi-asset specific fields
                 "equity_curve": model.equity_curve or {},
-                "rebalancing_events": model.rebalancing_events or [],
                 "asset_contributions": model.asset_contributions or {},
                 "all_trades": model.all_trades or [],
             })

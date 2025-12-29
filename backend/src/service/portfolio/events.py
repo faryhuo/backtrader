@@ -38,18 +38,12 @@ class PortfolioEventType(Enum):
 
     Events are categorized by their source and purpose:
     - Position events: Initial positions, position changes
-    - Rebalance events: Rebalancing operations
     - Trade events: Individual trade executions
     - Value events: Portfolio value updates
     """
     # Position lifecycle events
     INITIAL_POSITIONS_ESTABLISHED = "initial_positions_established"
     POSITION_CHANGED = "position_changed"
-
-    # Rebalancing events
-    REBALANCE_TRIGGERED = "rebalance_triggered"
-    REBALANCE_EXECUTED = "rebalance_executed"
-    REBALANCE_SKIPPED = "rebalance_skipped"
 
     # Trade events
     TRADE_EXECUTED = "trade_executed"
@@ -80,58 +74,6 @@ class PortfolioEvent:
             "event_type": self.event_type.value,
             "timestamp": self.timestamp.isoformat(),
             "data": self.data,
-        }
-
-
-@dataclass
-class RebalanceExecutedEvent(PortfolioEvent):
-    """
-    Event emitted after a rebalancing operation completes.
-
-    Contains all information about the rebalancing:
-    - Pre/post values and weights
-    - Orders executed
-    - Transaction costs
-    """
-    event_type: PortfolioEventType = field(
-        default=PortfolioEventType.REBALANCE_EXECUTED,
-        init=False
-    )
-    date: Union[datetime, date] = field(default=None)
-    trigger: str = ""
-    pre_value: float = 0.0
-    post_value: float = 0.0
-    target_weights: Dict[str, float] = field(default_factory=dict)
-    pre_weights: Dict[str, float] = field(default_factory=dict)
-    orders: Dict[str, int] = field(default_factory=dict)
-    transaction_cost: float = 0.0
-    prices: Dict[str, float] = field(default_factory=dict)
-
-    def __post_init__(self):
-        if self.date is None:
-            self.date = datetime.now()
-        if self.timestamp is None:
-            self.timestamp = (
-                self.date if isinstance(self.date, datetime)
-                else datetime.combine(self.date, datetime.min.time())
-            )
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for storage/serialization."""
-        return {
-            "event_type": self.event_type.value,
-            "date": (
-                self.date.isoformat() if isinstance(self.date, (datetime, date))
-                else str(self.date)
-            ),
-            "trigger": self.trigger,
-            "pre_value": self.pre_value,
-            "post_value": self.post_value,
-            "target_weights": self.target_weights,
-            "pre_weights": self.pre_weights,
-            "orders": self.orders,
-            "transaction_cost": self.transaction_cost,
-            "prices": self.prices,
         }
 
 
@@ -338,37 +280,6 @@ class PortfolioEventBus:
                     f"{event.event_type.value}: {e}"
                 )
 
-    def emit_rebalance(
-        self,
-        date: Union[datetime, date],
-        trigger: str,
-        pre_value: float,
-        post_value: float,
-        target_weights: Dict[str, float],
-        pre_weights: Dict[str, float],
-        orders: Dict[str, int],
-        transaction_cost: float,
-        prices: Dict[str, float],
-    ) -> None:
-        """
-        Convenience method to emit a rebalance event.
-
-        Creates and emits a RebalanceExecutedEvent with the provided data.
-        """
-        event = RebalanceExecutedEvent(
-            timestamp=datetime.now(),
-            date=date,
-            trigger=trigger,
-            pre_value=pre_value,
-            post_value=post_value,
-            target_weights=target_weights,
-            pre_weights=pre_weights,
-            orders=orders,
-            transaction_cost=transaction_cost,
-            prices=prices,
-        )
-        self.emit(event)
-
     def emit_trade(
         self,
         date: Union[datetime, date],
@@ -445,7 +356,6 @@ __all__ = [
     "PortfolioEventType",
     # Event classes
     "PortfolioEvent",
-    "RebalanceExecutedEvent",
     "InitialPositionsEvent",
     "TradeExecutedEvent",
     "PortfolioValueEvent",

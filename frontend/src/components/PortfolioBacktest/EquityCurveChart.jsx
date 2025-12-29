@@ -6,11 +6,10 @@ import { createChart } from 'lightweight-charts';
 /**
  * Inner chart component that handles the lightweight-charts rendering
  */
-const EquityChartInner = ({ data, rebalancingEvents, height = 300, t }) => {
+const EquityChartInner = ({ data, height = 300, t }) => {
     const chartContainerRef = useRef(null);
     const chartRef = useRef(null);
     const seriesRef = useRef(null);
-    const markersRef = useRef([]);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -97,30 +96,17 @@ const EquityChartInner = ({ data, rebalancingEvents, height = 300, t }) => {
         // Set the data
         seriesRef.current.setData(data);
 
-        // Add rebalancing markers
-        if (rebalancingEvents && rebalancingEvents.length > 0) {
-            const markers = rebalancingEvents.map(event => ({
-                time: event.date,
-                position: 'aboveBar',
-                color: '#f59e0b',
-                shape: 'arrowDown',
-                text: 'R',
-            }));
-            seriesRef.current.setMarkers(markers);
-            markersRef.current = markers;
-        }
-
         chart.timeScale().fitContent();
 
-    }, [data, rebalancingEvents]);
+    }, [data]);
 
     return <div ref={chartContainerRef} style={{ height }} />;
 };
 
 /**
- * EquityCurveChart - Shows portfolio equity curve over time with rebalancing markers
+ * EquityCurveChart - Shows portfolio equity curve over time
  */
-const EquityCurveChart = ({ equityCurve, rebalancingEvents, t }) => {
+const EquityCurveChart = ({ equityCurve, t }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [timeRange, setTimeRange] = useState('ALL');
 
@@ -171,15 +157,6 @@ const EquityCurveChart = ({ equityCurve, rebalancingEvents, t }) => {
         return chartData.filter(d => d.time >= startStr);
     }, [chartData, timeRange]);
 
-    // Filter rebalancing events based on time range
-    const filteredRebalancing = useMemo(() => {
-        if (!rebalancingEvents || rebalancingEvents.length === 0) return [];
-        if (filteredData.length === 0) return [];
-
-        const startDate = filteredData[0].time;
-        return rebalancingEvents.filter(e => e.date >= startDate);
-    }, [rebalancingEvents, filteredData]);
-
     if (!equityCurve || Object.keys(equityCurve).length === 0) {
         return (
             <Card
@@ -210,11 +187,6 @@ const EquityCurveChart = ({ equityCurve, rebalancingEvents, t }) => {
                     <Space>
                         <LineChartOutlined />
                         {t('portfolio.equity_curve', 'Equity Curve')}
-                        {rebalancingEvents && rebalancingEvents.length > 0 && (
-                            <span style={{ fontSize: 12, color: '#f59e0b' }}>
-                                ({rebalancingEvents.length} {t('portfolio.rebalances', 'rebalances')})
-                            </span>
-                        )}
                     </Space>
                 }
                 extra={
@@ -235,7 +207,6 @@ const EquityCurveChart = ({ equityCurve, rebalancingEvents, t }) => {
             >
                 <EquityChartInner
                     data={filteredData}
-                    rebalancingEvents={filteredRebalancing}
                     height={300}
                     t={t}
                 />
@@ -264,7 +235,6 @@ const EquityCurveChart = ({ equityCurve, rebalancingEvents, t }) => {
                 </div>
                 <EquityChartInner
                     data={filteredData}
-                    rebalancingEvents={filteredRebalancing}
                     height={500}
                     t={t}
                 />
