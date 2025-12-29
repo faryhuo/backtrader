@@ -67,5 +67,47 @@ export const backtestApi = {
             })
         })
         return await parseResponse(res)
+    },
+
+    /**
+     * Export backtest data in PyFolio-compatible format as a ZIP file
+     * @param {string} backtestId - Backtest ID
+     * @returns {Promise<Blob>} - ZIP file blob
+     */
+    async exportPyFolioData(backtestId) {
+        const res = await buildRequest(`/backtest/history/${backtestId}/pyfolio-export`)
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ detail: 'Export failed' }))
+            throw new Error(error.detail || 'Export failed')
+        }
+        return await res.blob()
+    },
+
+    /**
+     * Get PyFolio-style performance metrics
+     * @param {string} backtestId - Backtest ID
+     * @returns {Promise<Object>} - Metrics object
+     */
+    async getPyFolioMetrics(backtestId) {
+        const res = await buildRequest(`/backtest/history/${backtestId}/pyfolio-metrics`)
+        return await parseResponse(res)
+    },
+
+    /**
+     * Generate PyFolio-style tear sheet (QuantStats HTML report)
+     * @param {string} backtestId - Backtest ID
+     * @param {Object} config - Configuration options
+     * @param {string} config.benchmark_ticker - Optional benchmark ticker
+     * @returns {Promise<Object>} - Object with HTML content
+     */
+    async generatePyFolioTearSheet(backtestId, config = {}) {
+        const res = await buildRequest(`/backtest/history/${backtestId}/pyfolio-tearsheet`, {
+            method: 'POST',
+            body: JSON.stringify({
+                include_tear_sheet: true,
+                benchmark_ticker: config.benchmark_ticker || null
+            })
+        })
+        return await parseResponse(res)
     }
 }

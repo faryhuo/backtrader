@@ -37,6 +37,8 @@ from src.config.worker_config import WorkerPoolConfig, get_config
 from src.service.worker.task_models import (
     BacktestResult,
     BacktestTask,
+    MultiAssetBacktestResult,
+    MultiAssetBacktestTask,
     LiveTradingEvent,
     LiveTradingTask,
     TaskStatus,
@@ -90,8 +92,9 @@ def _backtest_worker_main(
         # Send error back if imports fail
         result_queue.put({
             "task_id": "INIT_ERROR",
-            "success": False,
+            "status": TaskStatus.FAILED.value,
             "error": f"Worker initialization failed: {e}",
+            "error_type": type(e).__name__,
         })
         return
     
@@ -142,6 +145,81 @@ def _backtest_worker_main(
             break
         except Exception as e:
             logger.exception(f"Worker loop error: {e}")
+            continue
+
+
+def _multi_asset_worker_main(
+    task_queue: mp.Queue,
+    result_queue: mp.Queue,
+    config: Dict[str, Any],
+):
+    """
+    Main entry point for multi-asset backtest worker process.
+
+    This function runs in a separate process and executes multi-asset
+    portfolio backtests in complete isolation from the API process.
+
+    Args:
+        task_queue: Queue to receive tasks from
+        result_queue: Queue to send results to
+        config: Worker configuration dictionary
+    """
+    # Import here to avoid loading in main process
+    try:
+        from src.service.worker.multi_asset_worker import execute_multi_asset_task
+    except ImportError as e:
+        result_queue.put({
+            "task_id": "INIT_ERROR",
+            "status": TaskStatus.FAILED.value,
+            "error": f"Multi-asset worker initialization failed: {e}",
+            "error_type": type(e).__name__,
+        })
+        return
+
+    # Apply resource limits (higher for multi-asset: 2GB)
+    max_memory_mb = config.get("max_memory_mb", 2048)
+    try:
+        _apply_memory_limit(max_memory_mb)
+    except Exception as e:
+        logger.warning(f"Failed to apply memory limit: {e}")
+
+    # Worker main loop
+    while True:
+        try:
+            try:
+                task_data = task_queue.get(timeout=1.0)
+            except queue.Empty:
+                continue
+
+            if task_data is None:
+                logger.debug("Multi-asset worker received shutdown signal")
+                break
+
+            task_id = task_data.get("task_id", "unknown")
+            start_time = datetime.utcnow()
+
+            try:
+                task = MultiAssetBacktestTask.from_dict(task_data)
+                result = execute_multi_asset_task(task)
+                result.start_time = start_time.isoformat()
+                result.end_time = datetime.utcnow().isoformat()
+                result.duration_seconds = (datetime.utcnow() - start_time).total_seconds()
+                result_queue.put(result.to_dict())
+            except Exception as e:
+                logger.exception(f"Multi-asset worker task {task_id} failed: {e}")
+                result_queue.put({
+                    "task_id": task_id,
+                    "status": TaskStatus.FAILED.value,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "start_time": start_time.isoformat(),
+                    "end_time": datetime.utcnow().isoformat(),
+                })
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            logger.exception(f"Multi-asset worker loop error: {e}")
             continue
 
 
@@ -355,21 +433,22 @@ class WorkerPool:
                     result_data = self._result_queue.get(timeout=0.5)
                 except queue.Empty:
                     continue
-                
+
                 task_id = result_data.get("task_id")
                 if not task_id:
                     continue
-                
-                result = BacktestResult.from_dict(result_data)
-                
+
+                # Store raw dict - conversion happens in get methods
+                # This supports both BacktestResult and MultiAssetBacktestResult
                 with self._lock:
-                    self._results[task_id] = result
+                    self._results[task_id] = result_data
                     event = self._pending_results.get(task_id)
                     if event:
                         event.set()
-                
-                logger.debug(f"Collected result for task {task_id}: {result.status}")
-            
+
+                status = result_data.get("status", "unknown")
+                logger.debug(f"Collected result for task {task_id}: {status}")
+
             except Exception as e:
                 if not self._shutdown:
                     logger.exception(f"Error collecting result: {e}")
@@ -417,29 +496,32 @@ class WorkerPool:
     ) -> BacktestResult:
         """
         Get the result of a submitted task.
-        
+
         Args:
             task_id: Task ID returned from submit_backtest
             timeout: Optional timeout in seconds, defaults to config
-            
+
         Returns:
             BacktestResult
-            
+
         Raises:
             WorkerTimeoutError: If task times out
             WorkerPoolError: If result retrieval fails
         """
         if timeout is None:
             timeout = self.config.task_timeout_seconds
-        
+
         with self._lock:
             # Check if result is already available
             result = self._results.get(task_id)
             if result:
                 del self._results[task_id]
                 self._pending_results.pop(task_id, None)
+                # Convert dict to BacktestResult if needed
+                if isinstance(result, dict):
+                    return BacktestResult.from_dict(result)
                 return result
-            
+
             event = self._pending_results.get(task_id)
         
         if not event:
@@ -454,12 +536,15 @@ class WorkerPool:
         with self._lock:
             result = self._results.pop(task_id, None)
             self._pending_results.pop(task_id, None)
-        
+
         if not result:
             raise WorkerPoolError(f"Result not found for task {task_id}")
-        
+
+        # Convert dict to BacktestResult if needed
+        if isinstance(result, dict):
+            return BacktestResult.from_dict(result)
         return result
-    
+
     def submit_backtest_sync(
         self,
         task: BacktestTask,
@@ -513,11 +598,154 @@ class WorkerPool:
                 event.set()
         
         return task.task_id
-    
+
+    # =========================================================================
+    # Multi-Asset Backtest Methods
+    # =========================================================================
+
+    def submit_multi_asset_backtest(self, task: MultiAssetBacktestTask) -> str:
+        """
+        Submit a multi-asset portfolio backtest task to the worker pool.
+
+        Args:
+            task: Multi-asset backtest task definition
+
+        Returns:
+            task_id for tracking the result
+
+        Raises:
+            WorkerPoolError: If pool is not available
+        """
+        if not self.config.enabled:
+            return self._execute_multi_asset_in_process(task)
+
+        if not self._started:
+            self.start()
+
+        # Register pending result
+        with self._lock:
+            event = threading.Event()
+            self._pending_results[task.task_id] = event
+
+        # Submit to queue (use same queue as backtest for now)
+        try:
+            self._task_queue.put(task.to_dict(), timeout=10.0)
+        except queue.Full:
+            with self._lock:
+                del self._pending_results[task.task_id]
+            raise WorkerPoolError("Task queue is full")
+
+        logger.debug(f"Submitted multi-asset backtest task {task.task_id}")
+        return task.task_id
+
+    def get_multi_asset_result(
+        self,
+        task_id: str,
+        timeout: Optional[float] = None
+    ) -> MultiAssetBacktestResult:
+        """
+        Get the result of a submitted multi-asset task.
+
+        Args:
+            task_id: Task ID returned from submit_multi_asset_backtest
+            timeout: Optional timeout in seconds, defaults to config (with 2x multiplier)
+
+        Returns:
+            MultiAssetBacktestResult
+
+        Raises:
+            WorkerTimeoutError: If task times out
+            WorkerPoolError: If result retrieval fails
+        """
+        if timeout is None:
+            # Multi-asset backtests get 2x timeout
+            timeout = self.config.task_timeout_seconds * 2
+
+        with self._lock:
+            result = self._results.get(task_id)
+            if result:
+                del self._results[task_id]
+                self._pending_results.pop(task_id, None)
+                # Convert to MultiAssetBacktestResult if needed
+                if isinstance(result, dict):
+                    return MultiAssetBacktestResult.from_dict(result)
+                return result
+
+            event = self._pending_results.get(task_id)
+
+        if not event:
+            raise WorkerPoolError(f"Unknown task: {task_id}")
+
+        if not event.wait(timeout=timeout):
+            with self._lock:
+                self._pending_results.pop(task_id, None)
+            raise WorkerTimeoutError(f"Task {task_id} timed out after {timeout}s")
+
+        with self._lock:
+            result = self._results.pop(task_id, None)
+            self._pending_results.pop(task_id, None)
+
+        if not result:
+            raise WorkerPoolError(f"Result not found for task {task_id}")
+
+        if isinstance(result, dict):
+            return MultiAssetBacktestResult.from_dict(result)
+        return result
+
+    def submit_multi_asset_backtest_sync(
+        self,
+        task: MultiAssetBacktestTask,
+        timeout: Optional[float] = None
+    ) -> MultiAssetBacktestResult:
+        """
+        Submit a multi-asset backtest task and wait for result (synchronous).
+
+        Args:
+            task: Multi-asset backtest task definition
+            timeout: Optional timeout in seconds
+
+        Returns:
+            MultiAssetBacktestResult
+        """
+        task_id = self.submit_multi_asset_backtest(task)
+        return self.get_multi_asset_result(task_id, timeout=timeout)
+
+    def _execute_multi_asset_in_process(self, task: MultiAssetBacktestTask) -> str:
+        """
+        Fallback: Execute multi-asset backtest in-process (when pool is disabled).
+
+        WARNING: This executes user code in the API process!
+        Only use when worker pool is explicitly disabled.
+        """
+        logger.warning(
+            "Executing multi-asset backtest in-process (worker pool disabled). "
+            "This is not secure for untrusted code!"
+        )
+
+        from src.service.worker.multi_asset_worker import execute_multi_asset_task
+
+        with self._lock:
+            event = threading.Event()
+            self._pending_results[task.task_id] = event
+
+        try:
+            result = execute_multi_asset_task(task)
+            with self._lock:
+                self._results[task.task_id] = result
+                event.set()
+        except Exception as e:
+            with self._lock:
+                self._results[task.task_id] = MultiAssetBacktestResult.error_result(
+                    task.task_id, str(e), type(e).__name__
+                )
+                event.set()
+
+        return task.task_id
+
     # =========================================================================
     # Live Trading Workers
     # =========================================================================
-    
+
     def start_live_session(
         self,
         task: LiveTradingTask,

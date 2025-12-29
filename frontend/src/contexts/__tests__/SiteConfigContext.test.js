@@ -223,7 +223,7 @@ describe('SiteConfigContext', () => {
         })
 
         it('should have correct site configuration structure', async () => {
-            siteApi.getSiteConfig.mockResolvedValue(customConfig)
+            getSiteConfig.mockResolvedValue(customConfig)
 
             const { result } = renderHook(() => useSiteConfig(), { wrapper })
 
@@ -236,7 +236,7 @@ describe('SiteConfigContext', () => {
         })
 
         it('should have correct links structure', async () => {
-            siteApi.getSiteConfig.mockResolvedValue(customConfig)
+            getSiteConfig.mockResolvedValue(customConfig)
 
             const { result } = renderHook(() => useSiteConfig(), { wrapper })
 
@@ -251,7 +251,7 @@ describe('SiteConfigContext', () => {
         })
 
         it('should have correct features flags', async () => {
-            siteApi.getSiteConfig.mockResolvedValue(customConfig)
+            getSiteConfig.mockResolvedValue(customConfig)
 
             const { result } = renderHook(() => useSiteConfig(), { wrapper })
 

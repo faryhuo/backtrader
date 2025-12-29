@@ -40,6 +40,11 @@ class BacktestTask:
     initial_cash: float = 100000.0
     commission: float = 0.0005
     stake: int = 100
+    # Sizer configuration
+    sizer_type: str = "fixed_size"
+    sizer_config: Optional[Dict[str, Any]] = None
+    # Data timeframe
+    timeframe: str = "1d"
     params: Optional[Dict[str, Any]] = None
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
@@ -55,6 +60,9 @@ class BacktestTask:
             "initial_cash": self.initial_cash,
             "commission": self.commission,
             "stake": self.stake,
+            "sizer_type": self.sizer_type,
+            "sizer_config": self.sizer_config,
+            "timeframe": self.timeframe,
             "params": self.params,
             "generate_chart": self.generate_chart,
             "chart_save_path": self.chart_save_path,
@@ -137,6 +145,143 @@ class BacktestResult:
         error: str,
         error_type: str = "ExecutionError"
     ) -> "BacktestResult":
+        """Create a failed result with error."""
+        return cls(
+            task_id=task_id,
+            status=TaskStatus.FAILED,
+            error=error,
+            error_type=error_type,
+        )
+
+
+# =============================================================================
+# Multi-Asset Backtest Task Models
+# =============================================================================
+
+@dataclass
+class MultiAssetBacktestTask:
+    """
+    Multi-asset portfolio backtest task for worker execution.
+
+    All fields must be JSON-serializable for IPC.
+    """
+    task_id: str
+    tickers: List[str]
+    weights: List[float]
+    start_date: str
+    end_date: str
+    initial_cash: float = 100000.0
+    commission: float = 0.0005
+    strategy_name: Optional[str] = None
+    rebalance_config: Optional[Dict[str, Any]] = None
+    optimization_method: str = "equal_weight"
+    timeframe: str = "1d"
+    generate_chart: bool = True
+    chart_save_path: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "task_id": self.task_id,
+            "tickers": self.tickers,
+            "weights": self.weights,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "initial_cash": self.initial_cash,
+            "commission": self.commission,
+            "strategy_name": self.strategy_name,
+            "rebalance_config": self.rebalance_config,
+            "optimization_method": self.optimization_method,
+            "timeframe": self.timeframe,
+            "generate_chart": self.generate_chart,
+            "chart_save_path": self.chart_save_path,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "MultiAssetBacktestTask":
+        """Create from dictionary."""
+        return cls(**data)
+
+
+@dataclass
+class MultiAssetBacktestResult:
+    """
+    Multi-asset portfolio backtest result from worker.
+
+    Contains all portfolio metrics and data needed by the API.
+    """
+    task_id: str
+    status: TaskStatus
+
+    # Portfolio-level metrics
+    final_value: Optional[float] = None
+    total_return: Optional[float] = None
+    sharpe_ratio: Optional[float] = None
+    max_drawdown: Optional[float] = None
+    volatility: Optional[float] = None
+
+    # Portfolio data
+    equity_curve: Optional[Dict[str, float]] = None
+    rebalancing_events: Optional[List[Dict[str, Any]]] = None
+    asset_contributions: Optional[Dict[str, Dict[str, Any]]] = None
+    optimization_history: Optional[List[Dict[str, Any]]] = None
+
+    # Per-asset results
+    per_asset_results: Optional[Dict[str, Dict[str, Any]]] = None
+
+    # Chart
+    chart_path: Optional[str] = None
+
+    # Error info
+    error: Optional[str] = None
+    error_type: Optional[str] = None
+
+    # Timing and memory
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    duration_seconds: Optional[float] = None
+    peak_memory_mb: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "task_id": self.task_id,
+            "status": self.status.value if isinstance(self.status, TaskStatus) else self.status,
+            "final_value": self.final_value,
+            "total_return": self.total_return,
+            "sharpe_ratio": self.sharpe_ratio,
+            "max_drawdown": self.max_drawdown,
+            "volatility": self.volatility,
+            "equity_curve": self.equity_curve,
+            "rebalancing_events": self.rebalancing_events,
+            "asset_contributions": self.asset_contributions,
+            "optimization_history": self.optimization_history,
+            "per_asset_results": self.per_asset_results,
+            "chart_path": self.chart_path,
+            "error": self.error,
+            "error_type": self.error_type,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "duration_seconds": self.duration_seconds,
+            "peak_memory_mb": self.peak_memory_mb,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "MultiAssetBacktestResult":
+        """Create from dictionary."""
+        status = data.get("status", TaskStatus.FAILED)
+        if isinstance(status, str):
+            status = TaskStatus(status)
+        data["status"] = status
+        return cls(**data)
+
+    @classmethod
+    def error_result(
+        cls,
+        task_id: str,
+        error: str,
+        error_type: str = "ExecutionError"
+    ) -> "MultiAssetBacktestResult":
         """Create a failed result with error."""
         return cls(
             task_id=task_id,
@@ -281,6 +426,8 @@ __all__ = [
     "TaskStatus",
     "BacktestTask",
     "BacktestResult",
+    "MultiAssetBacktestTask",
+    "MultiAssetBacktestResult",
     "LiveTradingTask",
     "LiveEventType",
     "LiveTradingEvent",

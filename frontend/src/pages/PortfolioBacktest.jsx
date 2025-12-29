@@ -17,6 +17,7 @@ import {
     TickerWeightSection,
     ParametersSection,
     StrategyParamsSection,
+    RebalanceConfigSection,
     PortfolioResultsSection,
 } from '../components/PortfolioBacktest';
 import './PortfolioBacktest.css';
@@ -35,7 +36,7 @@ function PortfolioBacktest() {
     const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')]);
     const [initialCash, setInitialCash] = useState(100000);
     const [commission, setCommission] = useState(0.0005);
-    const [stake] = useState(100);
+    const [timeframe, setTimeframe] = useState('1d');
 
     const {
         strategies,
@@ -43,6 +44,15 @@ function PortfolioBacktest() {
         setSelectedStrategy,
     } = useStrategies();
     const [paramsExpanded, setParamsExpanded] = useState(true);
+
+    // Rebalancing state
+    const [rebalanceEnabled, setRebalanceEnabled] = useState(false);
+    const [rebalanceConfig, setRebalanceConfig] = useState({
+        frequency: 'monthly',
+        optimization_method: 'equal_weight',
+        min_trade_threshold: 0.01,
+        transaction_cost_pct: 0.001,
+    });
 
     // Use custom hooks
     const {
@@ -85,9 +95,10 @@ function PortfolioBacktest() {
             endDate: dateRange[1].format('YYYY-MM-DD'),
             initialCash,
             commission,
-            stake,
+            timeframe,
             selectedStrategy,
-            paramOverrides,
+            rebalanceEnabled,
+            rebalanceConfig,
         }, t);
     };
 
@@ -126,6 +137,8 @@ function PortfolioBacktest() {
                     setInitialCash={setInitialCash}
                     commission={commission}
                     setCommission={setCommission}
+                    timeframe={timeframe}
+                    setTimeframe={setTimeframe}
                 />
 
                 {strategyParams.length > 0 && (
@@ -138,6 +151,14 @@ function PortfolioBacktest() {
                         setParamsExpanded={setParamsExpanded}
                     />
                 )}
+
+                <RebalanceConfigSection
+                    t={t}
+                    enabled={rebalanceEnabled}
+                    onEnabledChange={setRebalanceEnabled}
+                    config={rebalanceConfig}
+                    onConfigChange={setRebalanceConfig}
+                />
 
                 <div className="run-button-container">
                     <Button

@@ -61,6 +61,9 @@ export function useBacktest() {
             initialCash,
             commission,
             stake,
+            sizerType,
+            sizerConfig,
+            timeframe,
             selectedStrategy,
             paramOverrides,
         } = params;
@@ -85,6 +88,9 @@ export function useBacktest() {
                 initial_cash: parseFloat(initialCash),
                 commission: parseFloat(commission),
                 stake: parseInt(stake, 10),
+                sizer_type: sizerType || 'fixed_size',
+                sizer_config: sizerConfig || null,
+                timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy,
                 params: paramsToSend
             });
@@ -123,9 +129,10 @@ export function useBacktest() {
             endDate,
             initialCash,
             commission,
-            stake,
+            timeframe,
             selectedStrategy,
-            paramOverrides,
+            rebalanceEnabled,
+            rebalanceConfig,
         } = params;
 
         const validTickers = tickers.filter(ticker => ticker.trim());
@@ -140,7 +147,12 @@ export function useBacktest() {
         setTaskProgress(null);
 
         try {
-            const paramsToSend = Object.keys(paramOverrides || {}).length > 0 ? paramOverrides : null;
+            // Build rebalance_config for API if enabled
+            const rebalance_config = rebalanceEnabled ? {
+                frequency: rebalanceConfig.frequency,
+                min_trade_threshold: rebalanceConfig.min_trade_threshold,
+                transaction_cost_pct: rebalanceConfig.transaction_cost_pct,
+            } : null;
 
             const taskResponse = await api.runPortfolioBacktest({
                 tickers: validTickers,
@@ -149,10 +161,13 @@ export function useBacktest() {
                 end_date: endDate,
                 initial_cash: initialCash,
                 commission: commission,
-                stake: stake,
+                timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy || null,
-                params: paramsToSend
+                rebalance_config: rebalance_config,
+                optimization_method: rebalanceEnabled ? rebalanceConfig.optimization_method : 'equal_weight',
             });
+
+
 
             // Handle async task-based response
             if (taskResponse.task_id) {

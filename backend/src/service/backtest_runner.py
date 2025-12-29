@@ -42,6 +42,9 @@ def run_backtest_worker(
     strategy_name: str,
     save_path: Optional[Path],
     params: Optional[dict],
+    sizer_type: str = "fixed_size",
+    sizer_config: Optional[dict] = None,
+    timeframe: str = "1d",
 ) -> dict:
     """
     Run backtest in isolated worker process (secure).
@@ -68,6 +71,9 @@ def run_backtest_worker(
         params=params,
         generate_chart=save_path is not None,
         chart_save_path=str(save_path) if save_path else None,
+        sizer_type=sizer_type,
+        sizer_config=sizer_config,
+        timeframe=timeframe,
     )
 
     pool = get_worker_pool()

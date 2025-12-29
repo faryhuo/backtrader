@@ -27,6 +27,22 @@ const { Option } = Select
 const { RangePicker } = DatePicker
 const { Text } = Typography
 
+const SIZER_OPTIONS = [
+    { value: 'fixed_size', label: 'Fixed Size' },
+    { value: 'percent_sizer', label: 'Percent Sizer' },
+    { value: 'all_in_sizer', label: 'All In' },
+    { value: 'risk_sizer', label: 'Risk Control' },
+    { value: 'kelly_sizer', label: 'Kelly Criterion' },
+]
+
+const TIMEFRAME_OPTIONS = [
+    { value: '1d', label: 'Daily' },
+    { value: '1h', label: 'Hourly' },
+    { value: '15m', label: '15 Min' },
+    { value: '5m', label: '5 Min' },
+    { value: '1m', label: '1 Min' },
+]
+
 const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const { t } = useTranslation()
     const [form] = Form.useForm()
@@ -110,6 +126,14 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                 return
             }
 
+            const sizerType = values.sizer_type || 'fixed_size'
+            let sizer_config = null
+            if (sizerType === 'percent_sizer') {
+                sizer_config = { percents: values.sizer_percent || 10 }
+            } else if (sizerType === 'risk_sizer' || sizerType === 'kelly_sizer') {
+                sizer_config = { risk_percent: values.sizer_risk || 2 }
+            }
+
             const payload = {
                 strategy_name: values.strategy_name,
                 ticker: values.ticker,
@@ -122,7 +146,10 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                 optimization_metric: values.optimization_metric,
                 initial_cash: values.initial_cash,
                 commission: values.commission,
-                stake: values.stake
+                stake: values.stake,
+                sizer_type: sizerType,
+                sizer_config: sizer_config,
+                timeframe: values.timeframe || '1d'
             }
 
             await onSubmit(payload)
@@ -157,6 +184,10 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                     initial_cash: 100000,
                     commission: 0.0005,
                     stake: 100,
+                    sizer_type: 'fixed_size',
+                    sizer_percent: 10,
+                    sizer_risk: 2,
+                    timeframe: '1d',
                     parameters: [{ name: '', values: '' }]
                 }}
             >
@@ -324,13 +355,71 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                             <InputNumber min={0} max={0.01} step={0.0001} style={{ width: '100%' }} />
                         </Form.Item>
                     </Col>
+                </Row>
+
+                <Row gutter={16}>
                     <Col span={8}>
-                        <Form.Item label={t('walkforward.config.stake')} name="stake">
-                            <InputNumber min={1} max={10000} style={{ width: '100%' }} />
+                        <Form.Item label={t('config_form.sizer_type', 'Position Sizing')} name="sizer_type">
+                            <Select>
+                                {SIZER_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>
+                                        {t(`sizer.${opt.value}`, opt.label)}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Form.Item
+                        noStyle
+                        shouldUpdate={(prev, curr) => prev.sizer_type !== curr.sizer_type}
+                    >
+                        {({ getFieldValue }) => {
+                            const sizerType = getFieldValue('sizer_type')
+                            if (sizerType === 'fixed_size') {
+                                return (
+                                    <Col span={8}>
+                                        <Form.Item label={t('config_form.order_size', 'Order Size')} name="stake">
+                                            <InputNumber min={1} max={10000} style={{ width: '100%' }} />
+                                        </Form.Item>
+                                    </Col>
+                                )
+                            }
+                            if (sizerType === 'percent_sizer') {
+                                return (
+                                    <Col span={8}>
+                                        <Form.Item label={t('config_form.sizer_percent', 'Position %')} name="sizer_percent">
+                                            <InputNumber min={0.1} max={100} step={0.5} style={{ width: '100%' }} />
+                                        </Form.Item>
+                                    </Col>
+                                )
+                            }
+                            if (sizerType === 'risk_sizer' || sizerType === 'kelly_sizer') {
+                                return (
+                                    <Col span={8}>
+                                        <Form.Item label={t('config_form.sizer_risk', 'Risk per Trade %')} name="sizer_risk">
+                                            <InputNumber min={0.1} max={100} step={0.5} style={{ width: '100%' }} />
+                                        </Form.Item>
+                                    </Col>
+                                )
+                            }
+                            return null
+                        }}
+                    </Form.Item>
+                    <Col span={8}>
+                        <Form.Item label={t('config_form.timeframe', 'Data Interval')} name="timeframe">
+                            <Select>
+                                {TIMEFRAME_OPTIONS.map(opt => (
+                                    <Option key={opt.value} value={opt.value}>
+                                        {t(`timeframe.${opt.value}`, opt.label)}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                     </Col>
                 </Row>
+
             </Form>
+
         </Modal>
     )
 }

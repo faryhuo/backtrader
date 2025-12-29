@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
-import { Modal, Tabs, Descriptions, Tag, Button, Select } from 'antd'
+import { Modal, Tabs, Descriptions, Tag, Button, Select, Dropdown, message, Space } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { FileTextOutlined } from '@ant-design/icons'
+import { FileTextOutlined, DownloadOutlined, AreaChartOutlined, DownOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useSettingsContext } from '../../contexts/SettingsContext'
 import { api } from '../../services/api'
@@ -17,6 +17,8 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t, i18n } = useTranslation()
     const { settings, getAvailableModels } = useSettingsContext()
     const [reportLoading, setReportLoading] = useState(false)
+    const [pyfolioLoading, setPyfolioLoading] = useState(false)
+    const [tearsheetLoading, setTearsheetLoading] = useState(false)
 
     // Persistence callback for saving AI analysis
     const handleSaveAnalysis = useCallback(async (backtestId, modelName, analysis) => {
@@ -104,6 +106,132 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
         }
     }
 
+    const handleExportPyFolio = async () => {
+        if (!backtest || !backtest.backtest_id) {
+            return
+        }
+        setPyfolioLoading(true)
+
+        try {
+            const blob = await api.exportPyFolioData(backtest.backtest_id)
+
+            // Create download link
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `pyfolio_export_${backtest.ticker}_${backtest.backtest_id.slice(0, 8)}.zip`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+
+            message.success(t('history.pyfolio_export_success', 'PyFolio data exported successfully'))
+        } catch (err) {
+            console.error('Failed to export PyFolio data:', err)
+            message.error(t('history.pyfolio_export_failed', 'Failed to export PyFolio data'))
+        } finally {
+            setPyfolioLoading(false)
+        }
+    }
+
+    const handleGenerateTearSheet = async () => {
+        if (!backtest || !backtest.backtest_id) {
+            return
+        }
+
+        // Open window immediately on user click to avoid popup blocker
+        const newWindow = window.open('', '_blank')
+        if (!newWindow) {
+            message.warning(t('history.tearsheet_popup_blocked', 'Popup blocked. Please allow popups and try again.'))
+            return
+        }
+
+        // Show loading state in the new window
+        newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Loading Tear Sheet...</title>
+                <style>
+                    body {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        background: #f5f5f5;
+                    }
+                    .loader {
+                        text-align: center;
+                    }
+                    .spinner {
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #1890ff;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 16px;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="loader">
+                    <div class="spinner"></div>
+                    <div>Generating Tear Sheet...</div>
+                </div>
+            </body>
+            </html>
+        `)
+
+        setTearsheetLoading(true)
+
+        try {
+            const result = await api.generatePyFolioTearSheet(backtest.backtest_id)
+
+            if (result.html) {
+                // Write the tear sheet HTML to the already-opened window
+                newWindow.document.open()
+                newWindow.document.write(result.html)
+                newWindow.document.close()
+                message.success(t('history.tearsheet_generated', 'Tear sheet generated successfully'))
+            } else {
+                newWindow.close()
+                message.error(t('history.tearsheet_failed', 'Failed to generate tear sheet.'))
+            }
+        } catch (err) {
+            console.error('Failed to generate tear sheet:', err)
+            newWindow.close()
+            message.error(t('history.tearsheet_failed', 'Failed to generate tear sheet. QuantStats may not be installed on the server.'))
+        } finally {
+            setTearsheetLoading(false)
+        }
+    }
+
+    const isExporting = pyfolioLoading || tearsheetLoading
+
+    const pyfolioMenuItems = [
+        {
+            key: 'export',
+            label: t('history.pyfolio_export_data', 'Export Data (ZIP)'),
+            icon: <DownloadOutlined />,
+            disabled: isExporting,
+            onClick: handleExportPyFolio,
+        },
+        {
+            key: 'tearsheet',
+            label: t('history.pyfolio_tearsheet', 'Generate Tear Sheet'),
+            icon: <AreaChartOutlined />,
+            disabled: isExporting,
+            onClick: handleGenerateTearSheet,
+        },
+    ]
+
     return (
         <Modal
             title={t('history.detail_title')}
@@ -111,6 +239,25 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
             onCancel={onClose}
             width="90%"
             footer={[
+                <Dropdown
+                    key="pyfolio"
+                    menu={{ items: pyfolioMenuItems }}
+                    trigger={['click']}
+                    placement="top"
+                    disabled={isExporting}
+                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                >
+                    <Button
+                        icon={<AreaChartOutlined />}
+                        loading={isExporting}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Space>
+                            {t('history.pyfolio_export', 'PyFolio')}
+                            <DownOutlined />
+                        </Space>
+                    </Button>
+                </Dropdown>,
                 <Button
                     key="generate-report"
                     type="primary"

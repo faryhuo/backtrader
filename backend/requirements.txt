@@ -3,6 +3,7 @@ uvicorn[standard]>=0.32.0
 backtrader>=1.9.78.123
 yfinance>=0.2.66
 pandas>=2.3.3
+scipy>=1.14.0
 matplotlib>=3.10.8
 python-dotenv>=1.0.1
 openai>=2.11.0
@@ -24,3 +25,7 @@ ibapi>=9.81.1
 httpx>=0.28.0  # Required by newer packages, conflicts with investiny if installed
 pycares<5.0.0  # Version 5.0.0 has compatibility issues with aiodns
 aiodns>=3.6.1  # Required by aiohttp for async DNS resolution
+
+# Portfolio Analytics - PyFolio Integration
+pyfolio-reloaded>=0.9.5  # Maintained fork of pyfolio with modern Python support
+quantstats>=0.0.64  # Modern portfolio analytics library (alternative to pyfolio)

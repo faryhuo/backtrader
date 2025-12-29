@@ -163,6 +163,8 @@ def setup_logging(config_override: Optional[Dict[str, Any]] = None) -> None:
     """
     Configure logging based on config file or provided configuration.
     
+    Config format: handlers are enabled via loggers.root.handlers array.
+    
     Args:
         config_override: Optional config dict to override file-based config
     """
@@ -176,8 +178,17 @@ def setup_logging(config_override: Optional[Dict[str, Any]] = None) -> None:
     loggers_config = config.get("loggers", {})
     sensitive_config = config.get("sensitive_fields", DEFAULT_CONFIG["sensitive_fields"])
     
-    # Get root level from env var or config
-    root_level_str = os.getenv("LOG_LEVEL", log_config.get("level", "INFO"))
+    # Get root logger config
+    root_logger_config = loggers_config.get("root", {})
+    
+    # Get enabled handlers from loggers.root.handlers array
+    enabled_handlers = set(root_logger_config.get("handlers", ["console"]))
+    
+    # Get root level: priority is ENV > loggers.root.level > logging.level > default
+    root_level_str = os.getenv(
+        "LOG_LEVEL",
+        root_logger_config.get("level", log_config.get("level", "INFO"))
+    )
     root_level = get_log_level(root_level_str)
     
     # Create formatters
@@ -191,12 +202,12 @@ def setup_logging(config_override: Optional[Dict[str, Any]] = None) -> None:
     # Clear existing handlers
     root_logger.handlers.clear()
     
-    # Setup handlers
+    # Setup handlers based on config
     handlers_config = log_config.get("handlers", {})
     
     # Console handler
-    console_config = handlers_config.get("console", {})
-    if console_config.get("enabled", True):
+    if "console" in enabled_handlers:
+        console_config = handlers_config.get("console", {})
         console_handler = logging.StreamHandler()
         console_level = get_log_level(console_config.get("level", root_level_str))
         console_handler.setLevel(console_level)
@@ -207,8 +218,8 @@ def setup_logging(config_override: Optional[Dict[str, Any]] = None) -> None:
         root_logger.addHandler(console_handler)
     
     # File handler
-    file_config = handlers_config.get("file", {})
-    if file_config.get("enabled", False):
+    if "file" in enabled_handlers:
+        file_config = handlers_config.get("file", {})
         log_file = Path(file_config.get("filename", "logs/app.log"))
         
         # Create log directory if needed

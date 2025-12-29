@@ -7,14 +7,6 @@ services:
       - "8020:8000"
     environment:
       - PORT=8000
-      - HOST=0.0.0.0
-    volumes:
-      - ./data:/app/data                          # Database files
-      - ./logs:/app/logs                          # Log files
-      - ./resources/config:/app/resources/config  # Config files
-      - ./resources/images:/app/resources/images  # Images
-      - ./resources/reports:/app/resources/reports # Reports
-      - ./resources/strategy:/app/resources/strategy # Strategies
-      - ./resources/templates:/app/resources/templates # Templates                
+      - HOST=0.0.0.0    
     restart: unless-stopped
 

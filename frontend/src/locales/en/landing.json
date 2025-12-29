@@ -46,6 +46,22 @@
             "title": "Live Trading",
             "description": "Paper/live trading support, WebSocket real-time updates, order and position management."
         },
+        "versioning": {
+            "title": "Strategy Versioning",
+            "description": "Version history, diff comparison, one-click rollback for strategy management."
+        },
+        "report": {
+            "title": "Report Center",
+            "description": "Generate professional HTML reports with download & share links, including key metrics and visualizations."
+        },
+        "pyfolio": {
+            "title": "PyFolio Integration",
+            "description": "Export PyFolio-compatible data, QuantStats online reports, professional performance metrics."
+        },
+        "taskcenter": {
+            "title": "Task Center",
+            "description": "Unified management for backtests, optimizations, and analysis tasks with cancel/retry and real-time progress."
+        },
         "realtime": {
             "title": "Real-time Updates",
             "description": "WebSocket push notifications, live market data, instant order execution feedback."
@@ -53,10 +69,6 @@
         "security": {
             "title": "Secure & Reliable",
             "description": "Encrypted credentials, sandboxed execution, optional JWT auth for trading security."
-        },
-        "versioning": {
-            "title": "Strategy Versioning",
-            "description": "Version history, diff comparison, one-click rollback for strategy management."
         }
     },
     "workflow": {
@@ -84,37 +96,37 @@
         "badge": "Roadmap",
         "title": "Continuously Evolving Platform",
         "description": "We're constantly improving. Here's what's coming",
-        "item1": {
-            "title": "Core Backtest Engine",
-            "description": "Single-asset backtesting, strategy templates, result persistence"
-        },
-        "item2": {
-            "title": "Parameter Optimization",
-            "description": "Walk-Forward, heatmaps, overfitting detection"
-        },
-        "item3": {
-            "title": "Portfolio Backtesting",
-            "description": "Multi-asset portfolios, correlation analysis, Markowitz optimization"
-        },
-        "item4": {
-            "title": "Live Trading",
-            "description": "Paper/live sessions, WebSocket updates, order management"
-        },
-        "item5": {
+        "risk": {
             "title": "Risk Management",
-            "description": "Position limits, stop-loss guards, risk alerts"
+            "description": "Position limits, stop-loss guards, max drawdown thresholds, risk alerts via WebSocket"
         },
-        "item6": {
-            "title": "Strategy Versioning",
-            "description": "Version history, diff comparison, one-click rollback"
+        "advancedOrders": {
+            "title": "Advanced Order Types",
+            "description": "Trailing stops (StopTrail), stop-limit, bracket orders for complex strategies"
         },
-        "item7": {
+        "multiTimeframe": {
+            "title": "Multi-Timeframe",
+            "description": "Run strategies with multiple timeframe data feeds, cross-period signals"
+        },
+        "costSlippage": {
+            "title": "Cost & Slippage Models",
+            "description": "Tiered commissions, per-asset fee rates, slippage models, futures margin"
+        },
+        "filters": {
+            "title": "Data Filters",
+            "description": "Session filters for off-hours data, Replay mode, HeikinAshi candlesticks"
+        },
+        "scheduler": {
             "title": "Scheduled Tasks",
-            "description": "Scheduled backtests, report generation, task scheduling"
+            "description": "Scheduled backtests, report generation, Walk-Forward scheduling"
         },
-        "item8": {
+        "team": {
             "title": "Team Collaboration",
-            "description": "Team workspaces, strategy sharing, permission management"
+            "description": "Team workspaces, strategy sharing, RBAC permission management"
+        },
+        "ml": {
+            "title": "Machine Learning Workflow",
+            "description": "Feature pipelines, train/backtest integration, SHAP explainability"
         }
     },
     "cta": {
@@ -140,7 +152,7 @@
         "description": "Professional quantitative trading platform helping traders automate strategies and improve efficiency.",
         "product": "Product",
         "product.features": "Features",
-        "product.pricing": "Pricing",
+        "product.workflow": "Workflow",
         "product.roadmap": "Roadmap",
         "product.changelog": "Changelog",
         "resources": "Resources",
@@ -148,11 +160,6 @@
         "resources.api": "API Reference",
         "resources.templates": "Strategy Templates",
         "resources.tutorials": "Tutorials",
-        "company": "Company",
-        "company.about": "About Us",
-        "company.blog": "Blog",
-        "company.contact": "Contact",
-        "company.careers": "Careers",
         "copyright": "© 2024 Backtrader Pro. All rights reserved.",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service"

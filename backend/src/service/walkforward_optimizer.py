@@ -76,6 +76,9 @@ class WalkForwardOptimizer:
         train_period_days: int = 365,
         test_period_days: int = 90,
         anchored: bool = False,
+        sizer_type: str = "fixed_size",
+        sizer_config: Optional[Dict[str, Any]] = None,
+        timeframe: str = "1d",
     ):
         """
         Initialize walk-forward optimizer.
@@ -94,6 +97,9 @@ class WalkForwardOptimizer:
             test_period_days: Testing window size in days
             anchored: If True, training window grows from start (anchored),
                      If False, training window slides (rolling)
+            sizer_type: Position sizing type
+            sizer_config: Sizer configuration
+            timeframe: Data interval (1d, 1h, 15m, 5m, 1m)
         """
         self.strategy_name = strategy_name
         self.ticker = ticker
@@ -106,6 +112,9 @@ class WalkForwardOptimizer:
         self.train_period_days = train_period_days
         self.test_period_days = test_period_days
         self.anchored = anchored
+        self.sizer_type = sizer_type
+        self.sizer_config = sizer_config
+        self.timeframe = timeframe
 
         # Strategy is loaded in worker processes, not here
         # This ensures user code never runs in the main API process
@@ -214,6 +223,9 @@ class WalkForwardOptimizer:
                 stake=self.stake,
                 strategy_name=self.strategy_name,
                 params=params,
+                sizer_type=self.sizer_type,
+                sizer_config=self.sizer_config,
+                timeframe=self.timeframe,
             )
 
             # Extract and normalize metrics from result

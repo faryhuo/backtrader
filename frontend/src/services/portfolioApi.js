@@ -6,7 +6,7 @@ import { normalizePortfolioResult, normalizePortfolioHistory } from './normalize
 
 export const portfolioApi = {
     async runPortfolioBacktest(params) {
-        const res = await buildRequest('/portfolio/backtest', {
+        const res = await buildRequest('/portfolio/multi-asset/backtest', {
             method: 'POST',
             body: JSON.stringify(params)
         })

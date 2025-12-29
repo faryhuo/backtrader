@@ -59,5 +59,13 @@
   "expected_volatility": "Expected Volatility",
   "generate_report": "Generate Report",
   "report_generating": "Report generation started. You can view it in the Report Center.",
-  "report_generation_failed": "Failed to generate report"
+  "report_generation_failed": "Failed to generate report",
+  "pyfolio_export": "PyFolio",
+  "pyfolio_export_data": "Export Data (ZIP)",
+  "pyfolio_tearsheet": "Generate Tear Sheet",
+  "pyfolio_export_success": "PyFolio data exported successfully",
+  "pyfolio_export_failed": "Failed to export PyFolio data",
+  "tearsheet_generated": "Tear sheet generated successfully",
+  "tearsheet_popup_blocked": "Popup blocked. Please allow popups and try again.",
+  "tearsheet_failed": "Failed to generate tear sheet. QuantStats may not be installed on the server."
 }

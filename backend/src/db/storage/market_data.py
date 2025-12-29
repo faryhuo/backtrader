@@ -205,7 +205,7 @@ def get_data_from_db(ticker: str, start: str, end: str) -> Optional[pd.DataFrame
         return None
 
 
-def get_data_from_yahoo(ticker: str, start: str, end: str) -> Optional[pd.DataFrame]:
+def get_data_from_yahoo(ticker: str, start: str, end: str, interval: str = "1d") -> Optional[pd.DataFrame]:
     """
     Fetch data from Yahoo Finance (yfinance).
     
@@ -213,23 +213,32 @@ def get_data_from_yahoo(ticker: str, start: str, end: str) -> Optional[pd.DataFr
         ticker: Symbol ticker
         start: Start date string (YYYY-MM-DD)
         end: End date string (YYYY-MM-DD)
+        interval: Data interval (1m, 5m, 15m, 1h, 1d, 1wk, 1mo)
         
     Returns:
         DataFrame with OHLCV data, or None if fetch fails
+        
+    Note:
+        yfinance interval limitations:
+        - 1m: last 7 days
+        - 5m, 15m: last 60 days
+        - 1h: last 730 days
+        - 1d and above: full history
     """
     try:
-        data = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
+        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False, auto_adjust=False)
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.get_level_values(0)
         
         if data is None or data.empty:
-            logger.warning(f"Yahoo Finance returned no data for {ticker}")
+            logger.warning(f"Yahoo Finance returned no data for {ticker} at {interval} interval")
             return None
             
-        logger.info(f"Loaded {len(data)} records from Yahoo Finance for {ticker}")
+        logger.info(f"Loaded {len(data)} records from Yahoo Finance for {ticker} at {interval} interval")
         
-        # Save to database for future use
-        save_to_db(ticker, data, source="yfinance")
+        # Only cache daily data to database to avoid storage bloat
+        if interval == "1d":
+            save_to_db(ticker, data, source="yfinance")
         
         return data
     except Exception as e:
@@ -280,6 +289,7 @@ def get_data(
     ticker: str, 
     start: str, 
     end: str,
+    interval: str = "1d",
     priority: Optional[list] = None
 ) -> pd.DataFrame:
     """
@@ -292,6 +302,7 @@ def get_data(
         ticker: Symbol ticker
         start: Start date string (YYYY-MM-DD)
         end: End date string (YYYY-MM-DD)
+        interval: Data interval (1m, 5m, 15m, 1h, 1d)
         priority: Optional list of data sources to try (overrides settings)
                   Valid values: "yahoo", "eodhd", "database"
     
@@ -300,6 +311,10 @@ def get_data(
         
     Raises:
         DataLoadError: If no data source returns valid data
+        
+    Note:
+        For intraday intervals (1m, 5m, 15m, 1h), only yfinance is used
+        as the database only stores daily data.
     """
     # Get priority from settings if not provided
     if priority is None:
@@ -311,9 +326,14 @@ def get_data(
             logger.warning(f"Failed to load data source priority: {e}")
             priority = ["yahoo", "database"]  # Default fallback
     
+    # For intraday data, skip database (only stores daily)
+    if interval != "1d":
+        priority = [src for src in priority if src != "database"]
+        logger.info(f"Intraday interval {interval} requested, skipping database cache")
+    
     # Map source names to fetcher functions
     source_fetchers = {
-        "yahoo": lambda: get_data_from_yahoo(ticker, start, end),
+        "yahoo": lambda: get_data_from_yahoo(ticker, start, end, interval=interval),
         "eodhd": lambda: get_data_from_eodhd(ticker, start, end),
         "database": lambda: get_data_from_db(ticker, start, end),
     }
@@ -346,11 +366,40 @@ def get_data(
     raise DataLoadError(error_msg)
 
 
-def get_bt_feed(ticker: str, start: str, end: str) -> bt.feeds.PandasData:
+def get_bt_feed(
+    ticker: str, start: str, end: str, timeframe: str = "1d"
+) -> bt.feeds.PandasData:
     """
     Wrapper to get data as a Backtrader feed.
+    
+    Args:
+        ticker: Symbol ticker
+        start: Start date (YYYY-MM-DD)
+        end: End date (YYYY-MM-DD)
+        timeframe: Data interval (1d, 1h, 15m, 5m, 1m)
+        
+    Returns:
+        Backtrader PandasData feed
+        
+    Note:
+        yfinance interval limitations:
+        - 1m: last 7 days only
+        - 5m, 15m: last 60 days
+        - 1h: last 730 days
+        - 1d: full history
     """
-    data = get_data(ticker, start, end)
+    # Map UI timeframe to yfinance interval
+    interval_map = {
+        "1d": "1d",
+        "1h": "1h",
+        "15m": "15m",
+        "5m": "5m",
+        "1m": "1m",
+    }
+    interval = interval_map.get(timeframe, "1d")
+    
+    data = get_data(ticker, start, end, interval=interval)
+    
     return bt.feeds.PandasData(dataname=data)
 
 

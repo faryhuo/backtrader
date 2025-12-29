@@ -11,6 +11,7 @@ Directory documentation files:
 - `backend/src/src.md` - Backend source root overview
 - `backend/src/routes/routes.md` - API routing conventions
 - `backend/src/service/service.md` - Business logic layer
+- `backend/src/service/worker/worker.md` - Worker pool isolation system
 - `backend/src/db/db.md` - Database/persistence layer
 - `backend/src/config/config.md` - Configuration management
 - `backend/src/utils/utils.md` - Utility functions
@@ -19,13 +20,29 @@ Directory documentation files:
 - `backend/src/brokers/ibkr_adapter/ibkr_adapter.md` - IBKR adapter
 - `backend/resources/strategy/strategy.md` - Strategy file conventions
 
+Feature documentation (in `docs/`):
+- `docs/DEEP_ANALYSIS_FEATURE.md` - Deep analysis feature details
+- `docs/MULTI_ASSET_IMPLEMENTATION_ROADMAP.md` - Portfolio backtest roadmap
+- `docs/SECURITY.md` - Security guidelines
+- `docs/TIME_FRAME.md` - Timeframe documentation
+- `docs/FEATURE-PLAN.md` - Feature planning
+
 ## Project Overview
 
 This is a **Backtrader-based trading platform** with:
 - **Backend**: FastAPI + Backtrader + SQLAlchemy (Python 3.11+)
 - **Frontend**: React + Vite + Ant Design + i18next
 - **Live Trading**: CCXT (crypto exchanges) and IBKR (Interactive Brokers) adapters
-- **Features**: Strategy backtesting, live/paper trading, AI-powered analysis, multi-language support
+- **Features**:
+  - Strategy backtesting (single-asset and multi-asset portfolio)
+  - Walk-forward optimization with out-of-sample validation
+  - Live/paper trading with real-time monitoring
+  - AI-powered analysis (OpenAI integration)
+  - Deep analysis (returns heatmaps, rolling metrics, drawdown analysis)
+  - Report generation and sharing
+  - Task queue for async operations
+  - Multi-language support (en, zh)
+  - PyFolio integration for advanced metrics
 
 The platform allows users to develop, backtest, and deploy trading strategies with the same code running in both backtest and live modes.
 
@@ -54,27 +71,25 @@ cp .env.template .env  # Then edit .env with your credentials
 ### Frontend (React + Vite)
 
 ```bash
-# Development server (frontend only)
-cd frontend
-npm install
-npm run dev  # Runs on http://localhost:5173 with proxy to backend
-
 # Build for production
 cd frontend
 npm run build  # Outputs to frontend/dist/
+
+# Note: if you want to run the frontend. pls run the Full Stack Development
 
 # Lint
 cd frontend
 npm run lint
 ```
 
+
 ### Full Stack Development
 
 ```bash
-# Windows: Start both backend and frontend
-start_dev.bat  # Opens two terminal windows
+# Windows: 1. build 2. start server
+build.bat
 
-# The frontend dev server proxies /api and /images to backend (see vite.config.js)
+start_server.bat
 ```
 
 ### Docker
@@ -87,7 +102,6 @@ docker-compose up
 bash docker-build-optimized.sh
 
 # Note: Dockerfile uses multi-stage build with Python 3.12-slim-bookworm
-# and Aliyun mirrors for China-based development
 ```
 
 ## Architecture
@@ -97,70 +111,181 @@ bash docker-build-optimized.sh
 ```
 backend/
 ├── src/
-│   ├── brokers/          # Live trading adapters
-│   │   ├── ccxt_adapter/ # CCXT integration (crypto exchanges)
-│   │   │   ├── ccxt_store.py   # Connection manager with async/sync bridge
-│   │   │   ├── ccxt_broker.py  # Order execution
-│   │   │   └── ccxt_data.py    # Live data feeds
-│   │   └── ibkr_adapter/ # Interactive Brokers integration
+│   ├── brokers/              # Live trading adapters
+│   │   ├── ccxt_adapter/     # CCXT integration (crypto exchanges)
+│   │   │   ├── ccxt_store.py       # Connection manager with async/sync bridge
+│   │   │   ├── ccxt_broker.py      # Order execution
+│   │   │   └── ccxt_data.py        # Live data feeds
+│   │   └── ibkr_adapter/     # Interactive Brokers integration
 │   │       └── ibkr_store.py
-│   ├── config/           # Settings and configuration
-│   ├── db/               # Database layer (SQLAlchemy)
-│   │   ├── models.py           # Trading sessions, orders, positions
-│   │   ├── backtest_storage.py # Backtest history persistence
-│   │   └── session_storage.py  # Live trading session persistence
-│   ├── routes/           # FastAPI route handlers
-│   │   ├── api_routes.py       # /api/backtest, /api/strategy, /api/data
-│   │   ├── ai_routes.py        # /api/ai_analyze (OpenAI integration)
-│   │   ├── live_routes.py      # /api/live/* (trading session mgmt)
-│   │   ├── websocket_routes.py # WebSocket for real-time updates
-│   │   └── frontend_routes.py  # Static file serving
-│   ├── service/          # Business logic
-│   │   ├── app.py              # FastAPI app initialization
-│   │   ├── backtest_engine.py  # Core backtesting logic
-│   │   ├── live_engine.py      # Live trading orchestration
-│   │   ├── session_manager.py  # Multi-session lifecycle mgmt
-│   │   ├── strategy_sandbox.py # Safe strategy code execution
-│   │   └── websocket_manager.py# WebSocket connection manager
-│   └── utils/            # Utilities
-│       ├── auth.py             # JWT authentication (Logto)
-│       └── config_loader.py    # Broker config loader
+│   ├── config/               # Settings and configuration
+│   │   ├── config_manager.py       # Configuration management
+│   │   ├── settings.py             # Settings definitions
+│   │   ├── sandbox_config.py       # Sandbox environment config
+│   │   └── worker_config.py        # Worker pool configuration
+│   ├── contracts/            # Configuration contracts and exceptions
+│   │   ├── exceptions.py           # Custom exception classes
+│   │   ├── sizer_config.py         # Position sizing configuration
+│   │   └── task.py                 # Task-related contracts
+│   ├── db/                   # Database layer (SQLAlchemy)
+│   │   ├── models/                 # Database models (reorganized)
+│   │   │   ├── base.py             # Base model class
+│   │   │   ├── trading.py          # Session, order, position models
+│   │   │   ├── backtest.py         # Backtest history, portfolio results
+│   │   │   ├── market.py           # Market data, ticker metadata
+│   │   │   ├── user.py             # User settings, strategy versions
+│   │   │   ├── report.py           # Report models
+│   │   │   └── task.py             # Task models
+│   │   ├── storage/                # Data access layer
+│   │   │   ├── base.py             # Base storage class
+│   │   │   ├── backtest.py         # Backtest history persistence
+│   │   │   ├── portfolio.py        # Portfolio backtest results
+│   │   │   ├── walkforward.py      # Walk-forward results
+│   │   │   ├── report.py           # Report storage
+│   │   │   ├── task.py             # Task storage
+│   │   │   ├── session.py          # Live trading session persistence
+│   │   │   ├── market_data.py      # Market data caching
+│   │   │   ├── eodhd_data.py       # EODHD data integration
+│   │   │   ├── ticker_metadata.py  # Ticker information
+│   │   │   ├── strategy_version.py # Version control
+│   │   │   ├── resampler.py        # Data resampling
+│   │   │   ├── data_cache.py       # Cache management
+│   │   │   └── settings/           # Settings storage submodule
+│   │   │       ├── base.py         # Base settings storage
+│   │   │       ├── credentials.py  # API credentials storage
+│   │   │       ├── data_source.py  # Data source settings
+│   │   │       ├── logto_config.py # Auth configuration
+│   │   │       └── site_config.py  # Site configuration
+│   │   └── database.py             # Database connection
+│   ├── routes/               # FastAPI route handlers
+│   │   ├── common/                 # Route utilities
+│   │   │   ├── auth_dependencies.py# Auth dependency injection
+│   │   │   ├── dependencies.py     # Common dependencies
+│   │   │   ├── error_utils.py      # Error handling utilities
+│   │   │   └── task_helpers.py     # Task route helpers
+│   │   ├── backtest_routes.py      # /api/backtest (core backtesting)
+│   │   ├── portfolio_routes.py     # /api/portfolio (multi-asset backtest)
+│   │   ├── walkforward_routes.py   # /api/walkforward (optimization)
+│   │   ├── report_routes.py        # /api/reports (generation/sharing)
+│   │   ├── task_routes.py          # /api/tasks (async task management)
+│   │   ├── market_data_routes.py   # /api/market-data
+│   │   ├── settings_routes.py      # /api/settings
+│   │   ├── site_config_routes.py   # /api/site-config
+│   │   ├── strategy_routes.py      # /api/strategy
+│   │   ├── ai_routes.py            # /api/ai_analyze (OpenAI integration)
+│   │   ├── live_routes.py          # /api/live/* (trading session mgmt)
+│   │   ├── websocket_routes.py     # WebSocket for real-time updates
+│   │   └── frontend_routes.py      # Static file serving
+│   ├── service/              # Business logic
+│   │   ├── worker/                 # Worker pool isolation
+│   │   │   ├── worker_pool.py      # Process pool manager
+│   │   │   ├── backtest_worker.py  # Backtest execution worker
+│   │   │   ├── live_worker.py      # Live trading worker
+│   │   │   ├── task_models.py      # IPC task models
+│   │   │   └── worker.md           # Worker documentation
+│   │   ├── app.py                  # FastAPI app initialization
+│   │   ├── backtest_engine.py      # Core backtesting logic
+│   │   ├── backtest_runner.py      # Backtest execution wrapper
+│   │   ├── multi_asset_backtest.py # Multi-asset portfolio backtesting
+│   │   ├── multi_asset_strategy_wrapper.py # Strategy adapter
+│   │   ├── portfolio_analyzers.py  # Portfolio analysis tools
+│   │   ├── portfolio_rebalancer.py # Portfolio rebalancing logic
+│   │   ├── walkforward_optimizer.py# Walk-forward optimization
+│   │   ├── pyfolio_exporter.py     # PyFolio integration
+│   │   ├── report_generator.py     # Report generation
+│   │   ├── live_engine.py          # Live trading orchestration
+│   │   ├── session_manager.py      # Multi-session lifecycle mgmt
+│   │   ├── strategy_sandbox.py     # Safe strategy code execution
+│   │   ├── strategy_loader.py      # Strategy loading utility
+│   │   ├── strategy_param_extractor.py # Parameter extraction
+│   │   ├── strategy_repo.py        # Strategy repository management
+│   │   ├── task_manager.py         # Task queue management
+│   │   ├── websocket_manager.py    # WebSocket connection manager
+│   │   ├── echarts_theme.py        # Chart theming support
+│   │   ├── deep_analysis.py        # Deep analysis calculations
+│   │   ├── parameter_analysis.py   # Parameter sensitivity analysis
+│   │   ├── strategy_executor.py    # Strategy execution wrapper
+│   │   ├── strategy_templates.py   # Strategy template management
+│   │   ├── version_service.py      # Version tracking service
+│   │   └── isolated_sandbox.py     # Isolated sandbox execution
+│   └── utils/                # Utilities
+│       ├── auth.py                 # JWT authentication (Logto)
+│       ├── config_loader.py        # Broker config loader
+│       ├── logger.py               # Logging configuration
+│       ├── encryption.py           # Credential encryption
+│       ├── credential_validator.py # Credential validation
+│       ├── exception_handlers.py   # Global exception handlers
+│       ├── request_context.py      # Request context management
+│       ├── share_token.py          # Share token generation
+│       └── report_i18n.py          # Report internationalization
 ├── resources/
 │   ├── config/
-│   │   └── broker_config.json  # Exchange settings, risk limits
-│   ├── strategy/               # User strategy files (.py)
-│   ├── frontend/               # Built frontend assets (served by backend)
-│   └── images/                 # Generated backtest charts
-├── main.py              # Entry point (Daphne ASGI server)
-└── api.py               # Exports FastAPI app
+│   │   └── broker_config.json      # Exchange settings, risk limits
+│   ├── strategy/                   # User strategy files (.py)
+│   ├── frontend/                   # Built frontend assets (served by backend)
+│   ├── images/                     # Generated backtest charts
+│   ├── reports/                    # Generated reports storage
+│   └── templates/                  # Report/email templates
+├── main.py                   # Entry point (Daphne ASGI server)
+└── api.py                    # Exports FastAPI app
 ```
 
 ### Frontend Structure
 
 ```
 frontend/src/
-├── components/          # React components
-│   ├── Auth/           # Authentication (Logto provider)
-│   ├── Layout/         # App shell with navigation
-│   ├── RunStrategy/    # Backtest execution UI
-│   ├── BacktestHistory/# Historical results browser
-│   ├── LiveTrading/    # Live trading dashboard
-│   ├── StrategyMaintain/# Strategy code editor (Monaco)
-│   └── DataSource/     # Data source configuration
-├── pages/              # Top-level page components
-├── services/           # API client (api.js)
-├── providers/          # React context providers
-│   ├── LogtoProvider.jsx      # Authentication
-│   └── NotificationProvider.jsx # Notification center
-├── hooks/              # Custom React hooks
-├── locales/            # i18n translations (en, zh)
-├── config/             # Frontend configuration
-└── App.jsx             # Root component with routing
+├── assets/                  # Static assets (images, fonts)
+├── components/              # React components
+│   ├── Auth/               # Authentication (Logto provider)
+│   ├── Layout/             # App shell with navigation
+│   ├── Landing/            # Landing page
+│   │   ├── Hero.jsx        # Hero section
+│   │   ├── Features.jsx    # Features showcase
+│   │   ├── Roadmap.jsx     # Development roadmap
+│   │   ├── Workflow.jsx    # User workflow demo
+│   │   ├── CTA.jsx         # Call-to-action section
+│   │   ├── Navbar.jsx      # Landing page navigation
+│   │   └── Footer.jsx      # Footer component
+│   ├── RunStrategy/        # Backtest execution UI
+│   ├── BacktestHistory/    # Historical results browser
+│   ├── PortfolioBacktest/  # Portfolio backtesting UI│   ├── WalkForward/        # Walk-forward optimization UI│   ├── DeepAnalysis/       # Advanced analysis visualizations│   │   ├── MonthlyReturnsHeatmap.jsx
+│   │   ├── RollingMetricsChart.jsx
+│   │   ├── ReturnsDistribution.jsx
+│   │   ├── DrawdownAnalysis.jsx
+│   │   └── ConsecutiveLossStats.jsx
+│   ├── ReportCenter/       # Report generation and sharing│   ├── DataManagement/     # Data cache management UI│   ├── LiveTrading/        # Live trading dashboard
+│   ├── StrategyMaintain/   # Strategy code editor (Monaco)
+│   ├── DataSource/         # Data source configuration
+│   └── Settings/           # User settings UI
+├── pages/                  # Top-level page components
+│   ├── Home.jsx
+│   ├── Backtest.jsx
+│   ├── PortfolioBacktest.jsx    # Portfolio backtesting page│   ├── WalkForward.jsx          # Walk-forward optimization page│   ├── ReportCenter.jsx         # Report management page│   ├── TaskCenter.jsx           # Async task monitoring│   ├── DataManagement.jsx       # Data management page│   ├── SharedReport.jsx         # Report sharing page│   ├── LiveTrading.jsx
+│   └── Settings.jsx
+├── services/               # API client (api.js)
+├── providers/              # React context providers
+│   ├── LogtoProvider.jsx         # Authentication
+│   └── NotificationProvider.jsx  # Notification center
+├── contexts/               # React contexts├── constants/              # Constants and configuration├── hooks/                  # Custom React hooks
+├── locales/                # i18n translations (en, zh)
+├── config/                 # Frontend configuration
+├── i18n.js                 # Internationalization setup
+└── App.jsx                 # Root component with routing
 ```
 
 ### Key Architectural Patterns
 
-#### 1. **Strategy Code Execution**
+#### 1. **Worker Pool Isolation (NEW)**
+
+Strategy execution is isolated in separate processes for stability and resource control:
+
+- **Process Pool**: `worker_pool.py` manages a pool of worker processes
+- **Task Models**: `task_models.py` defines IPC communication contracts
+- **Workers**: Separate workers for backtest (`backtest_worker.py`) and live trading (`live_worker.py`)
+- **Configuration**: Enable via `WORKER_POOL_ENABLED=true`, configure pool size with `WORKER_POOL_SIZE`
+- **Benefits**: Prevents strategy crashes from affecting main server, enables resource limits per execution
+
+#### 2. **Strategy Code Execution**
 
 Strategies are written as Backtrader strategies in `backend/resources/strategy/*.py`. The same strategy class works for both backtesting and live trading:
 
@@ -168,7 +293,43 @@ Strategies are written as Backtrader strategies in `backend/resources/strategy/*
 - **Live**: `live_engine.py` uses same strategy loader with CCXT/IBKR data feeds
 - **Storage**: Strategies are files on disk, editable via frontend Monaco editor
 
-#### 2. **Live Trading Async/Sync Bridge**
+#### 3. **Portfolio Backtesting (NEW)**
+
+Multi-asset portfolio backtesting with rebalancing support:
+
+- **Multi-Asset Engine**: `multi_asset_backtest.py` handles multiple data feeds
+- **Strategy Wrapper**: `multi_asset_strategy_wrapper.py` adapts strategies for portfolio use
+- **Rebalancing**: `portfolio_rebalancer.py` implements various rebalancing strategies
+- **Analyzers**: `portfolio_analyzers.py` provides portfolio-specific metrics
+- **Storage**: Results stored via `portfolio.py` storage module
+
+#### 4. **Walk-Forward Optimization (NEW)**
+
+Out-of-sample validation to detect overfitting:
+
+- **Optimizer**: `walkforward_optimizer.py` splits data into in-sample/out-of-sample windows
+- **Validation**: Compares in-sample vs out-of-sample performance
+- **Metrics**: Tracks parameter stability across windows
+- **Storage**: Results stored via `walkforward.py` storage module
+
+#### 5. **Task Queue System (NEW)**
+
+Async task management for long-running operations:
+
+- **Task Manager**: `task_manager.py` queues and tracks tasks
+- **Task Routes**: `task_routes.py` exposes task status/results via API
+- **Task Storage**: `task.py` persists task state to database
+- **Frontend**: `TaskCenter.jsx` provides task monitoring UI
+
+#### 6. **Report Generation (NEW)**
+
+Generate and share backtest/analysis reports:
+
+- **Generator**: `report_generator.py` creates comprehensive reports
+- **Storage**: `report.py` stores reports with sharing tokens
+- **Sharing**: Public report links via `SharedReport.jsx`
+
+#### 7. **Live Trading Async/Sync Bridge**
 
 CCXT is async-first, Backtrader is sync-first. The bridge pattern in `ccxt_store.py`:
 
@@ -176,33 +337,53 @@ CCXT is async-first, Backtrader is sync-first. The bridge pattern in `ccxt_store
 - `run_coroutine()` method executes async CCXT calls from sync Backtrader context
 - Store lifecycle: `start()` → `run_coroutine()` → `stop()`
 
-#### 3. **Session Management**
+#### 8. **Session Management**
 
 Live trading uses session-based architecture:
 
 - `SessionManager` (`session_manager.py`) tracks multiple concurrent sessions
 - Each session has: Cerebro instance, Store (CCXT/IBKR), background thread
-- Sessions persist to SQLite via `session_storage.py` for recovery
+- Sessions persist to SQLite via `session.py` for recovery
 - WebSocket (`websocket_manager.py`) broadcasts session updates to frontend
 
-#### 4. **Authentication (Optional)**
+#### 9. **Authentication (Optional)**
 
 - Uses Logto for JWT-based authentication
 - Enabled via `ENABLE_LOGIN=true` in `.env`
 - Auth middleware in `utils/auth.py` validates JWT on protected routes
 - Frontend: `LogtoProvider` wraps app, `useAuth` hook provides auth state
 
-#### 5. **Data Flow**
+#### 10. **Data Flow**
 
 **Backtest Flow**:
 ```
 Frontend (RunStrategy) → POST /api/backtest → backtest_engine.py
   → Load strategy from resources/strategy/
-  → Fetch data via datasource.py (yfinance)
-  → Run Backtrader Cerebro
+  → Fetch data via datasource.py (yfinance/EODHD)
+  → Run Backtrader Cerebro (optionally via worker pool)
   → Generate chart image → resources/images/
-  → Store results in backtest_storage.py
+  → Store results in backtest storage
   → Return metrics + image URL
+```
+
+**Portfolio Backtest Flow**:
+```
+Frontend (PortfolioBacktest) → POST /api/portfolio/backtest → multi_asset_backtest.py
+  → Load strategy and multiple assets
+  → Apply portfolio rebalancing strategy
+  → Run multi-asset Cerebro
+  → Calculate portfolio-level metrics
+  → Store results and return analysis
+```
+
+**Walk-Forward Flow**:
+```
+Frontend (WalkForward) → POST /api/walkforward → walkforward_optimizer.py
+  → Split data into training/validation windows
+  → Optimize parameters on in-sample data
+  → Validate on out-of-sample data
+  → Compare performance across windows
+  → Return optimization results with stability metrics
 ```
 
 **Live Trading Flow**:
@@ -213,7 +394,7 @@ Frontend (LiveTradingDashboard) → POST /api/live/start → live_routes.py
   → Create CCXTBroker + CCXTData
   → Load strategy (same code as backtest)
   → Start Cerebro in background thread
-  → Store session in session_storage.py
+  → Store session in session storage
   → WebSocket broadcasts updates
 ```
 
@@ -226,6 +407,7 @@ Copy `.env.template` to `.env` and configure:
 - **Authentication**: `LOGTO_ISSUER`, `LOGTO_JWKS_URI`, `ENABLE_LOGIN`
 - **AI Analysis**: `OPENAI_API_KEY`, `OPENAI_BASE_URL`
 - **Database**: `DATABASE_URL` (SQLite by default: `trading_sessions.db`)
+- **Worker Pool**: `WORKER_POOL_ENABLED`, `WORKER_POOL_SIZE`, `WORKER_TIMEOUT`
 - **Exchange Credentials**: `CCXT_{EXCHANGE}_{MODE}_API_KEY/SECRET`
   - Format: `CCXT_BINANCE_PAPER_API_KEY` (testnet), `CCXT_BINANCE_LIVE_API_KEY` (production)
   - Supports: Binance, OKX, Bybit (CCXT), IBKR (via IB Gateway)
@@ -257,11 +439,19 @@ Controls exchange settings and risk management:
 cd backend
 pytest --cov=src --cov-report=term-missing
 
+# Or use the batch script (Windows)
+cd backend
+run_tests_coverage.bat
+
 # Run smoke tests (critical health checks, fast)
 python -m pytest auto_test/smoke -q
 
 # Run e2e tests
 python -m pytest auto_test/e2e -q
+
+# Run all auto tests with batch script (Windows)
+cd auto_test
+run_tests.bat
 
 # Run tests by marker
 python -m pytest auto_test -m api -q      # API tests only
@@ -279,7 +469,16 @@ cd frontend && npm run lint
 
 - `backend/tests/` - Unit tests organized by module (db, service, routes, brokers, utils, config)
 - `auto_test/smoke/` - Critical API and UI health checks (fastest, run first)
-- `auto_test/e2e/` - End-to-end workflow tests (backtest, live trading, walk-forward, settings)
+- `auto_test/e2e/` - End-to-end workflow tests:
+  - `test_backtest_workflow.py` - Core backtest testing
+  - `test_portfolio_workflow.py` - Portfolio backtesting  - `test_walkforward_workflow.py` - Walk-forward optimization  - `test_live_trading.py` - Live trading flows
+  - `test_strategy_management.py` - Strategy CRUD
+  - `test_market_data.py` - Market data endpoints
+  - `test_ai_analysis.py` - AI analysis integration
+  - `test_reports.py` - Report generation  - `test_tasks.py` - Task queue  - `test_settings.py` - Settings management
+  - `test_websocket.py` - WebSocket connections
+  - `test_site_config.py` - Site configuration
+  - `test_frontend_routes.py` - Frontend serving
 - `auto_test/libs/` - Reusable test utilities (api_client, assertions, data_fixtures)
 
 ### Test Markers
@@ -323,6 +522,9 @@ See `backend/README_LIVE_TRADING.md` for detailed live trading guide.
 
 1. **Define route in `backend/src/routes/`**:
    ```python
+   from src.routes.common.dependencies import get_db
+   from src.routes.common.auth_dependencies import get_current_user
+
    @router.post("/api/my_endpoint")
    def my_endpoint(request: MyRequest, user: dict = Depends(get_current_user)):
        # Logic here
@@ -385,6 +587,13 @@ See `backend/README_LIVE_TRADING.md` for detailed live trading guide.
 
 3. **No code changes needed** - CCXT adapter auto-detects via `config_loader.py`
 
+### Adding a New Async Task Type
+
+1. **Define task in `backend/src/contracts/task.py`**
+2. **Add handler in `backend/src/service/task_manager.py`**
+3. **Create route in `backend/src/routes/task_routes.py`**
+4. **Add frontend task status polling in `TaskCenter.jsx`**
+
 ## Troubleshooting
 
 ### "Missing API credentials" (Live Trading)
@@ -417,11 +626,19 @@ See `backend/README_LIVE_TRADING.md` for detailed live trading guide.
 - For production, set `DATABASE_URL` to PostgreSQL/MySQL
 - Run migrations: `python -m src.db.migrate_cleanup_json` (if needed)
 
+### Worker pool issues
+
+- Check `WORKER_POOL_ENABLED` is set correctly
+- Verify `WORKER_POOL_SIZE` doesn't exceed system resources
+- Check worker logs for process-level errors
+- Disable worker pool temporarily with `WORKER_POOL_ENABLED=false` for debugging
+
 ## Security Notes
 
 - **NEVER** enable withdrawal permissions on exchange API keys
 - User strategies run in sandboxed environment (`strategy_sandbox.py`) - configure `SANDBOX_MODE` in `.env`
 - `.env` is in `.gitignore` - never commit credentials
+- Report sharing uses secure tokens - tokens can be revoked
 
 ## Special Considerations
 
@@ -434,3 +651,9 @@ See `backend/README_LIVE_TRADING.md` for detailed live trading guide.
 
 - Dockerfile uses Aliyun mirrors for apt and pip (faster in China)
 - To use default mirrors, edit `Dockerfile` and remove `-i https://mirrors.aliyun.com/pypi/simple/`
+
+## Related Files
+
+- `README.md` - User-facing project documentation
+- `backend/README_LIVE_TRADING.md` - Detailed live trading guide
+- `auto_test/README.md` - Test suite documentation

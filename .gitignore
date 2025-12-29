@@ -15,6 +15,7 @@ backend/coverage.xml
 backend/resources/frontend
 backend/venv_new
 backend/data
+backend/logs
 backend/.coverage
 backend/.coveragerc
 

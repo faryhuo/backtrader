@@ -1,0 +1,72 @@
+/* PortfolioDetailModal Styles */
+
+.portfolio-detail-modal .ant-modal-body {
+    padding: 16px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.portfolio-detail-modal .ant-tabs-content {
+    padding: 0;
+}
+
+.portfolio-detail-modal .overview-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.portfolio-detail-modal .overview-info-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.portfolio-detail-modal .overview-info-card .ant-descriptions-item-label {
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-secondary);
+}
+
+.portfolio-detail-modal .overview-info-card .ant-descriptions-item-content {
+    background: transparent;
+}
+
+/* Portfolio Metrics Card in modal */
+.portfolio-detail-modal .portfolio-metrics-card {
+    margin-bottom: 0;
+}
+
+.portfolio-detail-modal .portfolio-metrics-card .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Equity Chart in modal */
+.portfolio-detail-modal .equity-curve-card {
+    background: transparent;
+    border: none;
+}
+
+/* Correlation card in modal */
+.portfolio-detail-modal .correlation-card {
+    background: transparent;
+    border: none;
+}
+
+/* Optimization card in modal */
+.portfolio-detail-modal .optimization-card {
+    background: transparent;
+    border: none;
+}
+
+/* Rebalancing timeline in modal */
+.portfolio-detail-modal .ant-timeline {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .portfolio-detail-modal .portfolio-metrics-card .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

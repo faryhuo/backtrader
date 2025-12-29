@@ -5,6 +5,7 @@ This module provides low-level types that can be safely imported anywhere
 without causing circular dependencies. It contains:
 - Task types and status enums
 - Common exception classes
+- Sizer configuration types
 - Protocol definitions (for type hints without runtime dependencies)
 
 IMPORTANT: This module must NOT import from service, routes, or storage layers.
@@ -12,10 +13,14 @@ IMPORTANT: This module must NOT import from service, routes, or storage layers.
 
 from src.contracts.task import TaskType, TaskStatus
 from src.contracts.exceptions import StrategyLoadError, DataLoadError
+from src.contracts.sizer_config import SizerType, SizerConfig, SIZER_TYPE_LABELS
 
 __all__ = [
     "TaskType",
     "TaskStatus",
     "StrategyLoadError",
     "DataLoadError",
+    "SizerType",
+    "SizerConfig",
+    "SIZER_TYPE_LABELS",
 ]

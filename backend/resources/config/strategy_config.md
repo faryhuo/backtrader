@@ -42,11 +42,6 @@
 | `allowNetwork` | bool | `true` | 是否允许网络访问（实盘交易需要） |
 | `allowFileWrite` | bool | `true` | 是否允许文件写入（图表生成需要） |
 
-## 相关模块
-
-- `sandbox_config.py` - 沙箱配置加载
-- `worker_config.py` - Worker 池配置加载
-
 ## 安全说明
 
 > [!WARNING]

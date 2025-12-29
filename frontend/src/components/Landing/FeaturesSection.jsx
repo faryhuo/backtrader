@@ -7,7 +7,10 @@ import {
     Shield,
     GitBranch,
     BarChart3,
-    Radio
+    Radio,
+    FileText,
+    ClipboardList,
+    PieChart
 } from 'lucide-react';
 
 /**
@@ -53,6 +56,34 @@ export function FeaturesSection() {
             statusType: 'live',
         },
         {
+            icon: GitBranch,
+            titleKey: 'landing.features.versioning.title',
+            descriptionKey: 'landing.features.versioning.description',
+            statusKey: 'landing.status.live',
+            statusType: 'live',
+        },
+        {
+            icon: FileText,
+            titleKey: 'landing.features.report.title',
+            descriptionKey: 'landing.features.report.description',
+            statusKey: 'landing.status.live',
+            statusType: 'live',
+        },
+        {
+            icon: PieChart,
+            titleKey: 'landing.features.pyfolio.title',
+            descriptionKey: 'landing.features.pyfolio.description',
+            statusKey: 'landing.status.live',
+            statusType: 'live',
+        },
+        {
+            icon: ClipboardList,
+            titleKey: 'landing.features.taskcenter.title',
+            descriptionKey: 'landing.features.taskcenter.description',
+            statusKey: 'landing.status.live',
+            statusType: 'live',
+        },
+        {
             icon: Zap,
             titleKey: 'landing.features.realtime.title',
             descriptionKey: 'landing.features.realtime.description',
@@ -65,13 +96,6 @@ export function FeaturesSection() {
             descriptionKey: 'landing.features.security.description',
             statusKey: 'landing.status.live',
             statusType: 'live',
-        },
-        {
-            icon: GitBranch,
-            titleKey: 'landing.features.versioning.title',
-            descriptionKey: 'landing.features.versioning.description',
-            statusKey: 'landing.status.in_dev',
-            statusType: 'dev',
         },
     ];
 
