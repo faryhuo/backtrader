@@ -3,7 +3,6 @@ Trade Recorder Service - Centralized trade recording for portfolio operations.
 
 This module provides a unified interface for recording trades across:
 - Initial position establishment
-- Rebalancing operations
 - Strategy-driven trades (from Backtrader orders)
 
 By centralizing trade recording, we ensure:
@@ -82,7 +81,7 @@ class TradeRecorder:
     Centralized trade recorder for portfolio operations.
 
     This class provides a unified interface for recording trades from
-    various sources (initial positions, rebalancing, strategy signals)
+    various sources (initial positions, strategy signals)
     with consistent formatting and validation.
 
     Usage:

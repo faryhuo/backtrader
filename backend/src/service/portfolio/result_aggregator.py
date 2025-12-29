@@ -145,9 +145,6 @@ class PortfolioResultAggregator:
         """
         Get all executed trades.
 
-        First tries the trade_recorder analyzer, then falls back to
-        extracting trades from rebalancing events.
-
         Returns:
             List of trade dictionaries
         """

@@ -58,12 +58,6 @@
     border: none;
 }
 
-/* Rebalancing timeline in modal */
-.portfolio-detail-modal .ant-timeline {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .portfolio-detail-modal .portfolio-metrics-card .metrics-grid {
