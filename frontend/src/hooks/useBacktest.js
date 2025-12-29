@@ -131,6 +131,7 @@ export function useBacktest() {
             commission,
             timeframe,
             selectedStrategy,
+            paramOverrides,
             rebalanceEnabled,
             rebalanceConfig,
         } = params;
@@ -138,6 +139,12 @@ export function useBacktest() {
         const validTickers = tickers.filter(ticker => ticker.trim());
         if (validTickers.length === 0) {
             setError(t?.('portfolio.validation.no_ticker') || 'Please enter at least one ticker');
+            return null;
+        }
+
+        // Require strategy selection
+        if (!selectedStrategy) {
+            setError(t?.('portfolio.validation.no_strategy') || 'Please select a multi-asset strategy first.');
             return null;
         }
 
@@ -154,6 +161,9 @@ export function useBacktest() {
                 transaction_cost_pct: rebalanceConfig.transaction_cost_pct,
             } : null;
 
+            // Prepare strategy params (only send if non-empty)
+            const paramsToSend = Object.keys(paramOverrides || {}).length > 0 ? paramOverrides : null;
+
             const taskResponse = await api.runPortfolioBacktest({
                 tickers: validTickers,
                 weights: weights.slice(0, validTickers.length),
@@ -162,7 +172,8 @@ export function useBacktest() {
                 initial_cash: initialCash,
                 commission: commission,
                 timeframe: timeframe || '1d',
-                strategy_name: selectedStrategy || null,
+                strategy_name: selectedStrategy,
+                params: paramsToSend,
                 rebalance_config: rebalance_config,
                 optimization_method: rebalanceEnabled ? rebalanceConfig.optimization_method : 'equal_weight',
             });

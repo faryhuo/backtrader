@@ -18,8 +18,18 @@ from src.utils.config_loader import get_exchange_config, load_broker_config
 logger = logging.getLogger(__name__)
 
 
-# Initialize session storage
-_session_storage = SessionStorage()
+# Session storage (lazy-initialized to avoid import-time database access)
+_session_storage = None
+
+
+def _get_session_storage():
+    """Get or create session storage instance (lazy initialization)."""
+    global _session_storage
+    if _session_storage is None:
+        from src.config.settings import ensure_database_dir
+        ensure_database_dir()  # Ensure database directory exists before creating storage
+        _session_storage = SessionStorage()
+    return _session_storage
 
 
 class LiveTradingError(Exception):
@@ -290,7 +300,7 @@ def _run_live_worker(
         raise LiveTradingError(f"Failed to start worker session: {e}") from e
 
     # Save session to database
-    _session_storage.save_session(session)
+    _get_session_storage().save_session(session)
 
     logger.info(f"Session {session_id} started in worker pool")
     return session.to_dict()
@@ -371,7 +381,7 @@ def _run_live_legacy(
         session.store = store
 
         # 8. Save session to database
-        _session_storage.save_session(session)
+        _get_session_storage().save_session(session)
 
         # 9. Run Cerebro in background thread
         def run_cerebro():
@@ -379,7 +389,7 @@ def _run_live_legacy(
             try:
                 session.status = SessionStatus.RUNNING
                 session_manager.update_session(session_id, status=SessionStatus.RUNNING)
-                _session_storage.save_session(session)
+                _get_session_storage().save_session(session)
 
                 logger.info(f"Cerebro started for session {session_id}")
                 cerebro.run()
@@ -391,7 +401,7 @@ def _run_live_legacy(
                     status=SessionStatus.STOPPED,
                     end_time=session.end_time
                 )
-                _session_storage.save_session(session)
+                _get_session_storage().save_session(session)
 
                 logger.info(f"Cerebro stopped normally for session {session_id}")
 
@@ -406,7 +416,7 @@ def _run_live_legacy(
                     error_message=str(e),
                     end_time=session.end_time
                 )
-                _session_storage.save_session(session)
+                _get_session_storage().save_session(session)
 
                 logger.exception(f"Error in session {session_id}: {e}")
 
@@ -470,7 +480,7 @@ def stop_live(session_id: str, use_worker: Optional[bool] = None) -> Dict:
                     status=SessionStatus.STOPPED,
                     end_time=datetime.now()
                 )
-                _session_storage.save_session(session)
+                _get_session_storage().save_session(session)
             
             return {
                 'session_id': session_id,
@@ -490,7 +500,7 @@ def stop_live(session_id: str, use_worker: Optional[bool] = None) -> Dict:
     if not success:
         raise LiveTradingError(f"Failed to stop session {session_id}")
 
-    _session_storage.save_session(session)
+    _get_session_storage().save_session(session)
 
     return {
         'session_id': session_id,

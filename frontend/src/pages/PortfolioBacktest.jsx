@@ -97,6 +97,7 @@ function PortfolioBacktest() {
             commission,
             timeframe,
             selectedStrategy,
+            paramOverrides,
             rebalanceEnabled,
             rebalanceConfig,
         }, t);
