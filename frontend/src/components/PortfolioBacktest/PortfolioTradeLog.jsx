@@ -21,7 +21,7 @@ const formatCurrency = (value) => {
 const getTriggerColor = (trigger) => {
     if (trigger === 'initial_position') return 'blue';
     if (trigger === 'strategy') return 'cyan';
-    return 'purple';  // rebalance
+    return 'default';
 };
 
 /**
@@ -45,7 +45,7 @@ const TradeEventItem = ({ trades, date, t }) => {
                 {triggers.map(trigger => {
                     const isInitial = trigger === 'initial_position';
                     const isStrategy = trigger === 'strategy';
-                    let label = t('portfolio.rebalance_trigger', 'Rebalance');
+                    let label = t('portfolio.other_trigger', 'Other');
                     if (isInitial) label = t('portfolio.initial_position', 'Initial Position');
                     else if (isStrategy) label = t('portfolio.strategy_trigger', 'Strategy');
 
@@ -149,47 +149,6 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
             value: trade.value,
             trigger: trade.trigger || 'strategy',
         }));
-    } else if (rebalancingEvents && rebalancingEvents.length > 0) {
-        // Fallback: Extract from rebalancing events
-        let tradeNum = 1;
-        rebalancingEvents.forEach((event) => {
-            const eventTrades = event.trades || [];
-            const prices = event.prices || {};
-            const orders = event.orders || {};
-
-            if (eventTrades.length > 0) {
-                eventTrades.forEach((trade) => {
-                    trades.push({
-                        key: tradeNum,
-                        trade_num: tradeNum++,
-                        date: event.date,
-                        ticker: trade.ticker,
-                        action: trade.action || (trade.shares > 0 ? 'buy' : 'sell'),
-                        shares: Math.abs(trade.shares),
-                        price: trade.price,
-                        value: Math.abs(trade.shares) * (trade.price || 0),
-                        trigger: 'rebalance',
-                    });
-                });
-            } else if (Object.keys(orders).length > 0) {
-                Object.entries(orders).forEach(([ticker, shares]) => {
-                    if (shares !== 0) {
-                        const price = prices[ticker] || 0;
-                        trades.push({
-                            key: tradeNum,
-                            trade_num: tradeNum++,
-                            date: event.date,
-                            ticker,
-                            action: shares > 0 ? 'buy' : 'sell',
-                            shares: Math.abs(shares),
-                            price,
-                            value: Math.abs(shares) * price,
-                            trigger: 'rebalance',
-                        });
-                    }
-                });
-            }
-        });
     }
 
     // Group trades by date for timeline view

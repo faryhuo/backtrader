@@ -17,7 +17,6 @@ import {
     TickerWeightSection,
     ParametersSection,
     StrategyParamsSection,
-    RebalanceConfigSection,
     PortfolioResultsSection,
 } from '../components/PortfolioBacktest';
 import './PortfolioBacktest.css';
@@ -45,14 +44,7 @@ function PortfolioBacktest() {
     } = useStrategies();
     const [paramsExpanded, setParamsExpanded] = useState(true);
 
-    // Rebalancing state
-    const [rebalanceEnabled, setRebalanceEnabled] = useState(false);
-    const [rebalanceConfig, setRebalanceConfig] = useState({
-        frequency: 'monthly',
-        optimization_method: 'equal_weight',
-        min_trade_threshold: 0.01,
-        transaction_cost_pct: 0.001,
-    });
+
 
     // Use custom hooks
     const {
@@ -98,8 +90,6 @@ function PortfolioBacktest() {
             timeframe,
             selectedStrategy,
             paramOverrides,
-            rebalanceEnabled,
-            rebalanceConfig,
         }, t);
     };
 
@@ -153,13 +143,7 @@ function PortfolioBacktest() {
                     />
                 )}
 
-                <RebalanceConfigSection
-                    t={t}
-                    enabled={rebalanceEnabled}
-                    onEnabledChange={setRebalanceEnabled}
-                    config={rebalanceConfig}
-                    onConfigChange={setRebalanceConfig}
-                />
+
 
                 <div className="run-button-container">
                     <Button

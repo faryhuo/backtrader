@@ -174,8 +174,6 @@ class MultiAssetBacktestTask:
     commission: float = 0.0005
     strategy_name: str = ""  # Required - must provide strategy
     params: Optional[Dict[str, Any]] = None  # Strategy parameters
-    rebalance_config: Optional[Dict[str, Any]] = None
-    optimization_method: str = "equal_weight"
     timeframe: str = "1d"
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
@@ -192,8 +190,6 @@ class MultiAssetBacktestTask:
             "commission": self.commission,
             "strategy_name": self.strategy_name,
             "params": self.params,
-            "rebalance_config": self.rebalance_config,
-            "optimization_method": self.optimization_method,
             "timeframe": self.timeframe,
             "generate_chart": self.generate_chart,
             "chart_save_path": self.chart_save_path,
@@ -224,7 +220,6 @@ class MultiAssetBacktestResult:
 
     # Portfolio data
     equity_curve: Optional[Dict[str, float]] = None
-    rebalancing_events: Optional[List[Dict[str, Any]]] = None
     asset_contributions: Optional[Dict[str, Dict[str, Any]]] = None
     optimization_history: Optional[List[Dict[str, Any]]] = None
 
@@ -255,7 +250,6 @@ class MultiAssetBacktestResult:
             "max_drawdown": self.max_drawdown,
             "volatility": self.volatility,
             "equity_curve": self.equity_curve,
-            "rebalancing_events": self.rebalancing_events,
             "asset_contributions": self.asset_contributions,
             "optimization_history": self.optimization_history,
             "per_asset_results": self.per_asset_results,

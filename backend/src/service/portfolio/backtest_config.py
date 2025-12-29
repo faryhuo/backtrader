@@ -3,7 +3,6 @@ Backtest Configuration - Immutable configuration for portfolio backtests.
 
 This module provides:
 - BacktestConfig: Validated, immutable configuration for backtests
-- RebalanceConfig: Configuration for portfolio rebalancing
 - Validation logic extracted from run_multi_asset_backtest()
 """
 
@@ -17,15 +16,6 @@ logger = logging.getLogger(__name__)
 # Maximum number of tickers allowed (memory constraint)
 MAX_TICKERS = 20
 
-# Supported optimization methods
-SUPPORTED_OPTIMIZATION_METHODS = [
-    "equal_weight",
-    "risk_parity",
-    "min_variance",
-    "markowitz",
-    "max_sharpe",
-]
-
 # Supported timeframes
 SUPPORTED_TIMEFRAMES = [
     "1m", "5m", "15m", "30m",  # Minutes
@@ -34,43 +24,7 @@ SUPPORTED_TIMEFRAMES = [
 ]
 
 
-@dataclass(frozen=True)
-class RebalanceConfig:
-    """
-    Configuration for portfolio rebalancing.
 
-    Attributes:
-        enabled: Whether rebalancing is enabled
-        frequency: Rebalancing frequency (monthly, quarterly, annually)
-        method: Weight calculation method
-        custom_day: Custom day of month for rebalancing
-    """
-    enabled: bool = False
-    frequency: str = "monthly"
-    method: str = "equal_weight"
-    custom_day: Optional[int] = None
-
-    @classmethod
-    def from_dict(cls, config: Optional[dict]) -> "RebalanceConfig":
-        """Create RebalanceConfig from dictionary."""
-        if config is None:
-            return cls(enabled=False)
-
-        return cls(
-            enabled=config.get("enabled", True),
-            frequency=config.get("frequency", "monthly"),
-            method=config.get("method", "equal_weight"),
-            custom_day=config.get("custom_day"),
-        )
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "enabled": self.enabled,
-            "frequency": self.frequency,
-            "method": self.method,
-            "custom_day": self.custom_day,
-        }
 
 
 @dataclass
@@ -90,8 +44,6 @@ class BacktestConfig:
         commission: Commission rate per trade
         strategy_name: Name of the strategy file (without .py)
         params: Strategy parameters dictionary
-        rebalance_config: Rebalancing configuration
-        optimization_method: Weight optimization method
         timeframe: Data timeframe
     """
     tickers: List[str]
@@ -102,8 +54,6 @@ class BacktestConfig:
     commission: float = 0.0005
     strategy_name: str = ""
     params: Optional[Dict[str, Any]] = None
-    rebalance_config: Optional[RebalanceConfig] = None
-    optimization_method: str = "equal_weight"
     timeframe: str = "1d"
 
     # Internal flag to track if validation has run
@@ -138,9 +88,6 @@ class BacktestConfig:
 
         # Validate strategy
         self._validate_strategy()
-
-        # Validate optimization method
-        self._validate_optimization_method()
 
         # Validate timeframe
         self._validate_timeframe()
@@ -238,13 +185,7 @@ class BacktestConfig:
                 f"Strategy name contains invalid characters: {invalid_chars}"
             )
 
-    def _validate_optimization_method(self):
-        """Validate optimization method."""
-        if self.optimization_method not in SUPPORTED_OPTIMIZATION_METHODS:
-            raise ValueError(
-                f"Unsupported optimization method: {self.optimization_method}. "
-                f"Supported: {SUPPORTED_OPTIMIZATION_METHODS}"
-            )
+
 
     def _validate_timeframe(self):
         """Validate timeframe."""
@@ -265,10 +206,6 @@ class BacktestConfig:
         Returns:
             Validated BacktestConfig instance
         """
-        rebalance_config = None
-        if "rebalance_config" in data and data["rebalance_config"]:
-            rebalance_config = RebalanceConfig.from_dict(data["rebalance_config"])
-
         return cls(
             tickers=data.get("tickers", []),
             weights=data.get("weights", []),
@@ -278,8 +215,6 @@ class BacktestConfig:
             commission=data.get("commission", 0.0005),
             strategy_name=data.get("strategy_name", ""),
             params=data.get("params"),
-            rebalance_config=rebalance_config,
-            optimization_method=data.get("optimization_method", "equal_weight"),
             timeframe=data.get("timeframe", "1d"),
         )
 
@@ -294,10 +229,6 @@ class BacktestConfig:
             "commission": self.commission,
             "strategy_name": self.strategy_name,
             "params": self.params,
-            "rebalance_config": (
-                self.rebalance_config.to_dict() if self.rebalance_config else None
-            ),
-            "optimization_method": self.optimization_method,
             "timeframe": self.timeframe,
         }
 
@@ -316,8 +247,6 @@ class BacktestConfig:
 
 __all__ = [
     "BacktestConfig",
-    "RebalanceConfig",
     "MAX_TICKERS",
-    "SUPPORTED_OPTIMIZATION_METHODS",
     "SUPPORTED_TIMEFRAMES",
 ]

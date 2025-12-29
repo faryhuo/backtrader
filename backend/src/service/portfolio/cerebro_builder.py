@@ -182,13 +182,6 @@ class CerebroBuilder:
             "user_strategy_cls": user_strategy_cls,
         })
 
-        # Add rebalance config if present
-        if self.config.rebalance_config and self.config.rebalance_config.enabled:
-            params.update({
-                "rebalance_frequency": self.config.rebalance_config.frequency,
-                "optimization_method": self.config.rebalance_config.method,
-            })
-
         self.cerebro.addstrategy(wrapper_cls, **params)
         self._strategy_added = True
 

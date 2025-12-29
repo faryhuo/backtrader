@@ -65,10 +65,6 @@
   },
   "equity_curve": "净值曲线",
   "no_equity_data": "暂无净值曲线数据",
-  "rebalances": "次再平衡",
-  "rebalancing": "再平衡",
-  "rebalancing_history": "再平衡历史",
-  "no_rebalancing": "暂无再平衡事件",
   "transaction_cost": "费用",
   "total_cost": "总费用",
   "portfolio_value": "价值",
@@ -95,35 +91,10 @@
   "no_trades": "暂无交易记录",
   "trigger": "触发",
   "initial_position": "初始建仓",
-  "rebalance_trigger": "再平衡",
   "strategy_trigger": "策略信号",
+  "other_trigger": "其他",
   "table_view": "表格",
   "timeline_view": "时间线",
   "correlation_tooltip": "相关系数矩阵显示各资产收益之间的相关性。值范围从-1到+1：\n• +1：完全正相关（同涨同跌）\n• 0：无相关性\n• -1：完全负相关（一涨一跌）\n较低的相关性有助于分散投资风险。",
-  "not_set": "未设置",
-  "rebalance": {
-    "title": "再平衡配置",
-    "frequency_label": "频率",
-    "frequency_tooltip": "多久重新调整一次投资组合权重",
-    "optimization_label": "优化方法",
-    "optimization_tooltip": "再平衡时计算目标权重的方法",
-    "threshold_label": "最小交易阈值",
-    "threshold_tooltip": "触发交易所需的最小仓位变化百分比（默认1%）",
-    "cost_label": "交易成本",
-    "cost_tooltip": "预估交易成本占交易金额的百分比（默认0.1%）",
-    "disabled_hint": "启用再平衡以定期调整投资组合权重。",
-    "frequency": {
-      "monthly": "每月",
-      "monthly_first": "每月（月初）",
-      "monthly_last": "每月（月末）",
-      "quarterly": "每季度",
-      "annually": "每年"
-    },
-    "optimization": {
-      "equal_weight": "等权重",
-      "risk_parity": "风险平价",
-      "min_variance": "最小方差",
-      "markowitz": "Markowitz（最大夏普）"
-    }
-  }
+  "not_set": "未设置"
 }

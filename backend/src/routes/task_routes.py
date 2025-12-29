@@ -378,8 +378,6 @@ def _get_executor_for_task_type(task_type: str):
                     initial_cash=config.get("initial_cash", 100000),
                     commission=config.get("commission", 0.0005),
                     strategy_name=config.get("strategy_name"),
-                    per_asset_params=config.get("per_asset_params"),
-                    optimization_method=config.get("optimization_method", "equal_weight"),
                 )
 
             return portfolio_executor

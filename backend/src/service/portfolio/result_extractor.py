@@ -109,13 +109,10 @@ class ResultExtractor:
         Extract metrics from custom portfolio analyzers.
 
         Returns:
-            Dictionary with equity_curve, rebalancing_events, trades, etc.
+            Dictionary with equity_curve, trades, etc.
         """
         # Portfolio value analyzer
         portfolio_value = self._get_portfolio_value_analysis()
-
-        # Rebalancing events
-        rebalancing = self._get_rebalancing_analysis()
 
         # Asset contributions
         contributions = self._get_asset_contribution_analysis()
@@ -128,21 +125,15 @@ class ResultExtractor:
 
         return {
             "equity_curve": portfolio_value.get("equity_curve", {}),
-            "rebalancing_events": rebalancing.get("events", []),
             "all_trades": trades.get("trades", []),
             "asset_contributions": contributions.get("contributions", {}),
             "portfolio_metrics": portfolio_metrics,
-            "total_transaction_costs": rebalancing.get("total_transaction_costs", 0.0),
-            "rebalancing_count": rebalancing.get("total_events", 0),
+            "total_transaction_costs": 0.0,
         }
 
     def _get_portfolio_value_analysis(self) -> Dict:
         """Get portfolio value analyzer results."""
         return self._safe_get_analyzer("portfolio_value")
-
-    def _get_rebalancing_analysis(self) -> Dict:
-        """Get rebalancing analyzer results."""
-        return self._safe_get_analyzer("rebalancing")
 
     def _get_asset_contribution_analysis(self) -> Dict:
         """Get asset contribution analyzer results."""
@@ -243,7 +234,6 @@ class ResultExtractor:
 
             # Portfolio-specific results
             "equity_curve": portfolio_metrics["equity_curve"],
-            "rebalancing_events": portfolio_metrics["rebalancing_events"],
             "all_trades": portfolio_metrics["all_trades"],
             "asset_contributions": portfolio_metrics["asset_contributions"],
 
@@ -259,13 +249,7 @@ class ResultExtractor:
                 "returns": standard_metrics["returns"],
                 "drawdown": standard_metrics["drawdown"],
                 "portfolio_metrics": portfolio_metrics["portfolio_metrics"],
-                "optimization_method": self.config.optimization_method,
-                "rebalance_frequency": (
-                    self.config.rebalance_config.frequency
-                    if self.config.rebalance_config else None
-                ),
                 "total_transaction_costs": portfolio_metrics["total_transaction_costs"],
-                "rebalancing_count": portfolio_metrics["rebalancing_count"],
             }
         }
 

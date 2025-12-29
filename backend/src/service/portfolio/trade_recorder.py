@@ -27,11 +27,9 @@ class TradeTrigger(Enum):
 
     Values:
         INITIAL_POSITION: Trade from establishing initial portfolio positions
-        REBALANCE: Trade from portfolio rebalancing
         STRATEGY: Trade from user strategy signals
     """
     INITIAL_POSITION = "initial_position"
-    REBALANCE = "rebalance"
     STRATEGY = "strategy"
 
 

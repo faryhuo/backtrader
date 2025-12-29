@@ -4,7 +4,6 @@ Multi-Asset Backtest Service - True multi-asset portfolio backtesting engine.
 This module provides functionality for:
 - Single Cerebro instance with multiple data feeds
 - Portfolio-level position sizing and cash management
-- Periodic rebalancing with multiple optimization methods
 - Unified portfolio equity curve generation
 - Per-asset strategy parameter configuration
 
@@ -349,8 +348,6 @@ def run_multi_asset_backtest(
     commission: float = 0.0005,
     strategy_name: str = ...,  # Required parameter
     params: Optional[dict] = None,
-    rebalance_config: Optional[dict] = None,
-    optimization_method: str = "equal_weight",
     timeframe: str = "1d",
     save_path: Optional[Path] = None,
 ) -> dict:
@@ -369,10 +366,6 @@ def run_multi_asset_backtest(
         commission: Commission rate per trade (default: 0.0005 = 0.05%)
         strategy_name: Strategy file name (without .py) - REQUIRED. Must be multi-data aware.
         params: Strategy parameters (dict) - passed to strategy's params
-        rebalance_config: Rebalancing configuration
-            Example: {"frequency": "monthly", "method": "risk_parity"}
-        optimization_method: Optimization method for rebalancing
-            Options: "equal_weight", "risk_parity", "min_variance", "markowitz"
         timeframe: Data timeframe (default: "1d")
         save_path: Optional path to save chart image
 
@@ -560,8 +553,6 @@ def run_multi_asset_backtest(
                 "returns": returns_analysis,
                 "drawdown": drawdown_analysis,
                 "portfolio_metrics": portfolio_metrics_analysis,
-                "optimization_method": optimization_method,
-                "rebalance_frequency": rebalance_config.get("frequency") if rebalance_config else None,
                 "total_transaction_costs": rebalancing_analysis.get("total_transaction_costs", 0.0),
                 "rebalancing_count": rebalancing_analysis.get("total_events", 0),
             }

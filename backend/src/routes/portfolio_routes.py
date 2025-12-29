@@ -45,36 +45,7 @@ class PortfolioHistoryQuery(BaseModel):
 
 
 
-class RebalanceConfig(BaseModel):
-    """Rebalancing configuration for portfolio."""
-    frequency: str = Field(
-        ...,
-        description="Rebalancing frequency: monthly, monthly_first, monthly_last, quarterly, annually"
-    )
-    min_trade_threshold: float = Field(
-        0.01,
-        ge=0.0,
-        le=1.0,
-        description="Minimum position change % to execute trade (default 1%)"
-    )
-    transaction_cost_pct: float = Field(
-        0.001,
-        ge=0.0,
-        le=0.1,
-        description="Transaction cost as % of trade value (default 0.1%)"
-    )
 
-    @field_validator('frequency')
-    @classmethod
-    def validate_frequency(cls, v: str) -> str:
-        valid_frequencies = [
-            'monthly', 'monthly_first', 'monthly_last',
-            'quarterly', 'quarterly_first', 'quarterly_last',
-            'annually', 'annually_first', 'annually_last'
-        ]
-        if v not in valid_frequencies:
-            raise ValueError(f"Invalid frequency '{v}'. Must be one of: {', '.join(valid_frequencies)}")
-        return v
 
 
 class MultiAssetBacktestRequest(BaseModel):
@@ -87,23 +58,9 @@ class MultiAssetBacktestRequest(BaseModel):
     commission: float = Field(0.0005, ge=0, le=0.1, description="Broker commission rate")
     strategy_name: str = Field(..., description="Strategy file name (required - use multi-asset template)")
     params: dict | None = Field(None, description="Strategy parameters (applied globally)")
-    rebalance_config: RebalanceConfig | None = Field(
-        None,
-        description="Rebalancing configuration. Example: {'frequency': 'monthly', 'min_trade_threshold': 0.01}"
-    )
-    optimization_method: str = Field(
-        "equal_weight",
-        description="Optimization method for rebalancing: equal_weight, risk_parity, min_variance, markowitz"
-    )
     timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
-    @field_validator('optimization_method')
-    @classmethod
-    def validate_optimization_method(cls, v: str) -> str:
-        valid_methods = ['equal_weight', 'risk_parity', 'min_variance', 'markowitz']
-        if v not in valid_methods:
-            raise ValueError(f"Invalid optimization method '{v}'. Must be one of: {', '.join(valid_methods)}")
-        return v
+
 
     @field_validator('timeframe')
     @classmethod
@@ -146,8 +103,6 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
             commission=config.get("commission", 0.0005),
             strategy_name=config["strategy_name"],
             params=config.get("params"),
-            rebalance_config=config.get("rebalance_config"),
-            optimization_method=config.get("optimization_method", "equal_weight"),
             timeframe=config.get("timeframe", "1d"),
             save_path=save_path,
         )
@@ -185,8 +140,6 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "rebalancing_events": result.get("rebalancing_events", []),
         "asset_contributions": result.get("asset_contributions", {}),
         "all_trades": result.get("all_trades", []),  # Trade log from PortfolioTradeRecorder
-        "rebalance_frequency": (config.get("rebalance_config") or {}).get("frequency"),
-        "optimization_method": config.get("optimization_method", "equal_weight"),
         "per_asset_params": None,
         # Individual results for UI compatibility
         "individual_results": result.get("individual_results", []),

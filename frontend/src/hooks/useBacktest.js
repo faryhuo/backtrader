@@ -132,8 +132,6 @@ export function useBacktest() {
             timeframe,
             selectedStrategy,
             paramOverrides,
-            rebalanceEnabled,
-            rebalanceConfig,
         } = params;
 
         const validTickers = tickers.filter(ticker => ticker.trim());
@@ -154,13 +152,6 @@ export function useBacktest() {
         setTaskProgress(null);
 
         try {
-            // Build rebalance_config for API if enabled
-            const rebalance_config = rebalanceEnabled ? {
-                frequency: rebalanceConfig.frequency,
-                min_trade_threshold: rebalanceConfig.min_trade_threshold,
-                transaction_cost_pct: rebalanceConfig.transaction_cost_pct,
-            } : null;
-
             // Prepare strategy params (only send if non-empty)
             const paramsToSend = Object.keys(paramOverrides || {}).length > 0 ? paramOverrides : null;
 
@@ -174,11 +165,7 @@ export function useBacktest() {
                 timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy,
                 params: paramsToSend,
-                rebalance_config: rebalance_config,
-                optimization_method: rebalanceEnabled ? rebalanceConfig.optimization_method : 'equal_weight',
             });
-
-
 
             // Handle async task-based response
             if (taskResponse.task_id) {

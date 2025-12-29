@@ -31,10 +31,6 @@ class IResultAggregator(Protocol):
         """Get equity curve data."""
         ...
 
-    def get_rebalancing_events(self) -> List[Dict]:
-        """Get list of rebalancing events."""
-        ...
-
     def get_asset_contributions(self) -> Dict[str, Dict]:
         """Get per-asset contribution data."""
         ...
@@ -65,7 +61,6 @@ class PortfolioResultAggregator:
 
         # Or access individual components
         equity_curve = aggregator.get_equity_curve()
-        events = aggregator.get_rebalancing_events()
     """
 
     def __init__(self, strategy: bt.Strategy):
@@ -137,15 +132,6 @@ class PortfolioResultAggregator:
         """
         return self._safe_get_analyzer_key("portfolio_value", "equity_curve", {})
 
-    def get_rebalancing_events(self) -> List[Dict]:
-        """
-        Get list of rebalancing events.
-
-        Returns:
-            List of rebalancing event dictionaries
-        """
-        return self._safe_get_analyzer_key("rebalancing", "events", [])
-
     def get_asset_contributions(self) -> Dict[str, Dict]:
         """
         Get per-asset contribution data.
@@ -170,32 +156,7 @@ class PortfolioResultAggregator:
         if trades:
             return trades
 
-        # Fallback: Extract from rebalancing events
-        return self._extract_trades_from_events()
-
-    def _extract_trades_from_events(self) -> List[Dict]:
-        """Extract trades from rebalancing events as fallback."""
-        trades = []
-        events = self.get_rebalancing_events()
-
-        for event in events:
-            orders = event.get("orders", {})
-            prices = event.get("prices", {})
-            event_date = event.get("date", "")
-
-            for ticker, shares in orders.items():
-                if shares != 0:
-                    trades.append({
-                        "date": event_date,
-                        "ticker": ticker,
-                        "action": "buy" if shares > 0 else "sell",
-                        "shares": abs(shares),
-                        "price": prices.get(ticker, 0),
-                        "value": abs(shares) * prices.get(ticker, 0),
-                        "trigger": "rebalance",
-                    })
-
-        return trades
+        return []
 
     def get_portfolio_metrics(self) -> Dict[str, Any]:
         """
@@ -207,16 +168,8 @@ class PortfolioResultAggregator:
         return self._safe_get_analyzer("portfolio_metrics", {})
 
     def get_total_transaction_costs(self) -> float:
-        """Get total transaction costs from all rebalancing."""
-        return self._safe_get_analyzer_key(
-            "rebalancing", "total_transaction_costs", 0.0
-        )
-
-    def get_rebalancing_count(self) -> int:
-        """Get total number of rebalancing events."""
-        return self._safe_get_analyzer_key(
-            "rebalancing", "total_events", 0
-        )
+        """Get total transaction costs."""
+        return 0.0
 
     def get_trade_statistics(self) -> Dict[str, Any]:
         """
@@ -262,7 +215,6 @@ class PortfolioResultAggregator:
         """
         return {
             "equity_curve": self.get_equity_curve(),
-            "rebalancing_events": self.get_rebalancing_events(),
             "asset_contributions": self.get_asset_contributions(),
             "all_trades": self.get_all_trades(),
             "portfolio_metrics": self.get_portfolio_metrics(),
@@ -271,7 +223,6 @@ class PortfolioResultAggregator:
             "drawdown_analysis": self.get_drawdown_analysis(),
             "sharpe_ratio": self.get_sharpe_ratio(),
             "total_transaction_costs": self.get_total_transaction_costs(),
-            "rebalancing_count": self.get_rebalancing_count(),
         }
 
     def to_route_result(
@@ -330,7 +281,6 @@ class PortfolioResultAggregator:
 
             # From aggregator
             "equity_curve": aggregated["equity_curve"],
-            "rebalancing_events": aggregated["rebalancing_events"],
             "all_trades": aggregated["all_trades"],
             "asset_contributions": aggregated["asset_contributions"],
 
@@ -344,7 +294,6 @@ class PortfolioResultAggregator:
                 "drawdown": aggregated["drawdown_analysis"],
                 "portfolio_metrics": aggregated["portfolio_metrics"],
                 "total_transaction_costs": aggregated["total_transaction_costs"],
-                "rebalancing_count": aggregated["rebalancing_count"],
             },
         }
 
