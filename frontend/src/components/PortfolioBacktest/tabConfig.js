@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'antd';
 import {
     LineChartOutlined,
     SyncOutlined,
@@ -36,7 +37,7 @@ export function getAvailableData(result) {
         hasRebalancing: result.rebalancing_events && result.rebalancing_events.length > 0,
         hasContributions: result.asset_contributions && Object.keys(result.asset_contributions).length > 0,
         hasTrades: (result.all_trades && result.all_trades.length > 0) ||
-                   (result.rebalancing_events && result.rebalancing_events.length > 0),
+            (result.rebalancing_events && result.rebalancing_events.length > 0),
         hasCorrelation: result.correlation && !result.correlation.error,
         hasOptimization: result.optimization && !result.optimization.error,
         hasIndividualResults: result.individual_results && result.individual_results.length > 0,
@@ -233,7 +234,7 @@ export function buildPortfolioTabItems({ result, t, components, options = {} }) 
             ),
             children: (
                 <div style={{ textAlign: 'center', padding: 16 }}>
-                    <img
+                    <Image
                         src={result.plot_url}
                         alt="Backtest Chart"
                         style={{ maxWidth: '100%', maxHeight: 600 }}

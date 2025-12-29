@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty, Button, message, Space } from 'antd'
+import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty, Button, message, Space, Image } from 'antd'
 import {
     FileTextOutlined,
     LineChartOutlined,
@@ -293,7 +293,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             ),
             children: (
                 <div style={{ textAlign: 'center' }}>
-                    <img
+                    <Image
                         src={`/images/${portfolio.plot_filename}`}
                         alt="Portfolio Chart"
                         style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: 8 }}

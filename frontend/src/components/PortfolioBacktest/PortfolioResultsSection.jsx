@@ -1,4 +1,4 @@
-import { Card, Table, Tabs } from 'antd';
+import { Card, Image, Table, Tabs } from 'antd';
 import { LineChartOutlined, PieChartOutlined, SyncOutlined, TableOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import PortfolioMetricsCard from './PortfolioMetricsCard';
 import CorrelationCard from './CorrelationCard';
@@ -159,7 +159,7 @@ function PortfolioResultsSection({ t, result, columns }) {
 
             {result.plot_url && (
                 <Card className="chart-card" title={t('portfolio.chart', 'Portfolio Chart')}>
-                    <img src={result.plot_url} alt={t('portfolio.chart_alt', 'Portfolio Chart')} className="portfolio-chart" />
+                    <Image src={result.plot_url} alt={t('portfolio.chart_alt', 'Portfolio Chart')} className="portfolio-chart" style={{ maxWidth: '100%' }} />
                 </Card>
             )}
         </div>
