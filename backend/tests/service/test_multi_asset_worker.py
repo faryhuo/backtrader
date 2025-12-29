@@ -41,10 +41,6 @@ class TestMultiAssetBacktestTask:
             initial_cash=500000.0,
             commission=0.001,
             strategy_name="sma_cross",
-            per_asset_params={
-                "AAPL": {"sma_period": 10},
-                "GOOGL": {"sma_period": 20}
-            },
             rebalance_config={
                 "frequency": "monthly",
                 "min_trade_threshold": 0.02
@@ -58,7 +54,7 @@ class TestMultiAssetBacktestTask:
         assert task.initial_cash == 500000.0
         assert task.strategy_name == "sma_cross"
         assert task.optimization_method == "risk_parity"
-        assert "AAPL" in task.per_asset_params
+        assert task.rebalance_config is not None
 
     def test_to_dict(self):
         """Test serialization to dictionary."""
@@ -101,7 +97,7 @@ class TestMultiAssetBacktestTask:
             weights=[0.33, 0.34, 0.33],
             start_date="2024-01-01",
             end_date="2024-12-31",
-            per_asset_params={"AAPL": {"sma_period": 15}}
+            optimization_method="risk_parity"
         )
 
         data = original.to_dict()
@@ -109,7 +105,7 @@ class TestMultiAssetBacktestTask:
 
         assert restored.task_id == original.task_id
         assert restored.tickers == original.tickers
-        assert restored.per_asset_params == original.per_asset_params
+        assert restored.optimization_method == original.optimization_method
 
 
 class TestMultiAssetBacktestResult:

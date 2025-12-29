@@ -60,13 +60,12 @@ class TestAnalyzeChart:
     @pytest.mark.asyncio
     async def test_analyze_chart_text_only(self, mock_config_manager, mock_openai):
         """Test analyzing chart with text message only."""
-        user = {"sub": "test-user"}
 
         result = await analyze_chart(
             message="Analyze this strategy",
             model="gpt-4o",
             file=None,
-            user=user
+            user_id="test-user"
         )
 
         assert result == {"analysis": "This is a test analysis"}
@@ -86,7 +85,6 @@ class TestAnalyzeChart:
     @pytest.mark.asyncio
     async def test_analyze_chart_with_image(self, mock_config_manager, mock_openai):
         """Test analyzing chart with image attachment."""
-        user = {"sub": "test-user"}
 
         # Create mock upload file
         mock_file = AsyncMock(spec=UploadFile)
@@ -96,7 +94,7 @@ class TestAnalyzeChart:
             message="What do you see in this chart?",
             model="gpt-4o",
             file=mock_file,
-            user=user
+            user_id="test-user"
         )
 
         assert result == {"analysis": "This is a test analysis"}
@@ -114,7 +112,6 @@ class TestAnalyzeChart:
     @pytest.mark.asyncio
     async def test_analyze_chart_with_proxy(self, mock_config_manager, mock_openai):
         """Test analyzing chart with proxy configuration."""
-        user = {"sub": "test-user"}
 
         # Configure proxy
         mock_config_manager.return_value.get_proxy_config.return_value = {
@@ -139,7 +136,7 @@ class TestAnalyzeChart:
                 message="Test message",
                 model="gpt-4o",
                 file=None,
-                user=user
+                user_id="test-user"
             )
 
             assert result == {"analysis": "Proxy test analysis"}
@@ -151,7 +148,6 @@ class TestAnalyzeChart:
     @pytest.mark.asyncio
     async def test_analyze_chart_missing_credentials(self, mock_config_manager):
         """Test error handling when OpenAI credentials are missing."""
-        user = {"sub": "test-user"}
 
         # Configure missing credentials
         mock_config_manager.return_value.get_openai_config.return_value = {
@@ -166,7 +162,7 @@ class TestAnalyzeChart:
                 message="Test message",
                 model="gpt-4o",
                 file=None,
-                user=user
+                user_id="test-user"
             )
 
         assert exc_info.value.status_code == 500
@@ -175,7 +171,6 @@ class TestAnalyzeChart:
     @pytest.mark.asyncio
     async def test_analyze_chart_exception_handling(self, mock_config_manager, mock_openai):
         """Test error handling when OpenAI API fails."""
-        user = {"sub": "test-user"}
 
         # Configure OpenAI to raise an exception
         mock_openai.return_value.chat.completions.create.side_effect = Exception(
@@ -189,7 +184,7 @@ class TestAnalyzeChart:
                 message="Test message",
                 model="gpt-4o",
                 file=None,
-                user=user
+                user_id="test-user"
             )
 
         assert exc_info.value.status_code == 500
@@ -202,7 +197,7 @@ class TestAnalyzeChart:
             message="Test analysis",
             model="gpt-4o",
             file=None,
-            user=None
+            user_id=None
         )
 
         assert result == {"analysis": "This is a test analysis"}

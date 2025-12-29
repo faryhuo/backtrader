@@ -33,9 +33,8 @@ class TestStrategyListEndpoints:
     def test_get_strategy_list_success(self, mock_list_strategies):
         """Test successful strategy list retrieval."""
         mock_list_strategies.return_value = ["strategy1", "strategy2", "strategy3"]
-        user = {"sub": "test-user"}
 
-        result = get_strategy_list(user=user)
+        result = get_strategy_list(user_id="test-user")
 
         assert result == {"strategies": ["strategy1", "strategy2", "strategy3"]}
         mock_list_strategies.assert_called_once()
@@ -44,9 +43,8 @@ class TestStrategyListEndpoints:
     def test_get_strategy_list_empty(self, mock_list_strategies):
         """Test strategy list when no strategies exist."""
         mock_list_strategies.return_value = []
-        user = {"sub": "test-user"}
 
-        result = get_strategy_list(user=user)
+        result = get_strategy_list(user_id="test-user")
 
         assert result == {"strategies": []}
 
@@ -54,10 +52,9 @@ class TestStrategyListEndpoints:
     def test_get_strategy_list_exception(self, mock_list_strategies):
         """Test error handling in strategy list."""
         mock_list_strategies.side_effect = Exception("Database error")
-        user = {"sub": "test-user"}
 
         with pytest.raises(HTTPException) as exc_info:
-            get_strategy_list(user=user)
+            get_strategy_list(user_id="test-user")
 
         assert exc_info.value.status_code == 500
         assert "Database error" in str(exc_info.value.detail)
@@ -66,9 +63,8 @@ class TestStrategyListEndpoints:
     def test_get_strategy_with_name(self, mock_get_code):
         """Test getting specific strategy by name."""
         mock_get_code.return_value = "# Strategy code here"
-        user = {"sub": "test-user"}
 
-        result = get_strategy(name="my_strategy", user=user)
+        result = get_strategy(name="my_strategy", user_id="test-user")
 
         assert result == {"code": "# Strategy code here", "name": "my_strategy"}
         mock_get_code.assert_called_once_with("my_strategy")
@@ -79,9 +75,8 @@ class TestStrategyListEndpoints:
         """Test getting strategy without specifying name (defaults to first)."""
         mock_list_strategies.return_value = ["default_strategy", "other_strategy"]
         mock_get_code.return_value = "# Default strategy code"
-        user = {"sub": "test-user"}
 
-        result = get_strategy(name=None, user=user)
+        result = get_strategy(name=None, user_id="test-user")
 
         assert result == {"code": "# Default strategy code", "name": "default_strategy"}
         mock_list_strategies.assert_called_once()
@@ -91,10 +86,9 @@ class TestStrategyListEndpoints:
     def test_get_strategy_no_strategies_available(self, mock_list_strategies):
         """Test error when no strategies are available."""
         mock_list_strategies.return_value = []
-        user = {"sub": "test-user"}
 
         with pytest.raises(HTTPException) as exc_info:
-            get_strategy(name=None, user=user)
+            get_strategy(name=None, user_id="test-user")
 
         # The actual implementation wraps 404 in a 500 error
         assert exc_info.value.status_code in [404, 500]
@@ -108,7 +102,6 @@ class TestStrategySaveEndpoint:
     @patch("src.routes.strategy_routes.save_user_strategy_code")
     def test_save_strategy_success(self, mock_save_code, mock_get_storage):
         """Test successful strategy save with version creation."""
-        user = {"sub": "test-user"}
         request = StrategySaveRequest(
             name="my_strategy",
             code="# New strategy code",
@@ -124,7 +117,7 @@ class TestStrategySaveEndpoint:
         }
         mock_get_storage.return_value = mock_storage
 
-        result = save_strategy(request=request, user=user)
+        result = save_strategy(request=request, user_id="test-user")
 
         assert result["status"] == "ok"
         assert result["message"] == "Strategy saved"
@@ -139,7 +132,6 @@ class TestStrategySaveEndpoint:
     @patch("src.routes.strategy_routes.save_user_strategy_code")
     def test_save_strategy_version_creation_fails(self, mock_save_code, mock_get_storage):
         """Test strategy save when version creation fails (should not block save)."""
-        user = {"sub": "test-user"}
         request = StrategySaveRequest(
             name="my_strategy",
             code="# New strategy code",
@@ -151,7 +143,7 @@ class TestStrategySaveEndpoint:
         mock_storage.create_version.side_effect = Exception("Version DB error")
         mock_get_storage.return_value = mock_storage
 
-        result = save_strategy(request=request, user=user)
+        result = save_strategy(request=request, user_id="test-user")
 
         # Should still succeed despite version creation failure
         assert result["status"] == "ok"
@@ -165,7 +157,6 @@ class TestStrategySaveEndpoint:
         """Test error handling when file save fails."""
         from src.service.backtest_engine import StrategyLoadError
 
-        user = {"sub": "test-user"}
         request = StrategySaveRequest(
             name="my_strategy",
             code="# New code"
@@ -174,7 +165,7 @@ class TestStrategySaveEndpoint:
         mock_save_code.side_effect = StrategyLoadError("Invalid strategy code")
 
         with pytest.raises(HTTPException) as exc_info:
-            save_strategy(request=request, user=user)
+            save_strategy(request=request, user_id="test-user")
 
         assert exc_info.value.status_code == 400
         assert "Invalid strategy code" in str(exc_info.value.detail)
@@ -190,9 +181,8 @@ class TestStrategyParams:
             {"name": "period", "value": 20, "type": "int"},
             {"name": "threshold", "value": 0.5, "type": "float"}
         ]
-        user = {"sub": "test-user"}
 
-        result = get_strategy_params(name="my_strategy", user=user)
+        result = get_strategy_params(name="my_strategy", user_id="test-user")
 
         assert result["name"] == "my_strategy"
         assert len(result["params"]) == 2
@@ -203,9 +193,8 @@ class TestStrategyParams:
     def test_get_strategy_params_extraction_fails(self, mock_extract_params):
         """Test that extraction failures return empty params (no error)."""
         mock_extract_params.side_effect = Exception("Parse error")
-        user = {"sub": "test-user"}
 
-        result = get_strategy_params(name="my_strategy", user=user)
+        result = get_strategy_params(name="my_strategy", user_id="test-user")
 
         # Should return empty params instead of raising error
         assert result["name"] == "my_strategy"
@@ -226,9 +215,8 @@ class TestTemplateEndpoints:
         ]
         mock_categories.return_value = ["trend", "momentum"]
         mock_difficulties.return_value = ["beginner", "intermediate", "advanced"]
-        user = {"sub": "test-user"}
 
-        result = get_templates(user=user)
+        result = get_templates(user_id="test-user")
 
         assert len(result["templates"]) == 2
         assert result["categories"] == ["trend", "momentum"]
@@ -242,9 +230,8 @@ class TestTemplateEndpoints:
             "name": "SMA Crossover",
             "code": "# Template code"
         }
-        user = {"sub": "test-user"}
 
-        result = get_template_detail(template_id="sma_cross", user=user)
+        result = get_template_detail(template_id="sma_cross", user_id="test-user")
 
         assert result["id"] == "sma_cross"
         assert result["name"] == "SMA Crossover"
@@ -254,10 +241,9 @@ class TestTemplateEndpoints:
     def test_get_template_detail_not_found(self, mock_get_template):
         """Test getting non-existent template."""
         mock_get_template.return_value = None
-        user = {"sub": "test-user"}
 
         with pytest.raises(HTTPException) as exc_info:
-            get_template_detail(template_id="nonexistent", user=user)
+            get_template_detail(template_id="nonexistent", user_id="test-user")
 
         assert exc_info.value.status_code == 404
         assert "Template not found" in str(exc_info.value.detail)
@@ -272,14 +258,13 @@ class TestTemplateEndpoints:
             "code": "# Template code here"
         }
         mock_list.return_value = ["existing_strategy"]
-        user = {"sub": "test-user"}
 
         request = TemplateImportRequest(
             template_id="sma_cross",
             name="my_new_strategy"
         )
 
-        result = import_template(request=request, user=user)
+        result = import_template(request=request, user_id="test-user")
 
         assert result["status"] == "ok"
         assert result["name"] == "my_new_strategy"
@@ -291,7 +276,6 @@ class TestTemplateEndpoints:
         """Test importing template with name that already exists."""
         mock_get_template.return_value = {"id": "sma_cross", "code": "# Code"}
         mock_list.return_value = ["existing_strategy"]
-        user = {"sub": "test-user"}
 
         request = TemplateImportRequest(
             template_id="sma_cross",
@@ -299,7 +283,7 @@ class TestTemplateEndpoints:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            import_template(request=request, user=user)
+            import_template(request=request, user_id="test-user")
 
         assert exc_info.value.status_code == 400
         assert "already exists" in str(exc_info.value.detail)
@@ -326,13 +310,12 @@ class TestVersionManagement:
             "total": 2
         }
         mock_get_storage.return_value = mock_storage
-        user = {"sub": "test-user"}
 
         result = list_strategy_versions(
             name="my_strategy",
             limit=50,
             offset=0,
-            user=user
+            user_id="test-user"
         )
 
         assert result["total"] == 2
@@ -353,9 +336,8 @@ class TestVersionManagement:
             "commit_message": "Latest changes"
         }
         mock_get_storage.return_value = mock_storage
-        user = {"sub": "test-user"}
 
-        result = get_latest_strategy_version(name="my_strategy", user=user)
+        result = get_latest_strategy_version(name="my_strategy", user_id="test-user")
 
         assert result["version_number"] == 5
         mock_storage.get_latest_version.assert_called_once()
@@ -366,10 +348,9 @@ class TestVersionManagement:
         mock_storage = MagicMock()
         mock_storage.get_latest_version.return_value = None
         mock_get_storage.return_value = mock_storage
-        user = {"sub": "test-user"}
 
         with pytest.raises(HTTPException) as exc_info:
-            get_latest_strategy_version(name="my_strategy", user=user)
+            get_latest_strategy_version(name="my_strategy", user_id="test-user")
 
         assert exc_info.value.status_code == 404
 
@@ -389,13 +370,12 @@ class TestVersionManagement:
             "additions": 1,
             "deletions": 1
         }
-        user = {"sub": "test-user"}
 
         result = compare_strategy_versions(
             name="my_strategy",
             from_version=1,
             to_version=2,
-            user=user
+            user_id="test-user"
         )
 
         assert "diff" in result
@@ -415,7 +395,6 @@ class TestVersionManagement:
             "commit_message": "Rollback to version 3"
         }
         mock_get_storage.return_value = mock_storage
-        user = {"sub": "test-user"}
 
         request = VersionCreateRequest(commit_message="Rolling back")
 
@@ -423,7 +402,7 @@ class TestVersionManagement:
             name="my_strategy",
             version_number=3,
             request=request,
-            user=user
+            user_id="test-user"
         )
 
         assert result["status"] == "ok"

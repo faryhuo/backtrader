@@ -152,6 +152,9 @@ def _build_sqlite_url(sqlite_config: dict) -> str:
     """
     Build SQLite connection URL from configuration.
     
+    Note: This function does NOT create the database directory.
+    Call ensure_database_dir() during application startup to create it.
+    
     Args:
         sqlite_config: SQLite configuration dictionary with path key
     
@@ -164,11 +167,7 @@ def _build_sqlite_url(sqlite_config: dict) -> str:
     if not Path(db_path).is_absolute():
         db_path = PROJECT_ROOT / db_path
     
-    # Create parent directory if it doesn't exist
-    db_path = Path(db_path)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    return f"sqlite:///{db_path}"
+    return f"sqlite:///{Path(db_path)}"
 
 
 def get_database_url_from_config() -> str:
@@ -259,6 +258,42 @@ def ensure_resource_dirs() -> None:
     TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def ensure_database_dir() -> None:
+    """
+    Ensure the database directory exists.
+    
+    This should be called during application startup (not import time)
+    to avoid side effects during module imports.
+    
+    Raises:
+        RuntimeError: If the directory cannot be created
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    config = load_database_config()
+    db_config = config.get("database", {})
+    db_type = db_config.get("type", "sqlite")
+    
+    if db_type != "sqlite":
+        # PostgreSQL doesn't need local directory creation
+        return
+    
+    sqlite_config = db_config.get("sqlite", {})
+    db_path = sqlite_config.get("path", "trading_sessions.db")
+    
+    # Make path absolute if relative
+    if not Path(db_path).is_absolute():
+        db_path = PROJECT_ROOT / db_path
+    
+    db_path = Path(db_path)
+    try:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Database directory ensured: {db_path.parent}")
+    except (OSError, PermissionError) as e:
+        raise RuntimeError(f"Cannot create database directory '{db_path.parent}': {e}") from e
+
+
 __all__ = [
     "ASSETS_DIR",
     "BASE_DIR",
@@ -291,6 +326,7 @@ __all__ = [
     "RESOURCES_DIR",
     "STRATEGY_DIR",
     "TEMPLATES_DIR",
+    "ensure_database_dir",
     "ensure_resource_dirs",
     "load_database_config",
     "load_report_config",
