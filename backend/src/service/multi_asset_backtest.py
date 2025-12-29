@@ -550,6 +550,7 @@ def run_multi_asset_backtest(
         logger.info(f"Total return: {total_return:.2f}%, Sharpe: {sharpe_ratio:.2f}, Max DD: {max_drawdown:.2f}%")
         logger.info(f"Equity curve: {len(portfolio_value_analysis.get('equity_curve', {}))} days")
         logger.info(f"Asset contributions: {len(asset_contribution_analysis.get('contributions', {}))} assets")
+        logger.info(f"All trades: {len(getattr(strat, 'all_trades', []))} trades")
 
         # Step 8: Generate chart (optional)
         if save_path:

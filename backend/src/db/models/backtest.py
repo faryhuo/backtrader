@@ -134,6 +134,7 @@ class PortfolioResultModel(Base):
     equity_curve = Column(SafeJSON, nullable=True)  # Time-series portfolio value {date: value}
     rebalancing_events = Column(SafeJSON, nullable=True)  # [{date, weights, orders, cost}]
     asset_contributions = Column(SafeJSON, nullable=True)  # {ticker: {return%, weight, contribution%}}
+    all_trades = Column(SafeJSON, nullable=True)  # All trades including initial positions [{date, ticker, action, shares, price, value, trigger}]
     optimization_history = Column(SafeJSON, nullable=True)  # [{date, weights, method}] for dynamic optimization
 
     # Configuration fields for multi-asset

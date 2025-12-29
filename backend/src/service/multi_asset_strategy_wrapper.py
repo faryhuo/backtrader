@@ -360,6 +360,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     logger.error(f"{ticker}: Buy order returned None!")
         
         logger.info(f"Initial positions: {len(orders_placed)} orders placed for {len(self.p.tickers)} tickers")
+        logger.info(f"All trades recorded so far: {len(self.all_trades)} trades")
 
     def _should_rebalance(self) -> bool:
         """
