@@ -1,5 +1,5 @@
 """
-Mean Reversion with Z-Score Strategy - Statistical Arbitrage
+Mean Reversion with Z-Score Strategy - Statistical Arbitrage (Multi-Data Support)
 
 Uses Z-Score to measure how far price deviates from its mean in standard
 deviation units. Enters when price is extremely oversold (low Z-Score) and
@@ -27,23 +27,33 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.mean = bt.indicators.SMA(self.data.close, period=self.p.lookback)
-        self.std = bt.indicators.StdDev(self.data.close, period=self.p.lookback)
+        self.indicators = {}
         
-    def get_zscore(self):
-        """Calculate current Z-Score."""
-        if self.std[0] == 0:
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                'mean': bt.indicators.SMA(d.close, period=self.p.lookback),
+                'std': bt.indicators.StdDev(d.close, period=self.p.lookback),
+            }
+        
+    def get_zscore(self, d):
+        """Calculate current Z-Score for a specific data feed."""
+        ind = self.indicators[d]
+        if ind['std'][0] == 0:
             return 0
-        return (self.data.close[0] - self.mean[0]) / self.std[0]
+        return (d.close[0] - ind['mean'][0]) / ind['std'][0]
 
     def next(self):
-        zscore = self.get_zscore()
-        
-        if not self.position:
-            # Enter when extremely oversold
-            if zscore < self.p.entry_zscore:
-                self.buy()
-        else:
-            # Exit when price returns to mean
-            if zscore > self.p.exit_zscore:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            pos = self.getposition(d)
+            zscore = self.get_zscore(d)
+            
+            if not pos.size:
+                # Enter when extremely oversold
+                if zscore < self.p.entry_zscore:
+                    self.buy(data=d)
+            else:
+                # Exit when price returns to mean
+                if zscore > self.p.exit_zscore:
+                    self.close(data=d)

@@ -1,5 +1,5 @@
 """
-Triple Moving Average Strategy - Trend Following
+Triple Moving Average Strategy - Trend Following (Multi-Data Support)
 
 Uses three moving averages (fast, medium, slow) to identify trend strength
 and direction. Enters when all three align (fast > medium > slow for uptrend).
@@ -27,16 +27,27 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.fast_ma = bt.indicators.SMA(self.data.close, period=self.p.fast_period)
-        self.medium_ma = bt.indicators.SMA(self.data.close, period=self.p.medium_period)
-        self.slow_ma = bt.indicators.SMA(self.data.close, period=self.p.slow_period)
+        self.indicators = {}
+        
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                'fast_ma': bt.indicators.SMA(d.close, period=self.p.fast_period),
+                'medium_ma': bt.indicators.SMA(d.close, period=self.p.medium_period),
+                'slow_ma': bt.indicators.SMA(d.close, period=self.p.slow_period),
+            }
 
     def next(self):
-        if not self.position:
-            # All MAs aligned bullish: fast > medium > slow
-            if self.fast_ma[0] > self.medium_ma[0] > self.slow_ma[0]:
-                self.buy()
-        else:
-            # Exit when fast crosses below medium
-            if self.fast_ma[0] < self.medium_ma[0]:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            
+            if not pos.size:
+                # All MAs aligned bullish: fast > medium > slow
+                if ind['fast_ma'][0] > ind['medium_ma'][0] > ind['slow_ma'][0]:
+                    self.buy(data=d)
+            else:
+                # Exit when fast crosses below medium
+                if ind['fast_ma'][0] < ind['medium_ma'][0]:
+                    self.close(data=d)

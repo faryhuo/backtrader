@@ -1,5 +1,5 @@
 """
-RSI Divergence Strategy - Mean Reversion + Momentum
+RSI Divergence Strategy - Mean Reversion + Momentum (Multi-Data Support)
 
 This strategy combines RSI with price action to identify bullish and bearish
 divergences. A bullish divergence occurs when price makes a lower low but RSI
@@ -29,36 +29,48 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.rsi = bt.indicators.RSI(self.data.close, period=self.p.rsi_period)
+        self.indicators = {}
         
-    def find_bullish_divergence(self):
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            self.indicators[d] = {
+                'rsi': bt.indicators.RSI(d.close, period=self.p.rsi_period)
+            }
+        
+    def find_bullish_divergence(self, d, rsi):
         """Check for bullish divergence: price lower low, RSI higher low."""
-        if len(self.data) < self.p.lookback + 1:
+        if len(d) < self.p.lookback + 1:
             return False
         
         # Current price is lower than lookback bars ago
-        price_lower = self.data.low[0] < min([self.data.low[-i] for i in range(1, self.p.lookback + 1)])
+        price_lower = d.low[0] < min([d.low[-i] for i in range(1, self.p.lookback + 1)])
         # Current RSI is higher than lookback bars ago (when price was at local low)
-        rsi_higher = self.rsi[0] > min([self.rsi[-i] for i in range(1, self.p.lookback + 1)])
+        rsi_higher = rsi[0] > min([rsi[-i] for i in range(1, self.p.lookback + 1)])
         
-        return price_lower and rsi_higher and self.rsi[0] < self.p.rsi_oversold
+        return price_lower and rsi_higher and rsi[0] < self.p.rsi_oversold
 
-    def find_bearish_divergence(self):
+    def find_bearish_divergence(self, d, rsi):
         """Check for bearish divergence: price higher high, RSI lower high."""
-        if len(self.data) < self.p.lookback + 1:
+        if len(d) < self.p.lookback + 1:
             return False
         
         # Current price is higher than lookback bars ago
-        price_higher = self.data.high[0] > max([self.data.high[-i] for i in range(1, self.p.lookback + 1)])
+        price_higher = d.high[0] > max([d.high[-i] for i in range(1, self.p.lookback + 1)])
         # Current RSI is lower than lookback bars ago
-        rsi_lower = self.rsi[0] < max([self.rsi[-i] for i in range(1, self.p.lookback + 1)])
+        rsi_lower = rsi[0] < max([rsi[-i] for i in range(1, self.p.lookback + 1)])
         
-        return price_higher and rsi_lower and self.rsi[0] > self.p.rsi_overbought
+        return price_higher and rsi_lower and rsi[0] > self.p.rsi_overbought
 
     def next(self):
-        if not self.position:
-            if self.find_bullish_divergence():
-                self.buy()
-        else:
-            if self.find_bearish_divergence() or self.rsi[0] > self.p.rsi_overbought:
-                self.close()
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            rsi = ind['rsi']
+            
+            if not pos.size:
+                if self.find_bullish_divergence(d, rsi):
+                    self.buy(data=d)
+            else:
+                if self.find_bearish_divergence(d, rsi) or rsi[0] > self.p.rsi_overbought:
+                    self.close(data=d)

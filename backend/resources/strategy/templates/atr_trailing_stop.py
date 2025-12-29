@@ -1,5 +1,5 @@
 """
-ATR Trailing Stop Strategy - Trend Following with Dynamic Exit
+ATR Trailing Stop Strategy - Trend Following with Dynamic Exit (Multi-Data Support)
 
 This strategy uses Average True Range (ATR) to set dynamic trailing stops.
 Entry is based on simple trend filter, and exit adapts to market volatility.
@@ -27,24 +27,40 @@ class UserStrategy(bt.Strategy):
     )
 
     def __init__(self):
-        self.atr = bt.indicators.ATR(self.data, period=self.p.atr_period)
-        self.ma = bt.indicators.SMA(self.data.close, period=self.p.ma_period)
-        self.trailing_stop = None
+        self.indicators = {}
+        self.trailing_stops = {}
+        
+        # Create indicators for EACH data feed
+        for d in self.datas:
+            ticker = d._name
+            self.indicators[d] = {
+                'atr': bt.indicators.ATR(d, period=self.p.atr_period),
+                'ma': bt.indicators.SMA(d.close, period=self.p.ma_period),
+            }
+            self.trailing_stops[ticker] = None
 
     def next(self):
-        if not self.position:
-            # Enter long when price above MA (uptrend)
-            if self.data.close[0] > self.ma[0]:
-                self.buy()
-                # Set initial trailing stop
-                self.trailing_stop = self.data.close[0] - self.atr[0] * self.p.atr_multiplier
-        else:
-            # Update trailing stop (only move up, never down)
-            new_stop = self.data.close[0] - self.atr[0] * self.p.atr_multiplier
-            if new_stop > self.trailing_stop:
-                self.trailing_stop = new_stop
+        # Apply trading logic to each data feed
+        for d in self.datas:
+            ticker = d._name
+            ind = self.indicators[d]
+            pos = self.getposition(d)
+            trailing_stop = self.trailing_stops.get(ticker)
             
-            # Exit if price falls below trailing stop
-            if self.data.close[0] < self.trailing_stop:
-                self.close()
-                self.trailing_stop = None
+            if not pos.size:
+                # Enter long when price above MA (uptrend)
+                if d.close[0] > ind['ma'][0]:
+                    self.buy(data=d)
+                    # Set initial trailing stop
+                    self.trailing_stops[ticker] = d.close[0] - ind['atr'][0] * self.p.atr_multiplier
+            else:
+                # Update trailing stop (only move up, never down)
+                new_stop = d.close[0] - ind['atr'][0] * self.p.atr_multiplier
+                if trailing_stop is None or new_stop > trailing_stop:
+                    self.trailing_stops[ticker] = new_stop
+                    trailing_stop = new_stop
+                
+                # Exit if price falls below trailing stop
+                if d.close[0] < trailing_stop:
+                    self.close(data=d)
+                    self.trailing_stops[ticker] = None
