@@ -71,7 +71,8 @@ class TestMultiAssetBacktestRequest:
             tickers=["AAPL", "GOOGL"],
             weights=[0.5, 0.5],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
         assert request.tickers == ["AAPL", "GOOGL"]
         assert request.weights == [0.5, 0.5]
@@ -84,6 +85,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 optimization_method=method
             )
             assert request.optimization_method == method
@@ -96,6 +98,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 optimization_method="invalid_method"
             )
         assert "Invalid optimization method" in str(exc_info.value)
@@ -108,6 +111,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 timeframe=tf
             )
             assert request.timeframe == tf
@@ -120,6 +124,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 timeframe="2h"
             )
         assert "Invalid timeframe" in str(exc_info.value)
@@ -134,7 +139,8 @@ class TestMultiAssetBacktestRequest:
                 tickers=tickers,
                 weights=weights,
                 start_date="2024-01-01",
-                end_date="2024-12-31"
+                end_date="2024-12-31",
+                strategy_name="buy_and_hold"
             )
         assert "tickers" in str(exc_info.value).lower()
 
@@ -147,6 +153,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 initial_cash=500
             )
 
@@ -157,6 +164,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 initial_cash=200000000
             )
 
@@ -167,6 +175,7 @@ class TestMultiAssetBacktestRequest:
             weights=[0.6, 0.4],
             start_date="2024-01-01",
             end_date="2024-12-31",
+            strategy_name="buy_and_hold",
             rebalance_config={
                 "frequency": "quarterly",
                 "min_trade_threshold": 0.02,

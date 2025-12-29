@@ -1,12 +1,138 @@
-import React from 'react';
-import { Table, Tag, Card, Empty } from 'antd';
-import { UnorderedListOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Table, Tag, Card, Empty, Timeline, Segmented, Space, Typography } from 'antd';
+import { UnorderedListOutlined, FieldTimeOutlined, SwapOutlined, TableOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
+
+/**
+ * Format currency value
+ */
+const formatCurrency = (value) => {
+    if (value === undefined || value === null) return '-';
+    return '$' + Math.abs(value).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
+/**
+ * Get color based on trade trigger type
+ */
+const getTriggerColor = (trigger) => {
+    if (trigger === 'initial_position') return 'blue';
+    if (trigger === 'strategy') return 'cyan';
+    return 'purple';  // rebalance
+};
+
+/**
+ * Single trade event item for timeline view
+ */
+const TradeEventItem = ({ trades, date, t }) => {
+    const buys = trades.filter(t => t.action?.toLowerCase() === 'buy');
+    const sells = trades.filter(t => t.action?.toLowerCase() === 'sell');
+
+    // Calculate total value for this date
+    const totalBuyValue = buys.reduce((sum, t) => sum + (t.value || 0), 0);
+    const totalSellValue = sells.reduce((sum, t) => sum + (t.value || 0), 0);
+
+    // Get unique triggers
+    const triggers = [...new Set(trades.map(t => t.trigger))];
+
+    return (
+        <div style={{ padding: '4px 0' }}>
+            {/* Trigger tags */}
+            <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {triggers.map(trigger => {
+                    const isInitial = trigger === 'initial_position';
+                    const isStrategy = trigger === 'strategy';
+                    let label = t('portfolio.rebalance_trigger', 'Rebalance');
+                    if (isInitial) label = t('portfolio.initial_position', 'Initial Position');
+                    else if (isStrategy) label = t('portfolio.strategy_trigger', 'Strategy');
+
+                    return (
+                        <Tag key={trigger} color={getTriggerColor(trigger)}>
+                            {label}
+                        </Tag>
+                    );
+                })}
+                {totalBuyValue > 0 && (
+                    <Tag color="green">
+                        {t('portfolio.buy', 'Buy')}: {formatCurrency(totalBuyValue)}
+                    </Tag>
+                )}
+                {totalSellValue > 0 && (
+                    <Tag color="red">
+                        {t('portfolio.sell', 'Sell')}: {formatCurrency(totalSellValue)}
+                    </Tag>
+                )}
+            </div>
+
+            {/* Trade details */}
+            <div style={{
+                background: 'rgba(0,0,0,0.15)',
+                borderRadius: 4,
+                padding: 8,
+                fontSize: 11
+            }}>
+                {/* Buys */}
+                {buys.length > 0 && (
+                    <div style={{ marginBottom: sells.length > 0 ? 6 : 0 }}>
+                        {buys.map((trade, idx) => (
+                            <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginBottom: 2
+                            }}>
+                                <Tag color="green" style={{ margin: 0, minWidth: 35 }}>
+                                    {t('portfolio.buy', 'Buy')}
+                                </Tag>
+                                <Text strong style={{ minWidth: 50 }}>{trade.ticker}</Text>
+                                <Text>{trade.shares} {t('portfolio.shares', 'shares')}</Text>
+                                <Text type="secondary">@</Text>
+                                <Text>${trade.price?.toFixed(2) || '-'}</Text>
+                                <Text type="secondary">=</Text>
+                                <Text style={{ color: '#52c41a' }}>{formatCurrency(trade.value)}</Text>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Sells */}
+                {sells.length > 0 && (
+                    <div>
+                        {sells.map((trade, idx) => (
+                            <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginBottom: 2
+                            }}>
+                                <Tag color="red" style={{ margin: 0, minWidth: 35 }}>
+                                    {t('portfolio.sell', 'Sell')}
+                                </Tag>
+                                <Text strong style={{ minWidth: 50 }}>{trade.ticker}</Text>
+                                <Text>{trade.shares} {t('portfolio.shares', 'shares')}</Text>
+                                <Text type="secondary">@</Text>
+                                <Text>${trade.price?.toFixed(2) || '-'}</Text>
+                                <Text type="secondary">=</Text>
+                                <Text style={{ color: '#ff4d4f' }}>{formatCurrency(trade.value)}</Text>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 /**
  * PortfolioTradeLog - Displays all trades from portfolio backtest
- * Uses all_trades if available, otherwise extracts from rebalancing events
+ * Supports two view modes: Table and Timeline
  */
 function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
+    const [viewMode, setViewMode] = useState('table');
+
     // Use all_trades directly if available, otherwise extract from rebalancing events
     let trades = [];
 
@@ -65,6 +191,19 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
             }
         });
     }
+
+    // Group trades by date for timeline view
+    const tradesByDate = trades.reduce((groups, trade) => {
+        const date = trade.date;
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(trade);
+        return groups;
+    }, {});
+
+    // Sort dates
+    const sortedDates = Object.keys(tradesByDate).sort();
 
     const columns = [
         {
@@ -140,7 +279,7 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
                 const isStrategy = trigger === 'strategy';
                 let color = 'purple';
                 let label = t('portfolio.rebalance_trigger', 'Rebalance');
-                
+
                 if (isInitial) {
                     color = 'blue';
                     label = t('portfolio.initial_position', 'Initial');
@@ -148,7 +287,7 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
                     color = 'cyan';
                     label = t('portfolio.strategy_trigger', 'Strategy');
                 }
-                
+
                 return <Tag color={color}>{label}</Tag>;
             },
         },
@@ -162,6 +301,14 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
         );
     }
 
+    // Create timeline items
+    const timelineItems = sortedDates.map((date) => ({
+        color: getTriggerColor(tradesByDate[date][0]?.trigger),
+        dot: <SwapOutlined />,
+        label: date,
+        children: <TradeEventItem trades={tradesByDate[date]} date={date} t={t} />,
+    }));
+
     return (
         <Card
             title={
@@ -170,14 +317,42 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
                     {t('portfolio.trade_log', 'Trade Log')} ({trades.length})
                 </span>
             }
+            extra={
+                <Segmented
+                    value={viewMode}
+                    onChange={setViewMode}
+                    options={[
+                        {
+                            value: 'table',
+                            icon: <TableOutlined />,
+                            label: t('portfolio.table_view', 'Table'),
+                        },
+                        {
+                            value: 'timeline',
+                            icon: <FieldTimeOutlined />,
+                            label: t('portfolio.timeline_view', 'Timeline'),
+                        },
+                    ]}
+                    size="small"
+                />
+            }
         >
-            <Table
-                dataSource={trades}
-                columns={columns}
-                size="small"
-                pagination={{ pageSize: 20, showSizeChanger: true }}
-                scroll={{ y: 400 }}
-            />
+            {viewMode === 'table' ? (
+                <Table
+                    dataSource={trades}
+                    columns={columns}
+                    size="small"
+                    pagination={{ pageSize: 20, showSizeChanger: true }}
+                    scroll={{ y: 400 }}
+                />
+            ) : (
+                <div style={{ maxHeight: 400, overflow: 'auto' }}>
+                    <Timeline
+                        mode="left"
+                        items={timelineItems}
+                    />
+                </div>
+            )}
         </Card>
     );
 }

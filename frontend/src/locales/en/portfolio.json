@@ -96,6 +96,9 @@
   "trigger": "Trigger",
   "initial_position": "Initial",
   "rebalance_trigger": "Rebalance",
+  "strategy_trigger": "Strategy",
+  "table_view": "Table",
+  "timeline_view": "Timeline",
   "correlation_tooltip": "Correlation matrix shows the relationship between asset returns. Values range from -1 to +1:\n• +1: Perfect positive correlation (move together)\n• 0: No correlation\n• -1: Perfect negative correlation (move opposite)\nLower correlations help diversify portfolio risk.",
   "not_set": "Not set",
   "rebalance": {
