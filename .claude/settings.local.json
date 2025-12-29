@@ -32,7 +32,8 @@
       "Bash(git -C \"d:\\\\Project\\\\backtrader\" log --oneline --decorate -20)",
       "Bash(xargs:*)",
       "Bash(pushd:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

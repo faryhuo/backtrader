@@ -127,14 +127,10 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             ),
             children: (
                 <div className="overview-tab">
+                    {/* Pass the entire portfolio object for expanded metrics */}
                     <PortfolioMetricsCard
                         t={t}
-                        metrics={{
-                            final_value: portfolio.final_value,
-                            total_return: portfolio.total_return,
-                            weighted_sharpe: portfolio.weighted_sharpe,
-                            max_drawdown: portfolio.max_drawdown,
-                        }}
+                        metrics={portfolio}
                     />
                     <Card className="overview-info-card" size="small">
                         <Descriptions bordered column={2} size="small">

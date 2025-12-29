@@ -337,6 +337,26 @@ class PortfolioMetricsAnalyzer(bt.Analyzer):
         if annual_downside_deviation > 0:
             sortino_ratio = (annual_return - self.p.risk_free_rate) / annual_downside_deviation
 
+        # Win Rate - % of positive return days
+        positive_days = np.sum(returns_array > 0)
+        win_rate = (positive_days / len(returns_array)) if len(returns_array) > 0 else 0.0
+
+        # Best/Worst day returns
+        best_day = float(np.max(returns_array)) if len(returns_array) > 0 else 0.0
+        worst_day = float(np.min(returns_array)) if len(returns_array) > 0 else 0.0
+
+        # Additional risk metrics
+        # Skewness - measure of asymmetry in return distribution
+        from scipy import stats
+        skewness = float(stats.skew(returns_array)) if len(returns_array) > 3 else 0.0
+
+        # Kurtosis - measure of tail risk
+        kurtosis = float(stats.kurtosis(returns_array)) if len(returns_array) > 3 else 0.0
+
+        # VaR and CVaR (95% confidence)
+        var_95 = float(np.percentile(returns_array, 5)) if len(returns_array) > 0 else 0.0
+        cvar_95 = float(np.mean(returns_array[returns_array <= var_95])) if len(returns_array[returns_array <= var_95]) > 0 else 0.0
+
         return {
             "annual_return": float(annual_return),
             "annual_volatility": float(annual_volatility),
@@ -345,6 +365,14 @@ class PortfolioMetricsAnalyzer(bt.Analyzer):
             "daily_return_mean": float(mean_return),
             "daily_return_std": float(std_return),
             "num_days": len(self.daily_returns),
+            # New metrics
+            "win_rate": float(win_rate),
+            "best_day": float(best_day),
+            "worst_day": float(worst_day),
+            "skewness": float(skewness),
+            "kurtosis": float(kurtosis),
+            "var_95": float(var_95),
+            "cvar_95": float(cvar_95),
         }
 
 
