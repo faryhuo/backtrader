@@ -34,7 +34,6 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 
 
-
 # Request/Response Models
 class PortfolioHistoryQuery(BaseModel):
     """Query parameters for portfolio history."""
@@ -185,6 +184,7 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "equity_curve": result.get("equity_curve", {}),
         "rebalancing_events": result.get("rebalancing_events", []),
         "asset_contributions": result.get("asset_contributions", {}),
+        "all_trades": result.get("all_trades", []),  # Trade log from PortfolioTradeRecorder
         "rebalance_frequency": (config.get("rebalance_config") or {}).get("frequency"),
         "optimization_method": config.get("optimization_method", "equal_weight"),
         "per_asset_params": None,

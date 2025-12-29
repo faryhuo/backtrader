@@ -17,11 +17,11 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
             trade_num: index + 1,
             date: trade.date,
             ticker: trade.ticker,
-            action: trade.action,
+            action: trade.action?.toLowerCase() || 'buy', // Normalize to lowercase
             shares: trade.shares,
             price: trade.price,
             value: trade.value,
-            trigger: trade.trigger,
+            trigger: trade.trigger || 'strategy',
         }));
     } else if (rebalancingEvents && rebalancingEvents.length > 0) {
         // Fallback: Extract from rebalancing events
@@ -91,11 +91,14 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
             dataIndex: 'action',
             key: 'action',
             width: 80,
-            render: (action) => (
-                <Tag color={action === 'buy' ? 'green' : 'red'}>
-                    {action === 'buy' ? t('portfolio.buy', 'Buy') : t('portfolio.sell', 'Sell')}
-                </Tag>
-            ),
+            render: (action) => {
+                const isBuy = action?.toLowerCase() === 'buy';
+                return (
+                    <Tag color={isBuy ? 'green' : 'red'}>
+                        {isBuy ? t('portfolio.buy', 'Buy') : t('portfolio.sell', 'Sell')}
+                    </Tag>
+                );
+            },
         },
         {
             title: t('portfolio.shares', 'Shares'),
@@ -118,24 +121,36 @@ function PortfolioTradeLog({ allTrades, rebalancingEvents, t }) {
             key: 'value',
             width: 120,
             align: 'right',
-            render: (value, record) => (
-                <span style={{ color: record.action === 'buy' ? '#52c41a' : '#ff4d4f' }}>
-                    ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-            ),
+            render: (value, record) => {
+                const isBuy = record.action?.toLowerCase() === 'buy';
+                return (
+                    <span style={{ color: isBuy ? '#52c41a' : '#ff4d4f' }}>
+                        ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                );
+            },
         },
         {
             title: t('portfolio.trigger', 'Trigger'),
             dataIndex: 'trigger',
             key: 'trigger',
             width: 100,
-            render: (trigger) => (
-                <Tag color={trigger === 'initial_position' ? 'blue' : 'purple'}>
-                    {trigger === 'initial_position'
-                        ? t('portfolio.initial_position', 'Initial')
-                        : t('portfolio.rebalance_trigger', 'Rebalance')}
-                </Tag>
-            ),
+            render: (trigger) => {
+                const isInitial = trigger === 'initial_position';
+                const isStrategy = trigger === 'strategy';
+                let color = 'purple';
+                let label = t('portfolio.rebalance_trigger', 'Rebalance');
+                
+                if (isInitial) {
+                    color = 'blue';
+                    label = t('portfolio.initial_position', 'Initial');
+                } else if (isStrategy) {
+                    color = 'cyan';
+                    label = t('portfolio.strategy_trigger', 'Strategy');
+                }
+                
+                return <Tag color={color}>{label}</Tag>;
+            },
         },
     ];
 
