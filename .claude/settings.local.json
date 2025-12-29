@@ -30,7 +30,8 @@
       "Bash(npm run lint:*)",
       "Bash(pip show:*)",
       "Bash(git -C \"d:\\\\Project\\\\backtrader\" log --oneline --decorate -20)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(pushd:*)"
     ]
   }
 }

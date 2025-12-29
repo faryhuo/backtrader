@@ -14,7 +14,7 @@ while maintaining portfolio-level control.
 
 import logging
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import backtrader as bt
@@ -25,6 +25,9 @@ from src.service.portfolio_rebalancer import (
     PortfolioRebalancer,
 )
 from src.service.portfolio_optimizer import get_optimizer
+from src.service.portfolio.trade_recorder import TradeRecorder, TradeTrigger
+from src.service.portfolio.events import PortfolioEventBus, PortfolioEventType
+from src.utils.backtrader_helpers import get_data_name
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +151,12 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
         # Step 7: Rebalancing event log (for analyzer)
         self.rebalancing_events = []
-        
-        # Step 8: All trades log (includes initial positions and rebalancing trades)
-        self.all_trades = []
+
+        # Step 8: Initialize TradeRecorder for centralized trade recording
+        self.trade_recorder = TradeRecorder()
+
+        # Step 9: Initialize EventBus for loose coupling with analyzers
+        self.event_bus = PortfolioEventBus()
 
         logger.info("MultiAssetPortfolioStrategy initialization complete")
 
@@ -334,7 +340,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         # Second pass: place orders and record trades
         orders_placed = []
         current_date = self.datetime.date(0)
-        
+
         for ticker, plan in order_plan.items():
             if plan['shares'] > 0:
                 logger.info(
@@ -345,22 +351,21 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                 if order:
                     orders_placed.append((ticker, plan['shares'], order))
                     logger.info(f"{ticker}: Order placed successfully, order ref: {order.ref}")
-                    
-                    # Record the trade in all_trades
-                    self.all_trades.append({
-                        "date": current_date.isoformat(),
-                        "ticker": ticker,
-                        "action": "buy",
-                        "shares": plan['shares'],
-                        "price": plan['price'],
-                        "value": plan['value'],
-                        "trigger": "initial_position",
-                    })
+
+                    # Record the trade using TradeRecorder
+                    self.trade_recorder.record_buy(
+                        trade_date=current_date,
+                        ticker=ticker,
+                        shares=plan['shares'],
+                        price=plan['price'],
+                        trigger=TradeTrigger.INITIAL_POSITION,
+                        value=plan['value'],
+                    )
                 else:
                     logger.error(f"{ticker}: Buy order returned None!")
-        
+
         logger.info(f"Initial positions: {len(orders_placed)} orders placed for {len(self.p.tickers)} tickers")
-        logger.info(f"All trades recorded so far: {len(self.all_trades)} trades")
+        logger.info(f"All trades recorded so far: {self.trade_recorder.trade_count} trades")
 
     def _should_rebalance(self) -> bool:
         """
@@ -381,7 +386,6 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
             try:
                 # Get approximate end date (we don't know the exact end in advance)
                 # So we'll check month-by-month
-                from datetime import timedelta
                 end_date = current_date + timedelta(days=365 * 5)  # 5 years lookahead
                 self.rebalance_dates = self.rebalancer.scheduler.generate_rebalance_dates(
                     current_date, end_date
@@ -465,7 +469,8 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
         # Step 4: Execute trades - IMPORTANT: Execute sells first to free up cash for buys
         orders_executed = {}
-        
+        trade_date = current_date.date()
+
         # First, execute all sell orders
         for ticker, delta in rebalance_plan['orders'].items():
             if delta < 0:
@@ -473,18 +478,16 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                 order = self.sell(data=data, size=abs(delta))
                 orders_executed[ticker] = delta
                 logger.info(f"SELL {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
-                
-                # Record the trade
-                self.all_trades.append({
-                    "date": current_date.date().isoformat(),
-                    "ticker": ticker,
-                    "action": "sell",
-                    "shares": abs(delta),
-                    "price": current_prices[ticker],
-                    "value": abs(delta) * current_prices[ticker],
-                    "trigger": "rebalance",
-                })
-        
+
+                # Record the trade using TradeRecorder
+                self.trade_recorder.record_sell(
+                    trade_date=trade_date,
+                    ticker=ticker,
+                    shares=abs(delta),
+                    price=current_prices[ticker],
+                    trigger=TradeTrigger.REBALANCE,
+                )
+
         # Then, execute all buy orders (now cash should be available from sells)
         for ticker, delta in rebalance_plan['orders'].items():
             if delta > 0:
@@ -492,17 +495,15 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                 order = self.buy(data=data, size=abs(delta))
                 orders_executed[ticker] = delta
                 logger.info(f"BUY {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
-                
-                # Record the trade
-                self.all_trades.append({
-                    "date": current_date.date().isoformat(),
-                    "ticker": ticker,
-                    "action": "buy",
-                    "shares": abs(delta),
-                    "price": current_prices[ticker],
-                    "value": abs(delta) * current_prices[ticker],
-                    "trigger": "rebalance",
-                })
+
+                # Record the trade using TradeRecorder
+                self.trade_recorder.record_buy(
+                    trade_date=trade_date,
+                    ticker=ticker,
+                    shares=abs(delta),
+                    price=current_prices[ticker],
+                    trigger=TradeTrigger.REBALANCE,
+                )
 
         # Note: Post-rebalance value will be calculated after orders execute
         # For now, estimate with transaction costs
@@ -522,22 +523,18 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         # Update current target weights
         self.current_weights = target_weights
 
-        # Notify analyzer if available
-        if hasattr(self, 'analyzers') and hasattr(self.analyzers, 'rebalancing'):
-            try:
-                self.analyzers.rebalancing.notify_rebalance(
-                    date=current_date.date(),
-                    trigger=self.rebalancer.scheduler.frequency,
-                    pre_value=pre_rebalance_value,
-                    post_value=post_rebalance_value,
-                    target_weights=target_weights,
-                    orders=orders_executed,
-                    transaction_cost=rebalance_plan['estimated_cost'],
-                    pre_weights=actual_pre_weights,  # Use our calculated pre_weights
-                    prices=current_prices,
-                )
-            except Exception as e:
-                logger.warning(f"Failed to notify rebalancing analyzer: {e}")
+        # Emit rebalance event via EventBus (loose coupling with analyzers)
+        self.event_bus.emit_rebalance(
+            date=trade_date,
+            trigger=self.rebalancer.scheduler.frequency,
+            pre_value=pre_rebalance_value,
+            post_value=post_rebalance_value,
+            target_weights=target_weights,
+            pre_weights=actual_pre_weights,
+            orders=orders_executed,
+            transaction_cost=rebalance_plan['estimated_cost'],
+            prices=current_prices,
+        )
 
         logger.info(
             f"Rebalancing complete: {len(orders_executed)} trades, "
@@ -579,8 +576,8 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         if order.status in [order.Submitted, order.Accepted]:
             return
 
-        # Get ticker name from data feed
-        ticker = order.data._name if hasattr(order.data, '_name') else "UNKNOWN"
+        # Get ticker name using helper function
+        ticker = get_data_name(order.data)
 
         if order.status == order.Completed:
             if order.isbuy():
@@ -604,7 +601,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         if not trade.isclosed:
             return
 
-        ticker = trade.data._name if hasattr(trade.data, '_name') else "UNKNOWN"
+        ticker = get_data_name(trade.data)
 
         logger.debug(
             f"{ticker} TRADE CLOSED: PnL=${trade.pnl:.2f}, "
@@ -626,6 +623,18 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     f"{ticker}: {position.size} shares @ ${current_price:.2f} "
                     f"= ${position_value:,.2f}"
                 )
+
+    @property
+    def all_trades(self) -> list:
+        """
+        Get all trades recorded by this strategy.
+
+        Delegates to TradeRecorder for centralized trade management.
+
+        Returns:
+            List of trade dictionaries
+        """
+        return self.trade_recorder.get_all_trades()
 
 
 class BuyAndHoldPortfolioStrategy(MultiAssetPortfolioStrategy):

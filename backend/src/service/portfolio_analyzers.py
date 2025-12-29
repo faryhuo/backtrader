@@ -6,6 +6,8 @@ This module provides specialized analyzers for tracking portfolio-level metrics:
 - RebalancingEventAnalyzer: Rebalancing events and costs
 - AssetContributionAnalyzer: Per-asset return contribution
 - PortfolioMetricsAnalyzer: Comprehensive portfolio statistics
+
+The analyzers use EventBus for loose coupling with the strategy.
 """
 
 import logging
@@ -13,6 +15,12 @@ from datetime import datetime
 from typing import Optional
 
 import backtrader as bt
+
+from src.service.portfolio.events import (
+    PortfolioEventType,
+    RebalanceExecutedEvent,
+)
+from src.utils.backtrader_helpers import get_data_name, get_ticker_from_data_mapping
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +106,8 @@ class RebalancingEventAnalyzer(bt.Analyzer):
     """
     Track all portfolio rebalancing events.
 
+    Subscribes to EventBus for loose coupling with the strategy.
+
     Records each rebalancing occurrence including:
     - Date
     - Target weights
@@ -130,66 +140,62 @@ class RebalancingEventAnalyzer(bt.Analyzer):
         self.events = []
         self.total_transaction_costs = 0.0
 
-    def notify_rebalance(
-        self,
-        date: datetime.date,
-        trigger: str,
-        pre_value: float,
-        post_value: float,
-        target_weights: dict[str, float],
-        orders: dict[str, int],
-        transaction_cost: float,
-        pre_weights: dict[str, float] = None,
-        prices: dict[str, float] = None,
-    ):
-        """
-        Record a rebalancing event.
+    def start(self):
+        """Subscribe to EventBus when the backtest starts."""
+        # Subscribe to rebalance events via EventBus (loose coupling)
+        if hasattr(self.strategy, 'event_bus'):
+            self.strategy.event_bus.subscribe(
+                PortfolioEventType.REBALANCE_EXECUTED,
+                self._on_rebalance_event
+            )
+            logger.debug("RebalancingEventAnalyzer subscribed to EventBus")
 
-        This method is called by the strategy when rebalancing occurs.
+    def _on_rebalance_event(self, event: RebalanceExecutedEvent):
+        """
+        Handle a rebalance event from the EventBus.
 
         Args:
-            date: Rebalancing date
-            trigger: Trigger reason ("monthly_schedule", "quarterly_schedule", etc.)
-            pre_value: Portfolio value before rebalancing
-            post_value: Portfolio value after rebalancing
-            target_weights: New target allocation
-            orders: Share delta for each ticker
-            transaction_cost: Total transaction cost
-            pre_weights: Weights before rebalancing
-            prices: Current prices for each ticker
+            event: RebalanceExecutedEvent from the strategy
         """
         # Build trades array with details
         trades = []
-        for ticker, shares in orders.items():
+        for ticker, shares in event.orders.items():
             trade = {
                 "ticker": ticker,
                 "shares": shares,
                 "action": "buy" if shares > 0 else "sell",
             }
-            if prices and ticker in prices:
-                trade["price"] = prices[ticker]
-                trade["value"] = abs(shares) * prices[ticker]
+            if event.prices and ticker in event.prices:
+                trade["price"] = event.prices[ticker]
+                trade["value"] = abs(shares) * event.prices[ticker]
             trades.append(trade)
 
-        event = {
-            "date": date.isoformat(),
-            "trigger": trigger,
-            "pre_rebalance_value": float(pre_value),
-            "post_rebalance_value": float(post_value),
-            "portfolio_value": float(pre_value),  # For frontend display
-            "target_weights": {k: float(v) for k, v in target_weights.items()},
-            "pre_weights": {k: float(v) for k, v in pre_weights.items()} if pre_weights else {},
-            "orders": {k: int(v) for k, v in orders.items()},
+        # Format date
+        if hasattr(event.date, 'isoformat'):
+            date_str = event.date.isoformat()
+        else:
+            date_str = str(event.date)
+
+        event_record = {
+            "date": date_str,
+            "trigger": event.trigger,
+            "pre_rebalance_value": float(event.pre_value),
+            "post_rebalance_value": float(event.post_value),
+            "portfolio_value": float(event.pre_value),  # For frontend display
+            "target_weights": {k: float(v) for k, v in event.target_weights.items()},
+            "pre_weights": {k: float(v) for k, v in event.pre_weights.items()} if event.pre_weights else {},
+            "orders": {k: int(v) for k, v in event.orders.items()},
             "trades": trades,
-            "transaction_cost": float(transaction_cost),
+            "transaction_cost": float(event.transaction_cost),
+            "prices": {k: float(v) for k, v in event.prices.items()} if event.prices else {},
         }
 
-        self.events.append(event)
-        self.total_transaction_costs += transaction_cost
+        self.events.append(event_record)
+        self.total_transaction_costs += event.transaction_cost
 
         logger.info(
-            f"Rebalancing event recorded: {date} ({trigger}), "
-            f"cost=${transaction_cost:.2f}, {len(trades)} trades"
+            f"Rebalancing event recorded: {date_str} ({event.trigger}), "
+            f"cost=${event.transaction_cost:.2f}, {len(trades)} trades"
         )
 
     def get_analysis(self):
@@ -250,9 +256,9 @@ class AssetContributionAnalyzer(bt.Analyzer):
         if hasattr(self.strategy, 'p') and hasattr(self.strategy.p, 'tickers'):
             self.tickers = self.strategy.p.tickers
         else:
-            # Fallback: use data feed names
+            # Fallback: use data feed names via helper function
             self.tickers = [
-                data._name if hasattr(data, '_name') else f"Asset{i}"
+                get_data_name(data) if get_data_name(data) != "UNKNOWN" else f"Asset{i}"
                 for i, data in enumerate(self.strategy.datas)
             ]
 
@@ -495,16 +501,13 @@ class PortfolioTradeRecorder(bt.Analyzer):
         Records every completed order (buy or sell) with full details.
         """
         if order.status in [order.Completed]:
-            # Get ticker name from data feed
-            ticker = "Unknown"
-            if hasattr(order.data, '_name'):
-                ticker = order.data._name
-            elif hasattr(self.strategy, 'ticker_data'):
-                # Find ticker by matching data feed
-                for t, data in self.strategy.ticker_data.items():
-                    if data == order.data:
-                        ticker = t
-                        break
+            # Get ticker name using helper function
+            ticker = get_data_name(order.data)
+            if ticker == "UNKNOWN" and hasattr(self.strategy, 'ticker_data'):
+                # Fallback: find ticker by matching data feed
+                ticker = get_ticker_from_data_mapping(
+                    order, self.strategy.ticker_data, fallback="Unknown"
+                )
 
             # Record the trade
             trade = {

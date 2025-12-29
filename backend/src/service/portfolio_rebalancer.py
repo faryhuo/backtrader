@@ -13,11 +13,16 @@ Rebalancing strategies supported:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 import numpy as np
 import pandas as pd
+
+from src.service.portfolio.date_generator import (
+    RebalanceDateGenerator,
+    is_rebalance_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +83,9 @@ class RebalanceScheduler:
         """
         Generate all rebalancing dates within the date range.
 
+        Uses the unified RebalanceDateGenerator for consistent date generation
+        across all frequency types.
+
         Args:
             start_date: Backtest start date
             end_date: Backtest end date
@@ -87,111 +95,14 @@ class RebalanceScheduler:
         """
         logger.info(f"Generating rebalance dates: {start_date.date()} to {end_date.date()}")
 
-        dates = []
-
-        if self.frequency.startswith("monthly"):
-            dates = self._generate_monthly_dates(start_date, end_date)
-        elif self.frequency.startswith("quarterly"):
-            dates = self._generate_quarterly_dates(start_date, end_date)
-        elif self.frequency.startswith("annually"):
-            dates = self._generate_annual_dates(start_date, end_date)
+        dates = RebalanceDateGenerator.generate(
+            frequency=self.frequency,
+            start_date=start_date,
+            end_date=end_date,
+            custom_day=self.custom_day
+        )
 
         logger.info(f"Generated {len(dates)} rebalancing dates")
-        return dates
-
-    def _generate_monthly_dates(
-        self, start_date: datetime, end_date: datetime
-    ) -> list[datetime]:
-        """Generate monthly rebalancing dates."""
-        dates = []
-        current = start_date
-
-        while current <= end_date:
-            # Determine target day
-            if self.custom_day:
-                # Custom day of month
-                try:
-                    target = datetime(current.year, current.month, self.custom_day)
-                except ValueError:
-                    # Day doesn't exist in this month (e.g., Feb 30)
-                    # Use last day of month
-                    if current.month == 12:
-                        target = datetime(current.year, current.month, 31)
-                    else:
-                        target = datetime(current.year, current.month + 1, 1) - timedelta(days=1)
-            elif "first" in self.frequency:
-                # First day of month
-                target = datetime(current.year, current.month, 1)
-            elif "last" in self.frequency:
-                # Last day of month
-                if current.month == 12:
-                    target = datetime(current.year, 12, 31)
-                else:
-                    target = datetime(current.year, current.month + 1, 1) - timedelta(days=1)
-            else:
-                # Default: first day of month
-                target = datetime(current.year, current.month, 1)
-
-            if start_date <= target <= end_date:
-                dates.append(target)
-
-            # Move to next month
-            if current.month == 12:
-                current = datetime(current.year + 1, 1, 1)
-            else:
-                current = datetime(current.year, current.month + 1, 1)
-
-        return dates
-
-    def _generate_quarterly_dates(
-        self, start_date: datetime, end_date: datetime
-    ) -> list[datetime]:
-        """Generate quarterly rebalancing dates."""
-        dates = []
-        # Quarters: Jan, Apr, Jul, Oct
-        quarter_months = [1, 4, 7, 10]
-
-        current_year = start_date.year
-        end_year = end_date.year
-
-        for year in range(current_year, end_year + 1):
-            for month in quarter_months:
-                if "first" in self.frequency or "last" not in self.frequency:
-                    # First day of quarter
-                    target = datetime(year, month, 1)
-                else:
-                    # Last day of quarter (Mar 31, Jun 30, Sep 30, Dec 31)
-                    if month == 1:
-                        target = datetime(year, 3, 31)
-                    elif month == 4:
-                        target = datetime(year, 6, 30)
-                    elif month == 7:
-                        target = datetime(year, 9, 30)
-                    else:  # month == 10
-                        target = datetime(year, 12, 31)
-
-                if start_date <= target <= end_date:
-                    dates.append(target)
-
-        return sorted(dates)
-
-    def _generate_annual_dates(
-        self, start_date: datetime, end_date: datetime
-    ) -> list[datetime]:
-        """Generate annual rebalancing dates."""
-        dates = []
-
-        for year in range(start_date.year, end_date.year + 1):
-            if "first" in self.frequency or "last" not in self.frequency:
-                # First day of year
-                target = datetime(year, 1, 1)
-            else:
-                # Last day of year
-                target = datetime(year, 12, 31)
-
-            if start_date <= target <= end_date:
-                dates.append(target)
-
         return dates
 
     def should_rebalance(
@@ -199,6 +110,8 @@ class RebalanceScheduler:
     ) -> bool:
         """
         Check if rebalancing should occur on the current date.
+
+        Uses O(1) set-based lookup via is_rebalance_date for efficiency.
 
         Args:
             current_date: Current trading date
@@ -211,15 +124,7 @@ class RebalanceScheduler:
             logger.warning("No rebalance_dates provided to should_rebalance()")
             return False
 
-        # Compare dates (ignore time component)
-        current_date_only = current_date.date() if isinstance(current_date, datetime) else current_date
-
-        for rebalance_date in rebalance_dates:
-            rebalance_date_only = rebalance_date.date() if isinstance(rebalance_date, datetime) else rebalance_date
-            if current_date_only == rebalance_date_only:
-                return True
-
-        return False
+        return is_rebalance_date(current_date, rebalance_dates)
 
 
 class PortfolioRebalancer:

@@ -36,7 +36,9 @@ from src.service.portfolio_analyzers import (
     PortfolioMetricsAnalyzer,
     PortfolioTradeRecorder,
 )
+from src.service.portfolio.result_aggregator import PortfolioResultAggregator
 from src.service.strategy_loader import load_user_strategy
+from src.utils.backtrader_helpers import get_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -256,12 +258,12 @@ def align_data_feeds(
     logger.info(f"Successfully loaded data for {len(raw_data)} tickers")
 
     # Step 2: Extract date indices from each feed's dataname (pandas DataFrame)
-    # Note: Backtrader feeds wrap pandas DataFrames accessible via feed._dataname
+    # Use helper function to safely access the underlying DataFrame
     date_sets = {}
     for ticker, feed in raw_data.items():
         try:
-            # Access the underlying pandas DataFrame
-            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            # Access the underlying pandas DataFrame using helper function
+            df = get_dataframe(feed)
             if df is None or df.empty:
                 raise DataAlignmentError(f"Empty data for {ticker}")
 
@@ -308,7 +310,8 @@ def align_data_feeds(
 
     for ticker, feed in raw_data.items():
         try:
-            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            # Use helper function to access the underlying DataFrame
+            df = get_dataframe(feed)
             # Filter to common dates
             aligned_df = df.loc[df.index.isin(common_dates_sorted)].sort_index()
 
