@@ -194,21 +194,14 @@ class CerebroBuilder:
         """
         Add standard Backtrader analyzers.
 
-        Adds:
-        - SharpeRatio
-        - DrawDown
-        - Returns
-        - TradeAnalyzer
+        Delegates to centralized analyzer_config module for consistency.
 
         Returns:
             Self for method chaining
         """
-        self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
-        self.cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
-        self.cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-        self.cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
-
-        logger.debug("Added standard analyzers (SharpeRatio, DrawDown, Returns, TradeAnalyzer)")
+        from src.service.analyzer_config import configure_analyzers, AnalyzerMode
+        configure_analyzers(self.cerebro, AnalyzerMode.BACKTEST)
+        logger.debug("Added standard analyzers via centralized configuration")
 
         return self
 

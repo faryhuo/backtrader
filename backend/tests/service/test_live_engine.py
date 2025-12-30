@@ -102,11 +102,15 @@ def test_build_components_unknown_adapter(monkeypatch):
 
 
 def test_safe_returns_stop_handles_zero_division(monkeypatch):
+    # SafeReturns was moved to analyzer_config module
+    from src.service.analyzer_config import SafeReturns
+    import backtrader as bt
+
     def raise_zero(self):
         raise ZeroDivisionError()
 
-    monkeypatch.setattr(live_engine.bt.analyzers.Returns, "stop", raise_zero)
-    analyzer = object.__new__(live_engine.SafeReturns)
+    monkeypatch.setattr(bt.analyzers.Returns, "stop", raise_zero)
+    analyzer = object.__new__(SafeReturns)
     analyzer.rets = {}
-    live_engine.SafeReturns.stop(analyzer)
+    SafeReturns.stop(analyzer)
     assert analyzer.rets["rnorm100"] == 0.0

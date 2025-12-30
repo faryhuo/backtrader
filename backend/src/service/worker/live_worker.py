@@ -187,10 +187,9 @@ class LiveWorkerSession:
             self._cerebro.adddata(data_feed)
             self._cerebro.setbroker(broker)
             
-            # Add analyzers
-            self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
-            self._cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
-            self._cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")
+            # Add analyzers using centralized configuration
+            from src.service.analyzer_config import configure_analyzers, AnalyzerMode
+            configure_analyzers(self._cerebro, AnalyzerMode.LIVE, TradeRecorder)
             
             self._send_event(
                 LiveEventType.STATUS_UPDATE,

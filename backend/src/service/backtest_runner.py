@@ -137,15 +137,8 @@ def run_backtest_legacy(
     cerebro.broker.setcommission(commission=commission)
     cerebro.addsizer(bt.sizers.FixedSize, stake=stake)
 
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
-    cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-    cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="annual")
-    cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
-    cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturns")
-    cerebro.addanalyzer(trade_recorder_cls, _name="trade_recorder")
+    from src.service.analyzer_config import configure_analyzers, AnalyzerMode
+    configure_analyzers(cerebro, AnalyzerMode.BACKTEST, trade_recorder_cls)
 
     try:
         results = cerebro.run()
@@ -154,25 +147,14 @@ def run_backtest_legacy(
         raise
     strat = results[0]
 
-    trade_details = strat.analyzers.trade_recorder.get_analysis()
-    time_returns_raw = strat.analyzers.timereturns.get_analysis()
-    equity_curve = {
-        dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt): float(ret)
-        for dt, ret in time_returns_raw.items()
-    }
-
-    metrics = {
-        "final_value": cerebro.broker.getvalue(),
-        "sharpe": strat.analyzers.sharpe.get_analysis().get("sharperatio", None),
-        "drawdown": strat.analyzers.drawdown.get_analysis().get("max", {}).get("drawdown", 0.0),
-        "returns": strat.analyzers.returns.get_analysis().get("rnorm100", 0.0),
-        "annual_returns": strat.analyzers.annual.get_analysis(),
-        "sqn": strat.analyzers.sqn.get_analysis().get("sqn", None),
-        "trades": strat.analyzers.trades.get_analysis(),
-        "time_drawdown": strat.analyzers.timedraw.get_analysis(),
-        "trade_details": trade_details,
-        "equity_curve": equity_curve,
-    }
+    # Extract metrics using centralized function
+    from src.service.analyzer_config import extract_metrics
+    metrics = extract_metrics(strat, cerebro.broker)
+    
+    # Add legacy field names for backward compatibility
+    metrics["sharpe"] = metrics["sharpe_ratio"]
+    metrics["drawdown"] = metrics["max_drawdown"]
+    metrics["returns"] = metrics["total_return"]
 
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)

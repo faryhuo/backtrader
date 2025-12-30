@@ -36,19 +36,7 @@ class LiveTradingError(Exception):
     """Raised when live trading encounters an error."""
 
 
-class SafeReturns(bt.analyzers.Returns):
-    """Returns analyzer that tolerates zero bars (avoids ZeroDivisionError)."""
-
-    def stop(self):
-        try:
-            super().stop()
-        except ZeroDivisionError:
-            # No periods processed; provide neutral values instead of crashing
-            logger.warning("Returns analyzer saw no bars; emitting neutral return metrics")
-            self.rets['rtot'] = 0.0
-            self.rets['ravg'] = 0.0
-            self.rets['rnorm'] = 0.0
-            self.rets['rnorm100'] = 0.0
+# SafeReturns is now available from src.service.analyzer_config
 
 
 def _build_components(
@@ -369,11 +357,9 @@ def _run_live_legacy(
         cerebro.adddata(data_feed)
         cerebro.setbroker(broker)
 
-        # 6. Add analyzers
-        cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
-        cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-        cerebro.addanalyzer(SafeReturns, _name='returns')
-        cerebro.addanalyzer(TradeRecorder, _name='trade_recorder')
+        # 6. Add analyzers using centralized configuration
+        from src.service.analyzer_config import configure_analyzers, AnalyzerMode
+        configure_analyzers(cerebro, AnalyzerMode.LIVE, TradeRecorder)
         logger.info("Added analyzers to Cerebro")
 
         # 7. Store runtime objects in session

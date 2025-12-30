@@ -151,73 +151,35 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         # Dynamic sizer selection
         _add_sizer(cerebro, task)
         
-        # Add basic analyzers
-        cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
-        cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
-        cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-        cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="annual")
-        cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
-        cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
-        cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturns")
-        
-        # Add advanced analyzers
-        cerebro.addanalyzer(bt.analyzers.Calmar, _name="calmar")
-        cerebro.addanalyzer(bt.analyzers.VWR, _name="vwr")
-        cerebro.addanalyzer(bt.analyzers.TimeDrawDown, _name="timedraw")
-        
-        # Add custom trade recorder
+        # Add analyzers using centralized configuration
+        from src.service.analyzer_config import configure_analyzers, AnalyzerMode
         from src.service.backtest_engine import TradeRecorder
-        cerebro.addanalyzer(TradeRecorder, _name="trade_recorder")
+        configure_analyzers(cerebro, AnalyzerMode.BACKTEST, TradeRecorder)
         
         # 5. Run backtest
         logger.info(f"Running backtest for {task.ticker} from {task.start_date} to {task.end_date}")
         results = cerebro.run()
         strat = results[0]
         
-        # 6. Extract metrics
-        trade_details = strat.analyzers.trade_recorder.get_analysis()
-        time_returns_raw = strat.analyzers.timereturns.get_analysis()
-        equity_curve = {
-            dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt): float(ret)
-            for dt, ret in time_returns_raw.items()
-        }
+        # 6. Extract metrics using centralized function
+        from src.service.analyzer_config import extract_metrics
+        metrics = extract_metrics(strat, cerebro.broker)
         
-        # Convert annual returns (datetime keys to strings)
-        annual_raw = strat.analyzers.annual.get_analysis()
-        annual_returns = {
-            str(k): float(v) for k, v in annual_raw.items()
-        }
+        # Map canonical names to legacy format for BacktestResult compatibility
+        final_value = metrics["final_value"]
+        sharpe = metrics["sharpe_ratio"]
+        max_dd = metrics["max_drawdown"]
+        total_return = metrics["total_return"]
+        annual_returns = metrics["annual_returns"]
+        trade_details = metrics["trade_details"]
+        equity_curve = metrics["equity_curve"]
         
-        final_value = cerebro.broker.getvalue()
-        sharpe = strat.analyzers.sharpe.get_analysis().get("sharperatio")
-        max_dd = strat.analyzers.drawdown.get_analysis().get("max", {}).get("drawdown", 0.0)
-        total_return = strat.analyzers.returns.get_analysis().get("rnorm100", 0.0)
-        
-        # Extract Calmar from OrderedDict (Backtrader returns rolling values by month)
-        calmar_raw = strat.analyzers.calmar.get_analysis()
-        calmar_value = None
-        if calmar_raw:
-            # Get the last non-NaN value
-            import math
-            for v in reversed(list(calmar_raw.values())):
-                if isinstance(v, (int, float)) and not math.isnan(v):
-                    calmar_value = v
-                    break
-        
-        metrics = {
-            "final_value": final_value,
-            "sharpe": sharpe,
-            "drawdown": max_dd,
-            "returns": total_return,
-            "annual_returns": annual_returns,
-            "sqn": strat.analyzers.sqn.get_analysis().get("sqn"),
-            "trades": _serialize_trade_analysis(strat.analyzers.trades.get_analysis()),
-            "trade_details": trade_details,
-            "equity_curve": equity_curve,
-            "time_drawdown": strat.analyzers.timedraw.get_analysis(),
-            "calmar": calmar_value,
-            "vwr": strat.analyzers.vwr.get_analysis().get("vwr"),
-        }
+        # Also include legacy field names in metrics dict for backward compatibility
+        metrics["sharpe"] = sharpe
+        metrics["drawdown"] = max_dd
+        metrics["returns"] = total_return
+        metrics["calmar"] = metrics.get("calmar_ratio")
+
 
         
         # 7. Generate chart if requested
