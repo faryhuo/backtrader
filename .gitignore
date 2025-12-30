@@ -3,6 +3,9 @@
 **/resources/images/*
 .codex
 .claude
+AGENTS.md
+CLAUDE.md
+docs/*
 
 backend/.env
 backend/.envprod
