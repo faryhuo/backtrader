@@ -62,3 +62,97 @@ export const buildRecentTradesTable = (trades, limit = 50) => {
 
     return `${header}\n${rows}`;
 }
+
+// ============= Portfolio-specific formatters =============
+
+/**
+ * Format currency value for portfolio displays.
+ * Uses zero decimal places by default for larger values.
+ * @param {number} value - The currency value
+ * @param {number} digits - Decimal places (default 0)
+ * @returns {string} Formatted currency string or '-' if invalid
+ */
+export const formatPortfolioCurrency = (value, digits = 0) => {
+    if (value === undefined || value === null) return '-';
+    if (!isNumber(value)) return '-';
+    return '$' + Math.abs(value).toLocaleString(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+    });
+};
+
+/**
+ * Format percentage as weight (e.g., 0.25 -> "25.0%").
+ * @param {number} value - Weight value (0-1 range)
+ * @param {number} digits - Decimal places (default 1)
+ * @returns {string} Formatted percentage string or '-' if invalid
+ */
+export const formatWeight = (value, digits = 1) => {
+    if (value === undefined || value === null) return '-';
+    if (!isNumber(value)) return '-';
+    return (value * 100).toFixed(digits) + '%';
+};
+
+/**
+ * Get color indicator based on transaction cost severity.
+ * @param {number} cost - Transaction cost amount
+ * @returns {string} Ant Design color name (green, blue, orange, red)
+ */
+export const getCostColor = (cost) => {
+    if (!cost || !isNumber(cost)) return 'blue';
+    if (cost < 50) return 'green';
+    if (cost < 200) return 'blue';
+    if (cost < 500) return 'orange';
+    return 'red';
+};
+
+/**
+ * Get color based on numeric value (positive/negative).
+ * @param {number} value - The value to colorize
+ * @returns {string} CSS color value (green for positive, red for negative, gray for zero)
+ */
+export const getValueColor = (value) => {
+    if (!isNumber(value)) return '#8c8c8c';
+    if (value > 0) return '#52c41a';
+    if (value < 0) return '#ff4d4f';
+    return '#8c8c8c';
+};
+
+/**
+ * Get color for return/change values.
+ * @param {number} value - Return or change value
+ * @returns {string} CSS color class or value
+ */
+export const getReturnColor = (value) => {
+    if (!isNumber(value)) return 'inherit';
+    if (value > 0) return '#52c41a';
+    if (value < 0) return '#ff4d4f';
+    return 'inherit';
+};
+
+/**
+ * Format date string to localized date.
+ * @param {string} dateStr - ISO date string
+ * @param {Object} options - Intl.DateTimeFormat options
+ * @returns {string} Formatted date string
+ */
+export const formatDate = (dateStr, options = { year: 'numeric', month: 'short', day: 'numeric' }) => {
+    if (!dateStr) return '-';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString(undefined, options);
+    } catch {
+        return dateStr;
+    }
+};
+
+/**
+ * Format shares count with +/- sign for changes.
+ * @param {number} shares - Number of shares (positive for buy, negative for sell)
+ * @returns {string} Formatted shares string with sign
+ */
+export const formatSharesChange = (shares) => {
+    if (!isNumber(shares)) return '-';
+    const sign = shares > 0 ? '+' : '';
+    return `${sign}${shares.toLocaleString()}`;
+};

@@ -6,5 +6,13 @@
   "close_price": "平仓价格",
   "size": "数量",
   "net_pnl": "净盈亏",
-  "return": "收益率"
+  "return": "收益率",
+  "table_view": "表格",
+  "timeline_view": "时间线",
+  "no_trades": "无交易记录",
+  "profit": "盈利",
+  "loss": "亏损",
+  "open": "开仓",
+  "close": "平仓",
+  "shares": "股"
 }

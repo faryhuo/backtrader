@@ -5,8 +5,7 @@ This module provides the MultiAssetPortfolioStrategy class which wraps around
 user strategies to enable:
 - Managing multiple data feeds (self.datas[0], self.datas[1], ...)
 - Per-asset strategy parameter configuration
-- Rolling returns tracking for portfolio optimization
-- Rebalancing execution integration
+- Rolling returns tracking for analysis
 
 The strategy acts as a portfolio manager that delegates to per-asset logic
 while maintaining portfolio-level control.
@@ -14,17 +13,15 @@ while maintaining portfolio-level control.
 
 import logging
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import backtrader as bt
 import pandas as pd
 
-from src.service.portfolio_rebalancer import (
-    RebalanceScheduler,
-    PortfolioRebalancer,
-)
-from src.service.portfolio_optimizer import get_optimizer
+from src.service.portfolio.trade_recorder import TradeRecorder, TradeTrigger
+from src.service.portfolio.events import PortfolioEventBus, PortfolioEventType
+from src.utils.backtrader_helpers import get_data_name
 
 logger = logging.getLogger(__name__)
 
@@ -34,22 +31,17 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
     Portfolio-level strategy managing multiple data feeds.
 
     This strategy wraps around user-defined logic to provide portfolio-level
-    features like rebalancing and equity curve tracking.
+    features like equity curve tracking.
 
     Parameters:
         tickers (list): List of ticker symbols matching data feed order
         initial_weights (list): Initial allocation weights
-        rebalance_config (dict): Rebalancing configuration
-            Example: {"frequency": "monthly", "method": "risk_parity"}
-        optimization_method (str): Optimization method for rebalancing
         returns_lookback (int): Number of days to track for rolling returns (default: 252)
     """
 
     params = (
         ("tickers", []),
         ("initial_weights", []),
-        ("rebalance_config", None),
-        ("optimization_method", "equal_weight"),
         ("returns_lookback", 252),
     )
 
@@ -61,7 +53,6 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         - Ticker to data feed mapping
         - Per-asset indicators with custom parameters
         - Rolling returns storage
-        - Rebalancer (if configured)
         """
         logger.info(f"Initializing MultiAssetPortfolioStrategy for {len(self.p.tickers)} assets")
         logger.info(f"Tickers: {self.p.tickers}")
@@ -103,67 +94,23 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
 
         logger.debug(f"Initialized returns tracking with {self.p.returns_lookback}-day lookback")
 
-        # Step 4: Initialize rebalancer
-        self.rebalancer = None
-        self.rebalance_dates = []
-        if self.p.rebalance_config:
-            logger.info(f"Rebalancing configured: {self.p.rebalance_config}")
-            frequency = self.p.rebalance_config.get("frequency")
-
-            if frequency:
-                try:
-                    # Create scheduler
-                    scheduler = RebalanceScheduler(frequency)
-
-                    # Create optimizer if not using equal weights
-                    optimizer = None
-                    if self.p.optimization_method and self.p.optimization_method != "equal_weight":
-                        try:
-                            optimizer = get_optimizer(self.p.optimization_method)
-                            logger.info(f"Using optimizer: {self.p.optimization_method}")
-                        except ValueError as e:
-                            logger.warning(f"Failed to create optimizer: {e}. Using equal weights.")
-                            optimizer = None
-
-                    # Create rebalancer with optimizer
-                    self.rebalancer = PortfolioRebalancer(
-                        scheduler=scheduler,
-                        optimizer=optimizer,
-                        min_trade_threshold=self.p.rebalance_config.get("min_trade_threshold", 0.01),
-                        transaction_cost_pct=self.p.rebalance_config.get("transaction_cost_pct", 0.001),
-                    )
-
-                    logger.info("Rebalancer initialized successfully")
-                except Exception as e:
-                    logger.error(f"Failed to initialize rebalancer: {e}")
-                    self.rebalancer = None
-            else:
-                logger.warning("No rebalance frequency specified")
-
-        # Step 5: Track current target weights (starts with initial weights)
+        # Step 4: Track current target weights (starts with initial weights)
         self.current_weights = dict(zip(self.p.tickers, self.p.initial_weights))
 
-        # Step 6: Track if initial positions have been established
+        # Step 5: Track if initial positions have been established
         self.initial_positions_set = False
 
-        # Step 7: Rebalancing event log (for analyzer)
-        self.rebalancing_events = []
-        
-        # Step 8: All trades log (includes initial positions and rebalancing trades)
-        self.all_trades = []
+        # Step 6: Initialize TradeRecorder for centralized trade recording
+        self.trade_recorder = TradeRecorder()
+
+        # Step 7: Initialize EventBus for loose coupling with analyzers
+        self.event_bus = PortfolioEventBus()
 
         logger.info("MultiAssetPortfolioStrategy initialization complete")
 
     def start(self):
         """Called at the start of the backtest to initialize state."""
-        # Generate rebalance dates if rebalancer is configured
-        if self.rebalancer:
-            # Get the date range from data
-            start_date = self.datas[0].datetime.datetime(0)
-            # We'll generate dates for the full backtest period
-            # The scheduler will handle checking if we're on a rebalance date
-            # For now, we'll generate dates on-the-fly in _should_rebalance()
-            logger.info("Rebalancing scheduler ready")
+        pass  # No additional initialization needed
 
     def _create_indicators(
         self, ticker: str, data: bt.feeds.DataBase
@@ -217,8 +164,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         Handles:
         1. Update rolling returns
         2. Establish initial positions (first bar after warmup)
-        3. Check for rebalancing trigger
-        4. Execute trades
+        3. Execute trades
         """
         # Step 1: Update rolling returns for all assets
         self._update_returns()
@@ -229,14 +175,8 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
             self.initial_positions_set = True
             return
 
-        # Step 3: Check if we should rebalance
-        if self.rebalancer and self._should_rebalance():
-            logger.info(f"Rebalancing triggered on {self.datetime.date(0)}")
-            self._execute_rebalance()
-
-        # Step 4: Execute per-asset trading logic
+        # Step 3: Execute per-asset trading logic
         # For now, this is just buy-and-hold
-        # In Phase 4, we'll add support for custom user strategies per asset
         pass
 
     def _update_returns(self):
@@ -334,7 +274,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         # Second pass: place orders and record trades
         orders_placed = []
         current_date = self.datetime.date(0)
-        
+
         for ticker, plan in order_plan.items():
             if plan['shares'] > 0:
                 logger.info(
@@ -345,242 +285,28 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                 if order:
                     orders_placed.append((ticker, plan['shares'], order))
                     logger.info(f"{ticker}: Order placed successfully, order ref: {order.ref}")
-                    
-                    # Record the trade in all_trades
-                    self.all_trades.append({
-                        "date": current_date.isoformat(),
-                        "ticker": ticker,
-                        "action": "buy",
-                        "shares": plan['shares'],
-                        "price": plan['price'],
-                        "value": plan['value'],
-                        "trigger": "initial_position",
-                    })
+
+                    # Record the trade using TradeRecorder
+                    self.trade_recorder.record_buy(
+                        trade_date=current_date,
+                        ticker=ticker,
+                        shares=plan['shares'],
+                        price=plan['price'],
+                        trigger=TradeTrigger.INITIAL_POSITION,
+                        value=plan['value'],
+                    )
                 else:
                     logger.error(f"{ticker}: Buy order returned None!")
-        
+
         logger.info(f"Initial positions: {len(orders_placed)} orders placed for {len(self.p.tickers)} tickers")
-        logger.info(f"All trades recorded so far: {len(self.all_trades)} trades")
-
-    def _should_rebalance(self) -> bool:
-        """
-        Check if portfolio should be rebalanced on current date.
-
-        Returns:
-            True if rebalancing should occur, False otherwise
-        """
-        if not self.rebalancer:
-            return False
-
-        current_date = self.datetime.datetime(0)
-
-        # Generate rebalance dates if not done yet
-        if not self.rebalance_dates:
-            # We need to know the full date range - use a large window
-            # In practice, the scheduler will check dates as we go
-            try:
-                # Get approximate end date (we don't know the exact end in advance)
-                # So we'll check month-by-month
-                from datetime import timedelta
-                end_date = current_date + timedelta(days=365 * 5)  # 5 years lookahead
-                self.rebalance_dates = self.rebalancer.scheduler.generate_rebalance_dates(
-                    current_date, end_date
-                )
-                logger.info(f"Generated {len(self.rebalance_dates)} rebalance dates")
-            except Exception as e:
-                logger.error(f"Failed to generate rebalance dates: {e}")
-                return False
-
-        # Check if today is a rebalance date
-        should_rebalance = self.rebalancer.scheduler.should_rebalance(
-            current_date, self.rebalance_dates
-        )
-
-        if should_rebalance:
-            logger.info(f"Rebalancing triggered on {current_date.date()}")
-
-        return should_rebalance
-
-    def _execute_rebalance(self):
-        """
-        Execute portfolio rebalancing.
-
-        Steps:
-        1. Gather current positions and prices
-        2. Calculate target weights (via optimizer or equal weights)
-        3. Calculate required trades
-        4. Execute orders
-        5. Log rebalancing event
-        """
-        current_date = self.datetime.datetime(0)
-        logger.info(f"Executing rebalance on {current_date.date()}")
-
-        # Step 1: Gather current state
-        current_positions = {
-            ticker: self.getposition(data).size
-            for ticker, data in self.ticker_data.items()
-        }
-        current_prices = {
-            ticker: data.close[0]
-            for ticker, data in self.ticker_data.items()
-        }
-        pre_rebalance_value = self.broker.getvalue()
-
-        # Calculate actual pre-rebalance weights based on actual positions
-        # This shows true portfolio state - important for accurate reporting
-        actual_pre_weights = {}
-        total_position_value = 0.0
-        for ticker in self.p.tickers:
-            position_size = current_positions.get(ticker, 0)
-            price = current_prices.get(ticker, 0)
-            position_value = position_size * price if position_size > 0 and price > 0 else 0
-            total_position_value += position_value
-            actual_pre_weights[ticker] = position_value  # Store value first
-        
-        # Convert to percentages
-        for ticker in self.p.tickers:
-            if pre_rebalance_value > 0:
-                actual_pre_weights[ticker] = actual_pre_weights[ticker] / pre_rebalance_value
-            else:
-                actual_pre_weights[ticker] = 0.0
-
-        logger.info(f"Pre-rebalance value: ${pre_rebalance_value:,.2f}")
-        logger.info(f"Current positions: {current_positions}")
-        logger.info(f"Actual pre-weights: {actual_pre_weights}")
-        logger.info(f"Total position value: ${total_position_value:,.2f}, Cash: ${pre_rebalance_value - total_position_value:,.2f}")
-
-        # Step 2: Calculate target weights
-        returns_df = self._get_returns_dataframe()
-        target_weights = self.rebalancer.calculate_target_weights(
-            self.p.tickers, returns_df
-        )
-
-        # Step 3: Calculate rebalancing orders
-        rebalance_plan = self.rebalancer.calculate_rebalance_orders(
-            current_positions,
-            current_prices,
-            pre_rebalance_value,
-            target_weights,
-        )
-
-        # Step 4: Execute trades - IMPORTANT: Execute sells first to free up cash for buys
-        orders_executed = {}
-        
-        # First, execute all sell orders
-        for ticker, delta in rebalance_plan['orders'].items():
-            if delta < 0:
-                data = self.ticker_data[ticker]
-                order = self.sell(data=data, size=abs(delta))
-                orders_executed[ticker] = delta
-                logger.info(f"SELL {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
-                
-                # Record the trade
-                self.all_trades.append({
-                    "date": current_date.date().isoformat(),
-                    "ticker": ticker,
-                    "action": "sell",
-                    "shares": abs(delta),
-                    "price": current_prices[ticker],
-                    "value": abs(delta) * current_prices[ticker],
-                    "trigger": "rebalance",
-                })
-        
-        # Then, execute all buy orders (now cash should be available from sells)
-        for ticker, delta in rebalance_plan['orders'].items():
-            if delta > 0:
-                data = self.ticker_data[ticker]
-                order = self.buy(data=data, size=abs(delta))
-                orders_executed[ticker] = delta
-                logger.info(f"BUY {ticker}: {abs(delta)} shares @ ${current_prices[ticker]:.2f}")
-                
-                # Record the trade
-                self.all_trades.append({
-                    "date": current_date.date().isoformat(),
-                    "ticker": ticker,
-                    "action": "buy",
-                    "shares": abs(delta),
-                    "price": current_prices[ticker],
-                    "value": abs(delta) * current_prices[ticker],
-                    "trigger": "rebalance",
-                })
-
-        # Note: Post-rebalance value will be calculated after orders execute
-        # For now, estimate with transaction costs
-        post_rebalance_value = pre_rebalance_value - rebalance_plan['estimated_cost']
-
-        # Step 5: Record the event
-        self.rebalancer.record_rebalance_event(
-            date=current_date,
-            trigger=self.rebalancer.scheduler.frequency,
-            pre_value=pre_rebalance_value,
-            post_value=post_rebalance_value,
-            orders=orders_executed,
-            target_weights=target_weights,
-            transaction_cost=rebalance_plan['estimated_cost'],
-        )
-
-        # Update current target weights
-        self.current_weights = target_weights
-
-        # Notify analyzer if available
-        if hasattr(self, 'analyzers') and hasattr(self.analyzers, 'rebalancing'):
-            try:
-                self.analyzers.rebalancing.notify_rebalance(
-                    date=current_date.date(),
-                    trigger=self.rebalancer.scheduler.frequency,
-                    pre_value=pre_rebalance_value,
-                    post_value=post_rebalance_value,
-                    target_weights=target_weights,
-                    orders=orders_executed,
-                    transaction_cost=rebalance_plan['estimated_cost'],
-                    pre_weights=actual_pre_weights,  # Use our calculated pre_weights
-                    prices=current_prices,
-                )
-            except Exception as e:
-                logger.warning(f"Failed to notify rebalancing analyzer: {e}")
-
-        logger.info(
-            f"Rebalancing complete: {len(orders_executed)} trades, "
-            f"cost=${rebalance_plan['estimated_cost']:.2f}"
-        )
-
-    def _get_returns_dataframe(self) -> pd.DataFrame:
-        """
-        Convert rolling returns storage to pandas DataFrame for optimization.
-
-        Returns:
-            DataFrame with columns=tickers, rows=dates (most recent N days)
-        """
-        # Convert deque history to DataFrame
-        returns_dict = {
-            ticker: list(returns_deque)
-            for ticker, returns_deque in self.returns_history.items()
-        }
-
-        # Find minimum length to ensure all columns have same length
-        min_length = min(len(v) for v in returns_dict.values()) if returns_dict else 0
-
-        if min_length == 0:
-            logger.warning("No returns data available for optimization")
-            return pd.DataFrame()
-
-        # Truncate all to same length
-        returns_dict_aligned = {
-            ticker: returns[-min_length:] for ticker, returns in returns_dict.items()
-        }
-
-        df = pd.DataFrame(returns_dict_aligned)
-        logger.debug(f"Returns DataFrame: {len(df)} days × {len(df.columns)} assets")
-
-        return df
-
+        logger.info(f"All trades recorded so far: {self.trade_recorder.trade_count} trades")
     def notify_order(self, order):
         """Handle order notifications from Backtrader."""
         if order.status in [order.Submitted, order.Accepted]:
             return
 
-        # Get ticker name from data feed
-        ticker = order.data._name if hasattr(order.data, '_name') else "UNKNOWN"
+        # Get ticker name using helper function
+        ticker = get_data_name(order.data)
 
         if order.status == order.Completed:
             if order.isbuy():
@@ -604,7 +330,7 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
         if not trade.isclosed:
             return
 
-        ticker = trade.data._name if hasattr(trade.data, '_name') else "UNKNOWN"
+        ticker = get_data_name(trade.data)
 
         logger.debug(
             f"{ticker} TRADE CLOSED: PnL=${trade.pnl:.2f}, "
@@ -627,23 +353,32 @@ class MultiAssetPortfolioStrategy(bt.Strategy):
                     f"= ${position_value:,.2f}"
                 )
 
+    @property
+    def all_trades(self) -> list:
+        """
+        Get all trades recorded by this strategy.
+
+        Delegates to TradeRecorder for centralized trade management.
+
+        Returns:
+            List of trade dictionaries
+        """
+        return self.trade_recorder.get_all_trades()
+
 
 class BuyAndHoldPortfolioStrategy(MultiAssetPortfolioStrategy):
     """
-    Simple buy-and-hold portfolio strategy with optional rebalancing.
+    Simple buy-and-hold portfolio strategy.
 
     Buys initial positions based on weights and holds until end.
-    If rebalance_config is provided, it will periodically rebalance
-    to maintain target weights.
     """
 
     def next(self):
         """
         Main strategy logic - uses parent class for full functionality.
-        
+
         Supports:
         - Initial position establishment
-        - Periodic rebalancing (if configured)
         """
-        # Use parent class implementation which includes rebalancing
+        # Use parent class implementation
         super().next()

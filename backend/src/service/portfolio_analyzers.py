@@ -3,9 +3,9 @@ Portfolio Analyzers - Custom Backtrader analyzers for multi-asset portfolios.
 
 This module provides specialized analyzers for tracking portfolio-level metrics:
 - PortfolioValueAnalyzer: Daily equity curve
-- RebalancingEventAnalyzer: Rebalancing events and costs
 - AssetContributionAnalyzer: Per-asset return contribution
 - PortfolioMetricsAnalyzer: Comprehensive portfolio statistics
+- PortfolioTradeRecorder: Record all trades in portfolio
 """
 
 import logging
@@ -13,6 +13,8 @@ from datetime import datetime
 from typing import Optional
 
 import backtrader as bt
+
+from src.utils.backtrader_helpers import get_data_name, get_ticker_from_data_mapping
 
 logger = logging.getLogger(__name__)
 
@@ -94,118 +96,6 @@ class PortfolioValueAnalyzer(bt.Analyzer):
         }
 
 
-class RebalancingEventAnalyzer(bt.Analyzer):
-    """
-    Track all portfolio rebalancing events.
-
-    Records each rebalancing occurrence including:
-    - Date
-    - Target weights
-    - Orders executed
-    - Transaction costs
-    - Pre/post rebalance portfolio value
-
-    Results:
-        {
-            "events": [
-                {
-                    "date": "2023-01-31",
-                    "trigger": "monthly_schedule",
-                    "pre_rebalance_value": 105000.0,
-                    "post_rebalance_value": 104950.0,  # After transaction costs
-                    "target_weights": {"AAPL": 0.33, "GOOGL": 0.33, "MSFT": 0.34},
-                    "orders": {"AAPL": 10, "GOOGL": -5, "MSFT": 20},
-                    "transaction_cost": 50.0
-                },
-                ...
-            ],
-            "total_events": 12,
-            "total_transaction_costs": 600.0
-        }
-    """
-
-    def __init__(self):
-        """Initialize the analyzer."""
-        super().__init__()
-        self.events = []
-        self.total_transaction_costs = 0.0
-
-    def notify_rebalance(
-        self,
-        date: datetime.date,
-        trigger: str,
-        pre_value: float,
-        post_value: float,
-        target_weights: dict[str, float],
-        orders: dict[str, int],
-        transaction_cost: float,
-        pre_weights: dict[str, float] = None,
-        prices: dict[str, float] = None,
-    ):
-        """
-        Record a rebalancing event.
-
-        This method is called by the strategy when rebalancing occurs.
-
-        Args:
-            date: Rebalancing date
-            trigger: Trigger reason ("monthly_schedule", "quarterly_schedule", etc.)
-            pre_value: Portfolio value before rebalancing
-            post_value: Portfolio value after rebalancing
-            target_weights: New target allocation
-            orders: Share delta for each ticker
-            transaction_cost: Total transaction cost
-            pre_weights: Weights before rebalancing
-            prices: Current prices for each ticker
-        """
-        # Build trades array with details
-        trades = []
-        for ticker, shares in orders.items():
-            trade = {
-                "ticker": ticker,
-                "shares": shares,
-                "action": "buy" if shares > 0 else "sell",
-            }
-            if prices and ticker in prices:
-                trade["price"] = prices[ticker]
-                trade["value"] = abs(shares) * prices[ticker]
-            trades.append(trade)
-
-        event = {
-            "date": date.isoformat(),
-            "trigger": trigger,
-            "pre_rebalance_value": float(pre_value),
-            "post_rebalance_value": float(post_value),
-            "portfolio_value": float(pre_value),  # For frontend display
-            "target_weights": {k: float(v) for k, v in target_weights.items()},
-            "pre_weights": {k: float(v) for k, v in pre_weights.items()} if pre_weights else {},
-            "orders": {k: int(v) for k, v in orders.items()},
-            "trades": trades,
-            "transaction_cost": float(transaction_cost),
-        }
-
-        self.events.append(event)
-        self.total_transaction_costs += transaction_cost
-
-        logger.info(
-            f"Rebalancing event recorded: {date} ({trigger}), "
-            f"cost=${transaction_cost:.2f}, {len(trades)} trades"
-        )
-
-    def get_analysis(self):
-        """
-        Return all rebalancing events and summary statistics.
-
-        Returns:
-            Dictionary with event list and totals
-        """
-        return {
-            "events": self.events,
-            "total_events": len(self.events),
-            "total_transaction_costs": float(self.total_transaction_costs),
-        }
-
-
 class AssetContributionAnalyzer(bt.Analyzer):
     """
     Calculate each asset's contribution to total portfolio return.
@@ -250,9 +140,9 @@ class AssetContributionAnalyzer(bt.Analyzer):
         if hasattr(self.strategy, 'p') and hasattr(self.strategy.p, 'tickers'):
             self.tickers = self.strategy.p.tickers
         else:
-            # Fallback: use data feed names
+            # Fallback: use data feed names via helper function
             self.tickers = [
-                data._name if hasattr(data, '_name') else f"Asset{i}"
+                get_data_name(data) if get_data_name(data) != "UNKNOWN" else f"Asset{i}"
                 for i, data in enumerate(self.strategy.datas)
             ]
 
@@ -447,6 +337,26 @@ class PortfolioMetricsAnalyzer(bt.Analyzer):
         if annual_downside_deviation > 0:
             sortino_ratio = (annual_return - self.p.risk_free_rate) / annual_downside_deviation
 
+        # Win Rate - % of positive return days
+        positive_days = np.sum(returns_array > 0)
+        win_rate = (positive_days / len(returns_array)) if len(returns_array) > 0 else 0.0
+
+        # Best/Worst day returns
+        best_day = float(np.max(returns_array)) if len(returns_array) > 0 else 0.0
+        worst_day = float(np.min(returns_array)) if len(returns_array) > 0 else 0.0
+
+        # Additional risk metrics
+        # Skewness - measure of asymmetry in return distribution
+        from scipy import stats
+        skewness = float(stats.skew(returns_array)) if len(returns_array) > 3 else 0.0
+
+        # Kurtosis - measure of tail risk
+        kurtosis = float(stats.kurtosis(returns_array)) if len(returns_array) > 3 else 0.0
+
+        # VaR and CVaR (95% confidence)
+        var_95 = float(np.percentile(returns_array, 5)) if len(returns_array) > 0 else 0.0
+        cvar_95 = float(np.mean(returns_array[returns_array <= var_95])) if len(returns_array[returns_array <= var_95]) > 0 else 0.0
+
         return {
             "annual_return": float(annual_return),
             "annual_volatility": float(annual_volatility),
@@ -455,6 +365,14 @@ class PortfolioMetricsAnalyzer(bt.Analyzer):
             "daily_return_mean": float(mean_return),
             "daily_return_std": float(std_return),
             "num_days": len(self.daily_returns),
+            # New metrics
+            "win_rate": float(win_rate),
+            "best_day": float(best_day),
+            "worst_day": float(worst_day),
+            "skewness": float(skewness),
+            "kurtosis": float(kurtosis),
+            "var_95": float(var_95),
+            "cvar_95": float(cvar_95),
         }
 
 
@@ -495,16 +413,13 @@ class PortfolioTradeRecorder(bt.Analyzer):
         Records every completed order (buy or sell) with full details.
         """
         if order.status in [order.Completed]:
-            # Get ticker name from data feed
-            ticker = "Unknown"
-            if hasattr(order.data, '_name'):
-                ticker = order.data._name
-            elif hasattr(self.strategy, 'ticker_data'):
-                # Find ticker by matching data feed
-                for t, data in self.strategy.ticker_data.items():
-                    if data == order.data:
-                        ticker = t
-                        break
+            # Get ticker name using helper function
+            ticker = get_data_name(order.data)
+            if ticker == "UNKNOWN" and hasattr(self.strategy, 'ticker_data'):
+                # Fallback: find ticker by matching data feed
+                ticker = get_ticker_from_data_mapping(
+                    order, self.strategy.ticker_data, fallback="Unknown"
+                )
 
             # Record the trade
             trade = {
@@ -547,7 +462,6 @@ class PortfolioTradeRecorder(bt.Analyzer):
 
 __all__ = [
     "PortfolioValueAnalyzer",
-    "RebalancingEventAnalyzer",
     "AssetContributionAnalyzer",
     "PortfolioMetricsAnalyzer",
     "PortfolioTradeRecorder",

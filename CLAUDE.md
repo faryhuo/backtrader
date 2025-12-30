@@ -299,8 +299,7 @@ Multi-asset portfolio backtesting where user strategy code controls buy/sell dec
 
 - **Multi-Asset Engine**: `multi_asset_backtest.py` loads user strategies via `strategy_loader.py`
 - **Multi-Data Pattern**: Strategies access multiple assets via `self.datas[0]`, `self.datas[1]`, etc.
-- **Strategy-Controlled Sizing**: User specifies exact position sizes (no automatic weight enforcement)
-- **Rebalancing**: `portfolio_rebalancer.py` runs alongside strategy signals (if configured)
+- **Strategy-Controlled Sizing**: User specifies exact position sizes in strategy code
 - **Analyzers**: `portfolio_analyzers.py` provides portfolio-specific metrics
 - **Storage**: Results stored via `portfolio.py` storage module
 - **Template**: See [multi_asset_template.py](backend/resources/strategy/multi_asset_template.py) for examples
@@ -379,7 +378,6 @@ Frontend (PortfolioBacktest) → POST /api/portfolio/multi-asset/backtest → mu
   → Add user strategy with params (strategy accesses via self.datas[i])
   → Add portfolio analyzers
   → Run backtest (strategy controls all buy/sell via next() method)
-  → Apply rebalancing on schedule (if configured)
   → Calculate portfolio-level metrics
   → Store results and return analysis
 ```

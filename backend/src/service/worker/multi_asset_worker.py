@@ -70,11 +70,6 @@ def execute_multi_asset_task(task: "MultiAssetBacktestTask") -> "MultiAssetBackt
         plt.ioff()
         plt.show = lambda *args, **kwargs: None
 
-        # Convert rebalance_config dict to proper format if provided
-        rebalance_config = None
-        if task.rebalance_config:
-            rebalance_config = task.rebalance_config
-
         # Run the multi-asset backtest
         logger.info(
             f"Running multi-asset backtest for {task.tickers} "
@@ -89,8 +84,6 @@ def execute_multi_asset_task(task: "MultiAssetBacktestTask") -> "MultiAssetBackt
             initial_cash=task.initial_cash,
             commission=task.commission,
             strategy_name=task.strategy_name,
-            rebalance_config=rebalance_config,
-            optimization_method=task.optimization_method,
             timeframe=task.timeframe,
             save_path=Path(task.chart_save_path) if task.chart_save_path else None,
         )
@@ -108,7 +101,6 @@ def execute_multi_asset_task(task: "MultiAssetBacktestTask") -> "MultiAssetBackt
 
         # Extract portfolio data
         equity_curve = result.get("equity_curve", {})
-        rebalancing_events = result.get("rebalancing_events", [])
         asset_contributions = result.get("asset_contributions", {})
         optimization_history = result.get("optimization_history", [])
         per_asset_results = result.get("per_asset_results", {})
@@ -133,7 +125,6 @@ def execute_multi_asset_task(task: "MultiAssetBacktestTask") -> "MultiAssetBackt
             max_drawdown=max_drawdown,
             volatility=volatility,
             equity_curve=equity_curve,
-            rebalancing_events=rebalancing_events,
             asset_contributions=asset_contributions,
             optimization_history=optimization_history,
             per_asset_results=per_asset_results,

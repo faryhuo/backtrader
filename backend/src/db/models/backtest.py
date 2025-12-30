@@ -127,19 +127,13 @@ class PortfolioResultModel(Base):
     # Complete results (JSON format)
     portfolio_metrics = Column(SafeJSON, nullable=True)  # Combined metrics
     individual_results = Column(SafeJSON, nullable=True)  # Per-ticker metrics
-    correlation_matrix = Column(SafeJSON, nullable=True)  # Correlation data
-    optimization_suggestion = Column(SafeJSON, nullable=True)  # Optimal weights
 
     # Multi-asset backtest specific fields
     equity_curve = Column(SafeJSON, nullable=True)  # Time-series portfolio value {date: value}
-    rebalancing_events = Column(SafeJSON, nullable=True)  # [{date, weights, orders, cost}]
     asset_contributions = Column(SafeJSON, nullable=True)  # {ticker: {return%, weight, contribution%}}
     all_trades = Column(SafeJSON, nullable=True)  # All trades including initial positions [{date, ticker, action, shares, price, value, trigger}]
-    optimization_history = Column(SafeJSON, nullable=True)  # [{date, weights, method}] for dynamic optimization
 
     # Configuration fields for multi-asset
-    rebalance_frequency = Column(String(50), nullable=True)  # monthly, quarterly, etc.
-    optimization_method = Column(String(50), nullable=True)  # equal_weight, risk_parity, min_variance, markowitz
     per_asset_params = Column(SafeJSON, nullable=True)  # {ticker: {param: value}}
 
     # Strategy parameters used (existing, kept for backward compatibility)

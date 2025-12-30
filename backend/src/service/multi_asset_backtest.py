@@ -4,7 +4,6 @@ Multi-Asset Backtest Service - True multi-asset portfolio backtesting engine.
 This module provides functionality for:
 - Single Cerebro instance with multiple data feeds
 - Portfolio-level position sizing and cash management
-- Periodic rebalancing with multiple optimization methods
 - Unified portfolio equity curve generation
 - Per-asset strategy parameter configuration
 
@@ -21,6 +20,7 @@ from typing import Optional
 import backtrader as bt
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 from src.config.settings import IMAGES_DIR
 from src.contracts.exceptions import BacktestError
@@ -31,12 +31,13 @@ from src.service.multi_asset_strategy_wrapper import (
 )
 from src.service.portfolio_analyzers import (
     PortfolioValueAnalyzer,
-    RebalancingEventAnalyzer,
     AssetContributionAnalyzer,
     PortfolioMetricsAnalyzer,
     PortfolioTradeRecorder,
 )
+from src.service.portfolio.result_aggregator import PortfolioResultAggregator
 from src.service.strategy_loader import load_user_strategy
+from src.utils.backtrader_helpers import get_dataframe
 
 logger = logging.getLogger(__name__)
 
@@ -49,167 +50,242 @@ class DataAlignmentError(Exception):
     """Raised when data feeds cannot be properly aligned."""
 
 
-def calculate_correlation_matrix(
-    tickers: list[str],
-    start_date: str,
-    end_date: str
-) -> dict:
-    """
-    Calculate correlation matrix between asset daily returns.
-    
-    Args:
-        tickers: List of ticker symbols
-        start_date: Start date string
-        end_date: End date string
-        
-    Returns:
-        dict with 'matrix' (2D list) and 'tickers' (labels)
-    """
-    returns_data = {}
-    
-    for ticker in tickers:
-        try:
-            data = get_data(ticker, start_date, end_date)
-            # Calculate daily returns
-            close_prices = data['Close'] if 'Close' in data.columns else data['close']
-            returns = close_prices.pct_change().dropna()
-            returns_data[ticker] = returns
-        except Exception as e:
-            logger.warning(f"Failed to get data for {ticker}: {e}")
-            returns_data[ticker] = pd.Series(dtype=float)
-    
-    # Align all series to common dates
-    returns_df = pd.DataFrame(returns_data)
-    returns_df = returns_df.dropna()
-    
-    if returns_df.empty or len(returns_df) < 2:
-        return {
-            "matrix": [[1.0] * len(tickers) for _ in tickers],
-            "tickers": tickers,
-            "error": "Insufficient data for correlation"
-        }
-    
-    # Calculate correlation matrix
-    corr_matrix = returns_df.corr()
-    
-    return {
-        "matrix": corr_matrix.values.tolist(),
-        "tickers": tickers
-    }
-
-def _load_returns_data(tickers: list[str], start_date: str, end_date: str) -> tuple[dict, str]:
-    """Load and calculate daily returns for all tickers."""
-    returns_data = {}
-    
-    for ticker in tickers:
-        try:
-            data = get_data(ticker, start_date, end_date)
-            close_prices = data['Close'] if 'Close' in data.columns else data['close']
-            returns = close_prices.pct_change().dropna()
-            returns_data[ticker] = returns
-        except Exception as e:
-            logger.warning(f"Failed to get data for {ticker}: {e}")
-            return {}, f"Failed to get data for {ticker}: {e}"
-    
-    return returns_data, ""
-
-
-def _run_markowitz_optimization(
-    mean_returns: pd.Series,
-    cov_matrix: pd.DataFrame,
-    n_assets: int,
-    risk_free_rate: float
-) -> dict:
-    """Run Markowitz mean-variance optimization using scipy."""
-    from scipy.optimize import minimize
-    
-    def neg_sharpe_ratio(weights):
-        portfolio_return = np.sum(mean_returns * weights)
-        portfolio_std = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-        if portfolio_std == 0:
-            return 0
-        return -(portfolio_return - risk_free_rate) / portfolio_std
-    
-    constraints = {'type': 'eq', 'fun': lambda x: np.sum(x) - 1}
-    bounds = tuple((0, 1) for _ in range(n_assets))
-    initial_weights = np.array([1.0 / n_assets] * n_assets)
-    
-    result = minimize(
-        neg_sharpe_ratio,
-        initial_weights,
-        method='SLSQP',
-        bounds=bounds,
-        constraints=constraints
-    )
-    
-    if not result.success:
-        return {}
-    
-    optimal_weights = result.x.tolist()
-    portfolio_return = np.sum(mean_returns * result.x)
-    portfolio_std = np.sqrt(np.dot(result.x.T, np.dot(cov_matrix, result.x)))
-    sharpe = (portfolio_return - risk_free_rate) / portfolio_std if portfolio_std > 0 else 0
-    
-    return {
-        "optimal_weights": [round(w, 4) for w in optimal_weights],
-        "expected_return": round(portfolio_return, 4),
-        "expected_volatility": round(portfolio_std, 4),
-        "sharpe_ratio": round(sharpe, 4)
-    }
-
-
 def calculate_optimal_weights(
     tickers: list[str],
     start_date: str,
     end_date: str,
+    timeframe: str = "1d",
     risk_free_rate: float = 0.02
 ) -> dict:
     """
-    Calculate optimal portfolio weights using mean-variance optimization (Markowitz).
-    
-    This is a simplified implementation that finds the maximum Sharpe ratio portfolio.
-    
+    Calculate optimal portfolio weights using Modern Portfolio Theory (MPT).
+
+    Uses mean-variance optimization to find weights that maximize the Sharpe ratio.
+
     Args:
         tickers: List of ticker symbols
-        start_date: Start date string
-        end_date: End date string
-        risk_free_rate: Annual risk-free rate (default 2%)
-        
+        start_date: Start date for historical data
+        end_date: End date for historical data
+        timeframe: Data timeframe
+        risk_free_rate: Annual risk-free rate (default: 2%)
+
     Returns:
-        dict with optimal weights and metrics
+        Dictionary containing:
+        - optimal_weights: List of optimal weights
+        - expected_return: Expected annual return
+        - expected_volatility: Expected annual volatility
+        - sharpe_ratio: Expected Sharpe ratio
+        - tickers: List of tickers (for reference)
     """
-    n_assets = len(tickers)
-    equal_weights_fallback = {
-        "optimal_weights": [1.0 / n_assets] * n_assets,
-        "tickers": tickers,
-    }
-    
-    # Load returns data
-    returns_data, error = _load_returns_data(tickers, start_date, end_date)
-    if error:
-        return {**equal_weights_fallback, "error": error}
-    
-    # Align all series
-    returns_df = pd.DataFrame(returns_data).dropna()
-    
-    if returns_df.empty or len(returns_df) < 10:
-        return {**equal_weights_fallback, "error": "Insufficient data for optimization"}
-    
-    # Calculate expected returns and covariance matrix (annualized)
-    mean_returns = returns_df.mean() * 252
-    cov_matrix = returns_df.cov() * 252
-    
-    # Try scipy optimization
     try:
-        result = _run_markowitz_optimization(mean_returns, cov_matrix, n_assets, risk_free_rate)
-        if result:
-            return {"tickers": tickers, **result}
-    except ImportError:
-        logger.warning("scipy not available, using equal weights")
+        logger.info(f"Calculating optimal weights for {tickers}")
+
+        # Load price data for all tickers
+        returns_data = []
+        valid_tickers = []
+
+        for ticker in tickers:
+            try:
+                df = get_data(ticker, start_date, end_date, timeframe)
+                if df is not None and not df.empty:
+                    # Handle both lowercase and capitalized column names
+                    close_col = 'close' if 'close' in df.columns else 'Close'
+                    if close_col in df.columns:
+                        # Calculate returns
+                        returns = df[close_col].pct_change().dropna()
+                        if len(returns) > 0:
+                            returns_data.append(returns)
+                            valid_tickers.append(ticker)
+                    else:
+                        logger.warning(f"No close column for {ticker}, skipping in optimization")
+                else:
+                    logger.warning(f"No data for {ticker}, skipping in optimization")
+            except Exception as e:
+                logger.warning(f"Failed to load data for {ticker}: {e}")
+
+        if len(valid_tickers) < 2:
+            logger.warning("Not enough valid tickers for optimization")
+            return {
+                "error": "Insufficient data for optimization",
+                "tickers": tickers,
+                "optimal_weights": [1.0 / len(tickers)] * len(tickers),  # Equal weights fallback
+            }
+
+        # Create returns DataFrame
+        returns_df = pd.concat(returns_data, axis=1, keys=valid_tickers)
+        returns_df = returns_df.dropna()
+
+        if len(returns_df) < 10:
+            logger.warning("Insufficient data points for optimization")
+            return {
+                "error": "Insufficient data points",
+                "tickers": tickers,
+                "optimal_weights": [1.0 / len(tickers)] * len(tickers),
+            }
+
+        # Calculate expected returns and covariance
+        mean_returns = returns_df.mean() * 252  # Annualize
+        cov_matrix = returns_df.cov() * 252  # Annualize
+
+        num_assets = len(valid_tickers)
+
+        # Objective function: negative Sharpe ratio (we minimize)
+        def neg_sharpe(weights):
+            portfolio_return = np.dot(weights, mean_returns)
+            portfolio_std = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+            if portfolio_std == 0:
+                return 1e10  # Avoid division by zero
+            sharpe = (portfolio_return - risk_free_rate) / portfolio_std
+            return -sharpe  # Negative because we minimize
+
+        # Constraints
+        constraints = (
+            {'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0}  # Weights sum to 1
+        )
+
+        # Bounds: each weight between 0 and 1 (no short selling)
+        bounds = tuple((0, 1) for _ in range(num_assets))
+
+        # Initial guess: equal weights
+        init_weights = np.array([1.0 / num_assets] * num_assets)
+
+        # Optimize
+        result = minimize(
+            neg_sharpe,
+            init_weights,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints,
+            options={'maxiter': 1000}
+        )
+
+        if not result.success:
+            logger.warning(f"Optimization failed: {result.message}")
+            # Return equal weights
+            optimal_weights_dict = {ticker: 1.0 / num_assets for ticker in valid_tickers}
+        else:
+            optimal_weights_dict = {ticker: float(weight) for ticker, weight in zip(valid_tickers, result.x)}
+
+        # Calculate expected metrics with optimal weights
+        optimal_weights_array = np.array(list(optimal_weights_dict.values()))
+        expected_return = np.dot(optimal_weights_array, mean_returns)
+        expected_volatility = np.sqrt(np.dot(optimal_weights_array.T, np.dot(cov_matrix, optimal_weights_array)))
+        sharpe_ratio = (expected_return - risk_free_rate) / expected_volatility if expected_volatility > 0 else 0
+
+        # Map back to original tickers (fill missing with 0)
+        optimal_weights_full = []
+        for ticker in tickers:
+            optimal_weights_full.append(optimal_weights_dict.get(ticker, 0.0))
+
+        logger.info(f"Optimization complete. Sharpe ratio: {sharpe_ratio:.4f}")
+
+        return {
+            "tickers": tickers,
+            "optimal_weights": optimal_weights_full,
+            "expected_return": float(expected_return),
+            "expected_volatility": float(expected_volatility),
+            "sharpe_ratio": float(sharpe_ratio),
+        }
+
     except Exception as e:
-        logger.warning(f"Optimization failed: {e}")
-    
-    return {**equal_weights_fallback, "error": "Optimization failed, returning equal weights"}
+        logger.error(f"Failed to calculate optimal weights: {e}", exc_info=True)
+        # Return equal weights on error
+        return {
+            "error": str(e),
+            "tickers": tickers,
+            "optimal_weights": [1.0 / len(tickers)] * len(tickers),
+        }
+
+
+def calculate_correlation_matrix(
+    tickers: list[str],
+    start_date: str,
+    end_date: str,
+    timeframe: str = "1d"
+) -> dict:
+    """
+    Calculate correlation matrix between asset returns.
+
+    Args:
+        tickers: List of ticker symbols
+        start_date: Start date for historical data
+        end_date: End date for historical data
+        timeframe: Data timeframe
+
+    Returns:
+        Dictionary containing:
+        - matrix: 2D list of correlation values
+        - tickers: List of tickers (for reference)
+    """
+    try:
+        logger.info(f"Calculating correlation matrix for {tickers}")
+
+        # Load price data for all tickers
+        returns_data = []
+        valid_tickers = []
+
+        for ticker in tickers:
+            try:
+                df = get_data(ticker, start_date, end_date, timeframe)
+                if df is not None and not df.empty:
+                    # Handle both lowercase and capitalized column names
+                    close_col = 'close' if 'close' in df.columns else 'Close'
+                    if close_col in df.columns:
+                        # Calculate returns
+                        returns = df[close_col].pct_change().dropna()
+                        if len(returns) > 0:
+                            returns_data.append(returns)
+                            valid_tickers.append(ticker)
+                    else:
+                        logger.warning(f"No close column for {ticker}, skipping in correlation")
+                else:
+                    logger.warning(f"No data for {ticker}, skipping in correlation")
+            except Exception as e:
+                logger.warning(f"Failed to load data for {ticker}: {e}")
+
+        if len(valid_tickers) < 2:
+            logger.warning("Not enough valid tickers for correlation matrix")
+            return {
+                "error": "Insufficient data for correlation",
+                "tickers": tickers,
+            }
+
+        # Create returns DataFrame
+        returns_df = pd.concat(returns_data, axis=1, keys=valid_tickers)
+        returns_df = returns_df.dropna()
+
+        if len(returns_df) < 10:
+            logger.warning("Insufficient data points for correlation")
+            return {
+                "error": "Insufficient data points",
+                "tickers": tickers,
+            }
+
+        # Calculate correlation matrix
+        corr_matrix = returns_df.corr()
+        
+        # Convert to 2D list for JSON serialization (matches frontend expectation)
+        matrix = []
+        for ticker1 in valid_tickers:
+            row = []
+            for ticker2 in valid_tickers:
+                row.append(float(corr_matrix.loc[ticker1, ticker2]))
+            matrix.append(row)
+
+        logger.info("Correlation matrix calculation complete")
+
+        return {
+            "tickers": valid_tickers,
+            "matrix": matrix,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to calculate correlation matrix: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "tickers": tickers,
+        }
+
 
 def align_data_feeds(
     tickers: list[str],
@@ -222,8 +298,7 @@ def align_data_feeds(
     Load and align multiple data feeds to common trading dates.
 
     Strategy: Use intersection of trading dates to ensure all assets have data
-    on the same days. This prevents lookahead bias and ensures fair portfolio
-    rebalancing.
+    on the same days. This prevents lookahead bias.
 
     Args:
         tickers: List of ticker symbols to load
@@ -256,12 +331,12 @@ def align_data_feeds(
     logger.info(f"Successfully loaded data for {len(raw_data)} tickers")
 
     # Step 2: Extract date indices from each feed's dataname (pandas DataFrame)
-    # Note: Backtrader feeds wrap pandas DataFrames accessible via feed._dataname
+    # Use helper function to safely access the underlying DataFrame
     date_sets = {}
     for ticker, feed in raw_data.items():
         try:
-            # Access the underlying pandas DataFrame
-            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            # Access the underlying pandas DataFrame using helper function
+            df = get_dataframe(feed)
             if df is None or df.empty:
                 raise DataAlignmentError(f"Empty data for {ticker}")
 
@@ -308,7 +383,8 @@ def align_data_feeds(
 
     for ticker, feed in raw_data.items():
         try:
-            df = feed._dataname if hasattr(feed, '_dataname') else feed.p.dataname
+            # Use helper function to access the underlying DataFrame
+            df = get_dataframe(feed)
             # Filter to common dates
             aligned_df = df.loc[df.index.isin(common_dates_sorted)].sort_index()
 
@@ -346,8 +422,6 @@ def run_multi_asset_backtest(
     commission: float = 0.0005,
     strategy_name: str = ...,  # Required parameter
     params: Optional[dict] = None,
-    rebalance_config: Optional[dict] = None,
-    optimization_method: str = "equal_weight",
     timeframe: str = "1d",
     save_path: Optional[Path] = None,
 ) -> dict:
@@ -355,7 +429,7 @@ def run_multi_asset_backtest(
     Run a true multi-asset portfolio backtest with unified Cerebro instance.
 
     This function creates a single Backtrader Cerebro with multiple data feeds,
-    allowing portfolio-level position sizing, rebalancing, and equity curve tracking.
+    allowing portfolio-level position sizing and equity curve tracking.
 
     Args:
         tickers: List of ticker symbols (e.g., ['AAPL', 'GOOGL', 'MSFT'])
@@ -366,10 +440,6 @@ def run_multi_asset_backtest(
         commission: Commission rate per trade (default: 0.0005 = 0.05%)
         strategy_name: Strategy file name (without .py) - REQUIRED. Must be multi-data aware.
         params: Strategy parameters (dict) - passed to strategy's params
-        rebalance_config: Rebalancing configuration
-            Example: {"frequency": "monthly", "method": "risk_parity"}
-        optimization_method: Optimization method for rebalancing
-            Options: "equal_weight", "risk_parity", "min_variance", "markowitz"
         timeframe: Data timeframe (default: "1d")
         save_path: Optional path to save chart image
 
@@ -381,8 +451,8 @@ def run_multi_asset_backtest(
             "sharpe_ratio": float,
             "max_drawdown": float,
             "equity_curve": {date: value},
-            "rebalancing_events": [{date, weights, orders}],
             "asset_contributions": {ticker: contribution},
+            "all_trades": [{trade_info}],
             "metrics": {...}  # All other metrics
         }
 
@@ -457,7 +527,6 @@ def run_multi_asset_backtest(
         # Step 5: Add custom portfolio analyzers
         logger.info("Step 5: Adding portfolio analyzers...")
         cerebro.addanalyzer(PortfolioValueAnalyzer, _name="portfolio_value")
-        cerebro.addanalyzer(RebalancingEventAnalyzer, _name="rebalancing")
         cerebro.addanalyzer(
             AssetContributionAnalyzer,
             _name="asset_contribution",
@@ -494,17 +563,9 @@ def run_multi_asset_backtest(
 
         # Extract from custom portfolio analyzers
         portfolio_value_analysis = strat.analyzers.portfolio_value.get_analysis()
-        rebalancing_analysis = strat.analyzers.rebalancing.get_analysis()
         asset_contribution_analysis = strat.analyzers.asset_contribution.get_analysis()
         portfolio_metrics_analysis = strat.analyzers.portfolio_metrics.get_analysis()
         trade_recorder_analysis = strat.analyzers.trade_recorder.get_analysis()
-
-        # Calculate correlation matrix and optimization suggestions
-        logger.info("Calculating correlation matrix...")
-        correlation = calculate_correlation_matrix(tickers, start_date, end_date)
-
-        logger.info("Calculating optimization suggestions...")
-        optimization = calculate_optimal_weights(tickers, start_date, end_date)
 
         # Build individual results from asset contributions
         contributions = asset_contribution_analysis.get("contributions", {})
@@ -514,12 +575,12 @@ def run_multi_asset_backtest(
             # Use start_value and end_value from contributions if available
             start_value = contrib.get("start_value", initial_cash * weights[i])
             end_value = contrib.get("end_value", initial_cash * weights[i])
-            
+
             # Calculate return based on actual values
             asset_return = 0.0
             if start_value > 0:
                 asset_return = ((end_value - start_value) / start_value) * 100
-            
+
             individual_results.append({
                 "ticker": ticker,
                 "weight": weights[i],
@@ -531,6 +592,23 @@ def run_multi_asset_backtest(
                 "max_drawdown": None,
                 "total_trades": contrib.get("end_shares", 0),  # Use end_shares as proxy
             })
+
+        # Calculate additional risk-adjusted metrics
+        annual_return = portfolio_metrics_analysis.get("annual_return", 0.0)
+
+        # Calmar Ratio - Annual Return / Max Drawdown
+        calmar_ratio = 0.0
+        if max_drawdown and abs(max_drawdown) > 0:
+            calmar_ratio = annual_return / abs(max_drawdown)
+
+        # Recovery Factor - Net Profit / Max Drawdown (in absolute terms)
+        net_profit = final_value - initial_cash
+        recovery_factor = 0.0
+        if max_drawdown and abs(max_drawdown) > 0:
+            # Convert max_drawdown percentage to dollar amount
+            max_dd_dollars = (abs(max_drawdown) / 100) * drawdown_analysis.get('max', {}).get('moneydown', initial_cash * abs(max_drawdown) / 100)
+            if max_dd_dollars > 0:
+                recovery_factor = net_profit / max_dd_dollars
 
         # Build result dictionary
         result = {
@@ -544,25 +622,62 @@ def run_multi_asset_backtest(
             "weights": weights,
             # From custom analyzers
             "equity_curve": portfolio_value_analysis.get("equity_curve", {}),
-            "rebalancing_events": rebalancing_analysis.get("events", []),
             "all_trades": trade_recorder_analysis.get("trades", []),  # All trades from TradeRecorder analyzer
             "asset_contributions": contributions,
             # Individual asset results (for UI compatibility)
             "individual_results": individual_results,
-            # Correlation and optimization
-            "correlation": correlation,
-            "optimization": optimization,
             # Comprehensive metrics
             "metrics": {
                 "returns": returns_analysis,
                 "drawdown": drawdown_analysis,
                 "portfolio_metrics": portfolio_metrics_analysis,
-                "optimization_method": optimization_method,
-                "rebalance_frequency": rebalance_config.get("frequency") if rebalance_config else None,
-                "total_transaction_costs": rebalancing_analysis.get("total_transaction_costs", 0.0),
-                "rebalancing_count": rebalancing_analysis.get("total_events", 0),
-            }
+            },
+            # Additional calculated metrics
+            "calmar_ratio": calmar_ratio,
+            "recovery_factor": recovery_factor,
+            # Trading cost metrics
+            "total_commission": trade_recorder_analysis.get("total_commission", 0.0),
+            "total_volume": trade_recorder_analysis.get("total_volume", 0.0),
+            "total_trades": trade_recorder_analysis.get("total_trades", 0),
         }
+
+        # Step 9: Calculate optimal portfolio weights using MPT
+        logger.info("Step 9: Calculating optimal portfolio weights...")
+        try:
+            optimization_result = calculate_optimal_weights(
+                tickers=tickers,
+                start_date=start_date,
+                end_date=end_date,
+                timeframe=timeframe,
+                risk_free_rate=0.02  # 2% annual risk-free rate
+            )
+            result["optimization"] = optimization_result
+            logger.info("Optimization calculation complete")
+        except Exception as e:
+            logger.warning(f"Failed to calculate optimization: {e}")
+            # Add error result so frontend knows optimization was attempted
+            result["optimization"] = {
+                "error": f"Optimization failed: {str(e)}",
+                "tickers": tickers,
+            }
+
+        # Step 10: Calculate correlation matrix
+        logger.info("Step 10: Calculating correlation matrix...")
+        try:
+            correlation_result = calculate_correlation_matrix(
+                tickers=tickers,
+                start_date=start_date,
+                end_date=end_date,
+                timeframe=timeframe,
+            )
+            result["correlation"] = correlation_result
+            logger.info("Correlation matrix calculation complete")
+        except Exception as e:
+            logger.warning(f"Failed to calculate correlation matrix: {e}")
+            result["correlation"] = {
+                "error": f"Correlation calculation failed: {str(e)}",
+                "tickers": tickers,
+            }
 
         logger.info(f"Backtest complete! Final value: ${final_value:,.2f}")
         logger.info(f"Total return: {total_return:.2f}%, Sharpe: {sharpe_ratio:.2f}, Max DD: {max_drawdown:.2f}%")
@@ -616,8 +731,6 @@ def run_multi_asset_backtest(
 __all__ = [
     "run_multi_asset_backtest",
     "align_data_feeds",
-    "calculate_correlation_matrix",
-    "calculate_optimal_weights",
     "MultiAssetBacktestError",
     "DataAlignmentError",
 ]

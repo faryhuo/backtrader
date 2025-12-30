@@ -307,9 +307,38 @@
     gap: 16px;
 }
 
+.section-subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.insights-section {
+    margin-bottom: 16px;
+}
+
+.insights-section .ant-list-item {
+    border: none;
+    padding: 8px 0;
+}
+
+.insights-section .ant-alert {
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.optimal-weights-section {
+    margin-top: 16px;
+}
+
 .optimization-intro {
     color: var(--text-secondary);
     margin: 0;
+    font-size: 13px;
 }
 
 .optimal-weights {
@@ -320,22 +349,65 @@
 
 .optimal-weight-item {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
-    padding: 8px 16px;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.15);
     border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.optimal-weight-item:hover {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.weight-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.weight-values {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.weight-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.weight-value {
+    color: var(--text-color);
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.weight-value.optimal {
+    color: var(--primary-color);
 }
 
 .optimization-metrics {
     display: flex;
     flex-wrap: wrap;
-    gap: 24px;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
+    gap: 16px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.15);
     border-radius: 8px;
-    font-size: 14px;
-    color: var(--text-secondary);
+    margin-top: 16px;
 }
 
 /* Chart Card */
@@ -719,4 +791,103 @@
     padding: 8px 12px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
+}
+
+/* Enhanced Metrics Card Styles */
+.portfolio-metrics-card .metrics-section {
+    margin-bottom: 16px;
+}
+
+.portfolio-metrics-card .metrics-section:last-child {
+    margin-bottom: 0;
+}
+
+.portfolio-metrics-card .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.portfolio-metrics-card .metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.portfolio-metrics-card .metric-item:hover {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.portfolio-metrics-card .metric-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.portfolio-metrics-card .metric-icon {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.portfolio-metrics-card .metric-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-family: 'Roboto Mono', monospace;
+}
+
+.portfolio-metrics-card .metric-value.positive {
+    color: #52c41a;
+}
+
+.portfolio-metrics-card .metric-value.negative {
+    color: #ff4d4f;
+}
+
+.portfolio-metrics-card .ant-divider {
+    margin: 20px 0;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustments for metrics card */
+@media (max-width: 992px) {
+    .portfolio-metrics-card .metric-value {
+        font-size: 18px;
+    }
+
+    .portfolio-metrics-card .section-title {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 576px) {
+    .portfolio-metrics-card .metric-value {
+        font-size: 16px;
+    }
+
+    .portfolio-metrics-card .metric-item {
+        padding: 10px;
+    }
+
+    .portfolio-metrics-card .section-title {
+        font-size: 12px;
+    }
 }

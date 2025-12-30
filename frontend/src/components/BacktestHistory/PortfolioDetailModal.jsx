@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty, Button, message, Space } from 'antd'
+import { Modal, Tabs, Descriptions, Tag, Table, Card, Row, Col, Statistic, Empty, Button, message, Space, Image } from 'antd'
 import {
     FileTextOutlined,
     LineChartOutlined,
-    SyncOutlined,
     PieChartOutlined,
     TableOutlined,
     AppstoreOutlined,
@@ -17,10 +16,10 @@ import { api } from '../../services/api'
 // Import reusable components from PortfolioBacktest
 import PortfolioMetricsCard from '../PortfolioBacktest/PortfolioMetricsCard'
 import EquityCurveChart from '../PortfolioBacktest/EquityCurveChart'
-import RebalancingTimeline from '../PortfolioBacktest/RebalancingTimeline'
 import AssetContributionChart from '../PortfolioBacktest/AssetContributionChart'
 import CorrelationCard from '../PortfolioBacktest/CorrelationCard'
 import OptimizationCard from '../PortfolioBacktest/OptimizationCard'
+import PortfolioTradeLog from '../PortfolioBacktest/PortfolioTradeLog'
 
 import './PortfolioDetailModal.css'
 
@@ -32,10 +31,10 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
 
     // Check for available data
     const hasEquityCurve = portfolio.equity_curve && Object.keys(portfolio.equity_curve).length > 0
-    const hasRebalancing = portfolio.rebalancing_events && portfolio.rebalancing_events.length > 0
     const hasContributions = portfolio.asset_contributions && Object.keys(portfolio.asset_contributions).length > 0
     const hasCorrelation = portfolio.correlation && !portfolio.correlation.error
     const hasOptimization = portfolio.optimization && !portfolio.optimization.error
+    const hasTrades = portfolio.all_trades && portfolio.all_trades.length > 0
 
     // Individual asset results table columns
     const assetColumns = [
@@ -130,16 +129,8 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             ),
             children: (
                 <div className="overview-tab">
-                    <PortfolioMetricsCard
-                        t={t}
-                        metrics={{
-                            final_value: portfolio.final_value,
-                            total_return: portfolio.total_return,
-                            weighted_sharpe: portfolio.weighted_sharpe,
-                            max_drawdown: portfolio.max_drawdown,
-                        }}
-                    />
-                    <Card className="overview-info-card" size="small">
+                    {/* Backtest configuration info - should come first */}
+                    <Card className="overview-info-card" size="small" style={{ marginBottom: 16 }}>
                         <Descriptions bordered column={2} size="small">
                             <Descriptions.Item label={t('history.tickers')}>
                                 {portfolio.tickers?.map(ticker => (
@@ -163,6 +154,11 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                             </Descriptions.Item>
                         </Descriptions>
                     </Card>
+                    {/* Pass the entire portfolio object for expanded metrics */}
+                    <PortfolioMetricsCard
+                        t={t}
+                        metrics={portfolio}
+                    />
                 </div>
             )
         },
@@ -181,26 +177,6 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             children: (
                 <EquityCurveChart
                     equityCurve={portfolio.equity_curve}
-                    rebalancingEvents={portfolio.rebalancing_events}
-                    t={t}
-                />
-            ),
-        })
-    }
-
-    // Add rebalancing tab if events exist
-    if (hasRebalancing) {
-        tabItems.push({
-            key: 'rebalancing',
-            label: (
-                <span>
-                    <SyncOutlined />
-                    {t('portfolio.rebalancing', 'Rebalancing')}
-                </span>
-            ),
-            children: (
-                <RebalancingTimeline
-                    rebalancingEvents={portfolio.rebalancing_events}
                     t={t}
                 />
             ),
@@ -249,6 +225,22 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         ),
     })
 
+    // Add trade log tab if trades available
+    if (hasTrades) {
+        tabItems.push({
+            key: 'trades',
+            label: (
+                <span>
+                    <TableOutlined />
+                    {t('portfolio.trade_log', 'Trade Log')}
+                </span>
+            ),
+            children: (
+                <PortfolioTradeLog allTrades={portfolio.all_trades} t={t} />
+            ),
+        })
+    }
+
     // Add correlation tab
     if (hasCorrelation) {
         tabItems.push({
@@ -276,7 +268,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                 </span>
             ),
             children: (
-                <OptimizationCard t={t} optimization={portfolio.optimization} />
+                <OptimizationCard t={t} optimization={portfolio.optimization} metrics={portfolio} />
             ),
         })
     }
@@ -293,7 +285,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             ),
             children: (
                 <div style={{ textAlign: 'center' }}>
-                    <img
+                    <Image
                         src={`/images/${portfolio.plot_filename}`}
                         alt="Portfolio Chart"
                         style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: 8 }}

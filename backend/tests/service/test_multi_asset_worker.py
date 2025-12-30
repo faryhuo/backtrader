@@ -21,14 +21,15 @@ class TestMultiAssetBacktestTask:
             tickers=["AAPL", "GOOGL"],
             weights=[0.5, 0.5],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
 
         assert task.task_id == "test-123"
         assert task.tickers == ["AAPL", "GOOGL"]
         assert task.weights == [0.5, 0.5]
         assert task.initial_cash == 100000.0
-        assert task.optimization_method == "equal_weight"
+        assert task.strategy_name == "buy_and_hold"
 
     def test_create_full_task(self):
         """Test creating a fully configured task."""
@@ -41,11 +42,7 @@ class TestMultiAssetBacktestTask:
             initial_cash=500000.0,
             commission=0.001,
             strategy_name="sma_cross",
-            rebalance_config={
-                "frequency": "monthly",
-                "min_trade_threshold": 0.02
-            },
-            optimization_method="risk_parity",
+            params={"fast_period": 10, "slow_period": 30},
             timeframe="1d",
             generate_chart=True,
             chart_save_path="/tmp/test.png"
@@ -53,8 +50,8 @@ class TestMultiAssetBacktestTask:
 
         assert task.initial_cash == 500000.0
         assert task.strategy_name == "sma_cross"
-        assert task.optimization_method == "risk_parity"
-        assert task.rebalance_config is not None
+        assert task.params == {"fast_period": 10, "slow_period": 30}
+        assert task.timeframe == "1d"
 
     def test_to_dict(self):
         """Test serialization to dictionary."""
@@ -63,7 +60,8 @@ class TestMultiAssetBacktestTask:
             tickers=["AAPL"],
             weights=[1.0],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
 
         data = task.to_dict()
@@ -71,7 +69,7 @@ class TestMultiAssetBacktestTask:
         assert data["task_id"] == "test-789"
         assert data["tickers"] == ["AAPL"]
         assert data["weights"] == [1.0]
-        assert data["optimization_method"] == "equal_weight"
+        assert data["strategy_name"] == "buy_and_hold"
 
     def test_from_dict(self):
         """Test deserialization from dictionary."""
@@ -81,13 +79,13 @@ class TestMultiAssetBacktestTask:
             "weights": [0.6, 0.4],
             "start_date": "2024-01-01",
             "end_date": "2024-12-31",
-            "optimization_method": "markowitz"
+            "strategy_name": "momentum"
         }
 
         task = MultiAssetBacktestTask.from_dict(data)
 
         assert task.task_id == "test-abc"
-        assert task.optimization_method == "markowitz"
+        assert task.strategy_name == "momentum"
 
     def test_roundtrip_serialization(self):
         """Test to_dict -> from_dict roundtrip."""
@@ -97,7 +95,8 @@ class TestMultiAssetBacktestTask:
             weights=[0.33, 0.34, 0.33],
             start_date="2024-01-01",
             end_date="2024-12-31",
-            optimization_method="risk_parity"
+            strategy_name="multi_asset_template",
+            params={"rebalance_days": 30}
         )
 
         data = original.to_dict()
@@ -105,7 +104,8 @@ class TestMultiAssetBacktestTask:
 
         assert restored.task_id == original.task_id
         assert restored.tickers == original.tickers
-        assert restored.optimization_method == original.optimization_method
+        assert restored.strategy_name == original.strategy_name
+        assert restored.params == original.params
 
 
 class TestMultiAssetBacktestResult:
@@ -208,10 +208,8 @@ class TestMultiAssetWorkerExecution:
             "sharpe_ratio": 1.5,
             "max_drawdown": -8.0,
             "equity_curve": {"2024-01-01": 100000},
-            "rebalancing_events": [],
             "asset_contributions": {},
-            "optimization_history": [],
-            "per_asset_results": {}
+            "all_trades": []
         }
 
         task = MultiAssetBacktestTask(
@@ -219,7 +217,8 @@ class TestMultiAssetWorkerExecution:
             tickers=["AAPL", "GOOGL"],
             weights=[0.5, 0.5],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
 
         result = execute_multi_asset_task(task)
@@ -240,7 +239,8 @@ class TestMultiAssetWorkerExecution:
             tickers=["INVALID"],
             weights=[1.0],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
 
         result = execute_multi_asset_task(task)

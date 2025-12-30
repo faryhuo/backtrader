@@ -56,7 +56,6 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
 
     elif task_type == "multi_asset":
         tickers = config.get("tickers", [])
-        opt_method = config.get("optimization_method", "equal_weight")
         if not tickers:
             return "Multi-Asset Backtest"
 
@@ -64,7 +63,7 @@ def generate_task_name(task_type: str, config: Dict[str, Any]) -> str:
         display_tickers = ", ".join(tickers[:3])
         if len(tickers) > 3:
             display_tickers += f" +{len(tickers) - 3}"
-        return f"Multi-Asset: {display_tickers} ({opt_method})"
+        return f"Multi-Asset: {display_tickers}"
 
     elif task_type == "portfolio":
         # Portfolio is an alias for multi-asset backtest
@@ -134,8 +133,6 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "initial_cash": config.get("initial_cash"),
             "commission": config.get("commission"),
             "strategy_name": config.get("strategy_name"),
-            "rebalance_config": config.get("rebalance_config"),
-            "optimization_method": config.get("optimization_method", "equal_weight"),
             "timeframe": config.get("timeframe", "1d"),
         }
 

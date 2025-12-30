@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Image } from 'antd';
 
 
 function StrategyPlot({ result }) {
@@ -12,7 +13,7 @@ function StrategyPlot({ result }) {
         <>
             <div className="card plot-card">
                 <div className="plot-container">
-                    <img src={result.plot_url} alt="Strategy Plot" />
+                    <Image src={result.plot_url} alt="Strategy Plot" style={{ maxWidth: '100%' }} />
                 </div>
             </div>
         </>

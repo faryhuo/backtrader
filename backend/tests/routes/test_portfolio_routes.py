@@ -9,7 +9,6 @@ from pydantic import ValidationError
 from src.routes.portfolio_routes import (
     PortfolioHistoryQuery,
     MultiAssetBacktestRequest,
-    RebalanceConfig,
 )
 from src.db import get_portfolio_storage
 
@@ -24,44 +23,6 @@ class TestPortfolioStorage:
         assert storage1 is storage2
 
 
-class TestRebalanceConfig:
-    """Tests for RebalanceConfig validation."""
-
-    def test_valid_monthly_frequency(self):
-        """Test valid monthly frequency."""
-        config = RebalanceConfig(frequency="monthly")
-        assert config.frequency == "monthly"
-        assert config.min_trade_threshold == 0.01
-        assert config.transaction_cost_pct == 0.001
-
-    def test_valid_quarterly_frequency(self):
-        """Test valid quarterly frequency."""
-        config = RebalanceConfig(frequency="quarterly")
-        assert config.frequency == "quarterly"
-
-    def test_invalid_frequency(self):
-        """Test invalid frequency raises error."""
-        with pytest.raises(ValidationError) as exc_info:
-            RebalanceConfig(frequency="weekly")
-        assert "Invalid frequency" in str(exc_info.value)
-
-    def test_custom_thresholds(self):
-        """Test custom threshold values."""
-        config = RebalanceConfig(
-            frequency="monthly",
-            min_trade_threshold=0.05,
-            transaction_cost_pct=0.002
-        )
-        assert config.min_trade_threshold == 0.05
-        assert config.transaction_cost_pct == 0.002
-
-    def test_threshold_out_of_range(self):
-        """Test threshold out of valid range."""
-        with pytest.raises(ValidationError) as exc_info:
-            RebalanceConfig(frequency="monthly", min_trade_threshold=1.5)
-        assert "min_trade_threshold" in str(exc_info.value)
-
-
 class TestMultiAssetBacktestRequest:
     """Tests for MultiAssetBacktestRequest."""
 
@@ -71,34 +32,11 @@ class TestMultiAssetBacktestRequest:
             tickers=["AAPL", "GOOGL"],
             weights=[0.5, 0.5],
             start_date="2024-01-01",
-            end_date="2024-12-31"
+            end_date="2024-12-31",
+            strategy_name="buy_and_hold"
         )
         assert request.tickers == ["AAPL", "GOOGL"]
         assert request.weights == [0.5, 0.5]
-
-    def test_valid_optimization_methods(self):
-        """Test all valid optimization methods."""
-        for method in ["equal_weight", "risk_parity", "min_variance", "markowitz"]:
-            request = MultiAssetBacktestRequest(
-                tickers=["AAPL"],
-                weights=[1.0],
-                start_date="2024-01-01",
-                end_date="2024-12-31",
-                optimization_method=method
-            )
-            assert request.optimization_method == method
-
-    def test_invalid_optimization_method(self):
-        """Test invalid optimization method raises error."""
-        with pytest.raises(ValidationError) as exc_info:
-            MultiAssetBacktestRequest(
-                tickers=["AAPL"],
-                weights=[1.0],
-                start_date="2024-01-01",
-                end_date="2024-12-31",
-                optimization_method="invalid_method"
-            )
-        assert "Invalid optimization method" in str(exc_info.value)
 
     def test_valid_timeframes(self):
         """Test all valid timeframes."""
@@ -108,6 +46,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 timeframe=tf
             )
             assert request.timeframe == tf
@@ -120,6 +59,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 timeframe="2h"
             )
         assert "Invalid timeframe" in str(exc_info.value)
@@ -134,7 +74,8 @@ class TestMultiAssetBacktestRequest:
                 tickers=tickers,
                 weights=weights,
                 start_date="2024-01-01",
-                end_date="2024-12-31"
+                end_date="2024-12-31",
+                strategy_name="buy_and_hold"
             )
         assert "tickers" in str(exc_info.value).lower()
 
@@ -147,6 +88,7 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 initial_cash=500
             )
 
@@ -157,24 +99,9 @@ class TestMultiAssetBacktestRequest:
                 weights=[1.0],
                 start_date="2024-01-01",
                 end_date="2024-12-31",
+                strategy_name="buy_and_hold",
                 initial_cash=200000000
             )
-
-    def test_with_rebalance_config(self):
-        """Test request with rebalancing configuration."""
-        request = MultiAssetBacktestRequest(
-            tickers=["AAPL", "GOOGL"],
-            weights=[0.6, 0.4],
-            start_date="2024-01-01",
-            end_date="2024-12-31",
-            rebalance_config={
-                "frequency": "quarterly",
-                "min_trade_threshold": 0.02,
-                "transaction_cost_pct": 0.001
-            }
-        )
-        assert request.rebalance_config is not None
-        assert request.rebalance_config.frequency == "quarterly"
 
     def test_full_request(self):
         """Test fully configured request."""
@@ -186,16 +113,12 @@ class TestMultiAssetBacktestRequest:
             initial_cash=500000.0,
             commission=0.001,
             strategy_name="sma_cross",
-            rebalance_config={
-                "frequency": "monthly",
-                "min_trade_threshold": 0.01
-            },
-            optimization_method="risk_parity",
+            params={"fast_period": 10, "slow_period": 30},
             timeframe="1d"
         )
         assert len(request.tickers) == 3
         assert request.strategy_name == "sma_cross"
-        assert request.optimization_method == "risk_parity"
+        assert request.params == {"fast_period": 10, "slow_period": 30}
 
 
 class TestPortfolioHistoryQuery:

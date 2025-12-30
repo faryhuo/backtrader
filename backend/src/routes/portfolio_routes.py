@@ -45,36 +45,7 @@ class PortfolioHistoryQuery(BaseModel):
 
 
 
-class RebalanceConfig(BaseModel):
-    """Rebalancing configuration for portfolio."""
-    frequency: str = Field(
-        ...,
-        description="Rebalancing frequency: monthly, monthly_first, monthly_last, quarterly, annually"
-    )
-    min_trade_threshold: float = Field(
-        0.01,
-        ge=0.0,
-        le=1.0,
-        description="Minimum position change % to execute trade (default 1%)"
-    )
-    transaction_cost_pct: float = Field(
-        0.001,
-        ge=0.0,
-        le=0.1,
-        description="Transaction cost as % of trade value (default 0.1%)"
-    )
 
-    @field_validator('frequency')
-    @classmethod
-    def validate_frequency(cls, v: str) -> str:
-        valid_frequencies = [
-            'monthly', 'monthly_first', 'monthly_last',
-            'quarterly', 'quarterly_first', 'quarterly_last',
-            'annually', 'annually_first', 'annually_last'
-        ]
-        if v not in valid_frequencies:
-            raise ValueError(f"Invalid frequency '{v}'. Must be one of: {', '.join(valid_frequencies)}")
-        return v
 
 
 class MultiAssetBacktestRequest(BaseModel):
@@ -87,23 +58,9 @@ class MultiAssetBacktestRequest(BaseModel):
     commission: float = Field(0.0005, ge=0, le=0.1, description="Broker commission rate")
     strategy_name: str = Field(..., description="Strategy file name (required - use multi-asset template)")
     params: dict | None = Field(None, description="Strategy parameters (applied globally)")
-    rebalance_config: RebalanceConfig | None = Field(
-        None,
-        description="Rebalancing configuration. Example: {'frequency': 'monthly', 'min_trade_threshold': 0.01}"
-    )
-    optimization_method: str = Field(
-        "equal_weight",
-        description="Optimization method for rebalancing: equal_weight, risk_parity, min_variance, markowitz"
-    )
     timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
-    @field_validator('optimization_method')
-    @classmethod
-    def validate_optimization_method(cls, v: str) -> str:
-        valid_methods = ['equal_weight', 'risk_parity', 'min_variance', 'markowitz']
-        if v not in valid_methods:
-            raise ValueError(f"Invalid optimization method '{v}'. Must be one of: {', '.join(valid_methods)}")
-        return v
+
 
     @field_validator('timeframe')
     @classmethod
@@ -146,8 +103,6 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
             commission=config.get("commission", 0.0005),
             strategy_name=config["strategy_name"],
             params=config.get("params"),
-            rebalance_config=config.get("rebalance_config"),
-            optimization_method=config.get("optimization_method", "equal_weight"),
             timeframe=config.get("timeframe", "1d"),
             save_path=save_path,
         )
@@ -163,6 +118,19 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
     storage = get_portfolio_storage()
 
     # Build storage-compatible format
+    # Include all fields needed by frontend in portfolio_metrics JSON
+    extended_metrics = result.get("metrics", {})
+    extended_metrics.update({
+        # Risk-adjusted metrics
+        "sharpe_ratio": result.get("sharpe_ratio"),
+        "calmar_ratio": result.get("calmar_ratio"),
+        "recovery_factor": result.get("recovery_factor"),
+        # Trading activity
+        "total_commission": result.get("total_commission", 0.0),
+        "total_volume": result.get("total_volume", 0.0),
+        "total_trades": result.get("total_trades", 0),
+    })
+    
     storage_result = {
         "id": str(uuid.uuid4()),  # Generate unique portfolio ID
         "tickers": result["tickers"],
@@ -182,19 +150,17 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "num_assets": result["num_assets"],
         # Multi-asset specific fields
         "equity_curve": result.get("equity_curve", {}),
-        "rebalancing_events": result.get("rebalancing_events", []),
         "asset_contributions": result.get("asset_contributions", {}),
         "all_trades": result.get("all_trades", []),  # Trade log from PortfolioTradeRecorder
-        "rebalance_frequency": (config.get("rebalance_config") or {}).get("frequency"),
-        "optimization_method": config.get("optimization_method", "equal_weight"),
         "per_asset_params": None,
         # Individual results for UI compatibility
         "individual_results": result.get("individual_results", []),
-        # Correlation and optimization
-        "correlation": result.get("correlation", {}),
-        "optimization": result.get("optimization", {}),
-        # Additional metrics
-        "portfolio_metrics": result.get("metrics", {}),
+        # Extended metrics including optimization suggestions
+        "portfolio_metrics": extended_metrics,
+        # Optimization suggestions (optional, may not exist if optimization failed)
+        "optimization": result.get("optimization"),
+        # Correlation matrix (optional)
+        "correlation": result.get("correlation"),
     }
 
     portfolio_id = storage.save_result(storage_result, user_id=config.get("user_id"))
@@ -219,13 +185,12 @@ async def multi_asset_backtest(
 
     Features:
     - Single Backtrader Cerebro instance managing multiple data feeds
-    - Periodic rebalancing with multiple optimization methods
     - Unified portfolio equity curve
     - Per-asset strategy parameter configuration
     - Transaction cost tracking
 
     This endpoint provides true multi-asset backtesting (not parallel backtests),
-    enabling portfolio-level features like rebalancing and optimization.
+    enabling portfolio-level features and comprehensive performance tracking.
     """
     # Validate inputs
     if len(request.tickers) != len(request.weights):
@@ -321,8 +286,8 @@ async def get_portfolio_history(
 async def get_portfolio_detail(portfolio_id: str, user_id: str = Depends(get_optional_user_id)):
     """
     Get detailed portfolio result by ID.
-    
-    Includes all metrics, correlation matrix, and optimization suggestions.
+
+    Includes all metrics, equity curve, and asset contributions.
     """
     try:
         

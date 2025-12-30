@@ -1,10 +1,9 @@
-import { Card, Table, Tabs } from 'antd';
-import { LineChartOutlined, PieChartOutlined, SyncOutlined, TableOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { Card, Image, Table, Tabs } from 'antd';
+import { LineChartOutlined, PieChartOutlined, TableOutlined, UnorderedListOutlined, PictureOutlined } from '@ant-design/icons';
 import PortfolioMetricsCard from './PortfolioMetricsCard';
 import CorrelationCard from './CorrelationCard';
 import OptimizationCard from './OptimizationCard';
 import EquityCurveChart from './EquityCurveChart';
-import RebalancingTimeline from './RebalancingTimeline';
 import AssetContributionChart from './AssetContributionChart';
 import PortfolioTradeLog from './PortfolioTradeLog';
 
@@ -14,10 +13,9 @@ import PortfolioTradeLog from './PortfolioTradeLog';
 function PortfolioResultsSection({ t, result, columns }) {
     // Check if we have multi-asset specific data
     const hasEquityCurve = result.equity_curve && Object.keys(result.equity_curve).length > 0;
-    const hasRebalancing = result.rebalancing_events && result.rebalancing_events.length > 0;
     const hasContributions = result.asset_contributions && Object.keys(result.asset_contributions).length > 0;
-    const hasTrades = (result.all_trades && result.all_trades.length > 0) || hasRebalancing;
-    const hasMultiAssetData = hasEquityCurve || hasRebalancing || hasContributions || hasTrades;
+    const hasTrades = result.all_trades && result.all_trades.length > 0;
+    const hasMultiAssetData = hasEquityCurve || hasContributions || hasTrades;
 
     // Build tab items for multi-asset results
     const tabItems = [];
@@ -34,25 +32,6 @@ function PortfolioResultsSection({ t, result, columns }) {
             children: (
                 <EquityCurveChart
                     equityCurve={result.equity_curve}
-                    rebalancingEvents={result.rebalancing_events}
-                    t={t}
-                />
-            ),
-        });
-    }
-
-    if (hasRebalancing) {
-        tabItems.push({
-            key: 'rebalancing',
-            label: (
-                <span>
-                    <SyncOutlined />
-                    {t('portfolio.rebalancing', 'Rebalancing')}
-                </span>
-            ),
-            children: (
-                <RebalancingTimeline
-                    rebalancingEvents={result.rebalancing_events}
                     t={t}
                 />
             ),
@@ -100,7 +79,7 @@ function PortfolioResultsSection({ t, result, columns }) {
         ),
     });
 
-    // Always add trade log tab (shows trades from rebalancing events or initial positions)
+    // Always add trade log tab (shows trades from initial positions or strategy signals)
     tabItems.push({
         key: 'trades',
         label: (
@@ -112,20 +91,37 @@ function PortfolioResultsSection({ t, result, columns }) {
         children: (
             <PortfolioTradeLog
                 allTrades={result.all_trades}
-                rebalancingEvents={result.rebalancing_events}
                 t={t}
             />
         ),
     });
 
+    // Add portfolio chart tab if available
+    if (result.plot_url) {
+        tabItems.push({
+            key: 'chart',
+            label: (
+                <span>
+                    <PictureOutlined />
+                    {t('portfolio.chart', 'Chart')}
+                </span>
+            ),
+            children: (
+                <div style={{ textAlign: 'center', padding: 16 }}>
+                    <Image
+                        src={result.plot_url}
+                        alt={t('portfolio.chart_alt', 'Portfolio Chart')}
+                        style={{ maxWidth: '100%', maxHeight: 600 }}
+                    />
+                </div>
+            ),
+        });
+    }
+
     return (
         <div className="results-section">
-            <PortfolioMetricsCard t={t} metrics={{
-                final_value: result.final_value ?? result.portfolio_metrics?.final_value,
-                total_return: result.total_return ?? result.portfolio_metrics?.total_return,
-                weighted_sharpe: result.weighted_sharpe ?? result.sharpe_ratio ?? result.portfolio_metrics?.weighted_sharpe,
-                max_drawdown: result.max_drawdown ?? result.portfolio_metrics?.max_drawdown,
-            }} />
+            {/* Pass the entire result object to PortfolioMetricsCard for expanded metrics */}
+            <PortfolioMetricsCard t={t} metrics={result} />
 
             {hasMultiAssetData ? (
                 <Card className="multi-asset-results-card">
@@ -154,14 +150,10 @@ function PortfolioResultsSection({ t, result, columns }) {
             )}
 
             {result.optimization && !result.optimization.error && (
-                <OptimizationCard t={t} optimization={result.optimization} />
+                <OptimizationCard t={t} optimization={result.optimization} metrics={result} />
             )}
 
-            {result.plot_url && (
-                <Card className="chart-card" title={t('portfolio.chart', 'Portfolio Chart')}>
-                    <img src={result.plot_url} alt={t('portfolio.chart_alt', 'Portfolio Chart')} className="portfolio-chart" />
-                </Card>
-            )}
+
         </div>
     );
 }

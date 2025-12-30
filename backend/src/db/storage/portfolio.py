@@ -41,6 +41,12 @@ class PortfolioStorage(BaseStorage):
             try:
                 portfolio_metrics = result.get("portfolio_metrics", {})
                 
+                # Include optimization and correlation in portfolio_metrics for storage
+                if result.get("optimization"):
+                    portfolio_metrics["optimization"] = result.get("optimization")
+                if result.get("correlation"):
+                    portfolio_metrics["correlation"] = result.get("correlation")
+                
                 model = PortfolioResultModel(
                     portfolio_id=result.get("id"),
                     user_id=user_id,
@@ -60,12 +66,9 @@ class PortfolioStorage(BaseStorage):
                     failed_backtests=portfolio_metrics.get("failed_backtests", 0),
                     portfolio_metrics=portfolio_metrics,
                     individual_results=result.get("individual_results", []),
-                    correlation_matrix=result.get("correlation", {}),
-                    optimization_suggestion=result.get("optimization", {}),
                     plot_filename=result.get("plot_filename"),
                     # Multi-asset specific fields
                     equity_curve=result.get("equity_curve", {}),
-                    rebalancing_events=result.get("rebalancing_events", []),
                     asset_contributions=result.get("asset_contributions", {}),
                     all_trades=result.get("all_trades", []),
                 )
@@ -176,7 +179,17 @@ class PortfolioStorage(BaseStorage):
                 raise
 
     def _model_to_dict(self, model: PortfolioResultModel, summary: bool = False) -> dict:
-        """Convert model to dict."""
+        """Convert model to dict with proper structure for frontend."""
+        portfolio_metrics = model.portfolio_metrics or {}
+        
+        # Extract metrics from portfolio_metrics JSON
+        sharpe_ratio = model.weighted_sharpe or portfolio_metrics.get("sharpe_ratio")
+        calmar_ratio = portfolio_metrics.get("calmar_ratio")
+        recovery_factor = portfolio_metrics.get("recovery_factor")
+        total_commission = portfolio_metrics.get("total_commission", 0.0)
+        total_volume = portfolio_metrics.get("total_volume", 0.0)
+        total_trades = portfolio_metrics.get("total_trades", 0)
+        
         result = {
             "id": model.portfolio_id,
             "portfolio_id": model.portfolio_id,  # Also include for frontend compatibility
@@ -198,19 +211,38 @@ class PortfolioStorage(BaseStorage):
             "failed_backtests": model.failed_backtests,
             "plot_filename": model.plot_filename,
             "plot_url": f"/images/{model.plot_filename}" if model.plot_filename else None,
+            # Risk-adjusted metrics at root level for frontend compatibility
+            "sharpe_ratio": sharpe_ratio,
+            "calmar_ratio": calmar_ratio,
+            "recovery_factor": recovery_factor,
+            # Trading activity at root level
+            "total_commission": total_commission,
+            "total_volume": total_volume,
+            "total_trades": total_trades,
         }
         
         if not summary:
+            # Extract optimization and correlation from portfolio_metrics
+            optimization = portfolio_metrics.get("optimization")
+            correlation = portfolio_metrics.get("correlation")
+            
             result.update({
-                "portfolio_metrics": model.portfolio_metrics,
+                "portfolio_metrics": portfolio_metrics,
                 "individual_results": model.individual_results,
-                "correlation": model.correlation_matrix,
-                "optimization": model.optimization_suggestion,
                 # Multi-asset specific fields
                 "equity_curve": model.equity_curve or {},
-                "rebalancing_events": model.rebalancing_events or [],
                 "asset_contributions": model.asset_contributions or {},
                 "all_trades": model.all_trades or [],
+                # Wrap in metrics structure for frontend compatibility
+                "metrics": {
+                    "portfolio_metrics": portfolio_metrics.get("portfolio_metrics", portfolio_metrics),
+                    "returns": portfolio_metrics.get("returns", {}),
+                    "drawdown": portfolio_metrics.get("drawdown", {}),
+                },
+                # Optimization suggestions
+                "optimization": optimization,
+                # Correlation matrix
+                "correlation": correlation,
             })
         
         return result
