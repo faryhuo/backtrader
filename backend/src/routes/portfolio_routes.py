@@ -118,6 +118,19 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
     storage = get_portfolio_storage()
 
     # Build storage-compatible format
+    # Include all fields needed by frontend in portfolio_metrics JSON
+    extended_metrics = result.get("metrics", {})
+    extended_metrics.update({
+        # Risk-adjusted metrics
+        "sharpe_ratio": result.get("sharpe_ratio"),
+        "calmar_ratio": result.get("calmar_ratio"),
+        "recovery_factor": result.get("recovery_factor"),
+        # Trading activity
+        "total_commission": result.get("total_commission", 0.0),
+        "total_volume": result.get("total_volume", 0.0),
+        "total_trades": result.get("total_trades", 0),
+    })
+    
     storage_result = {
         "id": str(uuid.uuid4()),  # Generate unique portfolio ID
         "tickers": result["tickers"],
@@ -142,8 +155,12 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
         "per_asset_params": None,
         # Individual results for UI compatibility
         "individual_results": result.get("individual_results", []),
-        # Additional metrics
-        "portfolio_metrics": result.get("metrics", {}),
+        # Extended metrics including optimization suggestions
+        "portfolio_metrics": extended_metrics,
+        # Optimization suggestions (optional, may not exist if optimization failed)
+        "optimization": result.get("optimization"),
+        # Correlation matrix (optional)
+        "correlation": result.get("correlation"),
     }
 
     portfolio_id = storage.save_result(storage_result, user_id=config.get("user_id"))

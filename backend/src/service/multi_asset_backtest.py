@@ -87,12 +87,17 @@ def calculate_optimal_weights(
         for ticker in tickers:
             try:
                 df = get_data(ticker, start_date, end_date, timeframe)
-                if df is not None and not df.empty and 'close' in df.columns:
-                    # Calculate returns
-                    returns = df['close'].pct_change().dropna()
-                    if len(returns) > 0:
-                        returns_data.append(returns)
-                        valid_tickers.append(ticker)
+                if df is not None and not df.empty:
+                    # Handle both lowercase and capitalized column names
+                    close_col = 'close' if 'close' in df.columns else 'Close'
+                    if close_col in df.columns:
+                        # Calculate returns
+                        returns = df[close_col].pct_change().dropna()
+                        if len(returns) > 0:
+                            returns_data.append(returns)
+                            valid_tickers.append(ticker)
+                    else:
+                        logger.warning(f"No close column for {ticker}, skipping in optimization")
                 else:
                     logger.warning(f"No data for {ticker}, skipping in optimization")
             except Exception as e:
@@ -189,6 +194,96 @@ def calculate_optimal_weights(
             "error": str(e),
             "tickers": tickers,
             "optimal_weights": [1.0 / len(tickers)] * len(tickers),
+        }
+
+
+def calculate_correlation_matrix(
+    tickers: list[str],
+    start_date: str,
+    end_date: str,
+    timeframe: str = "1d"
+) -> dict:
+    """
+    Calculate correlation matrix between asset returns.
+
+    Args:
+        tickers: List of ticker symbols
+        start_date: Start date for historical data
+        end_date: End date for historical data
+        timeframe: Data timeframe
+
+    Returns:
+        Dictionary containing:
+        - matrix: 2D list of correlation values
+        - tickers: List of tickers (for reference)
+    """
+    try:
+        logger.info(f"Calculating correlation matrix for {tickers}")
+
+        # Load price data for all tickers
+        returns_data = []
+        valid_tickers = []
+
+        for ticker in tickers:
+            try:
+                df = get_data(ticker, start_date, end_date, timeframe)
+                if df is not None and not df.empty:
+                    # Handle both lowercase and capitalized column names
+                    close_col = 'close' if 'close' in df.columns else 'Close'
+                    if close_col in df.columns:
+                        # Calculate returns
+                        returns = df[close_col].pct_change().dropna()
+                        if len(returns) > 0:
+                            returns_data.append(returns)
+                            valid_tickers.append(ticker)
+                    else:
+                        logger.warning(f"No close column for {ticker}, skipping in correlation")
+                else:
+                    logger.warning(f"No data for {ticker}, skipping in correlation")
+            except Exception as e:
+                logger.warning(f"Failed to load data for {ticker}: {e}")
+
+        if len(valid_tickers) < 2:
+            logger.warning("Not enough valid tickers for correlation matrix")
+            return {
+                "error": "Insufficient data for correlation",
+                "tickers": tickers,
+            }
+
+        # Create returns DataFrame
+        returns_df = pd.concat(returns_data, axis=1, keys=valid_tickers)
+        returns_df = returns_df.dropna()
+
+        if len(returns_df) < 10:
+            logger.warning("Insufficient data points for correlation")
+            return {
+                "error": "Insufficient data points",
+                "tickers": tickers,
+            }
+
+        # Calculate correlation matrix
+        corr_matrix = returns_df.corr()
+        
+        # Convert to 2D list for JSON serialization (matches frontend expectation)
+        matrix = []
+        for ticker1 in valid_tickers:
+            row = []
+            for ticker2 in valid_tickers:
+                row.append(float(corr_matrix.loc[ticker1, ticker2]))
+            matrix.append(row)
+
+        logger.info("Correlation matrix calculation complete")
+
+        return {
+            "tickers": valid_tickers,
+            "matrix": matrix,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to calculate correlation matrix: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "tickers": tickers,
         }
 
 
@@ -563,6 +658,24 @@ def run_multi_asset_backtest(
             # Add error result so frontend knows optimization was attempted
             result["optimization"] = {
                 "error": f"Optimization failed: {str(e)}",
+                "tickers": tickers,
+            }
+
+        # Step 10: Calculate correlation matrix
+        logger.info("Step 10: Calculating correlation matrix...")
+        try:
+            correlation_result = calculate_correlation_matrix(
+                tickers=tickers,
+                start_date=start_date,
+                end_date=end_date,
+                timeframe=timeframe,
+            )
+            result["correlation"] = correlation_result
+            logger.info("Correlation matrix calculation complete")
+        except Exception as e:
+            logger.warning(f"Failed to calculate correlation matrix: {e}")
+            result["correlation"] = {
+                "error": f"Correlation calculation failed: {str(e)}",
                 "tickers": tickers,
             }
 

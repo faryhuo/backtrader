@@ -19,6 +19,7 @@ import EquityCurveChart from '../PortfolioBacktest/EquityCurveChart'
 import AssetContributionChart from '../PortfolioBacktest/AssetContributionChart'
 import CorrelationCard from '../PortfolioBacktest/CorrelationCard'
 import OptimizationCard from '../PortfolioBacktest/OptimizationCard'
+import PortfolioTradeLog from '../PortfolioBacktest/PortfolioTradeLog'
 
 import './PortfolioDetailModal.css'
 
@@ -33,6 +34,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
     const hasContributions = portfolio.asset_contributions && Object.keys(portfolio.asset_contributions).length > 0
     const hasCorrelation = portfolio.correlation && !portfolio.correlation.error
     const hasOptimization = portfolio.optimization && !portfolio.optimization.error
+    const hasTrades = portfolio.all_trades && portfolio.all_trades.length > 0
 
     // Individual asset results table columns
     const assetColumns = [
@@ -222,6 +224,22 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
         ),
     })
 
+    // Add trade log tab if trades available
+    if (hasTrades) {
+        tabItems.push({
+            key: 'trades',
+            label: (
+                <span>
+                    <TableOutlined />
+                    {t('portfolio.trade_log', 'Trade Log')}
+                </span>
+            ),
+            children: (
+                <PortfolioTradeLog allTrades={portfolio.all_trades} t={t} />
+            ),
+        })
+    }
+
     // Add correlation tab
     if (hasCorrelation) {
         tabItems.push({
@@ -249,7 +267,7 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                 </span>
             ),
             children: (
-                <OptimizationCard t={t} optimization={portfolio.optimization} />
+                <OptimizationCard t={t} optimization={portfolio.optimization} metrics={portfolio} />
             ),
         })
     }
