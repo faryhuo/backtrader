@@ -9,15 +9,25 @@ import {
 
 /**
  * Generate optimization insights based on portfolio metrics
+ * Handles both live backtest data structure and historical data structure
  */
 const generateInsights = (metrics, t) => {
     const insights = [];
-    const portfolioMetrics = metrics?.metrics?.portfolio_metrics || {};
+
+    // Handle multiple possible data structures for portfolio metrics
+    // Live backtest: metrics.metrics.portfolio_metrics
+    // History detail: metrics.portfolio_metrics.portfolio_metrics OR metrics.portfolio_metrics
+    const portfolioMetrics =
+        metrics?.metrics?.portfolio_metrics ||
+        metrics?.portfolio_metrics?.portfolio_metrics ||
+        metrics?.portfolio_metrics ||
+        {};
 
     // Risk-adjusted return analysis
-    const sharpeRatio = metrics?.sharpe_ratio || 0;
+    // sharpe_ratio can be at root or in portfolio_metrics
+    const sharpeRatio = metrics?.sharpe_ratio || metrics?.weighted_sharpe || portfolioMetrics?.sharpe_ratio || 0;
     const sortinoRatio = portfolioMetrics?.sortino_ratio || 0;
-    const calmarRatio = metrics?.calmar_ratio || 0;
+    const calmarRatio = metrics?.calmar_ratio || portfolioMetrics?.calmar_ratio || 0;
 
     if (sharpeRatio < 0.5) {
         insights.push({
@@ -35,7 +45,7 @@ const generateInsights = (metrics, t) => {
 
     // Win rate analysis
     const winRate = portfolioMetrics?.win_rate || 0;
-    if (winRate < 0.4) {
+    if (winRate < 0.4 && winRate > 0) {
         insights.push({
             type: 'warning',
             icon: <WarningOutlined />,
@@ -79,8 +89,8 @@ const generateInsights = (metrics, t) => {
     }
 
     // Recovery factor analysis
-    const recoveryFactor = metrics?.recovery_factor || 0;
-    if (recoveryFactor < 2) {
+    const recoveryFactor = metrics?.recovery_factor || portfolioMetrics?.recovery_factor || 0;
+    if (recoveryFactor < 2 && recoveryFactor !== 0) {
         insights.push({
             type: 'warning',
             icon: <WarningOutlined />,
@@ -95,15 +105,16 @@ const generateInsights = (metrics, t) => {
     }
 
     // Trading frequency analysis
-    const totalTrades = metrics?.total_trades || 0;
+    const totalTrades = metrics?.total_trades || portfolioMetrics?.total_trades || 0;
     const numDays = portfolioMetrics?.num_days || 1;
     const tradesPerDay = totalTrades / numDays;
 
     if (tradesPerDay > 2) {
+        const commission = metrics?.total_commission || portfolioMetrics?.total_commission || 0;
         insights.push({
             type: 'info',
             icon: <InfoCircleOutlined />,
-            message: t('portfolio.insights.high_frequency', 'High trading frequency detected. Monitor transaction costs carefully. Commission impact: $' + (metrics?.total_commission || 0).toFixed(2)),
+            message: t('portfolio.insights.high_frequency', 'High trading frequency detected. Monitor transaction costs carefully. Commission impact: $' + commission.toFixed(2)),
         });
     }
 

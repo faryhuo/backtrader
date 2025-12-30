@@ -129,12 +129,8 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
             ),
             children: (
                 <div className="overview-tab">
-                    {/* Pass the entire portfolio object for expanded metrics */}
-                    <PortfolioMetricsCard
-                        t={t}
-                        metrics={portfolio}
-                    />
-                    <Card className="overview-info-card" size="small">
+                    {/* Backtest configuration info - should come first */}
+                    <Card className="overview-info-card" size="small" style={{ marginBottom: 16 }}>
                         <Descriptions bordered column={2} size="small">
                             <Descriptions.Item label={t('history.tickers')}>
                                 {portfolio.tickers?.map(ticker => (
@@ -158,6 +154,11 @@ function PortfolioDetailModal({ visible, portfolio, onClose }) {
                             </Descriptions.Item>
                         </Descriptions>
                     </Card>
+                    {/* Pass the entire portfolio object for expanded metrics */}
+                    <PortfolioMetricsCard
+                        t={t}
+                        metrics={portfolio}
+                    />
                 </div>
             )
         },

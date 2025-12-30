@@ -6,5 +6,13 @@
   "close_price": "Close Price",
   "size": "Size",
   "net_pnl": "Net PnL",
-  "return": "Return"
+  "return": "Return",
+  "table_view": "Table",
+  "timeline_view": "Timeline",
+  "no_trades": "No trades executed",
+  "profit": "Profit",
+  "loss": "Loss",
+  "open": "Open",
+  "close": "Close",
+  "shares": "shares"
 }
