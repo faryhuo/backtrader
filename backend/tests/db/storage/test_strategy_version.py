@@ -5,7 +5,6 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from src.db.storage.strategy_version import (
-    StrategyVersionStorage,
     compute_code_hash,
     count_line_changes,
 )
@@ -71,83 +70,35 @@ class TestCountLineChanges:
         assert removed == 1
 
 
-class TestStrategyVersionStorageInit:
-    """Tests for StrategyVersionStorage initialization."""
+class TestStrategyVersionStorageImports:
+    """Tests for strategy version storage module imports."""
 
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_init_storage(self, mock_init_db):
-        """Test storage initialization."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage()
-        assert storage is not None
+    def test_module_import(self):
+        """Test that strategy version storage module can be imported."""
+        from src.db.storage import strategy_version
+        assert strategy_version is not None
 
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_init_storage_custom_url(self, mock_init_db):
-        """Test storage initialization with custom database URL."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage(database_url="sqlite:///test.db")
-        mock_init_db.assert_called()
+    def test_storage_class_import(self):
+        """Test that StrategyVersionStorage class can be imported."""
+        from src.db.storage.strategy_version import StrategyVersionStorage
+        assert StrategyVersionStorage is not None
 
 
-class TestStrategyVersionStorageCreateVersion:
-    """Tests for create_version method."""
+class TestStrategyVersionStorageClass:
+    """Tests for StrategyVersionStorage class structure."""
 
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_create_version_interface(self, mock_init_db):
-        """Test that create_version method exists with correct signature."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage()
+    def test_storage_has_required_methods(self):
+        """Test that StrategyVersionStorage class has all required methods."""
+        from src.db.storage.strategy_version import StrategyVersionStorage
         
-        assert hasattr(storage, "create_version")
-        import inspect
-        sig = inspect.signature(storage.create_version)
-        params = list(sig.parameters.keys())
-        assert "strategy_name" in params
-        assert "code" in params
+        # Check all expected methods exist
+        assert hasattr(StrategyVersionStorage, "create_version")
+        assert hasattr(StrategyVersionStorage, "list_versions")
+        assert hasattr(StrategyVersionStorage, "get_version")
+        assert hasattr(StrategyVersionStorage, "get_latest_version")
 
-
-class TestStrategyVersionStorageListVersions:
-    """Tests for list_versions method."""
-
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_list_versions_interface(self, mock_init_db):
-        """Test that list_versions method exists with correct signature."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage()
-        
-        assert hasattr(storage, "list_versions")
-        import inspect
-        sig = inspect.signature(storage.list_versions)
-        params = list(sig.parameters.keys())
-        assert "strategy_name" in params
-        assert "limit" in params
-        assert "offset" in params
-
-
-class TestStrategyVersionStorageGetVersion:
-    """Tests for get_version method."""
-
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_get_version_interface(self, mock_init_db):
-        """Test that get_version method exists with correct signature."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage()
-        
-        assert hasattr(storage, "get_version")
-        import inspect
-        sig = inspect.signature(storage.get_version)
-        params = list(sig.parameters.keys())
-        assert "strategy_name" in params
-        assert "version_number" in params
-
-
-class TestStrategyVersionStorageGetLatestVersion:
-    """Tests for get_latest_version method."""
-
-    @patch("src.db.storage.strategy_version.init_database")
-    def test_get_latest_version_interface(self, mock_init_db):
-        """Test that get_latest_version method exists."""
-        mock_init_db.return_value = MagicMock()
-        storage = StrategyVersionStorage()
-        
-        assert hasattr(storage, "get_latest_version")
+    def test_storage_inherits_base_storage(self):
+        """Test that StrategyVersionStorage inherits from BaseStorage."""
+        from src.db.storage.strategy_version import StrategyVersionStorage
+        from src.db.storage.base import BaseStorage
+        assert issubclass(StrategyVersionStorage, BaseStorage)

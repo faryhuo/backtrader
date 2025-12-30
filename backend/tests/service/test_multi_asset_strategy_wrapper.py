@@ -13,13 +13,34 @@ class TestMultiAssetStrategyWrapperImports:
         from src.service import multi_asset_strategy_wrapper
         assert multi_asset_strategy_wrapper is not None
 
+    def test_multi_asset_portfolio_strategy_import(self):
+        """Test that MultiAssetPortfolioStrategy class can be imported."""
+        from src.service.multi_asset_strategy_wrapper import MultiAssetPortfolioStrategy
+        assert MultiAssetPortfolioStrategy is not None
 
-class TestMultiAssetStrategyWrapper:
-    """Tests for MultiAssetStrategyWrapper class if exists."""
+    def test_buy_and_hold_strategy_import(self):
+        """Test that BuyAndHoldPortfolioStrategy class can be imported."""
+        from src.service.multi_asset_strategy_wrapper import BuyAndHoldPortfolioStrategy
+        assert BuyAndHoldPortfolioStrategy is not None
 
-    def test_class_or_function_exists(self):
-        """Test that wrapper class or function exists."""
-        from src.service import multi_asset_strategy_wrapper
-        # Should have some way to wrap strategies
-        assert hasattr(multi_asset_strategy_wrapper, 'MultiAssetStrategyWrapper') or \
-               hasattr(multi_asset_strategy_wrapper, 'wrap_strategy')
+
+class TestMultiAssetPortfolioStrategy:
+    """Tests for MultiAssetPortfolioStrategy class."""
+
+    def test_strategy_is_backtrader_strategy(self):
+        """Test that strategy inherits from backtrader Strategy."""
+        import backtrader as bt
+        from src.service.multi_asset_strategy_wrapper import MultiAssetPortfolioStrategy
+        assert issubclass(MultiAssetPortfolioStrategy, bt.Strategy)
+
+
+class TestBuyAndHoldPortfolioStrategy:
+    """Tests for BuyAndHoldPortfolioStrategy class."""
+
+    def test_strategy_is_multi_asset_strategy(self):
+        """Test that BuyAndHoldPortfolioStrategy inherits from MultiAssetPortfolioStrategy."""
+        from src.service.multi_asset_strategy_wrapper import (
+            MultiAssetPortfolioStrategy,
+            BuyAndHoldPortfolioStrategy,
+        )
+        assert issubclass(BuyAndHoldPortfolioStrategy, MultiAssetPortfolioStrategy)
