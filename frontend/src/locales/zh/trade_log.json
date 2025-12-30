@@ -1,9 +1,9 @@
 {
   "title": "交易日志",
-  "open_date": "开仓日期",
-  "open_price": "开仓价格",
-  "close_date": "平仓日期",
-  "close_price": "平仓价格",
+  "entry_date": "开仓日期",
+  "entry_price": "开仓价格",
+  "exit_date": "平仓日期",
+  "exit_price": "平仓价格",
   "size": "数量",
   "net_pnl": "净盈亏",
   "return": "收益率",
@@ -12,7 +12,7 @@
   "no_trades": "无交易记录",
   "profit": "盈利",
   "loss": "亏损",
-  "open": "开仓",
-  "close": "平仓",
+  "entry": "开仓",
+  "exit": "平仓",
   "shares": "股"
 }

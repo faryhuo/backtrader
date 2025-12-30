@@ -5,7 +5,7 @@
 .claude
 AGENTS.md
 CLAUDE.md
-docs/*
+docs/**
 
 backend/.env
 backend/.envprod

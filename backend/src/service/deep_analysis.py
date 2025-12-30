@@ -32,7 +32,7 @@ class DeepAnalysisError(Exception):
 
 
 def compute_deep_analysis(
-    equity_curve: Dict[datetime, float],
+    equity_curve: Dict[str, float],
     start_date: str,
     end_date: str,
     initial_cash: float = 100000.0,
@@ -114,7 +114,7 @@ def compute_deep_analysis(
     return result
 
 
-def _equity_curve_to_returns(equity_curve: Dict[datetime, float]) -> pd.Series:
+def _equity_curve_to_returns(equity_curve: Dict[str, float]) -> pd.Series:
     """
     Convert equity curve dict to daily returns Series.
 

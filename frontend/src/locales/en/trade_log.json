@@ -1,9 +1,9 @@
 {
   "title": "Trade Log",
-  "open_date": "Open Date",
-  "open_price": "Open Price",
-  "close_date": "Close Date",
-  "close_price": "Close Price",
+  "entry_date": "Entry Date",
+  "entry_price": "Entry Price",
+  "exit_date": "Exit Date",
+  "exit_price": "Exit Price",
   "size": "Size",
   "net_pnl": "Net PnL",
   "return": "Return",
@@ -12,7 +12,7 @@
   "no_trades": "No trades executed",
   "profit": "Profit",
   "loss": "Loss",
-  "open": "Open",
-  "close": "Close",
+  "entry": "Entry",
+  "exit": "Exit",
   "shares": "shares"
 }

@@ -131,10 +131,10 @@ class TradeRecorder(bt.Analyzer):
                     # 记录完整的交易信息
                     complete_trade = {
                         'trade_num': len(self.trades) + 1,
-                        'open_date': str(open_info['date']),
-                        'open_price': round(open_info['price'], 2),
-                        'close_date': str(trade_info['date']),
-                        'close_price': round(trade_info['price'], 2),
+                        'entry_date': str(open_info['date']),
+                        'entry_price': round(open_info['price'], 2),
+                        'exit_date': str(trade_info['date']),
+                        'exit_price': round(trade_info['price'], 2),
                         'size': open_info['size'],
                         'pnl': round(pnl, 2),
                         'commission': round(total_commission, 2),

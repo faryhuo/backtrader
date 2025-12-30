@@ -53,11 +53,11 @@ export const buildRecentTradesTable = (trades, limit = 50) => {
     const recentTrades = trades.slice(-limit);
 
     const header = `Recent Trading Logs (Last ${recentTrades.length} trades):
-| # | Open Date | Open Price | Close Date | Close Price | Size | Net PnL | Return % |
-|---|-----------|------------|------------|-------------|------|---------|----------|`;
+| # | Entry Date | Entry Price | Exit Date | Exit Price | Size | Net PnL | Return % |
+|---|------------|-------------|-----------|------------|------|---------|----------|`;
 
     const rows = recentTrades.map(t =>
-        `| ${t.trade_num} | ${t.open_date} | ${isNumber(t.open_price) ? t.open_price.toFixed(2) : 'N/A'} | ${t.close_date} | ${isNumber(t.close_price) ? t.close_price.toFixed(2) : 'N/A'} | ${t.size} | ${isNumber(t.net_pnl) ? t.net_pnl.toFixed(2) : 'N/A'} | ${isNumber(t.return_pct) ? t.return_pct.toFixed(2) : 'N/A'}% |`
+        `| ${t.trade_num} | ${t.entry_date} | ${isNumber(t.entry_price) ? t.entry_price.toFixed(2) : 'N/A'} | ${t.exit_date} | ${isNumber(t.exit_price) ? t.exit_price.toFixed(2) : 'N/A'} | ${t.size} | ${isNumber(t.net_pnl) ? t.net_pnl.toFixed(2) : 'N/A'} | ${isNumber(t.return_pct) ? t.return_pct.toFixed(2) : 'N/A'}% |`
     ).join('\n');
 
     return `${header}\n${rows}`;

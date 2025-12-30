@@ -57,11 +57,11 @@ const TradeEventItem = ({ trade, t }) => {
                     marginBottom: 4
                 }}>
                     <Tag color="green" style={{ margin: 0, minWidth: 45 }}>
-                        {t('trade_log.open', 'Open')}
+                        {t('trade_log.entry', 'Entry')}
                     </Tag>
-                    <Text type="secondary">{trade.open_date}</Text>
+                    <Text type="secondary">{trade.entry_date}</Text>
                     <Text>@</Text>
-                    <Text strong>{formatCurrencyDisplay(trade.open_price)}</Text>
+                    <Text strong>{formatCurrencyDisplay(trade.entry_price)}</Text>
                     <Text type="secondary">×</Text>
                     <Text>{trade.size} {t('trade_log.shares', 'shares')}</Text>
                 </div>
@@ -78,11 +78,11 @@ const TradeEventItem = ({ trade, t }) => {
                     gap: 8
                 }}>
                     <Tag color="red" style={{ margin: 0, minWidth: 45 }}>
-                        {t('trade_log.close', 'Close')}
+                        {t('trade_log.exit', 'Exit')}
                     </Tag>
-                    <Text type="secondary">{trade.close_date}</Text>
+                    <Text type="secondary">{trade.exit_date}</Text>
                     <Text>@</Text>
-                    <Text strong>{formatCurrencyDisplay(trade.close_price)}</Text>
+                    <Text strong>{formatCurrencyDisplay(trade.exit_price)}</Text>
                     <Text type="secondary">=</Text>
                     <Text style={{ color: isProfitable ? '#52c41a' : '#ff4d4f' }}>
                         {formatCurrencyDisplay(trade.net_pnl)}
@@ -123,29 +123,29 @@ function TradeLog({ trades }) {
             width: 50,
         },
         {
-            title: t('trade_log.open_date'),
-            dataIndex: 'open_date',
-            key: 'open_date',
+            title: t('trade_log.entry_date'),
+            dataIndex: 'entry_date',
+            key: 'entry_date',
             width: 100,
         },
         {
-            title: t('trade_log.open_price'),
-            dataIndex: 'open_price',
-            key: 'open_price',
+            title: t('trade_log.entry_price'),
+            dataIndex: 'entry_price',
+            key: 'entry_price',
             width: 100,
             align: 'right',
             render: (price) => formatCurrency(price),
         },
         {
-            title: t('trade_log.close_date'),
-            dataIndex: 'close_date',
-            key: 'close_date',
+            title: t('trade_log.exit_date'),
+            dataIndex: 'exit_date',
+            key: 'exit_date',
             width: 100,
         },
         {
-            title: t('trade_log.close_price'),
-            dataIndex: 'close_price',
-            key: 'close_price',
+            title: t('trade_log.exit_price'),
+            dataIndex: 'exit_price',
+            key: 'exit_price',
             width: 100,
             align: 'right',
             render: (price) => formatCurrency(price),
@@ -186,7 +186,7 @@ function TradeLog({ trades }) {
     // Create timeline items - group by close date
     const timelineItems = trades.map((trade) => ({
         color: trade.net_pnl >= 0 ? 'green' : 'red',
-        label: trade.close_date,
+        label: trade.exit_date,
         children: <TradeEventItem trade={trade} t={t} />,
     }));
 
