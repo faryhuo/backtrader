@@ -6,6 +6,7 @@ import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
 import { useAIAnalysis } from '../hooks/useAIAnalysis';
 import { buildTabItems } from '../utils/tabItemsBuilder.jsx';
+import { getDefaults } from '../config/defaults';
 import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm';
 import ResultsHeader from '../components/RunStrategy/ResultsHeader';
 import TaskProgressCard from '../components/RunStrategy/TaskProgressCard';
@@ -21,19 +22,20 @@ import { useTranslation } from 'react-i18next';
 function RunStrategy() {
     const { t } = useTranslation();
     const { settings, getAvailableModels } = useSettingsContext();
+    const defaults = getDefaults().backtest;
 
     // Form State
     const [ticker, setTicker] = useState('AAPL');
     const [startDate, setStartDate] = useState('2022-01-01');
     const [endDate, setEndDate] = useState('2023-12-31');
-    const [initialCash, setInitialCash] = useState(100000.0);
-    const [commission, setCommission] = useState(0.0005);
-    const [stake, setStake] = useState(100);
+    const [initialCash, setInitialCash] = useState(defaults.initial_cash);
+    const [commission, setCommission] = useState(defaults.commission);
+    const [stake, setStake] = useState(defaults.stake);
     // Sizer configuration
-    const [sizerType, setSizerType] = useState('fixed_size');
-    const [sizerConfig, setSizerConfig] = useState({ stake: 100, percents: 10, risk_percent: 2 });
+    const [sizerType, setSizerType] = useState(defaults.sizer_type);
+    const [sizerConfig, setSizerConfig] = useState({ stake: defaults.stake, percents: defaults.sizer_percent, risk_percent: defaults.sizer_risk_percent });
     // Data timeframe
-    const [timeframe, setTimeframe] = useState('1d');
+    const [timeframe, setTimeframe] = useState(defaults.timeframe);
 
     const {
         strategies,

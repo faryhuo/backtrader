@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from src.config.settings import IMAGES_DIR
 from src.contracts.task import TaskStatus
+from src.contracts.defaults import BACKTEST_DEFAULTS
 from src.service.task_manager import get_task_manager
 from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
 from src.routes.common.auth_dependencies import get_optional_user_id
@@ -52,13 +53,13 @@ class BacktestRequest(BaseModel):
     start_date: str
     end_date: str
     initial_cash: float
-    commission: float | None = 0.0005
-    stake: int | None = 100
+    commission: float | None = BACKTEST_DEFAULTS.COMMISSION
+    stake: int | None = BACKTEST_DEFAULTS.STAKE
     # Sizer configuration
-    sizer_type: str | None = "fixed_size"  # fixed_size, percent_sizer, all_in_sizer, risk_sizer, kelly_sizer
+    sizer_type: str | None = BACKTEST_DEFAULTS.SIZER_TYPE
     sizer_config: dict | None = None  # Type-specific config (percents, risk_percent, etc.)
     # Data configuration
-    timeframe: str | None = "1d"  # 1d, 1h, 15m, 5m, 1m
+    timeframe: str | None = BACKTEST_DEFAULTS.TIMEFRAME
     strategy_name: str | None = None
     params: dict | None = None  # Strategy parameter overrides
 
@@ -131,15 +132,15 @@ async def _backtest_executor(config: dict, progress_callback) -> dict:
             ticker=config["ticker"],
             start_date=config["start_date"],
             end_date=config["end_date"],
-            initial_cash=config.get("initial_cash", 100000.0),
-            commission=config.get("commission", 0.0005),
-            stake=config.get("stake", 100),
+            initial_cash=config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
+            commission=config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
+            stake=config.get("stake", BACKTEST_DEFAULTS.STAKE),
             strategy_name=config.get("strategy_name"),
             save_path=save_path,
             params=config.get("params"),
-            sizer_type=config.get("sizer_type", "fixed_size"),
+            sizer_type=config.get("sizer_type", BACKTEST_DEFAULTS.SIZER_TYPE),
             sizer_config=config.get("sizer_config"),
-            timeframe=config.get("timeframe", "1d"),
+            timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
         )
     )
 
@@ -156,9 +157,9 @@ async def _backtest_executor(config: dict, progress_callback) -> dict:
         "start_date": config["start_date"],
         "strategy_code": strategy_code,
         "end_date": config["end_date"],
-        "initial_cash": config.get("initial_cash", 100000.0),
-        "commission": config.get("commission", 0.0005),
-        "stake": config.get("stake", 100),
+        "initial_cash": config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
+        "commission": config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
+        "stake": config.get("stake", BACKTEST_DEFAULTS.STAKE),
         "strategy_name": config.get("strategy_name"),
         "params": config.get("params"),
     }

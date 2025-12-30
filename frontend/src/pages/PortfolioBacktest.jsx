@@ -11,6 +11,7 @@ import { useTickerWeights } from '../hooks/useTickerWeights';
 import { useStrategyParams } from '../hooks/useStrategyParams';
 import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
+import { getDefaults } from '../config/defaults';
 import { getIndividualResultsColumns } from '../utils/tableColumns';
 import {
     PortfolioHeader,
@@ -30,12 +31,13 @@ import './PortfolioBacktest.css';
  */
 function PortfolioBacktest() {
     const { t } = useTranslation();
+    const defaults = getDefaults().backtest;
 
     // Form state
     const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')]);
-    const [initialCash, setInitialCash] = useState(100000);
-    const [commission, setCommission] = useState(0.0005);
-    const [timeframe, setTimeframe] = useState('1d');
+    const [initialCash, setInitialCash] = useState(defaults.initial_cash);
+    const [commission, setCommission] = useState(defaults.commission);
+    const [timeframe, setTimeframe] = useState(defaults.timeframe);
 
     const {
         strategies,

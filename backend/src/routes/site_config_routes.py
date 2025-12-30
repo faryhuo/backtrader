@@ -161,3 +161,57 @@ def reset_site_config(user: dict = Depends(get_current_user)) -> dict:
         "message": "Site configuration reset to defaults"
     }
 
+
+@router.get("/site/defaults")
+def get_site_defaults() -> dict:
+    """
+    Get default configuration values for backtest forms.
+    
+    This endpoint provides centralized default values for:
+    - Backtest configuration (initial_cash, commission, stake, timeframe)
+    - Walk-forward optimization settings
+    - Valid options for dropdowns (timeframes, sizer types)
+    
+    No authentication required.
+    Frontend uses these values to initialize form state, ensuring
+    consistency between frontend defaults and backend validation.
+    """
+    from src.contracts.defaults import (
+        BACKTEST_DEFAULTS,
+        TIMEFRAME_OPTIONS,
+        SIZER_TYPE_OPTIONS,
+        OPTIMIZATION_METRIC_OPTIONS,
+    )
+    
+    return {
+        "backtest": {
+            "initial_cash": BACKTEST_DEFAULTS.INITIAL_CASH,
+            "commission": BACKTEST_DEFAULTS.COMMISSION,
+            "stake": BACKTEST_DEFAULTS.STAKE,
+            "timeframe": BACKTEST_DEFAULTS.TIMEFRAME,
+            "sizer_type": BACKTEST_DEFAULTS.SIZER_TYPE,
+            "sizer_percent": BACKTEST_DEFAULTS.SIZER_PERCENT,
+            "sizer_risk_percent": BACKTEST_DEFAULTS.SIZER_RISK_PERCENT,
+        },
+        "walkforward": {
+            "initial_cash": BACKTEST_DEFAULTS.INITIAL_CASH,
+            "commission": BACKTEST_DEFAULTS.COMMISSION,
+            "stake": BACKTEST_DEFAULTS.STAKE,
+            "train_period_days": BACKTEST_DEFAULTS.TRAIN_PERIOD_DAYS,
+            "test_period_days": BACKTEST_DEFAULTS.TEST_PERIOD_DAYS,
+            "anchored": BACKTEST_DEFAULTS.ANCHORED,
+            "optimization_metric": BACKTEST_DEFAULTS.OPTIMIZATION_METRIC,
+            "timeframe": BACKTEST_DEFAULTS.TIMEFRAME,
+            "sizer_type": BACKTEST_DEFAULTS.SIZER_TYPE,
+        },
+        "live": {
+            "initial_cash": BACKTEST_DEFAULTS.LIVE_INITIAL_CASH,
+            "commission": BACKTEST_DEFAULTS.LIVE_COMMISSION,
+        },
+        "options": {
+            "timeframes": TIMEFRAME_OPTIONS,
+            "sizer_types": SIZER_TYPE_OPTIONS,
+            "optimization_metrics": OPTIMIZATION_METRIC_OPTIONS,
+        }
+    }
+

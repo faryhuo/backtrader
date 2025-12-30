@@ -27,6 +27,7 @@ from src.service.multi_asset_backtest import (
 )
 from src.db import get_portfolio_storage
 from src.service.strategy_repo import list_strategies
+from src.contracts.defaults import BACKTEST_DEFAULTS
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -54,11 +55,11 @@ class MultiAssetBacktestRequest(BaseModel):
     weights: list[float] = Field(..., description="Initial allocation weights (will be normalized)")
     start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
     end_date: str = Field(..., description="End date (YYYY-MM-DD)")
-    initial_cash: float = Field(100000.0, ge=1000, le=100000000, description="Total initial cash for portfolio")
-    commission: float = Field(0.0005, ge=0, le=0.1, description="Broker commission rate")
+    initial_cash: float = Field(BACKTEST_DEFAULTS.INITIAL_CASH, ge=1000, le=100000000, description="Total initial cash for portfolio")
+    commission: float = Field(BACKTEST_DEFAULTS.COMMISSION, ge=0, le=0.1, description="Broker commission rate")
     strategy_name: str = Field(..., description="Strategy file name (required - use multi-asset template)")
     params: dict | None = Field(None, description="Strategy parameters (applied globally)")
-    timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
+    timeframe: str = Field(BACKTEST_DEFAULTS.TIMEFRAME, description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
 
 
@@ -99,11 +100,11 @@ async def _multi_asset_executor(config: dict, progress_callback) -> dict:
             weights=config["weights"],
             start_date=config["start_date"],
             end_date=config["end_date"],
-            initial_cash=config.get("initial_cash", 100000.0),
-            commission=config.get("commission", 0.0005),
+            initial_cash=config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
+            commission=config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
             strategy_name=config["strategy_name"],
             params=config.get("params"),
-            timeframe=config.get("timeframe", "1d"),
+            timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
             save_path=save_path,
         )
     )

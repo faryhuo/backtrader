@@ -22,6 +22,7 @@ import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-
 import dayjs from 'dayjs'
 import { useStrategies } from '../../hooks/useStrategies'
 import { useStrategyParams } from '../../hooks/useStrategyParams'
+import { getDefaults } from '../../config/defaults'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -48,6 +49,7 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
     const [form] = Form.useForm()
     const [loading, setLoading] = useState(false)
     const [selectedStrategy, setSelectedStrategy] = useState('')
+    const defaults = getDefaults().walkforward
 
     const {
         strategies,
@@ -177,17 +179,17 @@ const WalkForwardConfigModal = ({ visible, onCancel, onSubmit }) => {
                 initialValues={{
                     ticker: 'AAPL',
                     date_range: [dayjs().subtract(3, 'year'), dayjs()],
-                    train_period_days: 365,
-                    test_period_days: 90,
-                    anchored: false,
-                    optimization_metric: 'sharpe_ratio',
-                    initial_cash: 100000,
-                    commission: 0.0005,
-                    stake: 100,
-                    sizer_type: 'fixed_size',
+                    train_period_days: defaults.train_period_days,
+                    test_period_days: defaults.test_period_days,
+                    anchored: defaults.anchored,
+                    optimization_metric: defaults.optimization_metric,
+                    initial_cash: defaults.initial_cash,
+                    commission: defaults.commission,
+                    stake: defaults.stake,
+                    sizer_type: defaults.sizer_type,
                     sizer_percent: 10,
                     sizer_risk: 2,
-                    timeframe: '1d',
+                    timeframe: defaults.timeframe,
                     parameters: [{ name: '', values: '' }]
                 }}
             >

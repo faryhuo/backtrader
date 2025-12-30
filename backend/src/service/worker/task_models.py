@@ -10,6 +10,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from src.contracts.defaults import BACKTEST_DEFAULTS
+
 
 class TaskStatus(str, Enum):
     """Task execution status."""
@@ -37,14 +39,14 @@ class BacktestTask:
     ticker: str
     start_date: str
     end_date: str
-    initial_cash: float = 100000.0
-    commission: float = 0.0005
-    stake: int = 100
+    initial_cash: float = BACKTEST_DEFAULTS.INITIAL_CASH
+    commission: float = BACKTEST_DEFAULTS.COMMISSION
+    stake: int = BACKTEST_DEFAULTS.STAKE
     # Sizer configuration
-    sizer_type: str = "fixed_size"
+    sizer_type: str = BACKTEST_DEFAULTS.SIZER_TYPE
     sizer_config: Optional[Dict[str, Any]] = None
     # Data timeframe
-    timeframe: str = "1d"
+    timeframe: str = BACKTEST_DEFAULTS.TIMEFRAME
     params: Optional[Dict[str, Any]] = None
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
@@ -170,11 +172,11 @@ class MultiAssetBacktestTask:
     weights: List[float]
     start_date: str
     end_date: str
-    initial_cash: float = 100000.0
-    commission: float = 0.0005
+    initial_cash: float = BACKTEST_DEFAULTS.INITIAL_CASH
+    commission: float = BACKTEST_DEFAULTS.COMMISSION
     strategy_name: str = ""  # Required - must provide strategy
     params: Optional[Dict[str, Any]] = None  # Strategy parameters
-    timeframe: str = "1d"
+    timeframe: str = BACKTEST_DEFAULTS.TIMEFRAME
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
 
@@ -306,8 +308,8 @@ class LiveTradingTask:
     exchange: str
     mode: str  # 'paper' or 'live'
     timeframe: str = "1m"
-    initial_cash: float = 10000.0
-    commission: float = 0.001
+    initial_cash: float = BACKTEST_DEFAULTS.LIVE_INITIAL_CASH
+    commission: float = BACKTEST_DEFAULTS.LIVE_COMMISSION
     user_id: Optional[str] = None
     
     # Broker configuration (sensitive, passed securely)

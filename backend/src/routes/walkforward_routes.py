@@ -22,6 +22,7 @@ from src.service.task_manager import get_task_manager
 from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
 from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.walkforward_optimizer import WalkForwardOptimizer
+from src.contracts.defaults import BACKTEST_DEFAULTS
 from src.utils.request_context import get_request_id, set_trace_id
 
 logger = logging.getLogger(__name__)
@@ -47,16 +48,16 @@ class WalkForwardOptimizationRequest(BaseModel):
         ...,
         description="Parameter grid to optimize, e.g., {'fast_period': [5, 10, 20], 'slow_period': [20, 30, 50]}"
     )
-    train_period_days: int = Field(365, description="Training window size in days", ge=30)
-    test_period_days: int = Field(90, description="Test window size in days", ge=7)
-    anchored: bool = Field(False, description="If True, use anchored window; if False, use rolling window")
-    optimization_metric: str = Field("sharpe_ratio", description="Metric to optimize (sharpe_ratio, total_return, profit_factor)")
-    initial_cash: float = Field(100000.0, description="Initial cash for backtesting", gt=0)
-    commission: float = Field(0.0005, description="Commission rate", ge=0)
-    stake: int = Field(100, description="Position size", gt=0)
-    sizer_type: str = Field("fixed_size", description="Position sizing type")
+    train_period_days: int = Field(BACKTEST_DEFAULTS.TRAIN_PERIOD_DAYS, description="Training window size in days", ge=30)
+    test_period_days: int = Field(BACKTEST_DEFAULTS.TEST_PERIOD_DAYS, description="Test window size in days", ge=7)
+    anchored: bool = Field(BACKTEST_DEFAULTS.ANCHORED, description="If True, use anchored window; if False, use rolling window")
+    optimization_metric: str = Field(BACKTEST_DEFAULTS.OPTIMIZATION_METRIC, description="Metric to optimize (sharpe_ratio, total_return, profit_factor)")
+    initial_cash: float = Field(BACKTEST_DEFAULTS.INITIAL_CASH, description="Initial cash for backtesting", gt=0)
+    commission: float = Field(BACKTEST_DEFAULTS.COMMISSION, description="Commission rate", ge=0)
+    stake: int = Field(BACKTEST_DEFAULTS.STAKE, description="Position size", gt=0)
+    sizer_type: str = Field(BACKTEST_DEFAULTS.SIZER_TYPE, description="Position sizing type")
     sizer_config: Optional[Dict[str, Any]] = Field(None, description="Sizer configuration")
-    timeframe: str = Field("1d", description="Data interval (1d, 1h, 15m, 5m, 1m)")
+    timeframe: str = Field(BACKTEST_DEFAULTS.TIMEFRAME, description="Data interval (1d, 1h, 15m, 5m, 1m)")
 
 
 class WalkForwardOptimizationResponse(BaseModel):
@@ -95,15 +96,15 @@ async def _walkforward_executor(config: dict, progress_callback) -> dict:
         start_date=config["start_date"],
         end_date=config["end_date"],
         param_grid=config["param_grid"],
-        initial_cash=config.get("initial_cash", 100000.0),
-        commission=config.get("commission", 0.0005),
-        stake=config.get("stake", 100),
-        train_period_days=config.get("train_period_days", 365),
-        test_period_days=config.get("test_period_days", 90),
-        anchored=config.get("anchored", False),
-        sizer_type=config.get("sizer_type", "fixed_size"),
+        initial_cash=config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
+        commission=config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
+        stake=config.get("stake", BACKTEST_DEFAULTS.STAKE),
+        train_period_days=config.get("train_period_days", BACKTEST_DEFAULTS.TRAIN_PERIOD_DAYS),
+        test_period_days=config.get("test_period_days", BACKTEST_DEFAULTS.TEST_PERIOD_DAYS),
+        anchored=config.get("anchored", BACKTEST_DEFAULTS.ANCHORED),
+        sizer_type=config.get("sizer_type", BACKTEST_DEFAULTS.SIZER_TYPE),
         sizer_config=config.get("sizer_config"),
-        timeframe=config.get("timeframe", "1d"),
+        timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
     )
     
     await progress_callback(30, "Running walk-forward analysis")
