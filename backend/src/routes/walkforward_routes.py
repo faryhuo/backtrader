@@ -8,10 +8,8 @@ Provides endpoints for:
 - Deleting optimizations
 """
 
-import asyncio
 import logging
 import uuid
-from functools import partial
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -19,9 +17,9 @@ from pydantic import BaseModel, Field
 
 from src.db import WalkForwardStorage
 from src.service.task_manager import get_task_manager
+from src.service.executors import get_executor
 from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
 from src.routes.common.auth_dependencies import get_optional_user_id
-from src.service.walkforward_optimizer import WalkForwardOptimizer
 from src.contracts.defaults import BACKTEST_DEFAULTS
 from src.utils.request_context import get_request_id, set_trace_id
 
@@ -72,66 +70,6 @@ class WalkForwardListResponse(BaseModel):
     """Response model for listing optimizations."""
     optimizations: List[Dict[str, Any]]
     total: int
-
-
-async def _walkforward_executor(config: dict, progress_callback) -> dict:
-    """
-    Executor function for walk-forward optimization tasks.
-    
-    Args:
-        config: Walk-forward configuration from task
-        progress_callback: Callback for progress updates
-        
-    Returns:
-        Dictionary with optimization results
-    """
-    optimization_id = config["optimization_id"]
-    
-    await progress_callback(10, "Initializing walk-forward optimizer")
-    
-    # Create optimizer
-    optimizer = WalkForwardOptimizer(
-        strategy_name=config["strategy_name"],
-        ticker=config["ticker"],
-        start_date=config["start_date"],
-        end_date=config["end_date"],
-        param_grid=config["param_grid"],
-        initial_cash=config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
-        commission=config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
-        stake=config.get("stake", BACKTEST_DEFAULTS.STAKE),
-        train_period_days=config.get("train_period_days", BACKTEST_DEFAULTS.TRAIN_PERIOD_DAYS),
-        test_period_days=config.get("test_period_days", BACKTEST_DEFAULTS.TEST_PERIOD_DAYS),
-        anchored=config.get("anchored", BACKTEST_DEFAULTS.ANCHORED),
-        sizer_type=config.get("sizer_type", BACKTEST_DEFAULTS.SIZER_TYPE),
-        sizer_config=config.get("sizer_config"),
-        timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
-    )
-    
-    await progress_callback(30, "Running walk-forward analysis")
-    
-    # Run walk-forward analysis in thread pool to avoid blocking event loop
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(
-        None,  # Use default ThreadPoolExecutor
-        partial(
-            optimizer.run_walkforward,
-            optimization_metric=config.get("optimization_metric", "sharpe_ratio"),
-            optimization_id=optimization_id,
-        )
-    )
-    
-    await progress_callback(90, "Saving optimization results")
-    
-    # Save results to database
-    storage.save_optimization_result(result)
-    
-    await progress_callback(100, "Walk-forward optimization completed")
-    
-    return {
-        "id": optimization_id,
-        "optimization_id": optimization_id,
-        "result": result,
-    }
 
 
 # API Endpoints
@@ -221,11 +159,11 @@ async def start_walkforward_optimization(
             user_id=user_id,
         )
 
-        # Submit to TaskManager
+        # Submit to TaskManager using executor from registry
         task_manager = get_task_manager()
         task = await task_manager.submit(
             task_type="walkforward",
-            executor=_walkforward_executor,
+            executor=get_executor("walkforward"),
             config=task_config,
             user_id=user_id,
             name=task_name,

@@ -6,10 +6,8 @@ Handles:
 - Backtest history CRUD
 - AI analysis updates
 """
-import asyncio
 import uuid
 import logging
-from functools import partial
 
 from fastapi import APIRouter, HTTPException, Depends, Response
 from pydantic import BaseModel
@@ -18,10 +16,10 @@ from src.config.settings import IMAGES_DIR
 from src.contracts.task import TaskStatus
 from src.contracts.defaults import BACKTEST_DEFAULTS
 from src.service.task_manager import get_task_manager
+from src.service.executors import get_executor
 from src.routes.common.task_helpers import generate_task_name, create_task_config, map_exception_to_http
 from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.backtest_engine import (
-    run_backtest,
     get_user_strategy_code,
     StrategyLoadError,
 )
@@ -94,96 +92,6 @@ class PyFolioExportConfig(BaseModel):
 # ========== Backtest Execution Endpoints ==========
 
 
-async def _backtest_executor(config: dict, progress_callback) -> dict:
-    """
-    Executor function for backtest tasks.
-    
-    This function is called by TaskManager with automatic status tracking.
-    
-    Args:
-        config: Backtest configuration from task
-        progress_callback: Callback for progress updates (progress, message)
-        
-    Returns:
-        Dictionary with backtest_id and result data
-    """
-    backtest_id = str(uuid.uuid4())
-    filename = f"{backtest_id}.png"
-    save_path = IMAGES_DIR / filename
-    
-    await progress_callback(10, "Loading strategy")
-    
-    # Get strategy code
-    strategy_code = None
-    if config.get("strategy_name"):
-        try:
-            strategy_code = get_user_strategy_code(config["strategy_name"])
-        except Exception as e:
-            logger.warning(f"Failed to get strategy code: {e}")
-    
-    await progress_callback(20, "Running backtest")
-    
-    # Run backtest in thread pool to avoid blocking event loop
-    loop = asyncio.get_event_loop()
-    metrics = await loop.run_in_executor(
-        None,  # Use default ThreadPoolExecutor
-        partial(
-            run_backtest,
-            ticker=config["ticker"],
-            start_date=config["start_date"],
-            end_date=config["end_date"],
-            initial_cash=config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
-            commission=config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
-            stake=config.get("stake", BACKTEST_DEFAULTS.STAKE),
-            strategy_name=config.get("strategy_name"),
-            save_path=save_path,
-            params=config.get("params"),
-            sizer_type=config.get("sizer_type", BACKTEST_DEFAULTS.SIZER_TYPE),
-            sizer_config=config.get("sizer_config"),
-            timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
-        )
-    )
-
-    
-    if metrics is None:
-        raise ValueError("Backtest failed - no metrics returned")
-    
-    await progress_callback(80, "Saving results")
-    
-    # Save to database
-    storage = get_backtest_storage()
-    storage_config = {
-        "ticker": config["ticker"],
-        "start_date": config["start_date"],
-        "strategy_code": strategy_code,
-        "end_date": config["end_date"],
-        "initial_cash": config.get("initial_cash", BACKTEST_DEFAULTS.INITIAL_CASH),
-        "commission": config.get("commission", BACKTEST_DEFAULTS.COMMISSION),
-        "stake": config.get("stake", BACKTEST_DEFAULTS.STAKE),
-        "strategy_name": config.get("strategy_name"),
-        "params": config.get("params"),
-    }
-    
-    storage.save_backtest(
-        backtest_id=backtest_id,
-        config=storage_config,
-        metrics=metrics,
-        plot_filename=filename,
-        ai_analysis=None,
-        strategy_code=strategy_code,
-        user_id=config.get("user_id"),
-    )
-    
-    await progress_callback(100, "Backtest completed")
-    
-    return {
-        "id": backtest_id,
-        "backtest_id": backtest_id,
-        "metrics": metrics,
-        "plot_url": f"/images/{filename}",
-    }
-
-
 @router.post("/backtest")
 async def backtest(
     request: BacktestRequest,
@@ -213,11 +121,11 @@ async def backtest(
         # Generate task name
         task_name = generate_task_name("backtest", task_config)
         
-        # Submit to TaskManager
+        # Submit to TaskManager using executor from registry
         task_manager = get_task_manager()
         task = await task_manager.submit(
             task_type="backtest",
-            executor=_backtest_executor,
+            executor=get_executor("backtest"),
             config=task_config,
             user_id=user_id,
             name=task_name,

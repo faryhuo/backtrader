@@ -157,39 +157,32 @@ class TestBacktestRoutes:
 class TestBacktestExecutionMocks:
     """Tests for backtest execution with mocked dependencies."""
 
-    @patch("src.routes.backtest_routes.run_backtest")
+    @patch("src.routes.backtest_routes.get_executor")
+    @patch("src.routes.backtest_routes.get_task_manager")
     @patch("src.routes.backtest_routes.get_backtest_storage")
-    def test_run_backtest_success_mock(self, mock_storage, mock_run_backtest):
+    def test_run_backtest_success_mock(self, mock_storage, mock_task_manager, mock_get_executor):
         """Test successful backtest execution (mocked)."""
-        # Mock backtest result
-        mock_run_backtest.return_value = {
-            "backtest_id": "test-123",
-            "total_return": 15.5,
-            "sharpe_ratio": 1.2,
-            "max_drawdown": -8.3,
-            "plot_url": "/images/test-123.png"
-        }
+        # Mock backtest executor result
+        mock_executor = MagicMock()
+        mock_get_executor.return_value = mock_executor
+
+        # Mock task manager
+        manager = MagicMock()
+        manager.submit = AsyncMock(return_value={
+            "task_id": "test-123",
+            "status": "pending",
+        })
+        mock_task_manager.return_value = manager
 
         # Mock storage
         storage = MagicMock()
         mock_storage.return_value = storage
 
-        # This would be the actual route handler call
-        # We're just testing the mock setup here
-        result = mock_run_backtest(
-            ticker="AAPL",
-            start_date="2024-01-01",
-            end_date="2024-12-31",
-            initial_cash=100000,
-            commission=0.001,
-            stake=100,
-            strategy_name="sma_cross"
-        )
+        # Test that executor is properly retrieved
+        executor = mock_get_executor("backtest")
+        assert executor is not None
 
-        assert result["total_return"] == 15.5
-        assert result["sharpe_ratio"] == 1.2
-
-    @patch("src.routes.backtest_routes.run_backtest")
+    @patch("src.service.backtest_engine.run_backtest")
     def test_run_backtest_strategy_load_error(self, mock_run_backtest):
         """Test handling of strategy load errors."""
         from src.service.backtest_engine import StrategyLoadError
@@ -206,7 +199,7 @@ class TestBacktestExecutionMocks:
                 strategy_name="nonexistent"
             )
 
-    @patch("src.routes.backtest_routes.run_backtest")
+    @patch("src.service.backtest_engine.run_backtest")
     def test_run_backtest_data_load_error(self, mock_run_backtest):
         """Test handling of data load errors."""
         from src.db.storage.market_data import DataLoadError

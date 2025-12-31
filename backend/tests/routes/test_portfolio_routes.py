@@ -1,7 +1,7 @@
 """
 Unit tests for portfolio routes.
 """
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -191,22 +191,25 @@ class TestPortfolioRoutesMocks:
         assert result["portfolio_id"] == "port-123"
         assert result["total_return"] == 18.5
 
-    @patch("src.routes.portfolio_routes.run_multi_asset_backtest")
+    @patch("src.routes.portfolio_routes.get_executor")
+    @patch("src.routes.portfolio_routes.get_task_manager")
     @patch("src.routes.portfolio_routes.get_portfolio_storage")
-    def test_run_multi_asset_backtest(self, mock_storage, mock_run):
+    def test_run_multi_asset_backtest(self, mock_storage, mock_task_manager, mock_get_executor):
         """Test running multi-asset backtest."""
-        mock_run.return_value = {
-            "portfolio_id": "port-new",
-            "total_return": 22.5,
-        }
+        # Mock executor
+        mock_executor = MagicMock()
+        mock_get_executor.return_value = mock_executor
+
+        # Mock task manager
+        manager = MagicMock()
+        manager.submit = AsyncMock(return_value={
+            "task_id": "port-new",
+            "status": "pending",
+        })
+        mock_task_manager.return_value = manager
+
         mock_storage.return_value = MagicMock()
 
-        # Simulate request
-        result = mock_run(
-            tickers=["AAPL", "GOOGL"],
-            weights=[0.5, 0.5],
-            start_date="2024-01-01",
-            end_date="2024-12-31",
-        )
-
-        assert result["total_return"] == 22.5
+        # Test that executor is properly retrieved
+        executor = mock_get_executor("multi_asset")
+        assert executor is not None
