@@ -1,5 +1,11 @@
 # Backtrader 量化交易系统
 
+<p align="right">
+  <strong>🌐 Language:</strong>
+  <a href="README.md">简体中文</a> |
+  <a href="README_EN.md">English</a>
+</p>
+
 <div align="center">
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
