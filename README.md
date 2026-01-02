@@ -82,15 +82,10 @@
   </tr>
 </table>
 
-### 操作演示
-
-<p align="center">
-  <img src="docs/images/app_demo.webp" width="800" alt="应用演示"/>
-</p>
 
 ---
 
-## �🚀 快速开始
+## 🚀 快速开始
 
 ### 前置要求
 
