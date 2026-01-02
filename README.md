@@ -114,9 +114,6 @@ cd backtrader
 # 完整构建（安装依赖 + 构建前端 + 复制静态资源）
 build.bat
 
-# 开发模式（同时启动后端和前端开发服务器）
-start_dev.bat
-
 # 仅启动后端服务器（生产模式）
 start_server.bat
 ```
@@ -129,9 +126,6 @@ chmod +x *.sh
 
 # 完整构建（安装依赖 + 构建前端 + 复制静态资源）
 ./build.sh
-
-# 开发模式（同时启动后端和前端开发服务器）
-./start_dev.sh
 
 # 仅启动后端服务器（生产模式）
 ./start_server.sh

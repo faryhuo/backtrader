@@ -114,9 +114,6 @@ cd backtrader
 # Full build (install dependencies + build frontend + copy static resources)
 build.bat
 
-# Development mode (start both backend and frontend dev servers)
-start_dev.bat
-
 # Start backend server only (production mode)
 start_server.bat
 ```
@@ -129,9 +126,6 @@ chmod +x *.sh
 
 # Full build (install dependencies + build frontend + copy static resources)
 ./build.sh
-
-# Development mode (start both backend and frontend dev servers)
-./start_dev.sh
 
 # Start backend server only (production mode)
 ./start_server.sh
