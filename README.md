@@ -54,11 +54,14 @@
 
 ### 方式1：一键启动（开发模式）
 
-Windows 用户可以使用批处理脚本快速启动：
+克隆项目后，使用快速启动脚本：
 
-```git
+```bash
 git clone https://github.com/faryhuo/backtrader.git
+cd backtrader
 ```
+
+**Windows 用户：**
 
 ```bash
 # 完整构建（安装依赖 + 构建前端 + 复制静态资源）
@@ -66,6 +69,25 @@ build.bat
 
 # 开发模式（同时启动后端和前端开发服务器）
 start_dev.bat
+
+# 仅启动后端服务器（生产模式）
+start_server.bat
+```
+
+**macOS / Linux 用户：**
+
+```bash
+# 添加执行权限（首次运行）
+chmod +x *.sh
+
+# 完整构建（安装依赖 + 构建前端 + 复制静态资源）
+./build.sh
+
+# 开发模式（同时启动后端和前端开发服务器）
+./start_dev.sh
+
+# 仅启动后端服务器（生产模式）
+./start_server.sh
 ```
 
 ### 方式2：Docker 部署
