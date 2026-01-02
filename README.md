@@ -44,7 +44,53 @@
 
 ---
 
-## 🚀 快速开始
+## � 界面预览
+
+### 主要功能页面
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/homepage.png" width="400" alt="首页"/>
+      <br/>
+      <b>首页</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/run_strategy.png" width="400" alt="运行策略"/>
+      <br/>
+      <b>运行策略</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/strategy_maintain.png" width="400" alt="策略管理"/>
+      <br/>
+      <b>策略管理</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/backtest_history.png" width="400" alt="回测历史"/>
+      <br/>
+      <b>回测历史</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <img src="docs/images/portfolio.png" width="400" alt="组合回测"/>
+      <br/>
+      <b>组合回测</b>
+    </td>
+  </tr>
+</table>
+
+### 操作演示
+
+<p align="center">
+  <img src="docs/images/app_demo.webp" width="800" alt="应用演示"/>
+</p>
+
+---
+
+## �🚀 快速开始
 
 ### 前置要求
 

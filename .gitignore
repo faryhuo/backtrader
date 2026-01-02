@@ -5,7 +5,10 @@
 .claude
 AGENTS.md
 CLAUDE.md
-docs/**
+docs/ai
+docs/code-review
+docs/TIME_FRAME.md
+docs/FEATURE-PLAN.md
 
 backend/.env
 backend/.envprod
