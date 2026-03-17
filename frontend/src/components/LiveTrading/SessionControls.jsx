@@ -1,89 +1,81 @@
-import { Button, Space, Tag, Tooltip, Popconfirm } from 'antd';
-import { PlayCircleOutlined, StopOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useState, useEffect } from 'react';
+import { Button, Space, Tag, Popconfirm, Typography, Tooltip } from 'antd';
+import { PauseCircleOutlined, ReloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
+const { Text } = Typography;
+
 /**
- * Session Controls Component
- * Displays session status and provides start/stop controls
+ * Session controls: status badge, session info, stop/refresh buttons, duration timer
  */
-const SessionControls = ({ session, onStart, onStop, onRefresh, loading }) => {
+const SessionControls = ({ session, ticker: _ticker, onStop, onRefresh, loading }) => {
   const { t } = useTranslation();
+  const [elapsed, setElapsed] = useState('');
 
-  const getStatusColor = (status) => {
-    const statusColors = {
-      'starting': 'blue',
-      'running': 'green',
-      'stopping': 'orange',
-      'stopped': 'default',
-      'error': 'red'
+  useEffect(() => {
+    if (!session?.start_time) return;
+
+    const update = () => {
+      const start = new Date(session.start_time).getTime();
+      const diff = Math.floor((Date.now() - start) / 1000);
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      setElapsed(`${h}h ${m}m ${s}s`);
     };
-    return statusColors[status] || 'default';
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [session?.start_time]);
+
+  const statusColor = {
+    starting: 'blue',
+    running: 'green',
+    stopping: 'orange',
+    stopped: 'default',
+    error: 'red',
   };
 
-  const getStatusText = (status) => {
-    return t(`live.status_${status}`) || status;
-  };
-
-  const _isRunning = session && ['starting', 'running'].includes(session.status);
-  const isStopped = session && ['stopped', 'error'].includes(session.status);
+  if (!session) return null;
 
   return (
-    <Space size="middle">
-      {session && (
-        <>
-          <div>
-            <span style={{ marginRight: 8 }}>{t('live.session_status')}:</span>
-            <Tag color={getStatusColor(session.status)}>
-              {getStatusText(session.status)}
-            </Tag>
-          </div>
+    <Space size="middle" wrap>
+      <Tag color={statusColor[session.status] || 'default'}>
+        {session.status?.toUpperCase()}
+      </Tag>
 
-          <div>
-            <span style={{ marginRight: 8 }}>{t('live.session_id')}:</span>
-            <Tooltip title={session.session_id}>
-              <code>{session.session_id?.substring(0, 8)}...</code>
-            </Tooltip>
-          </div>
-        </>
+      <Tooltip title={session.session_id}>
+        <Text type="secondary">
+          {session.strategy_name} / {session.symbol} / {session.mode}
+        </Text>
+      </Tooltip>
+
+      {elapsed && (
+        <Space size={4}>
+          <ClockCircleOutlined style={{ color: '#8b8b8b' }} />
+          <Text type="secondary">{elapsed}</Text>
+        </Space>
       )}
 
-      <Space>
-        {!session || isStopped ? (
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={onStart}
-            loading={loading}
-          >
-            {t('live.start_trading')}
-          </Button>
-        ) : (
-          <Popconfirm
-            title={t('live.stop_confirm_title')}
-            description={t('live.stop_confirm_desc')}
-            onConfirm={onStop}
-            okText={t('live.yes_stop')}
-            cancelText={t('live.no_cancel')}
-          >
-            <Button
-              danger
-              icon={<StopOutlined />}
-              loading={loading}
-              disabled={session.status === 'stopping'}
-            >
-              {t('live.stop_trading')}
-            </Button>
-          </Popconfirm>
-        )}
+      <Button
+        icon={<ReloadOutlined />}
+        onClick={onRefresh}
+        loading={loading}
+        size="small"
+      />
 
-        <Tooltip title="Refresh">
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={onRefresh}
-            loading={loading}
-          />
-        </Tooltip>
-      </Space>
+      <Popconfirm
+        title={t('live.confirm_stop', 'Stop this trading session?')}
+        onConfirm={onStop}
+        okText={t('common.yes', 'Yes')}
+        cancelText={t('common.no', 'No')}
+        okButtonProps={{ danger: true }}
+      >
+        <Button danger icon={<PauseCircleOutlined />} loading={loading} size="small">
+          {t('live.stop_session', 'Stop')}
+        </Button>
+      </Popconfirm>
     </Space>
   );
 };

@@ -1,136 +1,132 @@
-import { Table, Tag, Typography, Tooltip } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Table, Tag, Typography, Tooltip, Button, Popconfirm, Segmented } from 'antd';
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, SyncOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
-/**
- * Order Log Component
- * Displays order execution history with real-time updates
- */
-const OrderLog = ({ orders, loading }) => {
-  const { t } = useTranslation();
+const STATUS_CONFIG = {
+  submitted: { color: 'blue', icon: <ClockCircleOutlined /> },
+  accepted: { color: 'cyan', icon: <SyncOutlined spin /> },
+  partial: { color: 'orange', icon: <SyncOutlined /> },
+  filled: { color: 'green', icon: <CheckCircleOutlined /> },
+  cancelled: { color: 'default', icon: <CloseCircleOutlined /> },
+  canceled: { color: 'default', icon: <CloseCircleOutlined /> },
+  rejected: { color: 'red', icon: <CloseCircleOutlined /> },
+  open: { color: 'blue', icon: <ClockCircleOutlined /> },
+};
 
-  const getStatusConfig = (status) => {
-    const configs = {
-      'created': { color: 'default', icon: <ClockCircleOutlined />, text: 'Created' },
-      'submitted': { color: 'processing', icon: <SyncOutlined spin />, text: 'Submitted' },
-      'accepted': { color: 'blue', icon: <SyncOutlined />, text: 'Accepted' },
-      'partial': { color: 'orange', icon: <SyncOutlined spin />, text: 'Partial Fill' },
-      'filled': { color: 'success', icon: <CheckCircleOutlined />, text: 'Filled' },
-      'canceled': { color: 'default', icon: <CloseCircleOutlined />, text: 'Canceled' },
-      'rejected': { color: 'error', icon: <CloseCircleOutlined />, text: 'Rejected' }
-    };
-    return configs[status] || { color: 'default', icon: null, text: status };
-  };
+/**
+ * Order log with tabs (Open / Filled / All) and cancel button
+ */
+const OrderLog = ({ orders, onCancelOrder }) => {
+  const { t } = useTranslation();
+  const [filter, setFilter] = useState('all');
+
+  const filtered = orders.filter(o => {
+    if (filter === 'open') return ['submitted', 'accepted', 'partial', 'open'].includes(o.status);
+    if (filter === 'filled') return o.status === 'filled';
+    return true;
+  });
 
   const columns = [
     {
-      title: t('live.time'),
+      title: t('live.orders.time', 'Time'),
       dataIndex: 'created_at',
-      key: 'created_at',
-      width: 120,
-      render: (time) => {
-        const date = dayjs(time);
-        return (
-          <Tooltip title={date.format('YYYY-MM-DD HH:mm:ss')}>
-            {date.format('HH:mm:ss')}
-          </Tooltip>
-        );
-      }
+      key: 'time',
+      width: 80,
+      render: (v) => v ? (
+        <Tooltip title={dayjs(v).format('YYYY-MM-DD HH:mm:ss')}>
+          <Text type="secondary">{dayjs(v).format('HH:mm:ss')}</Text>
+        </Tooltip>
+      ) : '-',
     },
     {
-      title: t('live.symbol'),
-      dataIndex: 'symbol',
-      key: 'symbol',
-      render: (symbol) => <Text strong>{symbol}</Text>
-    },
-    {
-      title: t('live.side'),
+      title: t('live.orders.side', 'Side'),
       dataIndex: 'side',
       key: 'side',
+      width: 60,
       render: (side) => (
-        <Tag color={side === 'buy' ? 'green' : 'red'}>
-          {side?.toUpperCase()}
+        <Tag color={side === 'buy' ? 'green' : 'red'} style={{ margin: 0 }}>
+          {(side || '').toUpperCase()}
         </Tag>
-      )
+      ),
     },
     {
-      title: t('live.type'),
-      dataIndex: 'type',
-      key: 'type',
-      render: (type) => type?.toUpperCase() || 'MARKET'
-    },
-    {
-      title: t('live.size'),
+      title: t('live.orders.size', 'Size'),
       dataIndex: 'size',
       key: 'size',
-      render: (size) => size?.toFixed(4) || '0'
+      width: 80,
+      render: (v) => v ? Math.abs(v) : '-',
     },
     {
-      title: t('live.price'),
-      dataIndex: 'price',
+      title: t('live.orders.price', 'Price'),
       key: 'price',
-      render: (price) => price ? `$${price.toFixed(2)}` : 'Market'
+      width: 90,
+      render: (_, record) => {
+        const price = record.filled_price || record.price;
+        return price ? `$${Number(price).toFixed(2)}` : 'Market';
+      },
     },
     {
-      title: t('live.filled'),
-      dataIndex: 'filled_size',
-      key: 'filled_size',
-      render: (filled, record) => {
-        const fillPercent = record.size ? (filled / record.size * 100) : 0;
-        return (
-          <Tooltip title={`${fillPercent.toFixed(1)}% filled`}>
-            {filled?.toFixed(4) || '0'} / {record.size?.toFixed(4) || '0'}
-          </Tooltip>
-        );
-      }
-    },
-    {
-      title: t('live.avg_fill_price'),
-      dataIndex: 'filled_price',
-      key: 'filled_price',
-      render: (price) => price ? `$${price.toFixed(2)}` : '-'
-    },
-    {
-      title: t('live.status'),
+      title: t('live.orders.status', 'Status'),
       dataIndex: 'status',
       key: 'status',
+      width: 90,
       render: (status) => {
-        const config = getStatusConfig(status);
+        const cfg = STATUS_CONFIG[status] || { color: 'default', icon: null };
         return (
-          <Tag color={config.color} icon={config.icon}>
-            {config.text}
+          <Tag color={cfg.color} icon={cfg.icon} style={{ margin: 0 }}>
+            {(status || '').toUpperCase()}
           </Tag>
         );
-      }
+      },
     },
     {
-      title: t('live.commission'),
-      dataIndex: 'commission',
-      key: 'commission',
-      render: (commission) => commission ? `$${commission.toFixed(4)}` : '-'
-    }
+      title: '',
+      key: 'action',
+      width: 40,
+      render: (_, record) => {
+        const isOpen = ['submitted', 'accepted', 'partial', 'open'].includes(record.status);
+        if (!isOpen || !onCancelOrder) return null;
+        return (
+          <Popconfirm
+            title={t('live.orders.confirm_cancel', 'Cancel this order?')}
+            onConfirm={() => onCancelOrder(record.order_id || record.ccxt_order_id)}
+            okText={t('common.yes', 'Yes')}
+            cancelText={t('common.no', 'No')}
+          >
+            <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+          </Popconfirm>
+        );
+      },
+    },
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={orders}
-      rowKey={(record) => record.order_id || record.created_at}
-      loading={loading}
-      pagination={{
-        pageSize: 20,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total}`
-      }}
-      locale={{
-        emptyText: t('live.no_orders')
-      }}
-      size="small"
-      scroll={{ x: 'max-content' }}
-    />
+    <div>
+      <div style={{ padding: '8px 16px' }}>
+        <Segmented
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { label: t('live.orders.tab_all', 'All'), value: 'all' },
+            { label: t('live.orders.tab_open', 'Open'), value: 'open' },
+            { label: t('live.orders.tab_filled', 'Filled'), value: 'filled' },
+          ]}
+          size="small"
+        />
+      </div>
+      <Table
+        dataSource={filtered}
+        columns={columns}
+        rowKey={(r) => r.order_id || r.ccxt_order_id || Math.random()}
+        pagination={{ pageSize: 20, size: 'small', showSizeChanger: false }}
+        size="small"
+        locale={{ emptyText: t('live.orders.empty', 'No orders yet') }}
+      />
+    </div>
   );
 };
 

@@ -13,8 +13,8 @@ const { Content } = Layout;
 const { Title, Text } = Typography;
 
 /**
- * Live Trading Dashboard
- * Main page for live/paper trading with real-time WebSocket updates
+ * Binance Spot Trading Dashboard
+ * Full rewrite with ticker display, order cancellation, and improved layout
  */
 const LiveTradingDashboard = () => {
   const { t } = useTranslation();
@@ -27,11 +27,13 @@ const LiveTradingDashboard = () => {
     currentPnl,
     portfolioValue,
     cash,
+    ticker,
     stats,
     wsConnected,
     handleStartSession,
     handleStopSession,
-    handleRefreshSession
+    handleRefreshSession,
+    handleCancelOrder,
   } = useLiveTrading();
 
   const isSessionActive = session && !['stopped', 'error'].includes(session.status);
@@ -39,50 +41,60 @@ const LiveTradingDashboard = () => {
   return (
     <Layout>
       <Content className="dashboard-container">
+        {/* Header */}
         <div className="dashboard-header">
           <Space align="center">
             <DashboardOutlined style={{ fontSize: '24px', color: '#38bdf8' }} />
             <Title level={2} className="dashboard-title" style={{ margin: 0 }}>
-              {t('live.dashboard_title')}
+              {t('live.dashboard_title', 'Binance Spot Trading')}
             </Title>
           </Space>
           <div style={{ marginTop: 8 }}>
             <Text className="dashboard-subtitle">
-              {t('live.dashboard_subtitle')}
+              {t('live.dashboard_subtitle', 'Real-time trading with strategy automation')}
             </Text>
           </div>
         </div>
 
         {!isSessionActive ? (
-          // Configuration form when no active session
+          /* ──── Config Form (no active session) ──── */
           <Row justify="center" style={{ marginTop: 40 }}>
             <Col xs={24} lg={16} xl={12}>
-              <Card className="dashboard-card" title={t('live.start_new_session')} bordered={false}>
+              <Card className="dashboard-card" title={t('live.start_new_session', 'Start New Session')} bordered={false}>
                 <LiveConfigForm onSubmit={handleStartSession} loading={loading} />
               </Card>
             </Col>
           </Row>
         ) : (
-          // Trading dashboard when session is active
+          /* ──── Active Trading Dashboard ──── */
           <>
-            {/* Session Controls & Status */}
+            {/* Controls + Connection + Ticker */}
             <Card className="dashboard-card" bodyStyle={{ padding: '16px 24px' }}>
               <Row justify="space-between" align="middle">
                 <Col>
                   <SessionControls
                     session={session}
-                    onStart={handleStartSession}
+                    ticker={ticker}
                     onStop={handleStopSession}
                     onRefresh={handleRefreshSession}
                     loading={loading}
                   />
                 </Col>
                 <Col>
-                  <Space>
-                    <Badge status={wsConnected ? 'success' : 'error'} />
-                    <Text type="secondary" style={{ color: wsConnected ? '#4ade80' : '#f87171' }}>
-                      {wsConnected ? t('live.connected') : t('live.disconnected')}
-                    </Text>
+                  <Space size="large">
+                    {/* Ticker price */}
+                    {ticker && ticker.last && (
+                      <Text strong style={{ fontSize: 18, color: '#facc15' }}>
+                        {session.symbol}: ${Number(ticker.last).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </Text>
+                    )}
+                    {/* WS status */}
+                    <Space>
+                      <Badge status={wsConnected ? 'success' : 'error'} />
+                      <Text type="secondary" style={{ color: wsConnected ? '#4ade80' : '#f87171' }}>
+                        {wsConnected ? t('live.connected', 'Connected') : t('live.disconnected', 'Disconnected')}
+                      </Text>
+                    </Space>
                   </Space>
                 </Col>
               </Row>
@@ -93,7 +105,7 @@ const LiveTradingDashboard = () => {
               <Col xs={24} sm={12} lg={6}>
                 <Card className="dashboard-card">
                   <Statistic
-                    title={t('live.portfolio_value')}
+                    title={t('live.portfolio_value', 'Portfolio Value')}
                     value={portfolioValue}
                     precision={2}
                     prefix={<DollarOutlined />}
@@ -104,7 +116,7 @@ const LiveTradingDashboard = () => {
               <Col xs={24} sm={12} lg={6}>
                 <Card className="dashboard-card">
                   <Statistic
-                    title={t('live.cash_balance')}
+                    title={t('live.cash_balance', 'Cash Balance')}
                     value={cash}
                     precision={2}
                     prefix={<DollarOutlined />}
@@ -114,7 +126,7 @@ const LiveTradingDashboard = () => {
               <Col xs={24} sm={12} lg={6}>
                 <Card className="dashboard-card">
                   <Statistic
-                    title={t('live.unrealized_pnl')}
+                    title={t('live.unrealized_pnl', 'Unrealized P&L')}
                     value={currentPnl}
                     precision={2}
                     prefix={currentPnl >= 0 ? <RiseOutlined /> : <FallOutlined />}
@@ -125,13 +137,13 @@ const LiveTradingDashboard = () => {
               <Col xs={24} sm={12} lg={6}>
                 <Card className="dashboard-card">
                   <Statistic
-                    title={t('live.total_trades')}
+                    title={t('live.total_trades', 'Total Trades')}
                     value={stats.totalTrades}
                     prefix={<ThunderboltOutlined />}
                     suffix={
                       stats.totalTrades > 0 && (
                         <Text type="secondary" style={{ fontSize: 14, marginLeft: 8 }}>
-                          ({stats.winRate.toFixed(1)}{t('live.win_rate')})
+                          ({stats.winRate.toFixed(1)}% {t('live.win_rate', 'win')})
                         </Text>
                       )
                     }
@@ -140,23 +152,29 @@ const LiveTradingDashboard = () => {
               </Col>
             </Row>
 
+            {/* Chart + Positions + Orders */}
             <Row gutter={[16, 16]}>
-              {/* Left Column: Chart & Positions */}
               <Col xs={24} xl={16}>
-                <Card className="dashboard-card" title={t('live.performance')}>
+                <Card className="dashboard-card" title={t('live.performance', 'Performance')}>
                   <PnLChart pnlHistory={pnlHistory} currentPnl={currentPnl} />
                 </Card>
 
-                <Card className="dashboard-card" title={t('live.open_positions')}>
-                  <PositionTable positions={positions} loading={false} />
+                <Card className="dashboard-card" title={t('live.open_positions', 'Open Positions')}>
+                  <PositionTable positions={positions} ticker={ticker} />
                 </Card>
               </Col>
 
-              {/* Right Column: Order Log */}
               <Col xs={24} xl={8}>
-                <Card className="dashboard-card" title={t('live.order_history')} bodyStyle={{ padding: 0 }}>
+                <Card
+                  className="dashboard-card"
+                  title={t('live.order_history', 'Orders')}
+                  bodyStyle={{ padding: 0 }}
+                >
                   <div style={{ height: '600px', overflowY: 'auto' }}>
-                    <OrderLog orders={orders} loading={false} />
+                    <OrderLog
+                      orders={orders}
+                      onCancelOrder={handleCancelOrder}
+                    />
                   </div>
                 </Card>
               </Col>

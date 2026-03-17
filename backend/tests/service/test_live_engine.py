@@ -3,106 +3,76 @@ import types
 import pytest
 
 from src.service import live_engine
+from src.service.live_engine import LiveTradingError
 
 
-def test_build_components_ccxt(monkeypatch):
-    calls = {"store_start": 0}
+def test_live_trading_error():
+    """Test LiveTradingError can be raised with message."""
+    with pytest.raises(LiveTradingError, match="test error"):
+        raise LiveTradingError("test error")
 
-    class StubStore:
-        def __init__(self, **kwargs):
-            self.kwargs = kwargs
 
-        def start(self):
-            calls["store_start"] += 1
+def test_get_storage_returns_session_storage(monkeypatch):
+    """Test lazy storage initialisation."""
+    # Reset module-level cache
+    monkeypatch.setattr(live_engine, "_session_storage", None)
 
-    class StubBroker:
-        def __init__(self, **kwargs):
-            self.kwargs = kwargs
+    from src.config.settings import ensure_database_dir
+    storage = live_engine._get_storage()
+    assert storage is not None
+    # Second call should return same instance
+    assert live_engine._get_storage() is storage
 
-    class StubData:
-        def __init__(self, **kwargs):
-            self.kwargs = kwargs
 
-    ex_config = types.SimpleNamespace(adapter="ccxt", ccxt_id="binance", default_market="spot", markets=["spot"])
-    monkeypatch.setattr(live_engine, "get_exchange_config", lambda exchange, config: ex_config)
-    monkeypatch.setattr(live_engine, "CCXTStore", StubStore)
-    monkeypatch.setattr(live_engine, "CCXTBroker", StubBroker)
-    monkeypatch.setattr(live_engine, "CCXTData", StubData)
+def test_start_session_rejects_missing_strategy(monkeypatch):
+    """start_session should raise LiveTradingError for unknown strategy."""
+    class StubSessionManager:
+        def create_session(self, **kwargs):
+            return types.SimpleNamespace(
+                session_id=kwargs["session_id"],
+                status="starting",
+                cerebro=None,
+                store=None,
+                thread=None,
+            )
 
-    store, broker, data, adapter = live_engine._build_components(
-        exchange="binance",
-        mode="paper",
-        symbol="BTC/USDT",
-        timeframe="1m",
-        initial_cash=100,
-        commission=0.0,
-        session_id="s1",
-        config={},
-        user_id="u1",
+        def remove_session(self, sid):
+            pass  # cleanup stub
+
+    broker_cfg = types.SimpleNamespace(
+        risk_management=types.SimpleNamespace(
+            position_limits=types.SimpleNamespace(
+                max_position_size_usd=5000, max_positions_count=5
+            ),
+            order_limits=types.SimpleNamespace(
+                min_order_size_usd=10, max_order_size_usd=5000
+            ),
+        )
     )
 
-    assert calls["store_start"] == 1
-    assert adapter == "ccxt"
-    assert isinstance(store, StubStore)
-    assert isinstance(broker, StubBroker)
-    assert isinstance(data, StubData)
+    monkeypatch.setattr(live_engine, "get_session_manager", lambda: StubSessionManager())
+    monkeypatch.setattr(live_engine, "load_broker_config", lambda: broker_cfg)
+    monkeypatch.setattr(live_engine, "get_risk_config", lambda cfg: cfg.risk_management)
+    monkeypatch.setattr(live_engine, "get_exchange_config", lambda ex, cfg: types.SimpleNamespace(
+        ccxt_id="binance",
+    ))
 
+    # load_user_strategy raises FileNotFoundError for unknown strategy
+    def raise_not_found(name):
+        raise FileNotFoundError(f"Strategy '{name}' not found")
 
-def test_build_components_ibkr(monkeypatch):
-    class StubIBKR:
-        def __init__(self, mode):
-            self.mode = mode
+    monkeypatch.setattr(live_engine, "load_user_strategy", raise_not_found)
 
-        def start(self):
-            return None
-
-        def get_broker(self, initial_cash, commission):
-            return object()
-
-        def get_data(self, symbol, timeframe):
-            return object()
-
-    ex_config = types.SimpleNamespace(adapter="ibkr", ccxt_id=None, default_market="spot", markets=["spot"])
-    monkeypatch.setattr(live_engine, "get_exchange_config", lambda exchange, config: ex_config)
-    monkeypatch.setattr(live_engine, "IBKRStore", StubIBKR)
-
-    store, broker, data, adapter = live_engine._build_components(
-        exchange="ibkr",
-        mode="paper",
-        symbol="AAPL-STK-SMART-USD",
-        timeframe="1m",
-        initial_cash=100,
-        commission=0.0,
-        session_id="s1",
-        config={},
-        user_id=None,
-    )
-
-    assert adapter == "ibkr"
-    assert isinstance(store, StubIBKR)
-    assert broker is not None
-    assert data is not None
-
-
-def test_build_components_unknown_adapter(monkeypatch):
-    ex_config = types.SimpleNamespace(adapter="nope", ccxt_id=None, default_market="spot", markets=["spot"])
-    monkeypatch.setattr(live_engine, "get_exchange_config", lambda exchange, config: ex_config)
-    with pytest.raises(live_engine.LiveTradingError):
-        live_engine._build_components(
-            exchange="x",
-            mode="paper",
+    with pytest.raises(LiveTradingError, match="Failed to start session"):
+        live_engine.start_session(
+            strategy_name="nonexistent_strategy",
             symbol="BTC/USDT",
-            timeframe="1m",
-            initial_cash=100,
-            commission=0.0,
-            session_id=None,
-            config={},
-            user_id=None,
+            mode="paper",
         )
 
 
 def test_safe_returns_stop_handles_zero_division(monkeypatch):
-    # SafeReturns was moved to analyzer_config module
+    """SafeReturns.stop should handle ZeroDivisionError gracefully."""
     from src.service.analyzer_config import SafeReturns
     import backtrader as bt
 
@@ -113,4 +83,4 @@ def test_safe_returns_stop_handles_zero_division(monkeypatch):
     analyzer = object.__new__(SafeReturns)
     analyzer.rets = {}
     SafeReturns.stop(analyzer)
-    assert analyzer.rets["rnorm100"] == 0.0
+    assert analyzer.rets["rnorm100"] == pytest.approx(0.0)

@@ -61,3 +61,20 @@ def test_init_exchange_sets_binance_testnet_urls(monkeypatch):
     assert store._exchange is not None
     assert store._exchange.sandbox is True
     assert store._exchange.urls["api"]["public"].startswith("https://testnet.binance.vision/")
+
+
+def test_store_defaults():
+    """Test default values of CCXTStore."""
+    store = CCXTStore()
+    assert store.exchange_id == "binance"
+    assert store.mode == "paper"
+    assert store._exchange is None
+    assert store._running is False
+
+
+def test_store_custom_init():
+    """Test custom initialization."""
+    store = CCXTStore(exchange_id="BINANCE", mode="LIVE", user_id="test-user")
+    assert store.exchange_id == "binance"
+    assert store.mode == "live"
+    assert store.user_id == "test-user"

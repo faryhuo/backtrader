@@ -348,6 +348,37 @@ class WebSocketManager:
             }
         })
 
+    async def broadcast_ticker(
+        self,
+        session_id: str,
+        symbol: str,
+        last_price: float,
+        bid: float,
+        ask: float,
+        timestamp: int
+    ) -> None:
+        """
+        Broadcast real-time ticker price update.
+
+        Args:
+            session_id: Session ID
+            symbol: Trading pair
+            last_price: Last traded price
+            bid: Best bid price
+            ask: Best ask price
+            timestamp: Exchange timestamp (ms)
+        """
+        await self.broadcast(session_id, {
+            'type': 'ticker',
+            'data': {
+                'symbol': symbol,
+                'last': last_price,
+                'bid': bid,
+                'ask': ask,
+                'timestamp': timestamp
+            }
+        })
+
     async def broadcast_task_update(
         self,
         task_id: str,

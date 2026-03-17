@@ -1,7 +1,7 @@
 import backtrader as bt
 import pytest
 
-from src.brokers.ccxt_adapter.ccxt_data import CCXTData
+from src.brokers.ccxt_adapter.ccxt_data import CCXTData, _map_to_bt_timeframe
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from src.brokers.ccxt_adapter.ccxt_data import CCXTData
     ],
 )
 def test_map_to_bt_timeframe(tf, expected):
-    assert CCXTData._map_to_bt_timeframe(tf) == expected
+    assert _map_to_bt_timeframe(tf) == expected
 
 
 def test_ccxtdata_init_rejects_unsupported_timeframe():

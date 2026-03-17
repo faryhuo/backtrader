@@ -1,10 +1,10 @@
 /**
- * Live Trading API - sessions, orders, exchanges
+ * Live Trading API - Binance Spot sessions, orders, ticker
  */
 import { buildRequest, parseResponse } from './apiCore'
 
 export const liveApi = {
-    async startLiveTrading(params) {
+    async startSession(params) {
         const res = await buildRequest('/live/start', {
             method: 'POST',
             body: JSON.stringify(params)
@@ -12,7 +12,7 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
-    async stopLiveTrading(sessionId) {
+    async stopSession(sessionId) {
         const res = await buildRequest('/live/stop', {
             method: 'POST',
             body: JSON.stringify({ session_id: sessionId })
@@ -20,12 +20,12 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
-    async getLiveStatus(sessionId) {
+    async getSessionStatus(sessionId) {
         const res = await buildRequest(`/live/status/${sessionId}`)
         return await parseResponse(res)
     },
 
-    async listLiveSessions(params = {}) {
+    async listSessions(params = {}) {
         const queryParams = new URLSearchParams()
         if (params.status) queryParams.append('status', params.status)
         if (params.active_only) queryParams.append('active_only', 'true')
@@ -43,12 +43,24 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async cancelOrder(sessionId, orderId) {
+        const res = await buildRequest(`/live/orders/${sessionId}/cancel/${orderId}`, {
+            method: 'POST'
+        })
+        return await parseResponse(res)
+    },
+
+    async getTickerPrice(sessionId) {
+        const res = await buildRequest(`/live/ticker/${sessionId}`)
+        return await parseResponse(res)
+    },
+
     async getExchanges() {
         const res = await buildRequest('/live/exchanges')
         return await parseResponse(res)
     },
 
-    async getLiveHealth() {
+    async getHealth() {
         const res = await buildRequest('/live/health')
         return await parseResponse(res)
     }

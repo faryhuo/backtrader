@@ -5,91 +5,91 @@ import { useTranslation } from 'react-i18next';
 const { Text } = Typography;
 
 /**
- * Position Table Component
- * Displays current open positions with real-time P&L
+ * Position table with real-time price from ticker
  */
-const PositionTable = ({ positions, loading }) => {
+const PositionTable = ({ positions, ticker }) => {
   const { t } = useTranslation();
+
+  // Merge ticker price into positions
+  const enriched = positions.map(pos => {
+    const currentPrice = (ticker && ticker.symbol === pos.symbol && ticker.last)
+      ? Number(ticker.last)
+      : pos.current_price;
+    const pnl = currentPrice && pos.avg_price
+      ? (currentPrice - pos.avg_price) * pos.size
+      : pos.pnl || 0;
+    const pnlPercent = pos.avg_price > 0 && pos.size !== 0
+      ? (pnl / (Math.abs(pos.size) * pos.avg_price) * 100)
+      : 0;
+
+    return { ...pos, current_price: currentPrice, pnl, pnl_percent: pnlPercent };
+  });
 
   const columns = [
     {
-      title: t('live.symbol'),
+      title: t('live.positions.symbol', 'Symbol'),
       dataIndex: 'symbol',
       key: 'symbol',
-      render: (symbol) => <Text strong>{symbol}</Text>
+      width: 120,
     },
     {
-      title: t('live.side'),
-      dataIndex: 'size',
+      title: t('live.positions.side', 'Side'),
+      dataIndex: 'side',
       key: 'side',
-      render: (size) => (
-        <Tag color={size > 0 ? 'green' : 'red'} icon={size > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}>
-          {size > 0 ? 'LONG' : 'SHORT'}
+      width: 80,
+      render: (side) => (
+        <Tag color={side === 'long' ? 'green' : 'red'}>
+          {(side || 'long').toUpperCase()}
         </Tag>
-      )
+      ),
     },
     {
-      title: t('live.size'),
+      title: t('live.positions.size', 'Size'),
       dataIndex: 'size',
       key: 'size',
-      render: (size) => Math.abs(size).toFixed(4)
+      width: 100,
+      render: (v) => Math.abs(v),
     },
     {
-      title: t('live.avg_price'),
+      title: t('live.positions.avg_price', 'Avg Price'),
       dataIndex: 'avg_price',
       key: 'avg_price',
-      render: (price) => `$${price?.toFixed(2) || '0.00'}`
+      width: 120,
+      render: (v) => v ? `$${Number(v).toFixed(2)}` : '-',
     },
     {
-      title: t('live.current_price'),
+      title: t('live.positions.current_price', 'Current'),
       dataIndex: 'current_price',
       key: 'current_price',
-      render: (price) => `$${price?.toFixed(2) || '0.00'}`
+      width: 120,
+      render: (v) => v ? `$${Number(v).toFixed(2)}` : '-',
     },
     {
-      title: t('live.unrealized_pnl'),
-      dataIndex: 'pnl',
+      title: t('live.positions.pnl', 'P&L'),
       key: 'pnl',
-      render: (pnl) => {
-        const isPositive = pnl >= 0;
+      width: 140,
+      render: (_, record) => {
+        const pnl = record.pnl || 0;
+        const pct = record.pnl_percent || 0;
+        const color = pnl >= 0 ? '#4ade80' : '#f87171';
+        const icon = pnl >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />;
         return (
-          <Text type={isPositive ? 'success' : 'danger'}>
-            {isPositive ? '+' : ''}{pnl?.toFixed(2) || '0.00'} USD
+          <Text style={{ color }}>
+            {icon} ${pnl.toFixed(2)} ({pct.toFixed(2)}%)
           </Text>
         );
-      }
+      },
     },
-    {
-      title: t('live.pnl_percent'),
-      dataIndex: 'pnl_percent',
-      key: 'pnl_percent',
-      render: (pnlPercent, record) => {
-        // Calculate P&L percentage if not provided
-        let percent = pnlPercent;
-        if (!percent && record.pnl && record.avg_price && record.size) {
-          percent = (record.pnl / (record.avg_price * Math.abs(record.size))) * 100;
-        }
-        const isPositive = percent >= 0;
-        return (
-          <Text type={isPositive ? 'success' : 'danger'} strong>
-            {isPositive ? '+' : ''}{percent?.toFixed(2) || '0.00'}%
-          </Text>
-        );
-      }
-    }
   ];
 
   return (
     <Table
+      dataSource={enriched}
       columns={columns}
-      dataSource={positions}
-      rowKey={(record, index) => record.symbol || index}
-      loading={loading}
+      rowKey="symbol"
       pagination={false}
-      locale={{
-        emptyText: t('live.no_open_positions')
-      }}
-      size="middle"
+      size="small"
+      locale={{ emptyText: t('live.positions.empty', 'No open positions') }}
     />
   );
 };

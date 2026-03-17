@@ -121,6 +121,7 @@ export const WS_MESSAGE_TYPES = {
   ORDER: 'order',
   PNL: 'pnl',
   TRADE: 'trade',
+  TICKER: 'ticker',
   LOG: 'log',
   ERROR: 'error',
   STATUS: 'status',

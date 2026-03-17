@@ -395,64 +395,137 @@ class UserStrategy(bt.Strategy):
 
 ---
 
-### 6. 实盘交易
+### 6. 实盘交易（币安现货）
 
 **路径**: 侧边栏 → 实盘交易
 
-实盘交易模块支持模拟盘和真实交易。
+实盘交易模块目前专注于 **币安现货（Binance Spot）** 交易，支持模拟盘（Testnet）和实盘模式。
 
-#### 支持的交易所
+#### 交易所支持
 
-| 类型 | 交易所 | 说明 |
-|------|--------|------|
-| **加密货币** | Binance | 需要 CCXT 适配器 |
-| **加密货币** | OKX | 需要 CCXT 适配器 |
-| **加密货币** | Bybit | 需要 CCXT 适配器 |
-| **传统证券** | Interactive Brokers | 需要 IBKR 网关 |
+| 类型 | 交易所 | 市场 | 说明 |
+|------|--------|------|------|
+| **加密货币** | Binance | 现货 (Spot) | 通过 CCXT 适配器对接 |
 
-#### 模拟盘使用
+> 注：后续版本将支持更多交易所（OKX、Bybit 等）和合约交易。
 
-**强烈建议先使用模拟盘测试！**
+#### 前置条件
 
-1. 获取测试网 API 密钥
-   - Binance 测试网: https://testnet.binance.vision/
-2. 在设置中配置 Paper 模式 API
-3. 启动模拟交易会话
+在使用实盘交易前，请确保：
+
+1. **后端环境变量配置**（`backend/.env`）：
+   ```env
+   # 启用实盘交易功能
+   LIVE_TRADING_ENABLED=true
+
+   # 模拟盘（Testnet）API 密钥
+   CCXT_BINANCE_PAPER_API_KEY=your_binance_testnet_api_key
+   CCXT_BINANCE_PAPER_SECRET=your_binance_testnet_secret
+
+   # 实盘 API 密钥（仅正式交易时需要）
+   CCXT_BINANCE_LIVE_API_KEY=your_binance_live_api_key
+   CCXT_BINANCE_LIVE_SECRET=your_binance_live_secret
+   ```
+
+2. **获取币安测试网 API 密钥**（模拟盘）：
+   - 访问 https://testnet.binance.vision/
+   - 使用 GitHub 账号登录
+   - 点击 "Generate HMAC_SHA256 Key" 生成 API Key 和 Secret
+   - 将密钥填入 `.env` 的 `CCXT_BINANCE_PAPER_*` 字段
+
+3. **获取币安实盘 API 密钥**（真实交易）：
+   - 登录 https://www.binance.com/
+   - 进入 API 管理页面创建 API Key
+   - **重要安全设置**：
+     - 仅开启 "现货交易" 权限
+     - **不要** 开启 "提现" 权限
+     - 启用 IP 白名单
+     - 启用两步验证 (2FA)
+
+4. **策略文件**：确保 `backend/resources/strategy/` 下有可用的策略 `.py` 文件
+
+5. **也可以通过 UI 配置**：在 设置 → 交易所凭证 中输入 API Key / Secret（会保存到数据库）
+
+#### 模拟盘使用（推荐先测试）
+
+**强烈建议先使用模拟盘测试！** 模拟盘使用币安测试网，不会产生真实交易。
+
+1. 配置好 `CCXT_BINANCE_PAPER_API_KEY` 和 `CCXT_BINANCE_PAPER_SECRET`
+2. 进入 实盘交易 页面
+3. 选择策略、交易对（如 BTC/USDT）、时间周期（如 1m）
+4. 确保模式为 **模拟 (Testnet)**
+5. 点击 "开始模拟交易"
 
 #### 实盘操作流程
 
-**Step 1: 配置凭证**
-1. 进入 设置 → Exchange 凭证
-2. 输入交易所 API Key 和 Secret
-3. 测试连接
+**Step 1: 配置**
+1. 选择已有策略（从策略管理中上传/编辑）
+2. 选择交易对（BTC/USDT、ETH/USDT 等常见交易对）
+3. 选择模式：模拟 (Testnet) 或 实盘 (Real Money)
+4. 配置时间周期、初始资金、佣金费率
 
 **Step 2: 启动交易**
-1. 选择策略和交易对
-2. 配置订单大小和风险参数
-3. 点击 "开始交易"
+1. 点击 "开始模拟交易" 或 "开始实盘交易"
+2. 系统将自动连接币安交易所并启动策略
 
 **Step 3: 监控仪表板**
-- 实时持仓价值
-- 未实现盈亏
-- 胜率统计
-- 订单历史
+- **实时价格**：右上角显示当前交易对最新价格
+- **连接状态**：WebSocket 连接状态指示灯（绿色=已连接）
+- **统计卡片**：投资组合价值、现金余额、未实现盈亏、总交易数
+- **盈亏曲线**：实时绩效图表
+- **持仓表**：当前持仓详情（含实时价格更新和盈亏计算）
+- **订单面板**：支持按 全部/挂单中/已成交 筛选，可撤销挂单
 
 **Step 4: 停止交易**
-- 点击 "停止" 结束交易会话
-- 系统会平掉所有持仓（可配置）
+- 点击 "停止" 按钮，确认后结束交易会话
+- 系统会停止策略执行并断开交易所连接
 
 #### 风险控制
 
-在 `broker_config.json` 中配置：
+在 `backend/resources/config/broker_config.json` 中配置：
 
 ```json
 {
-  "risk_limits": {
-    "max_position_size": 10000,    // 最大持仓量
-    "max_daily_loss": 1000,        // 日最大亏损
-    "max_positions_count": 5       // 最大持仓数
+  "risk_management": {
+    "position_limits": {
+      "max_position_size_usd": 5000,
+      "max_positions_count": 5,
+      "max_leverage": 1
+    },
+    "loss_limits": {
+      "max_daily_loss_usd": 500,
+      "max_daily_loss_percent": 5,
+      "max_drawdown_percent": 10
+    },
+    "order_limits": {
+      "min_order_size_usd": 10,
+      "max_order_size_usd": 5000,
+      "max_slippage_percent": 1
+    }
   }
 }
+```
+
+#### API 端点
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/live/start` | 启动交易会话 |
+| POST | `/api/live/stop` | 停止交易会话 |
+| POST | `/api/live/orders/{session_id}/cancel/{order_id}` | 撤销订单 |
+| GET | `/api/live/status/{session_id}` | 获取会话状态 |
+| GET | `/api/live/sessions` | 列出所有会话 |
+| GET | `/api/live/orders/{session_id}` | 获取会话订单 |
+| GET | `/api/live/ticker/{session_id}` | 获取实时价格 |
+| GET | `/api/live/health` | 健康检查 |
+
+#### 安全建议
+
+- 始终先用模拟盘测试策略，确认稳定后再考虑实盘
+- 从小仓位开始，逐步增加
+- 不要在 API Key 上开启提现权限
+- 定期检查策略运行状态和风险指标
+- 将 `.env` 文件加入 `.gitignore`，绝不提交到版本控制
 ```
 
 ---
