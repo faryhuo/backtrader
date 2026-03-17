@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import dayjs from 'dayjs';
 import '../components/RunStrategy/RunStrategy.css';
 import { useSettingsContext } from '../contexts/SettingsContext';
 import { useStrategyParams } from '../hooks/useStrategyParams';
 import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
 import { useAIAnalysis } from '../hooks/useAIAnalysis';
+import { usePersistedState } from '../hooks/usePersistedState';
 import { buildTabItems } from '../utils/tabItemsBuilder.jsx';
 import { getDefaults } from '../config/defaults';
 import StrategyConfigForm from '../components/RunStrategy/StrategyConfigForm';
@@ -24,25 +25,31 @@ function RunStrategy() {
     const { settings, getAvailableModels } = useSettingsContext();
     const defaults = getDefaults().backtest;
 
-    // Form State
-    const [ticker, setTicker] = useState('AAPL');
-    const [startDate, setStartDate] = useState('2022-01-01');
-    const [endDate, setEndDate] = useState('2023-12-31');
-    const [initialCash, setInitialCash] = useState(defaults.initial_cash);
-    const [commission, setCommission] = useState(defaults.commission);
-    const [stake, setStake] = useState(defaults.stake);
+    // Form State - persisted in localStorage across page navigations
+    const [ticker, setTicker] = usePersistedState('runStrategy.ticker', 'AAPL');
+    const [startDate, setStartDate] = usePersistedState('runStrategy.startDate', dayjs().subtract(3, 'month').format('YYYY-MM-DD'));
+    const [endDate, setEndDate] = usePersistedState('runStrategy.endDate', dayjs().format('YYYY-MM-DD'));
+    const [initialCash, setInitialCash] = usePersistedState('runStrategy.initialCash', defaults.initial_cash);
+    const [commission, setCommission] = usePersistedState('runStrategy.commission', defaults.commission);
+    const [stake, setStake] = usePersistedState('runStrategy.stake', defaults.stake);
     // Sizer configuration
-    const [sizerType, setSizerType] = useState(defaults.sizer_type);
-    const [sizerConfig, setSizerConfig] = useState({ stake: defaults.stake, percents: defaults.sizer_percent, risk_percent: defaults.sizer_risk_percent });
+    const [sizerType, setSizerType] = usePersistedState('runStrategy.sizerType', defaults.sizer_type);
+    const [sizerConfig, setSizerConfig] = usePersistedState('runStrategy.sizerConfig', { stake: defaults.stake, percents: defaults.sizer_percent, risk_percent: defaults.sizer_risk_percent });
     // Data timeframe
-    const [timeframe, setTimeframe] = useState(defaults.timeframe);
+    const [timeframe, setTimeframe] = usePersistedState('runStrategy.timeframe', defaults.timeframe);
 
+    const [savedStrategy, setSavedStrategy] = usePersistedState('runStrategy.strategy', '');
     const {
         strategies,
         selectedStrategy,
-        setSelectedStrategy,
+        setSelectedStrategy: _setSelectedStrategy,
         refresh: fetchStrategies,
-    } = useStrategies();
+    } = useStrategies({ initialSelectedStrategy: savedStrategy });
+
+    const setSelectedStrategy = (val) => {
+        _setSelectedStrategy(val);
+        setSavedStrategy(val);
+    };
 
     // Use custom hooks for complex state management
     const {

@@ -11,6 +11,7 @@ import { useTickerWeights } from '../hooks/useTickerWeights';
 import { useStrategyParams } from '../hooks/useStrategyParams';
 import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
+import { usePersistedState } from '../hooks/usePersistedState';
 import { getDefaults } from '../config/defaults';
 import { getIndividualResultsColumns } from '../utils/tableColumns';
 import {
@@ -33,35 +34,60 @@ function PortfolioBacktest() {
     const { t } = useTranslation();
     const defaults = getDefaults().backtest;
 
-    // Form state
-    const [dateRange, setDateRange] = useState([dayjs('2022-01-01'), dayjs('2023-12-31')]);
-    const [initialCash, setInitialCash] = useState(defaults.initial_cash);
-    const [commission, setCommission] = useState(defaults.commission);
-    const [timeframe, setTimeframe] = useState(defaults.timeframe);
+    // Form state - persisted in localStorage across page navigations
+    const dayjsArraySerialize = (val) => JSON.stringify(val.map(d => d.format('YYYY-MM-DD')));
+    const dayjsArrayDeserialize = (str) => JSON.parse(str).map(s => dayjs(s));
+    const [dateRange, setDateRange] = usePersistedState(
+        'portfolio.dateRange',
+        [dayjs().subtract(3, 'month'), dayjs()],
+        { serialize: dayjsArraySerialize, deserialize: dayjsArrayDeserialize }
+    );
+    const [initialCash, setInitialCash] = usePersistedState('portfolio.initialCash', defaults.initial_cash);
+    const [commission, setCommission] = usePersistedState('portfolio.commission', defaults.commission);
+    const [timeframe, setTimeframe] = usePersistedState('portfolio.timeframe', defaults.timeframe);
 
+    const [savedStrategy, setSavedStrategy] = usePersistedState('portfolio.strategy', '');
     const {
         strategies,
         selectedStrategy,
-        setSelectedStrategy,
-    } = useStrategies();
+        setSelectedStrategy: _setSelectedStrategy,
+    } = useStrategies({ initialSelectedStrategy: savedStrategy });
+    const setSelectedStrategy = (val) => {
+        _setSelectedStrategy(val);
+        setSavedStrategy(val);
+    };
     const [paramsExpanded, setParamsExpanded] = useState(true);
 
 
 
-    // Use custom hooks
+    // Use custom hooks - tickers/weights persisted
+    const [savedTickers, setSavedTickers] = usePersistedState('portfolio.tickers', ['AAPL', 'GOOGL']);
+    const [savedWeights, setSavedWeights] = usePersistedState('portfolio.weights', [0.5, 0.5]);
     const {
         tickers,
         weights,
-        addTicker,
-        removeTicker,
-        updateTicker,
-        updateWeight,
-        normalizeWeights,
-        equalWeights,
+        addTicker: _addTicker,
+        removeTicker: _removeTicker,
+        updateTicker: _updateTicker,
+        updateWeight: _updateWeight,
+        normalizeWeights: _normalizeWeights,
+        equalWeights: _equalWeights,
         totalWeight,
         isWeightValid,
         validTickers,
-    } = useTickerWeights();
+    } = useTickerWeights({ initialTickers: savedTickers, initialWeights: savedWeights });
+
+    // Wrap mutations to persist to localStorage
+    const syncTickersWeights = (newTickers, newWeights) => {
+        if (newTickers !== undefined) setSavedTickers(newTickers);
+        if (newWeights !== undefined) setSavedWeights(newWeights);
+    };
+    const addTicker = () => { _addTicker(); syncTickersWeights([...tickers, ''], [...weights, 0]); };
+    const removeTicker = (i) => { _removeTicker(i); syncTickersWeights(tickers.filter((_, idx) => idx !== i), weights.filter((_, idx) => idx !== i)); };
+    const updateTicker = (i, v) => { _updateTicker(i, v); const t = [...tickers]; t[i] = v.toUpperCase(); syncTickersWeights(t, undefined); };
+    const updateWeight = (i, v) => { _updateWeight(i, v); const w = [...weights]; w[i] = v || 0; syncTickersWeights(undefined, w); };
+    const normalizeWeights = () => { _normalizeWeights(); const total = weights.reduce((a, b) => a + b, 0); if (total > 0) syncTickersWeights(undefined, weights.map(w => Math.round((w / total) * 100) / 100)); };
+    const equalWeights = () => { _equalWeights(); const eq = Math.round((1 / tickers.length) * 100) / 100; syncTickersWeights(undefined, tickers.map(() => eq)); };
 
     const {
         strategyParams,
