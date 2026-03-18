@@ -18,6 +18,7 @@ import backtrader as bt
 from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore
 from src.db import SessionStorage
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
+from src.service.live_strategy_bridge import wrap_strategy_with_live_gate
 from src.service.session_manager import SessionStatus, get_session_manager
 from src.utils.config_loader import get_exchange_config, get_risk_config, load_broker_config
 
@@ -61,92 +62,6 @@ class BrokerEvent:
     TRADE_EXECUTED = 'trade_executed'
     POSITION_UPDATE = 'position_update'
     PNL_UPDATE = 'pnl_update'
-
-
-def _wrap_strategy_with_logging(strategy_cls, log_callback: Callable):
-    """
-    Create a dynamic subclass that intercepts next() and log() to forward
-    strategy decisions to the frontend via WebSocket.
-    """
-
-    print(f"[WRAP] Creating LoggingStrategy wrapper, callback: {log_callback}")
-
-    class LoggingStrategy(strategy_cls):
-        def __init__(self, *args, **kwargs):
-            print(f"[WRAP] LoggingStrategy.__init__ called")
-            # Store callback as instance attr via __dict__ to avoid
-            # Python descriptor protocol binding self as first arg
-            self.__dict__['_log_cb'] = log_callback
-            super().__init__(*args, **kwargs)
-            print(f"[WRAP] LoggingStrategy.__init__ done")
-
-        def log(self, txt, dt=None, level='info'):
-            dt = dt or (self.datas[0].datetime.date(0) if len(self.datas[0]) else datetime.now())
-            msg = f"{dt} | {txt}"
-            print(f"[WRAP] Strategy log: {msg}")
-            try:
-                self._log_cb(level, msg)
-            except Exception as e:
-                print(f"[WRAP] log callback error: {e}")
-
-        def next(self):
-            print(f"[WRAP] LoggingStrategy.next() called at bar {len(self.datas[0])}")
-            # Capture key state before strategy runs
-            pos_before = self.position.size if self.position else 0
-
-            super().next()
-
-            # After strategy runs, log current state
-            try:
-                dt = self.datas[0].datetime.datetime(0)
-                close = self.datas[0].close[0]
-                pos_after = self.position.size if self.position else 0
-
-                # Log position changes
-                if pos_after != pos_before:
-                    side = 'BUY' if pos_after > pos_before else 'SELL'
-                    self._log_cb('info', f"{dt} | {side} signal | price={close:.2f} | pos: {pos_before} -> {pos_after}")
-
-                # Log indicator values every 10 bars
-                if len(self.datas[0]) % 10 == 0:
-                    parts = [f"{dt} | close={close:.2f}"]
-                    # Try to extract common indicators
-                    for attr_name in ('fast_ma', 'slow_ma', 'sma', 'ema', 'rsi', 'crossover'):
-                        ind = getattr(self, attr_name, None)
-                        if ind is not None and len(ind) > 0:
-                            val = ind[0]
-                            parts.append(f"{attr_name}={val:.4f}")
-                    self._log_cb('debug', ' | '.join(parts))
-            except Exception:
-                pass
-
-        def notify_order(self, order):
-            super().notify_order(order)
-            try:
-                if order.status == order.Completed:
-                    side = 'BUY' if order.isbuy() else 'SELL'
-                    self._log_cb('info', f"Order {side} completed: size={order.executed.size:.6f} @ {order.executed.price:.2f}")
-                elif order.status == order.Rejected:
-                    self._log_cb('warning', f"Order REJECTED: {order.info}")
-                elif order.status == order.Canceled:
-                    self._log_cb('warning', f"Order CANCELED")
-            except Exception:
-                pass
-
-        def notify_trade(self, trade):
-            super().notify_trade(trade)
-            try:
-                if trade.isclosed:
-                    self._log_cb('info', f"Trade closed: PnL={trade.pnl:.2f} ({trade.pnlcomm:.2f} after commission)")
-            except Exception:
-                pass
-
-    LoggingStrategy.__name__ = strategy_cls.__name__
-    LoggingStrategy.__qualname__ = strategy_cls.__qualname__
-    return LoggingStrategy
-
-
-# ─────────────────────────────── public API ───────────────────────────────
 
 
 def start_session(
@@ -261,6 +176,7 @@ def start_session(
         # 5.1 Wire log callback for strategy logs
         # Also store logs in session for REST fallback
         session._strategy_logs = []
+        session.feed_status = 'warming_up'
         logger.info(f"[SESSION {session_id}] Setting up log callback")
 
         def on_strategy_log(level: str, message: str):
@@ -290,7 +206,23 @@ def start_session(
         broker.set_log_callback(on_strategy_log)
 
         # 5.2 Wrap strategy class with logging interceptor
-        strategy_cls = _wrap_strategy_with_logging(strategy_cls, on_strategy_log)
+        def on_data_status(status: str, data) -> None:
+            normalized = 'live' if status == 'live' else 'warming_up'
+            session.feed_status = normalized
+            session_manager.update_session(session_id, feed_status=normalized)
+            ws = _get_ws_manager()
+            if ws:
+                _run_ws(ws.broadcast_feed_status(
+                    session_id=session_id,
+                    status=normalized,
+                    symbol=getattr(data, '_symbol', symbol),
+                ))
+
+        strategy_cls = wrap_strategy_with_live_gate(
+            strategy_cls,
+            on_strategy_log,
+            on_data_status,
+        )
 
         # 6. Build Cerebro
         cerebro = bt.Cerebro()

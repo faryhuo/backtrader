@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { List, Tag, Empty } from 'antd';
 import { InfoCircleOutlined, WarningOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const ICON_MAP = {
   info: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
@@ -23,6 +24,7 @@ const formatTime = (timestamp) => {
 };
 
 const StrategyLog = ({ logs = [] }) => {
+  const { t } = useTranslation();
   const listRef = useRef(null);
 
   // Auto-scroll to top when new logs arrive
@@ -45,7 +47,7 @@ const StrategyLog = ({ logs = [] }) => {
       }}>
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={<span style={{ color: '#888' }}>暂无策略日志</span>}
+          description={<span style={{ color: '#888' }}>{t('live.no_strategy_logs', 'No strategy logs yet')}</span>}
         />
       </div>
     );
@@ -69,11 +71,11 @@ const StrategyLog = ({ logs = [] }) => {
           // Auto-detect log type from message content
           let type = item.level || 'info';
           const msg = item.message?.toLowerCase() || '';
-          if (msg.includes('buy') || msg.includes('买入') || msg.includes('做多')) {
+          if (msg.includes('buy')) {
             type = 'buy';
-          } else if (msg.includes('sell') || msg.includes('卖出') || msg.includes('做空')) {
+          } else if (msg.includes('sell')) {
             type = 'sell';
-          } else if (msg.includes('signal') || msg.includes('信号')) {
+          } else if (msg.includes('signal')) {
             type = 'signal';
           }
 

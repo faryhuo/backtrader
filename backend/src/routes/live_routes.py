@@ -68,6 +68,7 @@ class StopLiveRequest(BaseModel):
 class SessionResponse(BaseModel):
     session_id: str
     status: str
+    feed_status: str = "warming_up"
     strategy_name: str
     symbol: str
     exchange: str

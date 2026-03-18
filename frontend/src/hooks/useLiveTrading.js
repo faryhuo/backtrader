@@ -22,6 +22,7 @@ const initialState = {
     priceHistory: [], // For price chart: { time, open, high, low, close }
     stats: { totalTrades: 0, winningTrades: 0, losingTrades: 0, winRate: 0 },
     logs: [], // Strategy logs, max 100 entries
+    feedStatus: 'warming_up',
     error: null,
 };
 
@@ -46,14 +47,24 @@ function reducer(state, action) {
                 priceHistory: [],
                 stats: { totalTrades: 0, winningTrades: 0, losingTrades: 0, winRate: 0 },
                 logs: [],
+                feedStatus: action.payload.feed_status || 'warming_up',
                 error: null,
             };
 
         case 'SESSION_LOADED':
-            return { ...state, session: action.payload, error: null };
+            return {
+                ...state,
+                session: action.payload,
+                feedStatus: action.payload.feed_status || state.feedStatus,
+                error: null,
+            };
 
         case 'SESSION_STOPPED':
-            return { ...state, session: action.payload };
+            return {
+                ...state,
+                session: action.payload,
+                feedStatus: action.payload?.feed_status || 'warming_up',
+            };
 
         case 'SESSION_CLEARED':
             return { ...initialState };
@@ -173,6 +184,15 @@ function reducer(state, action) {
                     : state.session,
             };
 
+        case 'FEED_STATUS_UPDATE':
+            return {
+                ...state,
+                feedStatus: action.payload,
+                session: state.session
+                    ? { ...state.session, feed_status: action.payload }
+                    : state.session,
+            };
+
         case 'ORDERS_LOADED':
             return { ...state, orders: action.payload };
 
@@ -280,8 +300,14 @@ export const useLiveTrading = () => {
             }
 
             case WS_MESSAGE_TYPES.STATUS:
-                if (msg.data.status) {
+                if (msg.data.status || msg.data.new_status) {
                     dispatch({ type: 'STATUS_UPDATE', payload: msg.data.status || msg.data.new_status });
+                }
+                break;
+
+            case WS_MESSAGE_TYPES.FEED_STATUS:
+                if (msg.data.status) {
+                    dispatch({ type: 'FEED_STATUS_UPDATE', payload: msg.data.status });
                 }
                 break;
 
@@ -545,6 +571,7 @@ export const useLiveTrading = () => {
         priceHistory: state.priceHistory,
         stats: state.stats,
         logs: state.logs,
+        feedStatus: state.feedStatus,
         error: state.error,
         wsConnected,
 

@@ -35,6 +35,7 @@ const LiveTradingDashboard = () => {
     priceHistory,
     stats,
     logs,
+    feedStatus,
     wsConnected,
     handleStartSession,
     handleStopSession,
@@ -94,6 +95,7 @@ const LiveTradingDashboard = () => {
                   <SessionControls
                     session={session}
                     ticker={ticker}
+                    feedStatus={feedStatus}
                     onStop={handleStopSession}
                     onRefresh={handleRefreshSession}
                     loading={loading}
@@ -219,7 +221,7 @@ const LiveTradingDashboard = () => {
                 {/* Strategy Log Panel */}
                 <Card
                   size="small"
-                  title={t('live.strategy_log', '策略日志')}
+                  title={t('live.strategy_log', 'Strategy Log')}
                   style={{ marginTop: 16 }}
                 >
                   <StrategyLog logs={logs} />

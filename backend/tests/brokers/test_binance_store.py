@@ -10,6 +10,8 @@ Tests cover:
 - Symbol normalization (BTC/USDT → BTCUSDT)
 """
 
+import time
+
 import pytest
 
 from src.brokers.binance_adapter.binance_store import BinanceStore
@@ -142,6 +144,42 @@ class TestFetchOHLCV:
         bars = paper_store.fetch_ohlcv("BTC/USDT", interval="5m", limit=10)
         for bar in bars:
             assert bar[2] >= bar[3], f"High {bar[2]} should be >= Low {bar[3]}"
+
+    def test_since_ms_limits_paper_bars(self, paper_store):
+        now_ms = int(time.time() * 1000)
+        since_ms = now_ms - (2 * 60 * 1000)
+
+        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=100, since_ms=since_ms)
+
+        assert 0 < len(bars) <= 3
+        assert all(bar[0] >= since_ms for bar in bars)
+
+    def test_paper_bars_are_timeframe_aligned(self, paper_store):
+        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=5)
+
+        assert bars
+        assert all(bar[0] % 60000 == 0 for bar in bars)
+
+    def test_paper_since_ms_returns_next_closed_bar_after_time_advances(self, monkeypatch):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            monkeypatch.setattr(time, "time", lambda: 1_700_000_125.0)  # 22:15:25 UTC
+            initial = store.fetch_ohlcv("BTC/USDT", interval="1m", limit=3)
+            last_open_ms = initial[-1][0]
+
+            monkeypatch.setattr(time, "time", lambda: 1_700_000_185.0)  # 22:16:25 UTC
+            new_bars = store.fetch_ohlcv(
+                "BTC/USDT",
+                interval="1m",
+                limit=10,
+                since_ms=last_open_ms + 1,
+            )
+
+            assert len(new_bars) == 1
+            assert new_bars[0][0] == last_open_ms + 60000
+        finally:
+            store.stop()
 
 
 # ─────────────────────────── get_symbol_ticker ───────────────────────────

@@ -352,7 +352,10 @@ async def websocket_info():
         'active_connections': ws_manager.get_connection_count(),
         'connected_sessions': ws_manager.get_connected_sessions(),
         'message_types': {
-            'live': ['connected', 'position', 'order', 'pnl', 'trade', 'log', 'error', 'status'],
+            'live': [
+                'connected', 'position', 'order', 'pnl', 'trade',
+                'log', 'error', 'status', 'ticker', 'ohlcv', 'feed_status',
+            ],
             'tasks': ['task_created', 'task_started', 'task_progress', 'task_completed', 'task_failed', 'task_cancelled'],
         },
         'client_messages': ['ping'],

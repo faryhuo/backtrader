@@ -6,6 +6,7 @@ Provides real-time data feed for Backtrader strategies.
 
 import logging
 import time
+from calendar import timegm
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -48,7 +49,10 @@ class BinanceData(bt.DataBase):
 
         self._last_bar_time: Optional[datetime] = None
         self._hist_buffer: List[list] = []
+        self._live_buffer: List[list] = []
         self._consecutive_errors = 0
+        self._historical_mode = False
+        self._live_notified = False
 
         super().__init__(**kwargs)
 
@@ -70,18 +74,27 @@ class BinanceData(bt.DataBase):
 
     def _load(self) -> bool:
         """Load next bar into lines."""
-        # Serve from buffer first
+        # Serve preloaded historical bars first without entering LIVE mode.
         if self._hist_buffer:
-            return self._consume_bar()
+            loaded = self._consume_bar(self._hist_buffer)
+            if loaded and not self._hist_buffer:
+                self._historical_mode = False
+            return loaded
+
+        # Then serve live bars collected from websocket / polling.
+        if self._live_buffer:
+            self._notify_live()
+            return self._consume_bar(self._live_buffer)
 
         # Live wait-loop
         while self.store.is_running:
             try:
-                new_bars = self._fetch_bars()
+                new_bars = self._drain_live_bars()
                 if new_bars:
-                    self._hist_buffer.extend(new_bars)
+                    self._live_buffer.extend(new_bars)
                     self._consecutive_errors = 0
-                    return self._consume_bar()
+                    self._notify_live()
+                    return self._consume_bar(self._live_buffer)
 
                 time.sleep(self.params.pause)
 
@@ -103,6 +116,10 @@ class BinanceData(bt.DataBase):
         super().start()
         if self.params.backfill:
             self._perform_backfill()
+        self._historical_mode = bool(self._hist_buffer)
+        if self._historical_mode:
+            self.put_notification(self.DELAYED)
+        self._start_live_stream()
 
     def islive(self) -> bool:
         return True
@@ -115,7 +132,7 @@ class BinanceData(bt.DataBase):
     def _fetch_bars(self) -> List[list]:
         """Fetch OHLCV bars from Binance, filtering forming bars."""
         if self._last_bar_time:
-            since = int(self._last_bar_time.timestamp() * 1000) + 1
+            since = self._datetime_to_ms(self._last_bar_time) + 1
         else:
             since = int(
                 (datetime.utcnow() - timedelta(seconds=self._tf_seconds * 5)).timestamp() * 1000
@@ -154,12 +171,12 @@ class BinanceData(bt.DataBase):
 
         return valid
 
-    def _consume_bar(self) -> bool:
-        """Pop one bar from buffer and load into Backtrader lines."""
-        if not self._hist_buffer:
+    def _consume_bar(self, buffer_: List[list]) -> bool:
+        """Pop one bar from a buffer and load into Backtrader lines."""
+        if not buffer_:
             return False
 
-        bar = self._hist_buffer.pop(0)
+        bar = buffer_.pop(0)
         logger.debug(f"Loaded bar: O={bar[1]:.2f} H={bar[2]:.2f} L={bar[3]:.2f} C={bar[4]:.2f}")
 
         dt_obj = datetime.utcfromtimestamp(bar[0] / 1000)
@@ -175,6 +192,57 @@ class BinanceData(bt.DataBase):
         self._last_bar_time = dt_obj
         return True
 
+    def _start_live_stream(self) -> None:
+        """Subscribe to live closed kline updates when the store supports it."""
+        try:
+            self.store.start_kline_stream(
+                self._symbol,
+                self.ccxt_timeframe,
+                self._on_live_kline,
+            )
+        except Exception as exc:
+            logger.debug(f"Failed to start live kline stream: {exc}")
+
+    def _on_live_kline(self, bar: dict) -> None:
+        """Receive live closed kline messages from the store."""
+        if not bar.get('is_closed'):
+            return
+
+        normalized = [
+            int(bar['time_ms']),
+            float(bar['open']),
+            float(bar['high']),
+            float(bar['low']),
+            float(bar['close']),
+            float(bar['volume']),
+        ]
+
+        if not self._is_new_bar(normalized[0]):
+            return
+
+        self._live_buffer.append(normalized)
+
+    def _drain_live_bars(self) -> List[list]:
+        """Get new live bars from websocket first, then REST polling fallback."""
+        if self._live_buffer:
+            return []
+        return self._fetch_bars()
+
+    def _is_new_bar(self, ts_ms: int) -> bool:
+        bar_dt = datetime.utcfromtimestamp(ts_ms / 1000)
+        if self._last_bar_time and bar_dt <= self._last_bar_time:
+            return False
+        if self._hist_buffer and ts_ms <= self._hist_buffer[-1][0]:
+            return False
+        if self._live_buffer and ts_ms <= self._live_buffer[-1][0]:
+            return False
+        return True
+
+    def _notify_live(self) -> None:
+        if not self._live_notified:
+            self.put_notification(self.LIVE)
+            self._live_notified = True
+
     def _perform_backfill(self) -> None:
         """Fetch historical data before live feed starts."""
         if not self.params.backfill_start:
@@ -188,7 +256,7 @@ class BinanceData(bt.DataBase):
 
             logger.info(f"Backfilling {self._symbol} from {start_dt}...")
 
-            since = int(start_dt.timestamp() * 1000)
+            since = self._datetime_to_ms(start_dt)
             now_ms = int(datetime.utcnow().timestamp() * 1000)
 
             if since > now_ms:
@@ -229,4 +297,9 @@ class BinanceData(bt.DataBase):
         if self._last_bar_time and len(self) > 0:
             return self.lines.close[0]
         return None
+
+    @staticmethod
+    def _datetime_to_ms(dt_obj: datetime) -> int:
+        """Convert a datetime to epoch milliseconds, treating naive values as UTC."""
+        return int(timegm(dt_obj.utctimetuple()) * 1000 + dt_obj.microsecond / 1000)
 

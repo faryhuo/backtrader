@@ -60,6 +60,7 @@ class TradingSession:
     total_trades: int = 0
     positions: List[Dict] = field(default_factory=list)
     orders: List[Dict] = field(default_factory=list)
+    feed_status: str = "warming_up"
     error_message: Optional[str] = None
 
     def to_dict(self) -> Dict:
@@ -83,6 +84,7 @@ class TradingSession:
             'end_time': self.end_time.isoformat() if self.end_time else None,
             'current_pnl': self.current_pnl,
             'total_trades': self.total_trades,
+            'feed_status': self.feed_status,
             'positions': self.positions,
             'open_orders': [o for o in self.orders if o.get('status') not in ['filled', 'canceled']],
             'error_message': self.error_message,

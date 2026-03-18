@@ -8,7 +8,7 @@ const { Text } = Typography;
 /**
  * Session controls: status badge, session info, stop/refresh buttons, duration timer
  */
-const SessionControls = ({ session, ticker: _ticker, onStop, onRefresh, loading }) => {
+const SessionControls = ({ session, ticker: _ticker, feedStatus, onStop, onRefresh, loading }) => {
   const { t } = useTranslation();
   const [elapsed, setElapsed] = useState('');
 
@@ -36,6 +36,13 @@ const SessionControls = ({ session, ticker: _ticker, onStop, onRefresh, loading 
     stopped: 'default',
     error: 'red',
   };
+  const feedStatusColor = {
+    warming_up: 'gold',
+    live: 'green',
+  };
+  const feedStatusKey = (feedStatus || session.feed_status) === 'live'
+    ? 'live.live_feed'
+    : 'live.warming_up';
 
   if (!session) return null;
 
@@ -43,6 +50,10 @@ const SessionControls = ({ session, ticker: _ticker, onStop, onRefresh, loading 
     <Space size="middle" wrap>
       <Tag color={statusColor[session.status] || 'default'}>
         {session.status?.toUpperCase()}
+      </Tag>
+
+      <Tag color={feedStatusColor[feedStatus || session.feed_status] || 'default'}>
+        {t(feedStatusKey)}
       </Tag>
 
       <Tooltip title={session.session_id}>

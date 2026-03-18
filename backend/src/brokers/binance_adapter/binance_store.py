@@ -332,7 +332,7 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         if self._paper_mode:
-            return self._generate_paper_klines(sym, interval, limit)
+            return self._generate_paper_klines(sym, interval, limit, since_ms=since_ms)
 
         try:
             params = self._build_kline_params(sym, interval, limit, since_ms)
@@ -380,7 +380,7 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         if self._paper_mode:
-            return self._generate_paper_klines_raw(sym, interval, limit)
+            return self._generate_paper_klines_raw(sym, interval, limit, since_ms=start_time)
 
         try:
             params = self._build_kline_params(sym, interval, limit, start_time)
@@ -517,33 +517,64 @@ class BinanceStore:
         logger.info(f"[PAPER] Order: {side} {quantity} {symbol} @ {exec_price} ({status})")
         return order
 
-    def _generate_paper_klines(self, symbol: str, interval: str, limit: int) -> List[list]:
+    def _generate_paper_klines(
+        self,
+        symbol: str,
+        interval: str,
+        limit: int,
+        since_ms: Optional[int] = None,
+    ) -> List[list]:
         """Simulated klines in normalized [ts, o, h, l, c, v] format."""
         return [
             [bar[0], float(bar[1]), float(bar[2]), float(bar[3]), float(bar[4]), float(bar[5])]
-            for bar in self._generate_paper_klines_raw(symbol, interval, limit)
+            for bar in self._generate_paper_klines_raw(symbol, interval, limit, since_ms=since_ms)
         ]
 
-    def _generate_paper_klines_raw(self, symbol: str, interval: str, limit: int) -> list:
+    def _generate_paper_klines_raw(
+        self,
+        symbol: str,
+        interval: str,
+        limit: int,
+        since_ms: Optional[int] = None,
+    ) -> list:
         """Simulated klines in raw Binance 12-element format."""
         base_price = self._get_paper_price(symbol)
         seconds = TIMEFRAME_SECONDS.get(interval, 60)
-        now_ms = int(time.time() * 1000)
+        interval_ms = seconds * 1000
 
-        klines = []
-        for i in range(limit):
-            t = now_ms - (limit - i - 1) * seconds * 1000
-            o = base_price * (1 + random.uniform(-0.005, 0.005))
-            c = base_price * (1 + random.uniform(-0.005, 0.005))
-            h = max(o, c) * (1 + random.uniform(0, 0.002))
-            lo = min(o, c) * (1 - random.uniform(0, 0.002))
-            v = random.uniform(10, 100)
-            klines.append([
-                t, str(o), str(h), str(lo), str(c), str(v),
-                t + seconds * 1000, str(v * c), 123, str(v),
-                str(v * c / base_price), '0',
+        # Align timestamps to closed-bar boundaries so polling produces one
+        # deterministic new candle per interval instead of a drifting stream.
+        now_ms = int(time.time() * 1000)
+        current_open_ms = now_ms - (now_ms % interval_ms)
+        last_closed_open_ms = current_open_ms - interval_ms
+
+        if since_ms is not None:
+            start_ms = ((max(0, since_ms) + interval_ms - 1) // interval_ms) * interval_ms
+            if start_ms > last_closed_open_ms:
+                return []
+        else:
+            start_ms = last_closed_open_ms - ((max(1, limit) - 1) * interval_ms)
+
+        bars = []
+        ts_ms = start_ms
+        while ts_ms <= last_closed_open_ms and len(bars) < max(1, limit):
+            seed = (hash((symbol, interval, ts_ms // interval_ms)) & 0xFFFFFFFF)
+            rng = random.Random(seed)
+            drift = ((ts_ms // interval_ms) % 32 - 16) / 3200.0
+            anchor = base_price * (1 + drift)
+            o = anchor * (1 + rng.uniform(-0.002, 0.002))
+            c = anchor * (1 + rng.uniform(-0.002, 0.002))
+            h = max(o, c) * (1 + rng.uniform(0, 0.0015))
+            lo = min(o, c) * (1 - rng.uniform(0, 0.0015))
+            v = rng.uniform(10, 100)
+            bars.append([
+                ts_ms, str(o), str(h), str(lo), str(c), str(v),
+                ts_ms + interval_ms, str(v * c), 123, str(v),
+                str(v * c / max(base_price, 1.0)), '0',
             ])
-        return klines
+            ts_ms += interval_ms
+
+        return bars
 
 
     def _build_kline_params(

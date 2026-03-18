@@ -350,6 +350,21 @@ class WebSocketManager:
             }
         })
 
+    async def broadcast_feed_status(
+        self,
+        session_id: str,
+        status: str,
+        symbol: str = ''
+    ) -> None:
+        """Broadcast feed warmup/live status to the frontend."""
+        await self.broadcast(session_id, {
+            'type': 'feed_status',
+            'data': {
+                'status': status,
+                'symbol': symbol
+            }
+        })
+
     async def broadcast_ticker(
         self,
         session_id: str,

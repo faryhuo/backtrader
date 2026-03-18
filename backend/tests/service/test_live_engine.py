@@ -1,9 +1,11 @@
 import types
 
+import backtrader as bt
 import pytest
 
 from src.service import live_engine
 from src.service.live_engine import LiveTradingError
+from src.service.live_strategy_bridge import wrap_strategy_with_live_gate
 
 
 def test_live_trading_error():
@@ -84,3 +86,68 @@ def test_safe_returns_stop_handles_zero_division(monkeypatch):
     analyzer.rets = {}
     SafeReturns.stop(analyzer)
     assert analyzer.rets["rnorm100"] == pytest.approx(0.0)
+
+
+def test_wrapped_strategy_skips_next_until_live():
+    calls = []
+
+    class BaseStrategy(bt.Strategy):
+        def next(self):
+            calls.append("next")
+
+    class DummyDateTime:
+        def datetime(self, index=0):
+            return "2024-01-01T00:00:00"
+
+    class DummyData:
+        def __init__(self):
+            self.close = [100.0]
+            self.datetime = DummyDateTime()
+
+        def __len__(self):
+            return 1
+
+    wrapped = wrap_strategy_with_live_gate(BaseStrategy, lambda *_args: None)
+    wrapped.position = property(lambda self: types.SimpleNamespace(size=0))
+    strategy = object.__new__(wrapped)
+    strategy.__dict__["_log_cb"] = lambda *_args: None
+    strategy.__dict__["_data_live"] = False
+    strategy.datas = [DummyData()]
+
+    wrapped.next(strategy)
+    assert calls == []
+
+    strategy.__dict__["_data_live"] = True
+    wrapped.next(strategy)
+    assert calls == ["next"]
+
+
+def test_wrapped_strategy_emits_feed_status_callback():
+    statuses = []
+
+    class BaseStrategy(bt.Strategy):
+        pass
+
+    class DummyData:
+        LIVE = 1
+        DELAYED = 2
+        _symbol = "BTC/USDT"
+
+        @staticmethod
+        def _getstatusname(status):
+            return {1: "LIVE", 2: "DELAYED"}[status]
+
+    wrapped = wrap_strategy_with_live_gate(
+        BaseStrategy,
+        lambda *_args: None,
+        lambda status, data: statuses.append((status, data._symbol)),
+    )
+    strategy = object.__new__(wrapped)
+    strategy.__dict__["_log_cb"] = lambda *_args: None
+    strategy.__dict__["_data_live"] = False
+
+    wrapped.notify_data(strategy, DummyData(), DummyData.DELAYED)
+    wrapped.notify_data(strategy, DummyData(), DummyData.LIVE)
+
+    assert statuses == [("delayed", "BTC/USDT"), ("live", "BTC/USDT")]
+    assert strategy.__dict__["_data_live"] is True

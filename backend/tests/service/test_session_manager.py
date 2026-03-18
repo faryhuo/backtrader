@@ -103,8 +103,22 @@ def test_session_to_dict():
     assert session_dict['commission'] == 0.001
     assert session_dict['status'] == SessionStatus.STARTING.value
     assert session_dict['user_id'] == "user_123"
+    assert session_dict['feed_status'] == "warming_up"
     assert 'ws_token' in session_dict
     assert 'start_time' in session_dict
+
+
+def test_session_feed_status_round_trip():
+    """Session feed status should survive session updates and serialization."""
+    manager = SessionManager()
+    manager._sessions.clear()
+
+    manager.create_session("s1", "strat", "BTC/USDT")
+    manager.update_session("s1", feed_status="live")
+
+    session = manager.get_session("s1")
+    assert session.feed_status == "live"
+    assert session.to_dict()["feed_status"] == "live"
 
 
 def test_session_is_active():

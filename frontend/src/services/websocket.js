@@ -131,6 +131,7 @@ export const WS_MESSAGE_TYPES = {
   LOG: 'log',
   ERROR: 'error',
   STATUS: 'status',
+  FEED_STATUS: 'feed_status',
   PONG: 'pong',
 };
 

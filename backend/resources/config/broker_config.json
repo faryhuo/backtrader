@@ -63,7 +63,7 @@
   },
   "risk_management": {
     "position_limits": {
-      "max_position_size_usd": 5000,
+      "max_position_size_usd": 10000000,
       "max_positions_count": 5,
       "max_leverage": 1
     },
@@ -74,7 +74,7 @@
     },
     "order_limits": {
       "min_order_size_usd": 10,
-      "max_order_size_usd": 5000,
+      "max_order_size_usd": 10000000,
       "max_slippage_percent": 1
     }
   },

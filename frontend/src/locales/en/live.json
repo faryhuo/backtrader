@@ -3,6 +3,11 @@
   "dashboard_subtitle": "Real-time trading with strategy automation",
   "connected": "Connected",
   "disconnected": "Disconnected",
+  "warming_up": "Warming Up",
+  "live_feed": "Live Feed",
+  "strategy_log": "Strategy Log",
+  "no_strategy_logs": "No strategy logs yet",
+  "waiting_for_price_data": "Waiting for price data...",
   "portfolio_value": "Portfolio Value",
   "cash_balance": "Cash Balance",
   "unrealized_pnl": "Unrealized P&L",
@@ -66,6 +71,7 @@
     "session_stopped": "Trading session stopped",
     "session_stop_failed": "Failed to stop session: {{error}}",
     "session_refresh_failed": "Failed to refresh session status",
+    "order_cancelled": "Order cancelled",
     "order_cancel_failed": "Failed to cancel order: {{error}}"
   }
 }

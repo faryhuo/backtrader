@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Real-time K-line (candlestick) chart using lightweight-charts
  */
 const PriceChart = ({ priceHistory, currentPrice, symbol }) => {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
@@ -173,8 +175,8 @@ const PriceChart = ({ priceHistory, currentPrice, symbol }) => {
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>📈</div>
-          <div>Waiting for price data...</div>
+          <div style={{ fontSize: '24px', marginBottom: '8px' }}>$</div>
+          <div>{t('live.waiting_for_price_data', 'Waiting for price data...')}</div>
           {symbol && <div style={{ fontSize: '12px', marginTop: '4px' }}>{symbol}</div>}
         </div>
       </div>
