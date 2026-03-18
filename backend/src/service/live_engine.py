@@ -5,16 +5,17 @@ Manages the full session lifecycle: creation → Cerebro startup → real-time
 event routing (broker → WebSocket + DB) → graceful shutdown.
 """
 
+import asyncio
 import logging
 import threading
+import time
 import uuid
-from datetime import datetime
-from typing import Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Callable, Dict, List, Optional
 
 import backtrader as bt
 
-from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
-from src.brokers.ccxt_adapter.ccxt_broker import BrokerEvent
+from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore
 from src.db import SessionStorage
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.session_manager import SessionStatus, get_session_manager
@@ -24,6 +25,16 @@ logger = logging.getLogger(__name__)
 
 # Lazy-initialised storage
 _session_storage: Optional[SessionStorage] = None
+
+# Reference to the FastAPI (uvicorn) event loop — set once at startup
+_main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+def set_main_event_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """Called from FastAPI startup to capture the main event loop."""
+    global _main_loop
+    _main_loop = loop
+    logger.info(f"Main event loop captured: {loop}")
 
 
 def _get_storage() -> SessionStorage:
@@ -37,6 +48,102 @@ def _get_storage() -> SessionStorage:
 
 class LiveTradingError(Exception):
     """Raised when live trading encounters an error."""
+
+
+# Event types emitted by broker
+class BrokerEvent:
+    """Lightweight event emitted by the broker."""
+    ORDER_SUBMITTED = 'order_submitted'
+    ORDER_FILLED = 'order_filled'
+    ORDER_PARTIAL = 'order_partial'
+    ORDER_CANCELLED = 'order_cancelled'
+    ORDER_REJECTED = 'order_rejected'
+    TRADE_EXECUTED = 'trade_executed'
+    POSITION_UPDATE = 'position_update'
+    PNL_UPDATE = 'pnl_update'
+
+
+def _wrap_strategy_with_logging(strategy_cls, log_callback: Callable):
+    """
+    Create a dynamic subclass that intercepts next() and log() to forward
+    strategy decisions to the frontend via WebSocket.
+    """
+
+    print(f"[WRAP] Creating LoggingStrategy wrapper, callback: {log_callback}")
+
+    class LoggingStrategy(strategy_cls):
+        def __init__(self, *args, **kwargs):
+            print(f"[WRAP] LoggingStrategy.__init__ called")
+            # Store callback as instance attr via __dict__ to avoid
+            # Python descriptor protocol binding self as first arg
+            self.__dict__['_log_cb'] = log_callback
+            super().__init__(*args, **kwargs)
+            print(f"[WRAP] LoggingStrategy.__init__ done")
+
+        def log(self, txt, dt=None, level='info'):
+            dt = dt or (self.datas[0].datetime.date(0) if len(self.datas[0]) else datetime.now())
+            msg = f"{dt} | {txt}"
+            print(f"[WRAP] Strategy log: {msg}")
+            try:
+                self._log_cb(level, msg)
+            except Exception as e:
+                print(f"[WRAP] log callback error: {e}")
+
+        def next(self):
+            print(f"[WRAP] LoggingStrategy.next() called at bar {len(self.datas[0])}")
+            # Capture key state before strategy runs
+            pos_before = self.position.size if self.position else 0
+
+            super().next()
+
+            # After strategy runs, log current state
+            try:
+                dt = self.datas[0].datetime.datetime(0)
+                close = self.datas[0].close[0]
+                pos_after = self.position.size if self.position else 0
+
+                # Log position changes
+                if pos_after != pos_before:
+                    side = 'BUY' if pos_after > pos_before else 'SELL'
+                    self._log_cb('info', f"{dt} | {side} signal | price={close:.2f} | pos: {pos_before} -> {pos_after}")
+
+                # Log indicator values every 10 bars
+                if len(self.datas[0]) % 10 == 0:
+                    parts = [f"{dt} | close={close:.2f}"]
+                    # Try to extract common indicators
+                    for attr_name in ('fast_ma', 'slow_ma', 'sma', 'ema', 'rsi', 'crossover'):
+                        ind = getattr(self, attr_name, None)
+                        if ind is not None and len(ind) > 0:
+                            val = ind[0]
+                            parts.append(f"{attr_name}={val:.4f}")
+                    self._log_cb('debug', ' | '.join(parts))
+            except Exception:
+                pass
+
+        def notify_order(self, order):
+            super().notify_order(order)
+            try:
+                if order.status == order.Completed:
+                    side = 'BUY' if order.isbuy() else 'SELL'
+                    self._log_cb('info', f"Order {side} completed: size={order.executed.size:.6f} @ {order.executed.price:.2f}")
+                elif order.status == order.Rejected:
+                    self._log_cb('warning', f"Order REJECTED: {order.info}")
+                elif order.status == order.Canceled:
+                    self._log_cb('warning', f"Order CANCELED")
+            except Exception:
+                pass
+
+        def notify_trade(self, trade):
+            super().notify_trade(trade)
+            try:
+                if trade.isclosed:
+                    self._log_cb('info', f"Trade closed: PnL={trade.pnl:.2f} ({trade.pnlcomm:.2f} after commission)")
+            except Exception:
+                pass
+
+    LoggingStrategy.__name__ = strategy_cls.__name__
+    LoggingStrategy.__qualname__ = strategy_cls.__qualname__
+    return LoggingStrategy
 
 
 # ─────────────────────────────── public API ───────────────────────────────
@@ -65,7 +172,7 @@ def start_session(
     )
 
     session_manager = get_session_manager()
-    store: Optional[CCXTStore] = None
+    store: Optional[BinanceStore] = None
 
     try:
         # 1. Create in-memory session
@@ -89,16 +196,35 @@ def start_session(
         risk_config = get_risk_config(broker_config)
         ex_config = get_exchange_config(exchange, broker_config)
 
-        # 4. Initialise CCXT components
-        store = CCXTStore(
-            exchange_id=ex_config.ccxt_id,
+        # 4. Initialise Binance adapter components
+        store = BinanceStore(
             mode=mode,
+            exchange_id=ex_config.ccxt_id,
             config={'default_market': 'spot', 'markets': ['spot']},
             user_id=user_id,
         )
         store.start()
 
-        broker = CCXTBroker(
+        # Set up ticker callback for real-time price broadcast via WebSocket
+        def on_ticker(ticker):
+            try:
+                ws = _get_ws_manager()
+                if ws:
+                    _run_ws(ws.broadcast_ticker(
+                        session_id=session_id,
+                        symbol=symbol,
+                        last_price=ticker.get('last'),
+                        bid=ticker.get('bid'),
+                        ask=ticker.get('ask'),
+                        timestamp=ticker.get('timestamp'),
+                    ))
+            except Exception as e:
+                logger.debug(f"Ticker broadcast error: {e}")
+
+        store.set_ticker_callback(on_ticker)
+        store.start_ticker_stream(symbol)
+
+        broker = BinanceBroker(
             store=store,
             cash=initial_cash,
             commission=commission,
@@ -109,12 +235,62 @@ def start_session(
             max_order_size_usd=risk_config.order_limits.max_order_size_usd,
         )
 
-        data_feed = CCXTData(store=store, symbol=symbol, timeframe=timeframe)
+        # Calculate backfill start time based on timeframe
+        # For 1m timeframe, get last 100 bars ≈ 100 minutes
+        # IMPORTANT: Use UTC to match Binance timestamps
+        now = datetime.utcnow()
+        backfill_minutes = 100 if timeframe == '1m' else 200
+        backfill_start = now - timedelta(minutes=backfill_minutes)
+
+        data_feed = BinanceData(
+            store=store,
+            symbol=symbol,
+            timeframe=timeframe,
+            backfill=True,
+            backfill_start=backfill_start,
+            limit=100,
+        )
+
+        logger.info(f"[SESSION {session_id}] BinanceData created: symbol={symbol}, timeframe={timeframe}")
 
         # 5. Wire event callback (broker → WS + DB)
         broker.set_event_callback(
             _make_event_handler(session_id, session_manager, symbol)
         )
+
+        # 5.1 Wire log callback for strategy logs
+        # Also store logs in session for REST fallback
+        session._strategy_logs = []
+        logger.info(f"[SESSION {session_id}] Setting up log callback")
+
+        def on_strategy_log(level: str, message: str):
+            try:
+                logger.info(f"[STRATEGY LOG {session_id}] {level}: {message}")
+                # Store in-memory for REST access
+                log_entry = {
+                    'timestamp': datetime.now().isoformat(),
+                    'level': level,
+                    'message': message,
+                }
+                session._strategy_logs.append(log_entry)
+                if len(session._strategy_logs) > 200:
+                    session._strategy_logs = session._strategy_logs[-100:]
+
+                # Broadcast via WebSocket
+                ws = _get_ws_manager()
+                if ws:
+                    _run_ws(ws.broadcast_log(
+                        session_id=session_id,
+                        level=level,
+                        message=message,
+                    ))
+            except Exception as e:
+                logger.warning(f"Strategy log broadcast error: {e}")
+
+        broker.set_log_callback(on_strategy_log)
+
+        # 5.2 Wrap strategy class with logging interceptor
+        strategy_cls = _wrap_strategy_with_logging(strategy_cls, on_strategy_log)
 
         # 6. Build Cerebro
         cerebro = bt.Cerebro()
@@ -122,8 +298,56 @@ def start_session(
         cerebro.adddata(data_feed)
         cerebro.setbroker(broker)
 
+        logger.info(f"[SESSION {session_id}] Cerebro broker set: {cerebro.broker}")
+
         from src.service.analyzer_config import AnalyzerMode, configure_analyzers
         configure_analyzers(cerebro, AnalyzerMode.LIVE, TradeRecorder)
+
+        # 6.1 Send historical OHLCV to frontend after WebSocket connects
+        def send_initial_ohlcv():
+            try:
+                logger.info(f"send_initial_ohlcv called for session {session_id}")
+
+                # Wait for WebSocket client to connect (frontend needs time after receiving session response)
+                ws = _get_ws_manager()
+                for i in range(15):  # Wait up to 15 seconds
+                    if ws and ws.get_connection_count(session_id) > 0:
+                        logger.info(f"WebSocket client connected after {i}s")
+                        break
+                    time.sleep(1)
+                else:
+                    logger.warning(f"No WebSocket client connected after 15s, sending anyway")
+
+                # Calculate since time (150 minutes ago for 1m bars)
+                since_ms = int((datetime.now() - timedelta(minutes=150)).timestamp() * 1000)
+
+                logger.info(f"Fetching OHLCV for {symbol} timeframe={timeframe}")
+
+                bars = store.fetch_ohlcv(
+                    symbol=symbol,
+                    interval=timeframe,
+                    limit=100,
+                    since_ms=since_ms,
+                )
+
+                logger.info(f"Fetched {len(bars) if bars else 0} bars")
+
+                if bars:
+                    ws = _get_ws_manager()
+                    logger.info(f"WebSocket manager: {ws}")
+                    if ws:
+                        _run_ws(ws.broadcast_ohlcv(
+                            session_id=session_id,
+                            symbol=symbol,
+                            ohlcv_list=bars,
+                        ))
+                        logger.info(f"Sent {len(bars)} historical bars to frontend")
+                    else:
+                        logger.warning("WS is None, cannot broadcast OHLCV")
+                else:
+                    logger.warning("No bars fetched")
+            except Exception as e:
+                logger.warning(f"Failed to send initial OHLCV: {e}")
 
         # 7. Store runtime objects
         session.cerebro = cerebro
@@ -135,12 +359,21 @@ def start_session(
         # 9. Run Cerebro in background thread
         def _run():
             try:
+                logger.info(f"[SESSION {session_id}] Starting Cerebro run...")
                 session_manager.update_session(session_id, status=SessionStatus.RUNNING)
                 _get_storage().save_session(session)
                 _broadcast_status(session_id, 'starting', 'running')
 
-                logger.info(f"Cerebro started for session {session_id}")
+                # Send initial OHLCV in a separate thread so it doesn't block Cerebro
+                ohlcv_thread = threading.Thread(
+                    target=send_initial_ohlcv, daemon=True,
+                    name=f"OHLCV-{session_id[:8]}"
+                )
+                ohlcv_thread.start()
+
+                logger.info(f"[SESSION {session_id}] Calling cerebro.run()...")
                 cerebro.run()
+                logger.info(f"[SESSION {session_id}] Cerebro.run() returned normally")
 
                 session.status = SessionStatus.STOPPED
                 session.end_time = datetime.now()
@@ -171,7 +404,9 @@ def start_session(
         thread = threading.Thread(
             target=_run, daemon=True, name=f"Live-{session_id[:8]}"
         )
+        logger.info(f"[SESSION {session_id}] Starting background thread...")
         thread.start()
+        logger.info(f"[SESSION {session_id}] Background thread started")
         session.thread = thread
 
         logger.info(f"Session {session_id} launched")
@@ -241,19 +476,14 @@ def cancel_order(session_id: str, order_id: str) -> Dict:
         raise LiveTradingError("Session has no active Cerebro instance")
 
     broker = session.cerebro.broker
-    if not isinstance(broker, CCXTBroker):
+    if not isinstance(broker, BinanceBroker):
         raise LiveTradingError("Broker does not support order cancellation")
 
-    # Find order by ref or ccxt_order_id
+    # Find order by ref or binance order id
     target = broker._orders.get(int(order_id)) if order_id.isdigit() else None
 
     if target:
         broker.cancel(target)
-        return {'order_id': order_id, 'status': 'cancelled'}
-
-    # Try by ccxt exchange order id
-    success = broker.cancel_by_ccxt_id(order_id, session.symbol)
-    if success:
         return {'order_id': order_id, 'status': 'cancelled'}
 
     raise LiveTradingError(f"Order {order_id} not found in session {session_id}")
@@ -283,9 +513,51 @@ def get_ticker_price(session_id: str) -> Dict:
         'ask': ticker.get('ask'),
         'high': ticker.get('high'),
         'low': ticker.get('low'),
-        'volume': ticker.get('baseVolume'),
+        'volume': ticker.get('volume'),
         'timestamp': ticker.get('timestamp'),
     }
+
+
+def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
+    """Fetch historical OHLCV bars via REST (fallback for WebSocket)."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    if not session.store or not session.store._running:
+        raise LiveTradingError("Exchange connection is not active")
+
+    try:
+        since_ms = int((datetime.now() - timedelta(minutes=limit * 2)).timestamp() * 1000)
+        bars = session.store.fetch_ohlcv(
+            symbol=session.symbol,
+            interval=session.timeframe,
+            limit=limit,
+            since_ms=since_ms,
+        )
+        formatted = []
+        for bar in (bars or []):
+            formatted.append({
+                'time': bar[0] / 1000,
+                'open': bar[1],
+                'high': bar[2],
+                'low': bar[3],
+                'close': bar[4],
+                'volume': bar[5] if len(bar) > 5 else 0,
+            })
+        return {'symbol': session.symbol, 'bars': formatted}
+    except Exception as e:
+        raise LiveTradingError(f"Failed to fetch OHLCV: {e}") from e
+
+
+def get_strategy_logs(session_id: str, limit: int = 100) -> Dict:
+    """Get recent strategy log entries from in-memory buffer."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    logs = getattr(session, '_strategy_logs', [])
+    return {'session_id': session_id, 'logs': logs[-limit:]}
 
 
 # ─────────────────────────────── event handling ───────────────────────────────
@@ -414,24 +686,42 @@ def _get_ws_manager():
     """Lazy import to avoid circular dependency."""
     try:
         from src.service.websocket_manager import get_websocket_manager
-        return get_websocket_manager()
-    except ImportError:
+        ws = get_websocket_manager()
+        if ws is None:
+            logger.warning("WebSocket manager is None")
+        return ws
+    except Exception as e:
+        logger.warning(f"Failed to get WebSocket manager: {e}")
         return None
 
 
 def _run_ws(coro) -> None:
-    """Run a WebSocket manager coroutine from sync context."""
-    import asyncio
+    """Run a WebSocket manager coroutine from a background (sync) thread.
+
+    The key insight: WebSocket send_json() must run on the FastAPI event loop
+    (the one uvicorn is running), NOT the thread-local loop. We use
+    asyncio.run_coroutine_threadsafe() to schedule the coroutine on the
+    captured main loop.
+    """
+    global _main_loop
+    if _main_loop is None or _main_loop.is_closed():
+        logger.warning("[_run_ws] Main event loop not available, broadcast skipped")
+        return
+
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(coro, loop=loop)
-        else:
-            loop.run_until_complete(coro)
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(coro)
+        future = asyncio.run_coroutine_threadsafe(coro, _main_loop)
+        # Don't block waiting for result — fire and forget
+        future.add_done_callback(_ws_broadcast_done)
+    except Exception as e:
+        logger.warning(f"[_run_ws] Failed to schedule broadcast: {e}")
+
+
+def _ws_broadcast_done(future):
+    """Callback for completed WebSocket broadcasts."""
+    try:
+        future.result()  # Raise any exception
+    except Exception as e:
+        logger.warning(f"[_run_ws] Broadcast failed: {e}")
 
 
 def _broadcast_status(session_id: str, old: str, new: str) -> None:
@@ -446,7 +736,7 @@ def _persist_order(session_id: str, data: dict, status: str) -> None:
         _get_storage().save_order({
             'order_id': data['order_id'],
             'session_id': session_id,
-            'exchange_order_id': data.get('ccxt_order_id'),
+            'exchange_order_id': data.get('binance_order_id'),
             'symbol': data['symbol'],
             'side': data['side'],
             'type': data.get('order_type', 'market'),

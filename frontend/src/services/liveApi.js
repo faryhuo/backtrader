@@ -55,6 +55,16 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async getOhlcv(sessionId, limit = 100) {
+        const res = await buildRequest(`/live/ohlcv/${sessionId}?limit=${limit}`)
+        return await parseResponse(res)
+    },
+
+    async getStrategyLogs(sessionId, limit = 100) {
+        const res = await buildRequest(`/live/logs/${sessionId}?limit=${limit}`)
+        return await parseResponse(res)
+    },
+
     async getExchanges() {
         const res = await buildRequest('/live/exchanges')
         return await parseResponse(res)

@@ -1,40 +1,30 @@
 """
-CCXT Data - Live OHLCV data feed from Binance Spot via CCXT.
+Binance Data - Backtrader-compatible OHLCV data feed using python-binance.
 
-Provides a Backtrader-compatible data feed that polls Binance for
-real-time OHLCV bars, with forming-bar filtering and backfill support.
+Provides real-time data feed for Backtrader strategies.
 """
 
 import logging
-import re
 import time
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import backtrader as bt
 
-from .ccxt_store import CCXTStore
+from .common import TIMEFRAME_SECONDS, map_to_bt_timeframe
+from .binance_store import BinanceStore
 
 logger = logging.getLogger(__name__)
 
-# Timeframe string → seconds
-_TIMEFRAME_SECONDS = {
-    '1m': 60, '3m': 180, '5m': 300, '15m': 900, '30m': 1800,
-    '1h': 3600, '2h': 7200, '4h': 14400, '6h': 21600,
-    '8h': 28800, '12h': 43200, '1d': 86400,
-    '3d': 259200, '1w': 604800, '1M': 2592000,
-}
 
-
-class CCXTData(bt.DataBase):
+class BinanceData(bt.DataBase):
     """
-    Live data feed that fetches OHLCV from Binance via CCXT.
+    Backtrader data feed for Binance OHLCV data.
 
     Features:
-    - Forming-bar filter (skips incomplete bars to prevent future-leak)
-    - Catch-up buffering (fetches multiple bars if behind)
-    - Optional historical backfill
-    - Retry on network errors with backoff
+    - Forming bar filter (skips incomplete bars)
+    - Historical backfill on start
+    - Paper trading simulation
     """
 
     params = (
@@ -46,16 +36,13 @@ class CCXTData(bt.DataBase):
         ('limit', 50),
         ('pause', 1.0),
         ('debug', False),
-        ('max_fetch_retries', 3),
     )
 
-    def __init__(self, store: CCXTStore, symbol: str, **kwargs):
+    def __init__(self, store: BinanceStore, symbol: str, **kwargs):
         self.store = store
-        self.exchange = store.get_exchange()
-        self.symbol = symbol
-        self._symbol = symbol  # used by broker._get_symbol()
+        self._symbol = symbol
 
-        # Handle timeframe from kwargs
+        # Handle timeframe
         ccxt_tf = kwargs.pop('timeframe', None) or kwargs.pop('ccxt_timeframe', None)
         self.ccxt_timeframe = ccxt_tf or self.params.ccxt_timeframe
 
@@ -66,33 +53,28 @@ class CCXTData(bt.DataBase):
         super().__init__(**kwargs)
 
         # Validate timeframe
-        if self.ccxt_timeframe not in _TIMEFRAME_SECONDS:
+        if self.ccxt_timeframe not in TIMEFRAME_SECONDS:
             raise ValueError(f"Unsupported timeframe: '{self.ccxt_timeframe}'")
 
         # Map to Backtrader units
-        self._timeframe, self._compression = _map_to_bt_timeframe(self.ccxt_timeframe)
+        self._timeframe, self._compression = map_to_bt_timeframe(self.ccxt_timeframe)
         self.params.timeframe = self._timeframe
         self.params.compression = self._compression
 
-        self._tf_seconds = _TIMEFRAME_SECONDS[self.ccxt_timeframe]
+        self._tf_seconds = TIMEFRAME_SECONDS[self.ccxt_timeframe]
         self._tf_ms = self._tf_seconds * 1000
 
-        logger.info(f"CCXTData initialized: {symbol} [{self.ccxt_timeframe}]")
+        logger.info(f"BinanceData initialized: {symbol} [{self.ccxt_timeframe}]")
 
     # ──────────────────────────── Backtrader interface ────────────────────────────
 
     def _load(self) -> bool:
-        """Load next bar into lines. Returns True if bar loaded.
-
-        For live feeds, this method blocks until a new bar is available
-        or the store is stopped. Returning False only when the feed
-        should truly end (store stopped / too many errors).
-        """
+        """Load next bar into lines."""
         # Serve from buffer first
         if self._hist_buffer:
             return self._consume_bar()
 
-        # Live wait-loop: keep polling until a bar arrives or store stops
+        # Live wait-loop
         while self.store.is_running:
             try:
                 new_bars = self._fetch_bars()
@@ -101,26 +83,20 @@ class CCXTData(bt.DataBase):
                     self._consecutive_errors = 0
                     return self._consume_bar()
 
-                # No completed bar yet — wait and retry
                 time.sleep(self.params.pause)
 
             except Exception as e:
                 self._consecutive_errors += 1
                 if self.params.debug or self._consecutive_errors % 10 == 0:
-                    logger.error(f"Fetch error ({self.symbol}): {e}")
+                    logger.error(f"Fetch error ({self._symbol}): {e}")
 
-                # Give up after too many consecutive errors
-                if self._consecutive_errors >= self.params.max_fetch_retries * 10:
-                    logger.error(
-                        f"Too many consecutive errors ({self._consecutive_errors}) "
-                        f"for {self.symbol}, stopping data feed"
-                    )
+                if self._consecutive_errors >= 30:
+                    logger.error(f"Too many errors, stopping data feed")
                     return False
 
                 time.sleep(min(self.params.pause * self._consecutive_errors, 30))
 
-        # Store was stopped — signal end of data
-        logger.info(f"Store stopped, ending data feed for {self.symbol}")
+        logger.info(f"Store stopped, ending data feed")
         return False
 
     def start(self) -> None:
@@ -137,7 +113,7 @@ class CCXTData(bt.DataBase):
     # ──────────────────────────── data fetching ────────────────────────────
 
     def _fetch_bars(self) -> List[list]:
-        """Fetch OHLCV bars from exchange, filtering forming bars."""
+        """Fetch OHLCV bars from Binance, filtering forming bars."""
         if self._last_bar_time:
             since = int(self._last_bar_time.timestamp() * 1000) + 1
         else:
@@ -145,18 +121,16 @@ class CCXTData(bt.DataBase):
                 (datetime.utcnow() - timedelta(seconds=self._tf_seconds * 5)).timestamp() * 1000
             )
 
-        ohlcv = self.store.run_coroutine(
-            self.store._fetch_with_retry(
-                lambda: self.exchange.fetch_ohlcv(
-                    symbol=self.symbol,
-                    timeframe=self.ccxt_timeframe,
-                    since=since,
-                    limit=self.params.limit,
-                ),
-                max_attempts=self.params.max_fetch_retries,
-            ),
-            timeout=30,
-        )
+        try:
+            ohlcv = self.store.fetch_ohlcv(
+                symbol=self._symbol,
+                interval=self.ccxt_timeframe,
+                limit=self.params.limit,
+                since_ms=since,
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch OHLCV: {e}")
+            return []
 
         if not ohlcv:
             return []
@@ -176,7 +150,7 @@ class CCXTData(bt.DataBase):
             valid.append(bar)
 
         if self.params.debug and valid:
-            logger.debug(f"Fetched {len(valid)} new bars for {self.symbol}")
+            logger.debug(f"Fetched {len(valid)} new bars for {self._symbol}")
 
         return valid
 
@@ -186,14 +160,16 @@ class CCXTData(bt.DataBase):
             return False
 
         bar = self._hist_buffer.pop(0)
+        logger.debug(f"Loaded bar: O={bar[1]:.2f} H={bar[2]:.2f} L={bar[3]:.2f} C={bar[4]:.2f}")
+
         dt_obj = datetime.utcfromtimestamp(bar[0] / 1000)
 
         self.lines.datetime[0] = bt.date2num(dt_obj)
-        self.lines.open[0] = bar[1]
-        self.lines.high[0] = bar[2]
-        self.lines.low[0] = bar[3]
-        self.lines.close[0] = bar[4]
-        self.lines.volume[0] = bar[5]
+        self.lines.open[0] = float(bar[1])
+        self.lines.high[0] = float(bar[2])
+        self.lines.low[0] = float(bar[3])
+        self.lines.close[0] = float(bar[4])
+        self.lines.volume[0] = float(bar[5])
         self.lines.openinterest[0] = 0
 
         self._last_bar_time = dt_obj
@@ -202,6 +178,7 @@ class CCXTData(bt.DataBase):
     def _perform_backfill(self) -> None:
         """Fetch historical data before live feed starts."""
         if not self.params.backfill_start:
+            logger.warning(f"Backfill requested but no backfill_start set")
             return
 
         try:
@@ -209,27 +186,30 @@ class CCXTData(bt.DataBase):
             if isinstance(start_dt, str):
                 start_dt = datetime.fromisoformat(start_dt)
 
-            logger.info(f"Backfilling {self.symbol} from {start_dt}...")
+            logger.info(f"Backfilling {self._symbol} from {start_dt}...")
 
             since = int(start_dt.timestamp() * 1000)
             now_ms = int(datetime.utcnow().timestamp() * 1000)
+
+            if since > now_ms:
+                since = now_ms - (100 * self._tf_ms)
+
             batch_size = 1000
             total = 0
 
             while since < now_ms:
-                bars = self.store.run_coroutine(
-                    self.exchange.fetch_ohlcv(
-                        symbol=self.symbol,
-                        timeframe=self.ccxt_timeframe,
-                        since=since,
-                        limit=batch_size,
-                    )
+                bars = self.store.fetch_ohlcv(
+                    symbol=self._symbol,
+                    interval=self.ccxt_timeframe,
+                    limit=batch_size,
+                    since_ms=since,
                 )
 
                 if not bars:
                     break
 
                 closed = [b for b in bars if b[0] + self._tf_ms <= now_ms]
+
                 if not closed:
                     break
 
@@ -237,40 +217,16 @@ class CCXTData(bt.DataBase):
                 total += len(closed)
                 since = bars[-1][0] + 1
 
-                # Respect rate limit
-                time.sleep(self.exchange.rateLimit / 1000)
+                time.sleep(0.1)
 
-            logger.info(f"Backfill complete: {total} bars loaded for {self.symbol}")
+            logger.info(f"Backfill complete: {total} bars loaded for {self._symbol}")
 
         except Exception as e:
-            logger.error(f"Backfill failed for {self.symbol}: {e}")
-
-    # ──────────────────────────── price snapshot ────────────────────────────
+            logger.error(f"Backfill failed: {e}")
 
     def get_current_price(self) -> Optional[float]:
-        """Get latest close price (from last loaded bar or None)."""
+        """Get latest close price."""
         if self._last_bar_time and len(self) > 0:
             return self.lines.close[0]
         return None
 
-
-def _map_to_bt_timeframe(tf: str) -> Tuple[int, int]:
-    """Map CCXT timeframe string to (BT TimeFrame, compression)."""
-    match = re.match(r"(\d+)([a-zA-Z]+)", tf)
-    if not match:
-        return bt.TimeFrame.Minutes, 1
-
-    qty, unit = int(match.group(1)), match.group(2)
-
-    if unit == 'm':
-        return bt.TimeFrame.Minutes, qty
-    elif unit == 'h':
-        return bt.TimeFrame.Minutes, qty * 60
-    elif unit == 'd':
-        return bt.TimeFrame.Days, qty
-    elif unit == 'w':
-        return bt.TimeFrame.Weeks, qty
-    elif unit == 'M':
-        return bt.TimeFrame.Months, qty
-
-    return bt.TimeFrame.Minutes, 1

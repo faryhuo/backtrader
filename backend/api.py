@@ -35,13 +35,20 @@ app = FastAPI()
 async def startup_warmup():
     """
     Application startup handler - Initialize resources and warmup worker pool.
-    
+
     1. Ensures required resource directories exist
     2. Ensures database directory exists
     3. Pre-initializes the worker pool to eliminate cold start delays
+    4. Captures the main asyncio event loop for live trading WebSocket broadcasts
     """
+    import asyncio
     import logging
     logger = logging.getLogger(__name__)
+
+    # Capture the main event loop for live trading WebSocket broadcasts
+    from src.service.live_engine import set_main_event_loop
+    set_main_event_loop(asyncio.get_event_loop())
+    logger.info("Main event loop captured for live trading")
     
     # Ensure resource directories exist
     try:

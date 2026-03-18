@@ -206,11 +206,11 @@ def get_exchange_config(exchange_id: str, config: Optional[BrokerConfig] = None)
     if not ex_config.enabled:
         raise ValueError(f"Exchange '{exchange_id}' is disabled in configuration")
 
-    # Basic adapter validation to avoid unsupported integrations
-    if ex_config.adapter.lower() not in {"ccxt", "ibkr"}:
+    # Basic adapter validation — currently only CCXT (Binance Spot) is supported
+    if ex_config.adapter.lower() != "ccxt":
         raise ValueError(
             f"Exchange '{exchange_id}' uses unsupported adapter '{ex_config.adapter}'. "
-            "Supported adapters: ccxt, ibkr"
+            "Supported adapter: ccxt (Binance Spot)"
         )
 
     return ex_config

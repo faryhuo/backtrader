@@ -6,6 +6,8 @@ import SessionControls from '../components/LiveTrading/SessionControls';
 import PositionTable from '../components/LiveTrading/PositionTable';
 import OrderLog from '../components/LiveTrading/OrderLog';
 import PnLChart from '../components/LiveTrading/PnLChart';
+import PriceChart from '../components/LiveTrading/PriceChart';
+import StrategyLog from '../components/LiveTrading/StrategyLog';
 import { useLiveTrading } from '../hooks/useLiveTrading';
 import './LiveTradingDashboard.css';
 
@@ -28,13 +30,30 @@ const LiveTradingDashboard = () => {
     portfolioValue,
     cash,
     ticker,
+    prevTicker,
+    openPrice,
+    priceHistory,
     stats,
+    logs,
     wsConnected,
     handleStartSession,
     handleStopSession,
     handleRefreshSession,
     handleCancelOrder,
   } = useLiveTrading();
+
+  // Calculate price change (vs opening price)
+  const priceChange = ticker && openPrice
+    ? ticker.last - openPrice
+    : ticker && prevTicker
+    ? ticker.last - prevTicker.last
+    : 0;
+  const priceChangePercent = ticker && openPrice && openPrice > 0
+    ? ((ticker.last - openPrice) / openPrice) * 100
+    : ticker && prevTicker && prevTicker.last
+    ? ((ticker.last - prevTicker.last) / prevTicker.last) * 100
+    : 0;
+  const isPriceUp = priceChange >= 0;
 
   const isSessionActive = session && !['stopped', 'error'].includes(session.status);
 
@@ -82,11 +101,22 @@ const LiveTradingDashboard = () => {
                 </Col>
                 <Col>
                   <Space size="large">
-                    {/* Ticker price */}
+                    {/* Ticker price with change */}
                     {ticker && ticker.last && (
-                      <Text strong style={{ fontSize: 18, color: '#facc15' }}>
-                        {session.symbol}: ${Number(ticker.last).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </Text>
+                      <Space direction="vertical" size={0} style={{ textAlign: 'right' }}>
+                        <Text strong style={{ fontSize: 18, color: '#facc15' }}>
+                          {session.symbol}: ${Number(ticker.last).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </Text>
+                        {priceChange !== 0 && (
+                          <Text strong style={{ fontSize: 14, color: isPriceUp ? '#4ade80' : '#f87171' }}>
+                            {isPriceUp ? '+' : ''}{priceChange.toFixed(2)} ({isPriceUp ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                            {isPriceUp ? <RiseOutlined style={{ marginLeft: 4 }} /> : <FallOutlined style={{ marginLeft: 4 }} />}
+                          </Text>
+                        )}
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Bid: ${Number(ticker.bid || 0).toFixed(2)} | Ask: ${Number(ticker.ask || 0).toFixed(2)}
+                        </Text>
+                      </Space>
                     )}
                     {/* WS status */}
                     <Space>
@@ -155,6 +185,14 @@ const LiveTradingDashboard = () => {
             {/* Chart + Positions + Orders */}
             <Row gutter={[16, 16]}>
               <Col xs={24} xl={16}>
+                <Card className="dashboard-card" title={t('live.price_chart', 'Price Chart')}>
+                  <PriceChart
+                    priceHistory={priceHistory}
+                    currentPrice={ticker?.last}
+                    symbol={session?.symbol}
+                  />
+                </Card>
+
                 <Card className="dashboard-card" title={t('live.performance', 'Performance')}>
                   <PnLChart pnlHistory={pnlHistory} currentPnl={currentPnl} />
                 </Card>
@@ -176,6 +214,15 @@ const LiveTradingDashboard = () => {
                       onCancelOrder={handleCancelOrder}
                     />
                   </div>
+                </Card>
+
+                {/* Strategy Log Panel */}
+                <Card
+                  size="small"
+                  title={t('live.strategy_log', '策略日志')}
+                  style={{ marginTop: 16 }}
+                >
+                  <StrategyLog logs={logs} />
                 </Card>
               </Col>
             </Row>

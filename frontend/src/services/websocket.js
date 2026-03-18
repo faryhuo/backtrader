@@ -41,11 +41,16 @@ export function useWebSocket(sessionId, options = {}) {
 
   // Build live session WebSocket URL
   const buildUrl = useCallback(() => {
-    if (!sessionId) return null;
+    if (!sessionId) {
+      console.log('[WS] No sessionId, returning null URL');
+      return null;
+    }
 
     // Include token as query parameter for authentication
     const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-    return buildWebSocketUrl(`/ws/live/${sessionId}${tokenParam}`);
+    const url = buildWebSocketUrl(`/ws/live/${sessionId}${tokenParam}`);
+    console.log('[WS] Built URL:', url);
+    return url;
   }, [sessionId, token]);
 
   // Use the base WebSocket hook
@@ -122,6 +127,7 @@ export const WS_MESSAGE_TYPES = {
   PNL: 'pnl',
   TRADE: 'trade',
   TICKER: 'ticker',
+  OHLCV: 'ohlcv',
   LOG: 'log',
   ERROR: 'error',
   STATUS: 'status',

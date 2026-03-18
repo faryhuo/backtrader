@@ -88,8 +88,8 @@ class SessionResponse(BaseModel):
 class ExchangeInfo(BaseModel):
     id: str
     name: str
-    adapter: str = "ccxt"
-    ccxt_id: Optional[str] = None
+    adapter: str = "binance"
+    binance_id: Optional[str] = None
     markets: List[str]
     default_market: str
     paper_mode_available: bool
@@ -223,6 +223,30 @@ async def get_ticker_price(session_id: str):
     except Exception as e:
         logger.error(f"Failed to fetch ticker: {e}")
         raise HTTPException(503, detail=f"Ticker unavailable: {e}")
+
+
+@router.get("/live/ohlcv/{session_id}", tags=["Live Trading"])
+async def get_ohlcv(session_id: str, limit: int = 100):
+    """Get historical OHLCV bars for the session's symbol (REST fallback)."""
+    try:
+        return live_engine.get_ohlcv(session_id, limit=limit)
+    except LiveTradingError as e:
+        raise HTTPException(404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to fetch OHLCV: {e}")
+        raise HTTPException(503, detail=f"OHLCV unavailable: {e}")
+
+
+@router.get("/live/logs/{session_id}", tags=["Live Trading"])
+async def get_strategy_logs(session_id: str, limit: int = 100):
+    """Get recent strategy log entries for a session."""
+    try:
+        return live_engine.get_strategy_logs(session_id, limit=limit)
+    except LiveTradingError as e:
+        raise HTTPException(404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to fetch logs: {e}")
+        raise HTTPException(503, detail=f"Logs unavailable: {e}")
 
 
 @router.get("/live/exchanges", tags=["Live Trading"])

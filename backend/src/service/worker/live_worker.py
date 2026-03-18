@@ -119,7 +119,7 @@ class LiveWorkerSession:
             # Import trading components HERE (in worker, not API process)
             import backtrader as bt
             
-            from src.brokers.ccxt_adapter import CCXTBroker, CCXTData, CCXTStore
+            from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore
             from src.service.backtest_engine import TradeRecorder
             from src.service.strategy_repo import read_user_strategy_source
             from src.service.strategy_sandbox import execute_strategy_code
@@ -151,7 +151,7 @@ class LiveWorkerSession:
             ex_config = get_exchange_config(self.task.exchange, config)
             
             if ex_config.adapter.lower() == "ccxt":
-                self._store = CCXTStore(
+                self._store = BinanceStore(
                     exchange_id=ex_config.ccxt_id,
                     mode=self.task.mode,
                     config={
@@ -162,19 +162,19 @@ class LiveWorkerSession:
                 )
                 self._store.start()
                 
-                broker = CCXTBroker(
+                broker = BinanceBroker(
                     store=self._store,
                     cash=self.task.initial_cash,
                     commission=self.task.commission,
                     session_id=self.task.session_id,
                 )
-                data_feed = CCXTData(
+                data_feed = BinanceData(
                     store=self._store,
                     symbol=self.task.symbol,
                     timeframe=self.task.timeframe,
                 )
             else:
-                # TODO: Add IBKR support
+                # Only Binance adapter is supported currently
                 self._send_event(
                     LiveEventType.ERROR,
                     {"error": f"Unsupported adapter: {ex_config.adapter}"}

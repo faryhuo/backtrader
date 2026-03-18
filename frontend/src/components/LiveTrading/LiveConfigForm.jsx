@@ -10,13 +10,14 @@ const COMMON_PAIRS = [
 ];
 
 const TIMEFRAMES = [
-  { value: '1m', label: '1m' },
-  { value: '5m', label: '5m' },
+  { value: '1m', label: '1m (1分钟)' },
+  { value: '3m', label: '3m (3分钟)' },
+  { value: '5m', label: '5m (5分钟)' },
   { value: '15m', label: '15m' },
   { value: '30m', label: '30m' },
-  { value: '1h', label: '1h' },
+  { value: '1h', label: '1h (1小时)' },
   { value: '4h', label: '4h' },
-  { value: '1d', label: '1d' },
+  { value: '1d', label: '1d (1天)' },
 ];
 
 /**

@@ -99,8 +99,10 @@ class WebSocketManager:
         Returns:
             Number of clients that received the message
         """
+        logger.info(f"[BROADCAST] Session {session_id}, type={message.get('type', 'unknown')}, connections={len(self._connections.get(session_id, []))}")
+
         if session_id not in self._connections:
-            logger.debug(f"No WebSocket connections for session {session_id}")
+            logger.warning(f"[BROADCAST] No WebSocket connections for session {session_id}")
             return 0
 
         # Get copy of connections to avoid modification during iteration
@@ -376,6 +378,40 @@ class WebSocketManager:
                 'bid': bid,
                 'ask': ask,
                 'timestamp': timestamp
+            }
+        })
+
+    async def broadcast_ohlcv(
+        self,
+        session_id: str,
+        symbol: str,
+        ohlcv_list: list
+    ) -> None:
+        """
+        Broadcast historical OHLCV data (for chart initialization).
+
+        Args:
+            session_id: Session ID
+            symbol: Trading pair
+            ohlcv_list: List of [timestamp, open, high, low, close, volume]
+        """
+        # Convert to chart-friendly format
+        bars = []
+        for bar in ohlcv_list:
+            bars.append({
+                'time': bar[0] // 1000,  # Convert ms to seconds
+                'open': bar[1],
+                'high': bar[2],
+                'low': bar[3],
+                'close': bar[4],
+                'volume': bar[5],
+            })
+
+        await self.broadcast(session_id, {
+            'type': 'ohlcv',
+            'data': {
+                'symbol': symbol,
+                'bars': bars
             }
         })
 
