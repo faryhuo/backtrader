@@ -43,6 +43,16 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async getSessionPositions(sessionId) {
+        const res = await buildRequest(`/live/positions/${sessionId}`)
+        return await parseResponse(res)
+    },
+
+    async getSessionAccountSnapshot(sessionId) {
+        const res = await buildRequest(`/live/account/${sessionId}`)
+        return await parseResponse(res)
+    },
+
     async cancelOrder(sessionId, orderId) {
         const res = await buildRequest(`/live/orders/${sessionId}/cancel/${orderId}`, {
             method: 'POST'
@@ -62,6 +72,11 @@ export const liveApi = {
 
     async getStrategyLogs(sessionId, limit = 100) {
         const res = await buildRequest(`/live/logs/${sessionId}?limit=${limit}`)
+        return await parseResponse(res)
+    },
+
+    async getTradeErrors(sessionId, limit = 20) {
+        const res = await buildRequest(`/live/errors/${sessionId}?limit=${limit}`)
         return await parseResponse(res)
     },
 

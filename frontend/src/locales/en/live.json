@@ -75,20 +75,46 @@
   },
   "orders": {
     "time": "Time",
+    "fill_time": "Fill Time",
     "side": "Side",
     "size": "Size",
     "price": "Price",
+    "filled_price": "Filled Avg",
+    "executed_quote_qty": "Quote Qty",
+    "fee": "Fee",
+    "trades": "Trades",
     "status": "Status",
+    "group_open": "Open Orders",
+    "group_fills": "Session Fills",
+    "group_history": "History",
     "tab_all": "All",
     "tab_open": "Open",
     "tab_filled": "Filled",
     "confirm_cancel": "Cancel this order?",
-    "empty": "No orders yet"
+    "empty": "No orders yet",
+    "empty_open": "No open orders",
+    "empty_fills": "No session fills yet",
+    "empty_history": "No historical orders"
   },
   "trade": {
     "side": {
       "buy": "Bought",
       "sell": "Sold"
+    }
+  },
+  "errors": {
+    "title": "Recent Trading Errors",
+    "none": "No recent trading errors",
+    "codes": {
+      "BINANCE_LOT_SIZE": "Order quantity does not satisfy Binance lot size rules. Adjust the quantity step and minimum quantity.",
+      "BINANCE_MIN_NOTIONAL": "Order value is below Binance minimum notional. Increase the order amount.",
+      "INSUFFICIENT_BALANCE": "Available balance is insufficient for this order.",
+      "INSUFFICIENT_POSITION": "Current position is not enough to complete this sell order.",
+      "POSITION_LIMIT_EXCEEDED": "This order would exceed the configured position size limit.",
+      "MAX_POSITIONS_EXCEEDED": "This order would exceed the configured maximum open positions.",
+      "ORDER_VALUE_TOO_SMALL": "Order value is below the configured minimum order amount.",
+      "ORDER_VALUE_TOO_LARGE": "Order value is above the configured maximum order amount.",
+      "ORDER_REJECTED": "The order was rejected."
     }
   },
   "notifications": {

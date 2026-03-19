@@ -3,6 +3,8 @@
 import time
 from datetime import datetime
 
+import backtrader as bt
+
 from src.brokers.binance_adapter.binance_data import BinanceData
 
 
@@ -23,6 +25,14 @@ class DummyStore:
 
 
 class TestBinanceData:
+    def test_second_timeframe_maps_to_backtrader_seconds(self):
+        store = DummyStore()
+        data = BinanceData(store=store, symbol="BTCUSDT", timeframe="1s")
+
+        assert data._timeframe == bt.TimeFrame.Seconds
+        assert data._compression == 1
+        assert data._tf_seconds == 1
+
     def test_closed_live_kline_is_buffered_once(self):
         store = DummyStore()
         data = BinanceData(store=store, symbol="BTCUSDT", timeframe="1m")

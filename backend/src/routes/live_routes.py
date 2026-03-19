@@ -43,8 +43,10 @@ class StartLiveRequest(BaseModel):
     strategy_name: str = Field(..., description="Strategy file name (without .py)")
     symbol: str = Field(..., description="Trading pair (e.g., 'BTC/USDT')")
     mode: str = Field(default="paper", description="'paper' (testnet) or 'live'")
-    timeframe: str = Field(default="1m", description="Bar timeframe")
+    timeframe: str = Field(default="1m", description="Bar timeframe (for example: 1s, 1m, 5m, 1h)")
     params: dict | None = Field(default=None, description="Strategy parameter overrides")
+    sizer_type: str = Field(default="fixed_size", description="Position sizing type")
+    sizer_config: dict | None = Field(default=None, description="Position sizing configuration")
     initial_cash: float = Field(
         default=10000.0,
         ge=100,
@@ -61,6 +63,8 @@ class StartLiveRequest(BaseModel):
                 "mode": "paper",
                 "timeframe": "1m",
                 "params": {"target_trade_value_usd": 50},
+                "sizer_type": "percent_sizer",
+                "sizer_config": {"percents": 10},
                 "commission": 0.001,
             }
         }
@@ -131,6 +135,8 @@ async def start_live_trading(
             mode=request.mode,
             timeframe=request.timeframe,
             params=request.params,
+            sizer_type=request.sizer_type,
+            sizer_config=request.sizer_config,
             initial_cash=request.initial_cash,
             commission=request.commission,
             user_id=user_id,
@@ -220,6 +226,25 @@ async def get_session_orders(session_id: str):
         raise HTTPException(404, str(e))
 
 
+@router.get("/live/positions/{session_id}", tags=["Live Trading"])
+async def get_session_positions(session_id: str):
+    """Get exchange-backed positions for a session."""
+    try:
+        positions = live_engine.get_session_positions(session_id)
+        return {'positions': positions}
+    except LiveTradingError as e:
+        raise HTTPException(404, str(e))
+
+
+@router.get("/live/account/{session_id}", tags=["Live Trading"])
+async def get_session_account_snapshot(session_id: str):
+    """Get exchange-backed cash and portfolio snapshot for a session."""
+    try:
+        return live_engine.get_session_account_snapshot(session_id)
+    except LiveTradingError as e:
+        raise HTTPException(404, str(e))
+
+
 @router.get("/live/ticker/{session_id}", tags=["Live Trading"])
 async def get_ticker_price(session_id: str):
     """Get current ticker price for the session's symbol."""
@@ -255,6 +280,18 @@ async def get_strategy_logs(session_id: str, limit: int = 100):
     except Exception as e:
         logger.error(f"Failed to fetch logs: {e}")
         raise HTTPException(503, detail=f"Logs unavailable: {e}")
+
+
+@router.get("/live/errors/{session_id}", tags=["Live Trading"])
+async def get_trade_errors(session_id: str, limit: int = 20):
+    """Get recent trading errors for a session."""
+    try:
+        return live_engine.get_trade_errors(session_id, limit=limit)
+    except LiveTradingError as e:
+        raise HTTPException(404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to fetch trade errors: {e}")
+        raise HTTPException(503, detail=f"Trade errors unavailable: {e}")
 
 
 @router.get("/live/symbol-rules", tags=["Live Trading"])

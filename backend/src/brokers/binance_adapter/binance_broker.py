@@ -217,23 +217,22 @@ class BinanceBroker(bt.BrokerBase):
             risk_error = self._validate_order_value(required)
             if risk_error:
                 logger.warning(f"Order rejected: {risk_error}")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                self._reject_order(order, symbol, risk_error, side=side, size=amount, price=price_est)
                 return order
             if required > self._cash:
-                logger.warning(f"Order rejected: insufficient cash ({required} > {self._cash})")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                reason = f"insufficient cash ({required} > {self._cash})"
+                logger.warning(f"Order rejected: {reason}")
+                self._reject_order(order, symbol, reason, side=side, size=amount, price=price_est)
                 return order
             if self._exceeds_position_limit(order.data, amount, price_est):
-                logger.warning("Order rejected: position size limit exceeded")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                reason = "position size limit exceeded"
+                logger.warning(f"Order rejected: {reason}")
+                self._reject_order(order, symbol, reason, side=side, size=amount, price=price_est)
                 return order
             if self._exceeds_positions_count(order.data, amount):
-                logger.warning("Order rejected: max positions count exceeded")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                reason = "max positions count exceeded"
+                logger.warning(f"Order rejected: {reason}")
+                self._reject_order(order, symbol, reason, side=side, size=amount, price=price_est)
                 return order
         else:
             position = self._positions[order.data]
@@ -241,13 +240,12 @@ class BinanceBroker(bt.BrokerBase):
             risk_error = self._validate_order_value(amount * price_est)
             if risk_error:
                 logger.warning(f"Order rejected: {risk_error}")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                self._reject_order(order, symbol, risk_error, side=side, size=amount, price=price_est)
                 return order
             if position.size < amount:
-                logger.warning(f"Order rejected: insufficient position ({amount} > {position.size})")
-                order.status = bt.Order.Rejected
-                self.notify(order)
+                reason = f"insufficient position ({amount} > {position.size})"
+                logger.warning(f"Order rejected: {reason}")
+                self._reject_order(order, symbol, reason, side=side, size=amount, price=price_est)
                 return order
 
         # Submit to exchange
@@ -279,7 +277,7 @@ class BinanceBroker(bt.BrokerBase):
 
         except Exception as e:
             logger.error(f"Failed to submit order: {e}")
-            self._reject_order(order, symbol, str(e))
+            self._reject_order(order, symbol, str(e), side=side, size=amount, price=order.price or price_est)
 
         return order
 
@@ -373,14 +371,29 @@ class BinanceBroker(bt.BrokerBase):
         order.status = bt.Order.Submitted
         self._open_orders[order.ref] = order
 
-    def _reject_order(self, order: bt.Order, symbol: str, reason: str) -> None:
+    def _reject_order(
+        self,
+        order: bt.Order,
+        symbol: str,
+        reason: str,
+        side: Optional[str] = None,
+        size: Optional[float] = None,
+        price: Optional[float] = None,
+    ) -> None:
         order.status = bt.Order.Rejected
         self._open_orders.pop(order.ref, None)
+        if hasattr(order, 'info') and isinstance(order.info, dict):
+            order.info['reason'] = reason
+        else:
+            order.info = {'reason': reason}
         self.notify(order)
         self._emit('order_rejected', {
             'order_id': str(order.ref),
             'symbol': symbol,
             'reason': reason,
+            'side': (side or ('BUY' if order.ordtype == bt.Order.Buy else 'SELL')).lower(),
+            'size': size if size is not None else abs(order.size),
+            'price': price,
         })
 
     def _extract_fill(self, result: dict) -> Optional[Dict[str, float]]:

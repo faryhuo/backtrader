@@ -69,7 +69,7 @@ def make_config_data():
         },
         "trading_settings": {
             "default_timeframe": "1m",
-            "supported_timeframes": ["1m", "1h"],
+            "supported_timeframes": ["1s", "1m", "1h"],
             "reconnect_on_disconnect": True,
             "max_reconnect_attempts": 3,
             "heartbeat_interval_seconds": 15,
@@ -147,6 +147,7 @@ def test_validate_symbol_and_timeframe(tmp_path):
     with pytest.raises(ValueError):
         config_loader.validate_symbol("BTCUSDT", "binance", config)
 
+    assert config_loader.validate_timeframe("1s", config) is True
     assert config_loader.validate_timeframe("1h", config) is True
     with pytest.raises(ValueError):
         config_loader.validate_timeframe("2h", config)

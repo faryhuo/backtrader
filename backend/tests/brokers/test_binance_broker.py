@@ -103,11 +103,21 @@ class TestBinanceBroker:
 
         assert result.status == bt.Order.Rejected
         assert list(broker._open_orders.values()) == []
-        assert events == [('order_rejected', {'order_id': '1', 'symbol': 'BTCUSDT', 'reason': 'boom'})]
+        assert events == [('order_rejected', {
+            'order_id': '1',
+            'symbol': 'BTCUSDT',
+            'reason': 'boom',
+            'side': 'buy',
+            'size': 1,
+            'price': 100.0,
+        })]
+        assert result.info['reason'] == 'boom'
 
     def test_insufficient_cash_rejects_without_store_call(self):
         store = DummyStore()
         broker = BinanceBroker(store=store, cash=50.0)
+        events = []
+        broker.set_event_callback(lambda event_type, payload: events.append((event_type, payload)))
 
         order = broker._create_order(
             owner=None,
@@ -126,6 +136,15 @@ class TestBinanceBroker:
         assert result.status == bt.Order.Rejected
         assert broker.get_cash() == 50.0
         assert store.create_order_calls == []
+        assert events == [('order_rejected', {
+            'order_id': '1',
+            'symbol': 'BTCUSDT',
+            'reason': 'insufficient cash (100.0 > 50.0)',
+            'side': 'buy',
+            'size': 1,
+            'price': 100.0,
+        })]
+        assert result.info['reason'] == 'insufficient cash (100.0 > 50.0)'
 
     def test_buy_order_respects_min_order_size_limit(self):
         store = DummyStore()

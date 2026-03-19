@@ -1,4 +1,5 @@
 import types
+from datetime import datetime
 
 import backtrader as bt
 import pytest
@@ -13,6 +14,14 @@ def test_live_trading_error():
     """Test LiveTradingError can be raised with message."""
     with pytest.raises(LiveTradingError, match="test error"):
         raise LiveTradingError("test error")
+
+
+def test_calculate_ohlcv_since_ms_supports_second_timeframe():
+    now = datetime(2026, 3, 19, 12, 0, 0)
+
+    since_ms = live_engine._calculate_ohlcv_since_ms("1s", limit=100, now=now)
+
+    assert since_ms == int(datetime(2026, 3, 19, 11, 56, 40).timestamp() * 1000)
 
 
 def test_get_storage_returns_session_storage(monkeypatch):
@@ -184,8 +193,52 @@ def test_wrapped_strategy_logs_signal_when_pending_order_created():
 
     wrapped.next(strategy)
 
-    assert any("BUY signal created" in msg for _level, msg in logs)
+    assert any("BUY order created" in msg for _level, msg in logs)
     assert any(level == "debug" for level, _msg in logs)
+
+
+def test_wrapped_strategy_logs_immediate_order_rejection():
+    logs = []
+
+    class BaseStrategy(bt.Strategy):
+        def next(self):
+            self.order = types.SimpleNamespace(
+                ref=88,
+                status=4,
+                Rejected=4,
+                Canceled=5,
+                Margin=6,
+                Expired=7,
+                isbuy=lambda: True,
+                getstatusname=lambda: "Rejected",
+                info={"reason": "insufficient cash"},
+            )
+
+    class DummyDateTime:
+        def datetime(self, index=0):
+            return "2024-01-01T00:00:00"
+
+    class DummyData:
+        def __init__(self):
+            self.close = [100.0]
+            self.datetime = DummyDateTime()
+
+        def __len__(self):
+            return 1
+
+    wrapped = wrap_strategy_with_live_gate(BaseStrategy, lambda level, msg: logs.append((level, msg)))
+    wrapped.position = property(lambda self: types.SimpleNamespace(size=0))
+    strategy = object.__new__(wrapped)
+    strategy.__dict__["_log_cb"] = lambda level, msg: logs.append((level, msg))
+    strategy.__dict__["_data_live"] = True
+    strategy.__dict__["_last_signal_order_ref"] = None
+    strategy.order = None
+    strategy.datas = [DummyData()]
+
+    wrapped.next(strategy)
+
+    assert any(level == "warning" and "order rejected immediately" in msg for level, msg in logs)
+    assert any("insufficient cash" in msg for _level, msg in logs)
 
 
 def test_wrapped_strategy_logs_submitted_and_accepted_orders():
@@ -270,6 +323,7 @@ def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
             self.__dict__.update(kwargs)
             self.status = live_engine.SessionStatus.STARTING
             self.feed_status = "warming_up"
+            self.start_time = kwargs.get("start_time")
             self.current_pnl = 0.0
             self.total_trades = 0
             self.positions = []
@@ -352,6 +406,10 @@ def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
             self.broker = broker
             captured["broker"] = broker
 
+        def addsizer(self, sizer_cls, **kwargs):
+            captured["sizer_cls"] = sizer_cls
+            captured["sizer_kwargs"] = kwargs
+
         def run(self):
             return []
 
@@ -394,9 +452,312 @@ def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
         strategy_name="easy_live_trigger_test",
         symbol="DOGE/USDT",
         mode="paper",
-        timeframe="1m",
+        timeframe="1s",
         params={"target_trade_value_usd": 88, "min_trade_value_usd": 22},
     )
 
     assert captured["params"] == {"target_trade_value_usd": 88, "min_trade_value_usd": 22}
+    assert captured["data_feed"].kwargs["timeframe"] == "1s"
     assert result["initial_cash"] == 123.45
+
+
+def test_apply_live_sizer_uses_percent_sizer():
+    captured = {}
+
+    class StubCerebro:
+        def addsizer(self, sizer_cls, **kwargs):
+            captured["sizer_cls"] = sizer_cls
+            captured["kwargs"] = kwargs
+
+    live_engine._apply_live_sizer(
+        StubCerebro(),
+        sizer_type="percent_sizer",
+        sizer_config={"percents": 12.5},
+    )
+
+    assert captured["sizer_cls"] is bt.sizers.PercentSizer
+    assert captured["kwargs"] == {"percents": 12.5}
+
+
+def test_get_session_orders_returns_exchange_orders_only(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_all_orders(self, symbol, limit=100):
+            assert symbol == "DOGE/USDT"
+            assert limit == 100
+            return [{
+                "symbol": "DOGEUSDT",
+                "orderId": 987654,
+                "clientOrderId": "session-order-1",
+                "price": "0.20000000",
+                "origQty": "150",
+                "executedQty": "150",
+                "cummulativeQuoteQty": "30",
+                "status": "FILLED",
+                "type": "MARKET",
+                "side": "BUY",
+                "time": 1_700_000_000_000,
+                "updateTime": 1_700_000_005_000,
+            }]
+
+        def get_my_trades(self, symbol, limit=200):
+            assert symbol == "DOGE/USDT"
+            assert limit == 200
+            return [{
+                "orderId": 987654,
+                "price": "0.20000000",
+                "qty": "150",
+                "quoteQty": "30",
+                "commission": "0.03",
+                "commissionAsset": "USDT",
+                "time": 1_700_000_005_000,
+            }]
+
+    session = types.SimpleNamespace(
+        session_id="session-1",
+        symbol="DOGE/USDT",
+        start_time=types.SimpleNamespace(timestamp=lambda: 1_699_999_000),
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-1" else None),
+    )
+
+    orders = live_engine.get_session_orders("session-1")
+
+    assert len(orders) == 1
+    assert orders[0]["order_id"] == "987654"
+    assert orders[0]["exchange_order_id"] == "987654"
+    assert orders[0]["status"] == "filled"
+    assert orders[0]["filled_size"] == 150.0
+    assert orders[0]["filled_price"] == pytest.approx(0.2)
+    assert orders[0]["db_order_id"] == "session-1:session-order-1"
+    assert orders[0]["metadata"]["source"] == "exchange"
+    assert orders[0]["executed_quote_qty"] == pytest.approx(30.0)
+    assert orders[0]["fee"] == pytest.approx(0.03)
+    assert orders[0]["fee_asset"] == "USDT"
+    assert orders[0]["trade_count"] == 1
+    assert orders[0]["last_fill_at"] is not None
+    assert orders[0]["metadata"]["in_session"] is True
+
+
+def test_get_session_orders_includes_pre_session_exchange_history(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_all_orders(self, symbol, limit=100):
+            assert symbol == "DOGE/USDT"
+            assert limit == 100
+            return [{
+                "symbol": "DOGEUSDT",
+                "orderId": 111,
+                "clientOrderId": "older-order",
+                "price": "0.19000000",
+                "origQty": "100",
+                "executedQty": "100",
+                "cummulativeQuoteQty": "19",
+                "status": "FILLED",
+                "type": "MARKET",
+                "side": "BUY",
+                "time": 1_699_998_000_000,
+                "updateTime": 1_699_998_005_000,
+            }]
+
+        def get_my_trades(self, symbol, limit=200):
+            assert symbol == "DOGE/USDT"
+            assert limit == 200
+            return [{
+                "orderId": 111,
+                "price": "0.19000000",
+                "qty": "100",
+                "quoteQty": "19",
+                "commission": "0.02",
+                "commissionAsset": "USDT",
+                "time": 1_699_998_005_000,
+            }]
+
+    session = types.SimpleNamespace(
+        session_id="session-pre",
+        symbol="DOGE/USDT",
+        start_time=types.SimpleNamespace(timestamp=lambda: 1_699_999_000),
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-pre" else None),
+    )
+
+    orders = live_engine.get_session_orders("session-pre")
+
+    assert len(orders) == 1
+    assert orders[0]["order_id"] == "111"
+    assert orders[0]["filled_size"] == 100.0
+    assert orders[0]["metadata"]["in_session"] is False
+
+
+def test_get_session_orders_raises_when_exchange_fetch_fails(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_all_orders(self, _symbol, limit=100):
+            assert limit == 100
+            raise RuntimeError("exchange down")
+
+        def get_my_trades(self, _symbol, limit=200):
+            assert limit == 200
+            return []
+
+    session = types.SimpleNamespace(
+        session_id="session-3",
+        symbol="DOGE/USDT",
+        start_time=types.SimpleNamespace(timestamp=lambda: 1_699_999_000),
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-3" else None),
+    )
+
+    with pytest.raises(LiveTradingError, match="Failed to fetch orders from exchange"):
+        live_engine.get_session_orders("session-3")
+
+
+def test_get_session_orders_degrades_when_trade_fetch_fails(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_all_orders(self, symbol, limit=100):
+            assert symbol == "DOGE/USDT"
+            assert limit == 100
+            return [{
+                "symbol": "DOGEUSDT",
+                "orderId": 2468,
+                "clientOrderId": "session-order-2",
+                "price": "0.25000000",
+                "origQty": "200",
+                "executedQty": "0",
+                "cummulativeQuoteQty": "0",
+                "status": "NEW",
+                "type": "LIMIT",
+                "side": "SELL",
+                "time": 1_700_000_000_000,
+                "updateTime": 1_700_000_001_000,
+            }]
+
+        def get_my_trades(self, symbol, limit=200):
+            assert symbol == "DOGE/USDT"
+            assert limit == 200
+            raise RuntimeError("trade endpoint down")
+
+    session = types.SimpleNamespace(
+        session_id="session-4",
+        symbol="DOGE/USDT",
+        start_time=types.SimpleNamespace(timestamp=lambda: 1_699_999_000),
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-4" else None),
+    )
+
+    orders = live_engine.get_session_orders("session-4")
+
+    assert len(orders) == 1
+    assert orders[0]["order_id"] == "2468"
+    assert orders[0]["status"] == "open"
+    assert orders[0]["trade_count"] == 0
+    assert orders[0]["fee"] is None
+    assert orders[0]["last_fill_at"] is None
+
+
+def test_get_session_positions_uses_exchange_balances(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_account(self):
+            return {
+                "balances": [
+                    {"asset": "DOGE", "free": "120.5", "locked": "4.5"},
+                    {"asset": "USDT", "free": "800", "locked": "0"},
+                ]
+            }
+
+        def fetch_ticker(self, symbol):
+            assert symbol == "DOGE/USDT"
+            return {"last": "0.22"}
+
+    session = types.SimpleNamespace(
+        session_id="session-2",
+        symbol="DOGE/USDT",
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-2" else None),
+    )
+
+    positions = live_engine.get_session_positions("session-2")
+
+    assert positions == [{
+        "symbol": "DOGE/USDT",
+        "side": "long",
+        "size": 125.0,
+        "avg_price": None,
+        "current_price": 0.22,
+        "pnl": None,
+        "pnl_percent": None,
+        "free_size": 120.5,
+        "locked_size": 4.5,
+        "source": "exchange_balance",
+    }]
+
+
+def test_get_session_account_snapshot_includes_base_asset_value(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_account(self):
+            return {
+                "balances": [
+                    {"asset": "DOGE", "free": "120", "locked": "5"},
+                    {"asset": "USDT", "free": "800", "locked": "20"},
+                ]
+            }
+
+        def fetch_ticker(self, symbol):
+            assert symbol == "DOGE/USDT"
+            return {"last": "0.2"}
+
+    session = types.SimpleNamespace(
+        session_id="session-4",
+        symbol="DOGE/USDT",
+        initial_cash=1000.0,
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(get_session=lambda session_id: session if session_id == "session-4" else None),
+    )
+
+    snapshot = live_engine.get_session_account_snapshot("session-4")
+
+    assert snapshot["cash"] == 800.0
+    assert snapshot["cash_locked"] == 20.0
+    assert snapshot["base_size"] == 125.0
+    assert snapshot["base_value"] == pytest.approx(25.0)
+    assert snapshot["portfolio_value"] == pytest.approx(845.0)
+    assert snapshot["current_pnl"] == pytest.approx(-155.0)

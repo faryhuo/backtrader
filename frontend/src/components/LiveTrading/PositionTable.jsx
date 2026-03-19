@@ -15,12 +15,13 @@ const PositionTable = ({ positions, ticker }) => {
     const currentPrice = (ticker && ticker.symbol === pos.symbol && ticker.last)
       ? Number(ticker.last)
       : pos.current_price;
-    const pnl = currentPrice && pos.avg_price
+    const hasCostBasis = pos.avg_price !== null && pos.avg_price !== undefined;
+    const pnl = currentPrice && hasCostBasis
       ? (currentPrice - pos.avg_price) * pos.size
-      : pos.pnl || 0;
-    const pnlPercent = pos.avg_price > 0 && pos.size !== 0
+      : pos.pnl;
+    const pnlPercent = hasCostBasis && pos.avg_price > 0 && pos.size !== 0
       ? (pnl / (Math.abs(pos.size) * pos.avg_price) * 100)
-      : 0;
+      : null;
 
     return { ...pos, current_price: currentPrice, pnl, pnl_percent: pnlPercent };
   });
@@ -69,7 +70,10 @@ const PositionTable = ({ positions, ticker }) => {
       key: 'pnl',
       width: 140,
       render: (_, record) => {
-        const pnl = record.pnl || 0;
+        if (record.pnl === null || record.pnl === undefined) {
+          return '-';
+        }
+        const pnl = record.pnl;
         const pct = record.pnl_percent || 0;
         const color = pnl >= 0 ? '#4ade80' : '#f87171';
         const icon = pnl >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />;

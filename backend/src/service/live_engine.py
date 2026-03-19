@@ -15,8 +15,9 @@ from typing import Callable, Dict, List, Optional
 
 import backtrader as bt
 
-from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore
+from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore, TIMEFRAME_SECONDS
 from src.config.config_manager import get_global_config_manager, get_user_config_manager
+from src.contracts.sizer_config import SizerConfig, SizerType
 from src.db import SessionStorage
 from src.db.storage.session import build_session_order_pk
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
@@ -84,6 +85,15 @@ def _extract_quote_asset(symbol: str) -> str:
     return quote_asset.upper()
 
 
+def _extract_symbol_assets(symbol: str) -> tuple[str, str]:
+    if '/' not in symbol:
+        raise LiveTradingError(f"Unsupported symbol format: {symbol}")
+    base_asset, quote_asset = symbol.split('/', 1)
+    if not base_asset or not quote_asset:
+        raise LiveTradingError(f"Unsupported symbol format: {symbol}")
+    return base_asset.upper(), quote_asset.upper()
+
+
 def _get_free_quote_balance(account: dict, quote_asset: str) -> float:
     balances = account.get('balances')
     if not isinstance(balances, list):
@@ -102,6 +112,199 @@ def _get_free_quote_balance(account: dict, quote_asset: str) -> float:
     raise LiveTradingError(
         f"Exchange account does not contain quote asset balance for {quote_asset}."
     )
+
+
+def _safe_float(value) -> Optional[float]:
+    if value in (None, ''):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _format_exchange_timestamp(value) -> Optional[str]:
+    timestamp_ms = None
+    if isinstance(value, (int, float)):
+        timestamp_ms = int(value)
+    elif isinstance(value, str) and value.isdigit():
+        timestamp_ms = int(value)
+
+    if timestamp_ms is None or timestamp_ms <= 0:
+        return None
+    return datetime.fromtimestamp(timestamp_ms / 1000).isoformat()
+
+
+def _get_timeframe_seconds(timeframe: str) -> int:
+    """Return the live timeframe duration in seconds."""
+    return max(int(TIMEFRAME_SECONDS.get(timeframe, 60)), 1)
+
+
+def _calculate_ohlcv_since_ms(
+    timeframe: str,
+    limit: int,
+    *,
+    multiplier: int = 2,
+    now: Optional[datetime] = None,
+) -> int:
+    """Calculate a lookback window large enough to fetch the requested closed bars."""
+    bar_seconds = _get_timeframe_seconds(timeframe)
+    lookback_seconds = max(bar_seconds * max(limit, 1) * max(multiplier, 1), bar_seconds)
+    current_time = now or datetime.utcnow()
+    return int((current_time - timedelta(seconds=lookback_seconds)).timestamp() * 1000)
+
+
+def _normalize_order_status(status: Optional[str]) -> str:
+    mapping = {
+        'NEW': 'open',
+        'PARTIALLY_FILLED': 'partial',
+        'FILLED': 'filled',
+        'CANCELED': 'cancelled',
+        'CANCELLED': 'cancelled',
+        'PENDING_CANCEL': 'cancelled',
+        'REJECTED': 'rejected',
+        'EXPIRED': 'expired',
+    }
+    if not status:
+        return 'unknown'
+    return mapping.get(str(status).upper(), str(status).lower())
+
+
+def _classify_trading_error(reason: Optional[str]) -> str:
+    text = str(reason or '').lower()
+
+    if 'lot_size' in text:
+        return 'BINANCE_LOT_SIZE'
+    if 'min_notional' in text or 'notional' in text:
+        return 'BINANCE_MIN_NOTIONAL'
+    if 'insufficient balance' in text or 'insufficient cash' in text:
+        return 'INSUFFICIENT_BALANCE'
+    if 'insufficient position' in text:
+        return 'INSUFFICIENT_POSITION'
+    if 'position size limit exceeded' in text:
+        return 'POSITION_LIMIT_EXCEEDED'
+    if 'max positions count exceeded' in text:
+        return 'MAX_POSITIONS_EXCEEDED'
+    if 'below minimum' in text:
+        return 'ORDER_VALUE_TOO_SMALL'
+    if 'above maximum' in text:
+        return 'ORDER_VALUE_TOO_LARGE'
+    return 'ORDER_REJECTED'
+
+
+def _normalize_exchange_symbol(symbol: Optional[str]) -> Optional[str]:
+    if not symbol:
+        return None
+    text = str(symbol)
+    if '/' in text:
+        return text
+    if text.endswith('USDT') and len(text) > 4:
+        return f"{text[:-4]}/USDT"
+    return text
+
+
+def _aggregate_exchange_trades(trades: List[dict]) -> Dict[str, Dict]:
+    grouped: Dict[str, Dict] = {}
+
+    for trade in trades:
+        order_id = trade.get('orderId')
+        if order_id in (None, ''):
+            continue
+
+        key = str(order_id)
+        qty = _safe_float(trade.get('qty')) or 0.0
+        quote_qty = _safe_float(trade.get('quoteQty')) or 0.0
+        price = _safe_float(trade.get('price'))
+        fee = _safe_float(trade.get('commission')) or 0.0
+        fee_asset = trade.get('commissionAsset')
+        trade_time = _format_exchange_timestamp(trade.get('time'))
+
+        bucket = grouped.setdefault(key, {
+            'filled_size': 0.0,
+            'executed_quote_qty': 0.0,
+            'fee': 0.0,
+            'fee_assets': set(),
+            'trade_count': 0,
+            'last_fill_at': None,
+        })
+
+        bucket['filled_size'] += qty
+        bucket['executed_quote_qty'] += quote_qty
+        bucket['fee'] += fee
+        bucket['trade_count'] += 1
+
+        if fee_asset:
+            bucket['fee_assets'].add(str(fee_asset).upper())
+
+        if trade_time and (not bucket['last_fill_at'] or trade_time > bucket['last_fill_at']):
+            bucket['last_fill_at'] = trade_time
+
+        if qty > 0 and price is not None:
+            weighted_quote = bucket.get('_weighted_quote', 0.0) + (qty * price)
+            bucket['_weighted_quote'] = weighted_quote
+
+    for bucket in grouped.values():
+        weighted_quote = bucket.pop('_weighted_quote', 0.0)
+        filled_size = bucket['filled_size']
+        bucket['filled_price'] = (weighted_quote / filled_size) if filled_size > 0 else None
+        bucket['fee_asset'] = ', '.join(sorted(bucket['fee_assets'])) if bucket['fee_assets'] else None
+        bucket.pop('fee_assets', None)
+
+    return grouped
+
+
+def _normalize_exchange_order(exchange_order: dict, session_id: str) -> Dict:
+    exchange_order_id = str(
+        exchange_order.get('orderId')
+        or exchange_order.get('id')
+        or exchange_order.get('clientOrderId')
+        or ''
+    )
+    client_order_id = exchange_order.get('clientOrderId')
+    size = _safe_float(exchange_order.get('origQty') or exchange_order.get('orig_qty')) or 0.0
+    filled_size = _safe_float(
+        exchange_order.get('executedQty') or exchange_order.get('executed_qty')
+    ) or 0.0
+    price = _safe_float(exchange_order.get('price'))
+    cummulative_quote_qty = _safe_float(
+        exchange_order.get('cummulativeQuoteQty') or exchange_order.get('cumulativeQuoteQty')
+    )
+    filled_price = None
+    if filled_size > 0:
+        filled_price = _safe_float(exchange_order.get('avgPrice'))
+        if filled_price is None and cummulative_quote_qty is not None:
+            filled_price = cummulative_quote_qty / filled_size
+
+    return {
+        'order_id': exchange_order_id or str(client_order_id or ''),
+        'db_order_id': build_session_order_pk(
+            session_id,
+            str(client_order_id or exchange_order_id or ''),
+        ) if (client_order_id or exchange_order_id) else None,
+        'exchange_order_id': exchange_order_id or None,
+        'symbol': _normalize_exchange_symbol(exchange_order.get('symbol')),
+        'side': str(exchange_order.get('side') or '').lower() or None,
+        'type': str(exchange_order.get('type') or '').lower() or None,
+        'size': size,
+        'price': price,
+        'status': _normalize_order_status(exchange_order.get('status')),
+        'filled_size': filled_size,
+        'filled_price': filled_price,
+        'executed_quote_qty': cummulative_quote_qty,
+        'fee': None,
+        'fee_asset': None,
+        'trade_count': 0,
+        'last_fill_at': None,
+        'created_at': _format_exchange_timestamp(
+            exchange_order.get('time') or exchange_order.get('transactTime')
+        ),
+        'updated_at': _format_exchange_timestamp(exchange_order.get('updateTime')),
+        'metadata': {
+            'source': 'exchange',
+            'client_order_id': client_order_id,
+            'in_session': None,
+        },
+    }
 
 
 # Event types emitted by broker
@@ -123,6 +326,8 @@ def start_session(
     mode: str = 'paper',
     timeframe: str = '1m',
     params: Optional[dict] = None,
+    sizer_type: str = 'fixed_size',
+    sizer_config: Optional[dict] = None,
     initial_cash: float = 10000.0,
     commission: float = 0.001,
     user_id: Optional[str] = None,
@@ -226,9 +431,9 @@ def start_session(
         # Calculate backfill start time based on timeframe
         # For 1m timeframe, get last 100 bars ≈ 100 minutes
         # IMPORTANT: Use UTC to match Binance timestamps
-        now = datetime.utcnow()
-        backfill_minutes = 100 if timeframe == '1m' else 200
-        backfill_start = now - timedelta(minutes=backfill_minutes)
+        backfill_start = datetime.utcnow() - timedelta(
+            seconds=_get_timeframe_seconds(timeframe) * 100
+        )
 
         data_feed = BinanceData(
             store=store,
@@ -249,6 +454,7 @@ def start_session(
         # 5.1 Wire log callback for strategy logs
         # Also store logs in session for REST fallback
         session._strategy_logs = []
+        session._trade_errors = []
         session.feed_status = 'warming_up'
         logger.info(f"[SESSION {session_id}] Setting up log callback")
 
@@ -304,6 +510,7 @@ def start_session(
         cerebro.addstrategy(strategy_cls, **strategy_params)
         cerebro.adddata(data_feed)
         cerebro.setbroker(broker)
+        _apply_live_sizer(cerebro, sizer_type, sizer_config)
 
         logger.info(f"[SESSION {session_id}] Cerebro broker set: {cerebro.broker}")
 
@@ -325,8 +532,7 @@ def start_session(
                 else:
                     logger.warning(f"No WebSocket client connected after 15s, sending anyway")
 
-                # Calculate since time (150 minutes ago for 1m bars)
-                since_ms = int((datetime.now() - timedelta(minutes=150)).timestamp() * 1000)
+                since_ms = _calculate_ohlcv_since_ms(timeframe, limit=100)
 
                 logger.info(f"Fetching OHLCV for {symbol} timeframe={timeframe}")
 
@@ -429,6 +635,30 @@ def start_session(
         raise LiveTradingError(f"Failed to start session: {e}") from e
 
 
+def _apply_live_sizer(
+    cerebro: bt.Cerebro,
+    sizer_type: str = 'fixed_size',
+    sizer_config: Optional[dict] = None,
+) -> None:
+    """Apply backtrader sizer configuration for live sessions."""
+    config = SizerConfig.from_dict({
+        'type': sizer_type,
+        **(sizer_config or {}),
+    })
+
+    if config.type == SizerType.PERCENT_SIZER:
+        cerebro.addsizer(bt.sizers.PercentSizer, percents=config.percents)
+    elif config.type == SizerType.ALL_IN_SIZER:
+        cerebro.addsizer(bt.sizers.AllInSizerInt)
+    elif config.type == SizerType.RISK_SIZER:
+        cerebro.addsizer(bt.sizers.PercentSizerInt, percents=config.risk_percent)
+    elif config.type == SizerType.KELLY_SIZER:
+        kelly_fraction = min(max(config.risk_percent / 100.0, 0.01), 1.0) * 100.0
+        cerebro.addsizer(bt.sizers.PercentSizer, percents=kelly_fraction)
+    else:
+        cerebro.addsizer(bt.sizers.FixedSize, stake=config.stake)
+
+
 def stop_session(session_id: str) -> Dict:
     """Gracefully stop a live-trading session."""
     logger.info(f"Stopping session {session_id}")
@@ -462,17 +692,161 @@ def get_session_status(session_id: str) -> Dict:
 
 
 def get_session_orders(session_id: str) -> List[Dict]:
-    """Get orders for a session (from in-memory broker or DB)."""
+    """Get session orders directly from the exchange API."""
     session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
 
-    # Try in-memory broker first
-    if session and session.cerebro:
-        broker = session.cerebro.broker
-        if hasattr(broker, 'get_open_orders_list'):
-            return broker.get_open_orders_list()
+    if not session.store or not getattr(session.store, '_running', False):
+        raise LiveTradingError("Exchange connection is not active")
 
-    # Fallback to DB
-    return _get_storage().get_session_orders(session_id)
+    try:
+        exchange_orders = session.store.get_all_orders(session.symbol, limit=100)
+        session_start_ms = int(session.start_time.timestamp() * 1000) if session.start_time else None
+        trade_map = {}
+        try:
+            exchange_trades = session.store.get_my_trades(session.symbol, limit=200)
+            trade_map = _aggregate_exchange_trades(exchange_trades)
+        except Exception as trade_error:
+            logger.warning(
+                "Failed to fetch exchange trade details for %s; continuing with raw order history: %s",
+                session_id,
+                trade_error,
+            )
+        normalized = []
+        for order in exchange_orders:
+            order_time = _safe_float(order.get('time') or order.get('transactTime'))
+            normalized_order = _normalize_exchange_order(order, session_id)
+            normalized_order['metadata']['in_session'] = (
+                bool(session_start_ms and order_time and order_time >= session_start_ms)
+                if session_start_ms else None
+            )
+            trade_data = trade_map.get(str(normalized_order.get('exchange_order_id') or normalized_order.get('order_id')))
+            if trade_data:
+                normalized_order.update({
+                    'filled_size': trade_data.get('filled_size', normalized_order['filled_size']),
+                    'filled_price': trade_data.get('filled_price') or normalized_order['filled_price'],
+                    'executed_quote_qty': trade_data.get('executed_quote_qty'),
+                    'fee': trade_data.get('fee'),
+                    'fee_asset': trade_data.get('fee_asset'),
+                    'trade_count': trade_data.get('trade_count', 0),
+                    'last_fill_at': trade_data.get('last_fill_at'),
+                })
+            normalized.append(normalized_order)
+        return sorted(
+            normalized,
+            key=lambda item: item.get('last_fill_at') or item.get('created_at') or '',
+            reverse=True,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to fetch exchange-backed orders for {session_id}: {e}")
+        raise LiveTradingError(f"Failed to fetch orders from exchange: {e}") from e
+
+
+def get_session_positions(session_id: str) -> List[Dict]:
+    """Get current session symbol position from exchange account balances."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    if not session.store or not getattr(session.store, '_running', False):
+        raise LiveTradingError("Exchange connection is not active")
+
+    try:
+        base_asset, _quote_asset = _extract_symbol_assets(session.symbol)
+        account = session.store.get_account()
+        balances = account.get('balances')
+        if not isinstance(balances, list):
+            raise LiveTradingError("Exchange account response did not include balances.")
+
+        balance = next(
+            (item for item in balances if str(item.get('asset') or '').upper() == base_asset),
+            None,
+        )
+        if not balance:
+            return []
+
+        free_amount = _safe_float(balance.get('free')) or 0.0
+        locked_amount = _safe_float(balance.get('locked')) or 0.0
+        size = free_amount + locked_amount
+        if size <= 0:
+            return []
+
+        ticker = session.store.fetch_ticker(session.symbol)
+        current_price = _safe_float(ticker.get('last'))
+
+        return [{
+            'symbol': session.symbol,
+            'side': 'long',
+            'size': size,
+            'avg_price': None,
+            'current_price': current_price,
+            'pnl': None,
+            'pnl_percent': None,
+            'free_size': free_amount,
+            'locked_size': locked_amount,
+            'source': 'exchange_balance',
+        }]
+    except LiveTradingError:
+        raise
+    except Exception as e:
+        raise LiveTradingError(f"Failed to fetch positions from exchange: {e}") from e
+
+
+def get_session_account_snapshot(session_id: str) -> Dict:
+    """Get exchange-backed cash and portfolio value snapshot for the session symbol."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    if not session.store or not getattr(session.store, '_running', False):
+        raise LiveTradingError("Exchange connection is not active")
+
+    try:
+        base_asset, quote_asset = _extract_symbol_assets(session.symbol)
+        account = session.store.get_account()
+        balances = account.get('balances')
+        if not isinstance(balances, list):
+            raise LiveTradingError("Exchange account response did not include balances.")
+
+        balance_map = {
+            str(item.get('asset') or '').upper(): item
+            for item in balances
+        }
+        base_balance = balance_map.get(base_asset, {})
+        quote_balance = balance_map.get(quote_asset, {})
+
+        base_free = _safe_float(base_balance.get('free')) or 0.0
+        base_locked = _safe_float(base_balance.get('locked')) or 0.0
+        quote_free = _safe_float(quote_balance.get('free')) or 0.0
+        quote_locked = _safe_float(quote_balance.get('locked')) or 0.0
+
+        ticker = session.store.fetch_ticker(session.symbol)
+        current_price = _safe_float(ticker.get('last')) or 0.0
+
+        base_value = (base_free + base_locked) * current_price
+        portfolio_value = quote_free + quote_locked + base_value
+        current_pnl = portfolio_value - float(session.initial_cash)
+
+        return {
+            'session_id': session_id,
+            'symbol': session.symbol,
+            'cash': quote_free,
+            'cash_locked': quote_locked,
+            'base_size': base_free + base_locked,
+            'base_value': base_value,
+            'current_price': current_price,
+            'portfolio_value': portfolio_value,
+            'current_pnl': current_pnl,
+            'total_pnl_percent': (
+                (current_pnl / float(session.initial_cash)) * 100
+                if float(session.initial_cash) > 0 else 0.0
+            ),
+        }
+    except LiveTradingError:
+        raise
+    except Exception as e:
+        raise LiveTradingError(f"Failed to fetch account snapshot: {e}") from e
 
 
 def cancel_order(session_id: str, order_id: str) -> Dict:
@@ -493,6 +867,10 @@ def cancel_order(session_id: str, order_id: str) -> Dict:
 
     if target:
         broker.cancel(target)
+        return {'order_id': order_id, 'status': 'cancelled'}
+
+    if session.store and order_id.isdigit():
+        session.store.cancel_order(session.symbol, int(order_id))
         return {'order_id': order_id, 'status': 'cancelled'}
 
     raise LiveTradingError(f"Order {order_id} not found in session {session_id}")
@@ -537,7 +915,7 @@ def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
         raise LiveTradingError("Exchange connection is not active")
 
     try:
-        since_ms = int((datetime.now() - timedelta(minutes=limit * 2)).timestamp() * 1000)
+        since_ms = _calculate_ohlcv_since_ms(session.timeframe, limit=limit)
         bars = session.store.fetch_ohlcv(
             symbol=session.symbol,
             interval=session.timeframe,
@@ -571,6 +949,16 @@ def get_strategy_logs(session_id: str, limit: int = 100) -> Dict:
 
     logs = getattr(session, '_strategy_logs', [])
     return {'session_id': session_id, 'logs': logs[-limit:]}
+
+
+def get_trade_errors(session_id: str, limit: int = 20) -> Dict:
+    """Get recent trading errors for a session."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    errors = getattr(session, '_trade_errors', [])
+    return {'session_id': session_id, 'errors': errors[-limit:]}
 
 
 def get_symbol_trading_rules(symbol: str, mode: str = 'paper', user_id: Optional[str] = None) -> Dict:
@@ -674,10 +1062,29 @@ def _route_broker_event(
         _update_order_status(session_id, data['order_id'], 'cancelled', data)
 
     elif event_type == BrokerEvent.ORDER_REJECTED:
+        error_code = _classify_trading_error(data.get('reason'))
+        session = session_manager.get_session(session_id)
+        if session:
+            trade_errors = getattr(session, '_trade_errors', [])
+            trade_errors.append({
+                'timestamp': datetime.now().isoformat(),
+                'message': data.get('reason', 'unknown'),
+                'code': error_code,
+            })
+            session._trade_errors = trade_errors[-20:]
+        _run_ws(ws.broadcast_order_update(
+            session_id=session_id,
+            order_id=data['order_id'],
+            symbol=data.get('symbol', ''),
+            side=data.get('side', ''),
+            size=data.get('size', 0),
+            price=data.get('price') or 0,
+            status='rejected',
+        ))
         _run_ws(ws.broadcast_error(
             session_id=session_id,
             error_message=f"Order rejected: {data.get('reason', 'unknown')}",
-            error_code='ORDER_REJECTED',
+            error_code=error_code,
         ))
 
     elif event_type == BrokerEvent.TRADE_EXECUTED:

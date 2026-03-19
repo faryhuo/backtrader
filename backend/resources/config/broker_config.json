@@ -81,6 +81,7 @@
   "trading_settings": {
     "default_timeframe": "1m",
     "supported_timeframes": [
+      "1s",
       "1m",
       "5m",
       "15m",

@@ -39,13 +39,25 @@ class BinanceData(bt.DataBase):
         ('debug', False),
     )
 
-    def __init__(self, store: BinanceStore, symbol: str, **kwargs):
+    def __init__(
+        self,
+        store: BinanceStore,
+        symbol: str,
+        timeframe: str | None = None,
+        ccxt_timeframe: str | None = None,
+        **kwargs,
+    ):
         self.store = store
         self._symbol = symbol
 
-        # Handle timeframe
-        ccxt_tf = kwargs.pop('timeframe', None) or kwargs.pop('ccxt_timeframe', None)
-        self.ccxt_timeframe = ccxt_tf or self.params.ccxt_timeframe
+        # Capture the exchange timeframe before Backtrader normalizes its own timeframe param.
+        self.ccxt_timeframe = (
+            timeframe
+            or ccxt_timeframe
+            or kwargs.pop('timeframe', None)
+            or kwargs.pop('ccxt_timeframe', None)
+            or self.params.ccxt_timeframe
+        )
 
         self._last_bar_time: Optional[datetime] = None
         self._hist_buffer: List[list] = []
@@ -149,14 +161,6 @@ class BinanceData(bt.DataBase):
                 limit=self.params.limit,
                 since_ms=since,
             )
-            logger.info(
-                "Fetched %s raw bars for %s [%s] since=%s last_bar=%s",
-                len(ohlcv or []),
-                self._symbol,
-                self.ccxt_timeframe,
-                since,
-                self._last_bar_time.isoformat() if self._last_bar_time else "none",
-            )
         except Exception as e:
             logger.error(f"Failed to fetch OHLCV: {e}")
             return []
@@ -176,29 +180,6 @@ class BinanceData(bt.DataBase):
             if self._last_bar_time and bar_dt <= self._last_bar_time:
                 continue
             valid.append(bar)
-
-        if not valid:
-            logger.info(
-                "No new closed bars for %s [%s]; raw=%s last_bar=%s now_ms=%s",
-                self._symbol,
-                self.ccxt_timeframe,
-                len(ohlcv or []),
-                self._last_bar_time.isoformat() if self._last_bar_time else "none",
-                now_ms,
-            )
-        else:
-            logger.info(
-                "Accepted %s new closed bars for %s [%s]; first=%s last=%s",
-                len(valid),
-                self._symbol,
-                self.ccxt_timeframe,
-                datetime.utcfromtimestamp(valid[0][0] / 1000).isoformat(),
-                datetime.utcfromtimestamp(valid[-1][0] / 1000).isoformat(),
-            )
-
-        if self.params.debug and valid:
-            logger.debug(f"Fetched {len(valid)} new bars for {self._symbol}")
-
         return valid
 
     def _consume_bar(self, buffer_: List[list]) -> bool:

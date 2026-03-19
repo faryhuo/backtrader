@@ -1,16 +1,6 @@
-"""
-Tests for BinanceStore — the core connection layer for the Binance adapter.
+"""Tests for the BinanceStore exchange-backed implementation."""
 
-Tests cover:
-- Initialization and lifecycle (paper/live modes)
-- Ticker callback registration
-- fetch_ticker (normalized output)
-- fetch_ohlcv (normalized output)
-- Paper trading helpers (orders, balances)
-- Symbol normalization (BTC/USDT → BTCUSDT)
-"""
-
-import time
+import asyncio
 from decimal import Decimal
 
 import pytest
@@ -18,292 +8,366 @@ import pytest
 from src.brokers.binance_adapter.binance_store import BinanceStore
 
 
-# ─────────────────────────── Fixtures ───────────────────────────
+class StubClient:
+    def __init__(self, api_key="", api_secret="", testnet=False):
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.testnet = testnet
+        self.ping_calls = 0
+        self.calls = []
+        self.symbol_info = {}
+        self.klines_response = []
+        self.ticker_response = {
+            "lastPrice": "101.5",
+            "bidPrice": "101.4",
+            "askPrice": "101.6",
+            "highPrice": "103.0",
+            "lowPrice": "99.1",
+            "volume": "1234.5",
+            "closeTime": 1700000000000,
+        }
+        self.symbol_ticker_response = {"symbol": "BTCUSDT", "price": "101.5"}
+        self.order_book_ticker_response = {"bidPrice": "101.4", "askPrice": "101.6"}
+        self.account_response = {"balances": [{"asset": "USDT", "free": "250.0", "locked": "0"}]}
+        self.open_orders_response = []
+        self.all_orders_response = []
+        self.my_trades_response = []
+        self.created_order_response = {"orderId": 11, "status": "NEW"}
+        self.cancel_order_response = {"orderId": 11, "status": "CANCELED"}
+        self.get_order_response = {"orderId": 11, "status": "FILLED"}
+
+    def ping(self):
+        self.ping_calls += 1
+
+    def get_ticker(self, **kwargs):
+        self.calls.append(("get_ticker", kwargs))
+        return self.ticker_response
+
+    def get_klines(self, **kwargs):
+        self.calls.append(("get_klines", kwargs))
+        return self.klines_response
+
+    def get_symbol_ticker(self, **kwargs):
+        self.calls.append(("get_symbol_ticker", kwargs))
+        return self.symbol_ticker_response
+
+    def get_order_book_ticker(self, **kwargs):
+        self.calls.append(("get_order_book_ticker", kwargs))
+        return self.order_book_ticker_response
+
+    def create_order(self, **kwargs):
+        self.calls.append(("create_order", kwargs))
+        return self.created_order_response
+
+    def cancel_order(self, **kwargs):
+        self.calls.append(("cancel_order", kwargs))
+        return self.cancel_order_response
+
+    def get_order(self, **kwargs):
+        self.calls.append(("get_order", kwargs))
+        return self.get_order_response
+
+    def get_open_orders(self, **kwargs):
+        self.calls.append(("get_open_orders", kwargs))
+        return self.open_orders_response
+
+    def get_all_orders(self, **kwargs):
+        self.calls.append(("get_all_orders", kwargs))
+        return self.all_orders_response
+
+    def get_my_trades(self, **kwargs):
+        self.calls.append(("get_my_trades", kwargs))
+        return self.my_trades_response
+
+    def get_account(self):
+        self.calls.append(("get_account", {}))
+        return self.account_response
+
+    def get_symbol_info(self, symbol):
+        self.calls.append(("get_symbol_info", {"symbol": symbol}))
+        return self.symbol_info.get(symbol)
+
+
+class StubTWM:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self._alive = False
+        self.stop_calls = 0
+        self.join_calls = 0
+        self.stop_socket_calls = []
+        self.started_sockets = []
+
+    def start(self):
+        self._alive = True
+
+    def stop(self):
+        self.stop_calls += 1
+        self._alive = False
+
+    def is_alive(self):
+        return self._alive
+
+    def join(self, timeout=None):
+        self.join_calls += 1
+        self._alive = False
+
+    def stop_socket(self, key):
+        self.stop_socket_calls.append(key)
+
+    def start_symbol_ticker_socket(self, **kwargs):
+        self.started_sockets.append(("ticker", kwargs))
+        return "ticker-key"
+
+    def start_kline_socket(self, **kwargs):
+        self.started_sockets.append(("kline", kwargs))
+        return "kline-key"
+
+    def start_user_socket(self, **kwargs):
+        self.started_sockets.append(("user", kwargs))
+        return "user-key"
 
 
 @pytest.fixture
-def paper_store():
-    """Create a paper-mode BinanceStore (no real API calls)."""
+def client_factory(monkeypatch):
+    created = []
+
+    def _factory(*args, **kwargs):
+        client = StubClient(*args, **kwargs)
+        created.append(client)
+        return client
+
+    _factory.KLINE_INTERVAL_1MINUTE = "1m"
+    monkeypatch.setattr("src.brokers.binance_adapter.binance_store.Client", _factory)
+    return created
+
+
+@pytest.fixture
+def twm_factory(monkeypatch):
+    created = []
+
+    def _factory(**kwargs):
+        twm = StubTWM(**kwargs)
+        created.append(twm)
+        return twm
+
+    monkeypatch.setattr(
+        "src.brokers.binance_adapter.binance_store.ThreadedWebsocketManager",
+        _factory,
+    )
+    return created
+
+
+@pytest.fixture
+def unstarted_store():
+    return BinanceStore(mode="paper", session_id="test-session-123")
+
+
+@pytest.fixture
+def started_store(client_factory):
     store = BinanceStore(mode="paper", session_id="test-session-123")
     store.start()
     yield store
     store.stop()
 
 
-@pytest.fixture
-def unstarted_store():
-    """Create a BinanceStore that hasn't been started."""
-    return BinanceStore(mode="paper")
+class TestBinanceStoreLifecycle:
+    def test_start_paper_mode_uses_testnet_client(self, client_factory):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            assert store.is_running is True
+            assert client_factory[0].testnet is True
+            assert client_factory[0].ping_calls == 1
+        finally:
+            store.stop()
 
-
-# ─────────────────────────── Initialization ───────────────────────────
-
-
-class TestBinanceStoreInit:
-    def test_paper_mode_init(self, paper_store):
-        assert paper_store.is_paper_mode() is True
-        assert paper_store.is_running is True
-        assert paper_store.mode == "paper"
-
-    def test_default_paper_balance(self, paper_store):
-        assert paper_store.get_paper_balance("USDT") == 10000.0
-
-    def test_unstarted_store_not_running(self, unstarted_store):
-        assert unstarted_store.is_running is False
+    def test_start_live_mode_disables_testnet(self, client_factory):
+        store = BinanceStore(mode="live")
+        store.start()
+        try:
+            assert client_factory[0].testnet is False
+        finally:
+            store.stop()
 
     def test_get_client_raises_before_start(self, unstarted_store):
         with pytest.raises(RuntimeError, match="Store not started"):
             unstarted_store.get_client()
 
-    def test_start_stop_lifecycle(self):
-        store = BinanceStore(mode="paper")
-        assert store.is_running is False
-        store.start()
-        assert store.is_running is True
-        store.stop()
-        assert store.is_running is False
-
-    def test_double_start_is_idempotent(self, paper_store):
-        paper_store.start()  # second call
-        assert paper_store.is_running is True
+    def test_uses_exchange_account_data_is_true(self, unstarted_store):
+        assert unstarted_store.uses_exchange_account_data() is True
 
 
-# ─────────────────────────── Callback Registration ───────────────────────────
+class TestCallbacksAndWebsockets:
+    def test_set_ticker_callback(self, started_store):
+        callback = lambda _: None
+        started_store.set_ticker_callback(callback)
+        assert started_store._ticker_callback is callback
 
+    def test_set_user_data_callback(self, started_store):
+        callback = lambda _: None
+        started_store.set_user_data_callback(callback)
+        assert started_store._user_data_callback is callback
 
-class TestCallbacks:
-    def test_set_ticker_callback(self, paper_store):
-        callback = lambda x: None
-        paper_store.set_ticker_callback(callback)
-        assert paper_store._ticker_callback is callback
+    def test_ensure_twm_uses_dedicated_event_loop(self, twm_factory, unstarted_store):
+        unstarted_store._ensure_twm()
 
-    def test_set_user_data_callback(self, paper_store):
-        callback = lambda x: None
-        paper_store.set_user_data_callback(callback)
-        assert paper_store._user_data_callback is callback
+        assert len(twm_factory) == 1
+        assert isinstance(twm_factory[0].kwargs["loop"], asyncio.AbstractEventLoop)
+        assert twm_factory[0].kwargs["loop"] is unstarted_store._twm_loop
 
+    def test_stop_closes_dedicated_event_loop(self, twm_factory, unstarted_store):
+        unstarted_store._ensure_twm()
+        loop = unstarted_store._twm_loop
 
-# ─────────────────────────── fetch_ticker ───────────────────────────
+        unstarted_store.stop()
 
+        assert loop.is_closed() is True
+        assert unstarted_store._twm is None
+        assert unstarted_store._twm_loop is None
+        assert unstarted_store._twm_started is False
 
-class TestFetchTicker:
-    def test_paper_mode_returns_normalized_dict(self, paper_store):
-        ticker = paper_store.fetch_ticker("BTC/USDT")
-        assert 'last' in ticker
-        assert 'bid' in ticker
-        assert 'ask' in ticker
-        assert 'high' in ticker
-        assert 'low' in ticker
-        assert 'volume' in ticker
-        assert 'timestamp' in ticker
+    def test_ensure_twm_recreates_dead_manager(self, twm_factory, unstarted_store):
+        unstarted_store._ensure_twm()
+        first_twm = unstarted_store._twm
+        first_loop = unstarted_store._twm_loop
+        first_twm._alive = False
 
-    def test_paper_mode_price_is_reasonable(self, paper_store):
-        ticker = paper_store.fetch_ticker("BTCUSDT")
-        # Should be near 75000 (the base price for BTC)
-        assert 74000 < ticker['last'] < 76000
+        unstarted_store._ensure_twm()
 
-    def test_bid_ask_spread(self, paper_store):
-        ticker = paper_store.fetch_ticker("BTCUSDT")
-        assert ticker['bid'] < ticker['ask']
-        assert ticker['bid'] < ticker['last']
-        assert ticker['ask'] > ticker['last']
+        assert len(twm_factory) == 2
+        assert unstarted_store._twm is not first_twm
+        assert unstarted_store._twm_loop is not first_loop
+        assert first_loop.is_closed() is True
 
-    def test_symbol_normalization(self, paper_store):
-        """Both BTC/USDT and BTCUSDT should work."""
-        t1 = paper_store.fetch_ticker("BTC/USDT")
-        t2 = paper_store.fetch_ticker("BTCUSDT")
-        assert abs(t1['last'] - t2['last']) < 500  # Both near 75000
-
-
-# ─────────────────────────── fetch_ohlcv ───────────────────────────
-
-
-class TestFetchOHLCV:
-    def test_returns_correct_number_of_bars(self, paper_store):
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=50)
-        assert len(bars) == 50
-
-    def test_bar_format_is_normalized(self, paper_store):
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=5)
-        assert len(bars) > 0
-        bar = bars[0]
-        # Each bar should be [timestamp_ms, open, high, low, close, volume]
-        assert len(bar) == 6
-        assert isinstance(bar[0], int)       # timestamp
-        assert isinstance(bar[1], float)     # open
-        assert isinstance(bar[2], float)     # high
-        assert isinstance(bar[3], float)     # low
-        assert isinstance(bar[4], float)     # close
-        assert isinstance(bar[5], float)     # volume
-
-    def test_bars_are_time_ordered(self, paper_store):
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=10)
-        timestamps = [b[0] for b in bars]
-        assert timestamps == sorted(timestamps)
-
-    def test_high_gte_low(self, paper_store):
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="5m", limit=10)
-        for bar in bars:
-            assert bar[2] >= bar[3], f"High {bar[2]} should be >= Low {bar[3]}"
-
-    def test_since_ms_limits_paper_bars(self, paper_store):
-        now_ms = int(time.time() * 1000)
-        since_ms = now_ms - (2 * 60 * 1000)
-
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=100, since_ms=since_ms)
-
-        assert 0 < len(bars) <= 3
-        assert all(bar[0] >= since_ms for bar in bars)
-
-    def test_paper_bars_are_timeframe_aligned(self, paper_store):
-        bars = paper_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=5)
-
-        assert bars
-        assert all(bar[0] % 60000 == 0 for bar in bars)
-
-    def test_paper_since_ms_returns_next_closed_bar_after_time_advances(self, monkeypatch):
+    def test_start_ticker_stream_starts_exchange_socket(self, client_factory, twm_factory):
         store = BinanceStore(mode="paper")
         store.start()
         try:
-            monkeypatch.setattr(time, "time", lambda: 1_700_000_125.0)  # 22:15:25 UTC
-            initial = store.fetch_ohlcv("BTC/USDT", interval="1m", limit=3)
-            last_open_ms = initial[-1][0]
+            store.set_ticker_callback(lambda _: None)
+            store.start_ticker_stream("BTC/USDT")
 
-            monkeypatch.setattr(time, "time", lambda: 1_700_000_185.0)  # 22:16:25 UTC
-            new_bars = store.fetch_ohlcv(
-                "BTC/USDT",
-                interval="1m",
-                limit=10,
-                since_ms=last_open_ms + 1,
-            )
-
-            assert len(new_bars) == 1
-            assert new_bars[0][0] == last_open_ms + 60000
+            assert store._active_streams["ticker_BTC/USDT"] == "ticker-key"
+            socket_type, kwargs = twm_factory[0].started_sockets[0]
+            assert socket_type == "ticker"
+            assert kwargs["symbol"] == "btcusdt"
         finally:
             store.stop()
 
+    def test_ticker_stream_recovers_after_read_loop_closed(self, client_factory, twm_factory, monkeypatch):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            store.set_ticker_callback(lambda _: None)
+            store.start_ticker_stream("BTC/USDT")
 
-# ─────────────────────────── get_symbol_ticker ───────────────────────────
+            monkeypatch.setattr(store, "_schedule_websocket_recovery", store._recover_websocket_connection)
+
+            first_twm = twm_factory[0]
+            _socket_type, kwargs = first_twm.started_sockets[0]
+            kwargs["callback"]({
+                "e": "error",
+                "type": "ReadLoopClosed",
+                "m": "Read loop has been closed, please reset the websocket connection and listen to the message error.",
+            })
+
+            assert len(twm_factory) == 2
+            assert store._twm is twm_factory[1]
+            assert store._active_streams["ticker_BTC/USDT"] == "ticker-key"
+        finally:
+            store.stop()
+
+    def test_start_kline_stream_is_idempotent(self, client_factory, twm_factory):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            store.start_kline_stream("BTC/USDT", "1m", lambda _: None)
+            store.start_kline_stream("BTC/USDT", "1m", lambda _: None)
+
+            assert store._active_streams["kline_BTC/USDT_1m"] == "kline-key"
+            assert len([item for item in twm_factory[0].started_sockets if item[0] == "kline"]) == 1
+        finally:
+            store.stop()
+
+    def test_start_user_data_stream_is_idempotent(self, client_factory, twm_factory):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            store.start_user_data_stream(lambda _: None)
+            store.start_user_data_stream(lambda _: None)
+
+            assert store._active_streams["user_data"] == "user-key"
+            assert len([item for item in twm_factory[0].started_sockets if item[0] == "user"]) == 1
+        finally:
+            store.stop()
+
+    def test_stop_stops_active_sockets_and_clears_callbacks(self, client_factory, twm_factory):
+        store = BinanceStore(mode="paper")
+        store.start()
+        try:
+            store.start_kline_stream("BTC/USDT", "1m", lambda _: None)
+            twm = store._twm
+        finally:
+            store.stop()
+
+        assert twm.stop_socket_calls == ["kline-key"]
+        assert store._active_streams == {}
+        assert store._kline_callbacks == {}
 
 
-class TestGetSymbolTicker:
-    def test_paper_mode(self, paper_store):
-        result = paper_store.get_symbol_ticker("BTCUSDT")
-        assert 'symbol' in result
-        assert 'price' in result
-        assert result['symbol'] == 'BTCUSDT'
+class TestMarketDataMethods:
+    def test_fetch_ticker_normalizes_payload(self, started_store):
+        ticker = started_store.fetch_ticker("BTC/USDT")
 
-    def test_symbol_normalization(self, paper_store):
-        result = paper_store.get_symbol_ticker("BTC/USDT")
-        assert result['symbol'] == 'BTCUSDT'
+        assert ticker == {
+            "last": 101.5,
+            "bid": 101.4,
+            "ask": 101.6,
+            "high": 103.0,
+            "low": 99.1,
+            "volume": 1234.5,
+            "timestamp": 1700000000000,
+        }
+        assert started_store.get_client().calls[-1] == ("get_ticker", {"symbol": "BTCUSDT"})
 
+    def test_fetch_ohlcv_normalizes_bars_and_maps_since_ms(self, started_store):
+        started_store.get_client().klines_response = [
+            [1700000000000, "100", "105", "99", "101", "250", 0, 0, 0, 0, 0, 0],
+            [1700000060000, "101", "106", "100", "102", "275", 0, 0, 0, 0, 0, 0],
+        ]
 
-# ─────────────────────────── Paper Trading ───────────────────────────
+        bars = started_store.fetch_ohlcv("BTC/USDT", interval="1m", limit=2, since_ms=1700000000000)
 
-
-class TestPaperTrading:
-    def test_set_and_get_balance(self, paper_store):
-        paper_store.set_paper_balance("BTC", 1.5)
-        assert paper_store.get_paper_balance("BTC") == 1.5
-
-    def test_default_balance_for_unknown_asset(self, paper_store):
-        assert paper_store.get_paper_balance("XRP") == 0.0
-
-    def test_create_market_order_updates_balances(self, paper_store):
-        initial_usdt = paper_store.get_paper_balance("USDT")
-        order = paper_store.create_order(
-            symbol="BTCUSDT", side="BUY", order_type="MARKET",
-            quantity=0.01
+        assert bars == [
+            [1700000000000, 100.0, 105.0, 99.0, 101.0, 250.0],
+            [1700000060000, 101.0, 106.0, 100.0, 102.0, 275.0],
+        ]
+        assert started_store.get_client().calls[-1] == (
+            "get_klines",
+            {
+                "symbol": "BTCUSDT",
+                "interval": "1m",
+                "limit": 2,
+                "startTime": 1700000000000,
+            },
         )
-        assert order['status'] == 'FILLED'
-        assert paper_store.get_paper_balance("BTC") > 0
-        assert paper_store.get_paper_balance("USDT") < initial_usdt
 
-    def test_create_limit_order_stays_new(self, paper_store):
-        order = paper_store.create_order(
-            symbol="BTCUSDT", side="BUY", order_type="LIMIT",
-            quantity=0.01, price=70000.0
-        )
-        assert order['status'] == 'NEW'
+    def test_get_symbol_ticker_normalizes_symbol(self, started_store):
+        result = started_store.get_symbol_ticker("BTC/USDT")
 
-    def test_cancel_paper_order(self, paper_store):
-        order = paper_store.create_order(
-            symbol="BTCUSDT", side="BUY", order_type="LIMIT",
-            quantity=0.01, price=70000.0
-        )
-        result = paper_store.cancel_order("BTCUSDT", order['orderId'])
-        assert result['status'] == 'CANCELED'
+        assert result == {"symbol": "BTCUSDT", "price": 101.5}
+        assert started_store.get_client().calls[-1] == ("get_symbol_ticker", {"symbol": "BTCUSDT"})
 
-    def test_get_order(self, paper_store):
-        order = paper_store.create_order(
-            symbol="BTCUSDT", side="BUY", order_type="MARKET",
-            quantity=0.01
-        )
-        result = paper_store.get_order("BTCUSDT", order['orderId'])
-        assert result['orderId'] == order['orderId']
+    def test_get_klines_returns_raw_exchange_payload(self, started_store):
+        started_store.get_client().klines_response = [[1, "2", "3", "4", "5", "6", 0, 0, 0, 0, 0, 0]]
 
-    def test_get_open_orders(self, paper_store):
-        paper_store.create_order(
-            symbol="BTCUSDT", side="BUY", order_type="LIMIT",
-            quantity=0.01, price=70000.0
-        )
-        opens = paper_store.get_open_orders()
-        assert len(opens) >= 1
+        klines = started_store.get_klines("BTCUSDT", "1m", limit=1)
 
-    def test_get_account(self, paper_store):
-        account = paper_store.get_account()
-        assert 'balances' in account
-        usdt_balance = next(
-            b for b in account['balances'] if b['asset'] == 'USDT'
-        )
-        assert float(usdt_balance['free']) == 10000.0
-
-    def test_sell_market_order_requires_balance(self, paper_store):
-        with pytest.raises(ValueError, match="Insufficient paper balance"):
-            paper_store.create_order(
-                symbol="BTCUSDT", side="SELL", order_type="MARKET",
-                quantity=0.01
-            )
+        assert klines == [[1, "2", "3", "4", "5", "6", 0, 0, 0, 0, 0, 0]]
 
 
-# ─────────────────────────── get_klines (raw format) ───────────────────────────
-
-
-class TestGetKlines:
-    def test_returns_raw_12_element_format(self, paper_store):
-        klines = paper_store.get_klines("BTCUSDT", "1m", limit=5)
-        assert len(klines) == 5
-        assert len(klines[0]) == 12  # Raw Binance format
-
-    def test_prices_are_strings_in_raw_format(self, paper_store):
-        klines = paper_store.get_klines("BTCUSDT", "1m", limit=1)
-        # Raw Binance format has string prices
-        assert isinstance(klines[0][1], str)  # open price as string
-
-
-# ─────────────────────────── WebSocket (paper mode skips) ───────────────────────────
-
-
-class TestWebSocketPaperMode:
-    def test_start_ticker_stream_is_noop(self, paper_store):
-        """In paper mode, starting ticker stream should be a no-op."""
-        paper_store.set_ticker_callback(lambda x: None)
-        paper_store.start_ticker_stream("BTCUSDT")
-        assert len(paper_store._active_streams) == 0
-
-    def test_start_kline_stream_is_noop(self, paper_store):
-        paper_store.start_kline_stream("BTCUSDT", "1m", lambda x: None)
-        assert len(paper_store._active_streams) == 0
-
-    def test_start_user_data_stream_is_noop(self, paper_store):
-        paper_store.start_user_data_stream(lambda x: None)
-        assert 'user_data' not in paper_store._active_streams
-
-
-class TestExchangeOrderSizing:
-    def test_normalize_quantity_rounds_down_to_step_size(self, unstarted_store):
-        unstarted_store._client = object()
-        unstarted_store._symbol_info_cache["DOGEUSDT"] = {
+class TestTradingMethods:
+    def test_create_order_normalizes_quantity_before_submit(self, started_store):
+        started_store._symbol_info_cache["DOGEUSDT"] = {
             "symbol": "DOGEUSDT",
             "filters": [
                 {
@@ -315,9 +379,109 @@ class TestExchangeOrderSizing:
             ],
         }
 
-        normalized = unstarted_store.normalize_quantity("DOGEUSDT", 12.987654)
+        started_store.create_order("DOGE/USDT", "BUY", "MARKET", quantity=12.987)
 
-        assert normalized == Decimal("12")
+        assert started_store.get_client().calls[-1] == (
+            "create_order",
+            {
+                "symbol": "DOGEUSDT",
+                "side": "BUY",
+                "type": "MARKET",
+                "quantity": "12",
+            },
+        )
+
+    def test_create_limit_order_includes_price_and_tif(self, started_store):
+        started_store._symbol_info_cache["BTCUSDT"] = {
+            "symbol": "BTCUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100.00000000",
+                    "stepSize": "0.00100000",
+                }
+            ],
+        }
+
+        started_store.create_order("BTCUSDT", "SELL", "LIMIT", quantity=0.1234, price=105.5)
+
+        assert started_store.get_client().calls[-1] == (
+            "create_order",
+            {
+                "symbol": "BTCUSDT",
+                "side": "SELL",
+                "type": "LIMIT",
+                "quantity": "0.123",
+                "price": "105.5",
+                "timeInForce": "GTC",
+            },
+        )
+
+    def test_cancel_get_open_orders_and_history_delegate_to_exchange(self, started_store):
+        started_store.cancel_order("BTC/USDT", 11)
+        started_store.get_order("BTC/USDT", 11)
+        started_store.get_open_orders("BTC/USDT")
+        started_store.get_all_orders("BTC/USDT", limit=50)
+        started_store.get_my_trades("BTC/USDT", limit=50)
+        started_store.get_account()
+
+        assert ("cancel_order", {"symbol": "BTCUSDT", "orderId": 11}) in started_store.get_client().calls
+        assert ("get_order", {"symbol": "BTCUSDT", "orderId": 11}) in started_store.get_client().calls
+        assert ("get_open_orders", {"symbol": "BTCUSDT"}) in started_store.get_client().calls
+        assert ("get_all_orders", {"symbol": "BTCUSDT", "limit": 50}) in started_store.get_client().calls
+        assert ("get_my_trades", {"symbol": "BTCUSDT", "limit": 50}) in started_store.get_client().calls
+        assert ("get_account", {}) in started_store.get_client().calls
+
+
+class TestTradingRules:
+    def test_get_symbol_trading_rules_prefers_notional_filter(self, started_store):
+        started_store.get_client().symbol_info["BTCUSDT"] = {
+            "symbol": "BTCUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100.00000000",
+                    "stepSize": "0.00100000",
+                },
+                {
+                    "filterType": "NOTIONAL",
+                    "minNotional": "5.00000000",
+                },
+            ],
+        }
+
+        rules = started_store.get_symbol_trading_rules("BTC/USDT")
+
+        assert rules == {
+            "symbol": "BTCUSDT",
+            "min_qty": "0.00100000",
+            "max_qty": "100.00000000",
+            "step_size": "0.00100000",
+            "min_notional": "5.00000000",
+        }
+
+    def test_get_symbol_trading_rules_falls_back_to_min_notional(self, started_store):
+        started_store.get_client().symbol_info["ETHUSDT"] = {
+            "symbol": "ETHUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100.00000000",
+                    "stepSize": "0.00100000",
+                },
+                {
+                    "filterType": "MIN_NOTIONAL",
+                    "minNotional": "10.00000000",
+                },
+            ],
+        }
+
+        rules = started_store.get_symbol_trading_rules("ETHUSDT")
+
+        assert rules["min_notional"] == "10.00000000"
 
     def test_normalize_quantity_rejects_below_min_qty(self, unstarted_store):
         unstarted_store._client = object()
@@ -335,3 +499,21 @@ class TestExchangeOrderSizing:
 
         with pytest.raises(ValueError, match="below Binance minQty"):
             unstarted_store.normalize_quantity("BTCUSDT", 0.0009)
+
+    def test_normalize_quantity_rounds_down_to_step_size(self, unstarted_store):
+        unstarted_store._client = object()
+        unstarted_store._symbol_info_cache["DOGEUSDT"] = {
+            "symbol": "DOGEUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "1.00000000",
+                    "maxQty": "1000000.00000000",
+                    "stepSize": "1.00000000",
+                }
+            ],
+        }
+
+        normalized = unstarted_store.normalize_quantity("DOGEUSDT", 12.987654)
+
+        assert normalized == Decimal("12")

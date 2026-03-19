@@ -78,7 +78,7 @@ class TradingSettings(BaseModel):
     """General trading settings."""
     default_timeframe: str = "1m"
     supported_timeframes: List[str] = Field(
-        default=["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+        default=["1s", "1m", "5m", "15m", "30m", "1h", "4h", "1d"]
     )
     reconnect_on_disconnect: bool = True
     max_reconnect_attempts: int = 5

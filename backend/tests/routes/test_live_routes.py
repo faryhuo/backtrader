@@ -43,11 +43,11 @@ class TestStartLiveRequest:
             strategy_name="test",
             symbol="ETH/USDT",
             mode="live",
-            timeframe="5m",
+            timeframe="1s",
             initial_cash=50000.0,
             commission=0.0005,
         )
-        assert request.timeframe == "5m"
+        assert request.timeframe == "1s"
         assert request.initial_cash == pytest.approx(50000.0)
         assert request.commission == pytest.approx(0.0005)
 

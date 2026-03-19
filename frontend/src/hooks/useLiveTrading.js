@@ -12,6 +12,7 @@ const initialState = {
     loading: false,
     positions: [],
     orders: [],
+    recentErrors: [],
     pnlHistory: [],
     currentPnl: 0,
     portfolioValue: 0,
@@ -37,6 +38,7 @@ function reducer(state, action) {
                 session: action.payload,
                 positions: [],
                 orders: [],
+                recentErrors: [],
                 pnlHistory: [{ timestamp: new Date().toISOString(), pnl: 0 }],
                 currentPnl: 0,
                 portfolioValue: action.payload.initial_cash || 0,
@@ -77,6 +79,9 @@ function reducer(state, action) {
             else updated.push(pos);
             return { ...state, positions: updated };
         }
+
+        case 'POSITIONS_LOADED':
+            return { ...state, positions: action.payload };
 
         case 'ORDER_UPDATE': {
             const order = action.payload;
@@ -215,6 +220,18 @@ function reducer(state, action) {
         case 'SET_ERROR':
             return { ...state, error: action.payload };
 
+        case 'TRADE_ERROR': {
+            const errorEntry = action.payload;
+            return {
+                ...state,
+                error: errorEntry.message,
+                recentErrors: [errorEntry, ...state.recentErrors].slice(0, 5),
+            };
+        }
+
+        case 'TRADE_ERRORS_LOADED':
+            return { ...state, recentErrors: action.payload };
+
         default:
             return state;
     }
@@ -230,6 +247,56 @@ export const useLiveTrading = () => {
     // WebSocket session tracking — drives the useWebSocket hook
     const [wsSessionId, setWsSessionId] = useState(null);
     const [wsToken, setWsToken] = useState(null);
+
+    const resolveTradingErrorMessage = useCallback((code, fallbackMessage) => {
+        const key = code ? `live.errors.codes.${code}` : null;
+        if (key) {
+            const translated = t(key);
+            if (translated && translated !== key) {
+                return translated;
+            }
+        }
+        return fallbackMessage;
+    }, [t]);
+
+    const loadTradingState = useCallback(async (sessionId) => {
+        const [ordersResult, positionsResult, tradeErrorsResult, accountResult] = await Promise.allSettled([
+            liveApi.getSessionOrders(sessionId),
+            liveApi.getSessionPositions(sessionId),
+            liveApi.getTradeErrors(sessionId),
+            liveApi.getSessionAccountSnapshot(sessionId),
+        ]);
+
+        if (ordersResult.status === 'fulfilled') {
+            dispatch({ type: 'ORDERS_LOADED', payload: ordersResult.value?.orders || [] });
+        } else {
+            console.warn('[POLLING] Orders fetch failed:', ordersResult.reason?.message || ordersResult.reason);
+        }
+
+        if (positionsResult.status === 'fulfilled') {
+            dispatch({ type: 'POSITIONS_LOADED', payload: positionsResult.value?.positions || [] });
+        } else {
+            console.warn('[POLLING] Positions fetch failed:', positionsResult.reason?.message || positionsResult.reason);
+        }
+
+        if (tradeErrorsResult.status === 'fulfilled') {
+            dispatch({
+                type: 'TRADE_ERRORS_LOADED',
+                payload: (tradeErrorsResult.value?.errors || []).slice().reverse().map((item) => ({
+                    ...item,
+                    displayMessage: resolveTradingErrorMessage(item.code, item.message),
+                })),
+            });
+        } else {
+            console.warn('[POLLING] Trade errors fetch failed:', tradeErrorsResult.reason?.message || tradeErrorsResult.reason);
+        }
+
+        if (accountResult.status === 'fulfilled') {
+            dispatch({ type: 'PNL_UPDATE', payload: accountResult.value });
+        } else {
+            console.warn('[POLLING] Account snapshot fetch failed:', accountResult.reason?.message || accountResult.reason);
+        }
+    }, [resolveTradingErrorMessage]);
 
     // Ticker polling interval ref
     const tickerIntervalRef = useRef(null);
@@ -292,10 +359,19 @@ export const useLiveTrading = () => {
             }
 
             case WS_MESSAGE_TYPES.ERROR: {
-                const errorMsg = t('live.notifications.trading_error', { error: msg.data.message });
+                const displayMessage = resolveTradingErrorMessage(msg.data.code, msg.data.message);
+                const errorMsg = t('live.notifications.trading_error', { error: displayMessage });
                 message.error(errorMsg);
                 addNotification(errorMsg, 'error');
-                dispatch({ type: 'SET_ERROR', payload: msg.data.message });
+                dispatch({
+                    type: 'TRADE_ERROR',
+                    payload: {
+                        code: msg.data.code || 'ORDER_REJECTED',
+                        message: msg.data.message,
+                        displayMessage,
+                        timestamp: new Date().toISOString(),
+                    },
+                });
                 break;
             }
 
@@ -396,6 +472,8 @@ export const useLiveTrading = () => {
                 console.warn('[POLLING] OHLCV fetch failed:', e.message);
             }
 
+            await loadTradingState(sessionId);
+
             // Continue polling every 30s
             ohlcvIntervalRef.current = setInterval(async () => {
                 try {
@@ -404,6 +482,7 @@ export const useLiveTrading = () => {
                         dispatch({ type: 'OHLCV_UPDATE', payload: data });
                     }
                 } catch { /* silently ignore */ }
+                await loadTradingState(sessionId);
             }, 30000);
         }, 3000);
 
@@ -419,8 +498,9 @@ export const useLiveTrading = () => {
                     dispatch({ type: 'LOGS_LOADED', payload: data.logs });
                 }
             } catch { /* silently ignore */ }
+            await loadTradingState(sessionId);
         }, 5000);
-    }, []);
+    }, [loadTradingState]);
 
     const stopDataPolling = useCallback(() => {
         if (ohlcvIntervalRef.current) {
@@ -500,14 +580,13 @@ export const useLiveTrading = () => {
             const status = await liveApi.getSessionStatus(state.session.session_id);
             dispatch({ type: 'SESSION_LOADED', payload: status });
 
-            const ordersData = await liveApi.getSessionOrders(state.session.session_id);
-            dispatch({ type: 'ORDERS_LOADED', payload: ordersData?.orders || [] });
+            await loadTradingState(state.session.session_id);
         } catch (_error) {
             message.error(t('live.notifications.session_refresh_failed', 'Failed to refresh'));
         } finally {
             dispatch({ type: 'SET_LOADING', payload: false });
         }
-    }, [state.session, t]);
+    }, [loadTradingState, state.session, t]);
 
     const handleCancelOrder = useCallback(async (orderId) => {
         if (!state.session?.session_id) return;
@@ -532,8 +611,7 @@ export const useLiveTrading = () => {
                     dispatch({ type: 'SESSION_LOADED', payload: active });
 
                     if (active.session_id) {
-                        const ordersData = await liveApi.getSessionOrders(active.session_id);
-                        dispatch({ type: 'ORDERS_LOADED', payload: ordersData?.orders || [] });
+                        await loadTradingState(active.session_id);
 
                         if (active.status === 'running' && active.ws_token) {
                             setWsSessionId(active.session_id);
@@ -553,7 +631,7 @@ export const useLiveTrading = () => {
             stopDataPolling();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadTradingState]);
 
     return {
         // State
@@ -561,6 +639,7 @@ export const useLiveTrading = () => {
         loading: state.loading,
         positions: state.positions,
         orders: state.orders,
+        recentErrors: state.recentErrors,
         pnlHistory: state.pnlHistory,
         currentPnl: state.currentPnl,
         portfolioValue: state.portfolioValue,

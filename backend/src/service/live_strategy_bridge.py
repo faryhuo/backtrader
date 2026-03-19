@@ -13,6 +13,12 @@ def wrap_strategy_with_live_gate(
 ):
     """Wrap a strategy so historical warmup bars do not execute trading logic."""
 
+    def _order_reason(order) -> Optional[str]:
+        info = getattr(order, 'info', None)
+        if isinstance(info, dict):
+            return info.get('reason')
+        return None
+
     class LiveGatedStrategy(strategy_cls):
         def __init__(self, *args, **kwargs):
             self.__dict__['_log_cb'] = log_callback
@@ -65,11 +71,32 @@ def wrap_strategy_with_live_gate(
                 ):
                     current_order = getattr(self, 'order', None)
                     side = 'BUY' if current_order and current_order.isbuy() else 'SELL'
-                    self._last_signal_order_ref = pending_after
-                    self._log_cb(
-                        'info',
-                        f"{dt} | {side} signal created | price={close:.2f} | pos={pos_before}",
+                    status_name = (
+                        current_order.getstatusname()
+                        if current_order and hasattr(current_order, 'getstatusname')
+                        else 'Created'
                     )
+                    current_status = getattr(current_order, 'status', None)
+                    rejected_statuses = {
+                        getattr(current_order, 'Rejected', None),
+                        getattr(current_order, 'Canceled', None),
+                        getattr(current_order, 'Margin', None),
+                        getattr(current_order, 'Expired', None),
+                    }
+                    rejected_statuses.discard(None)
+                    if current_order and current_status is not None and current_status in rejected_statuses:
+                        reason = _order_reason(current_order) or status_name
+                        self._last_signal_order_ref = None
+                        self._log_cb(
+                            'warning',
+                            f"{dt} | {side} order rejected immediately | reason={reason} | price={close:.2f} | pos={pos_before}",
+                        )
+                    else:
+                        self._last_signal_order_ref = pending_after
+                        self._log_cb(
+                            'info',
+                            f"{dt} | {side} order created | status={status_name} | price={close:.2f} | pos={pos_before}",
+                        )
 
                 if pos_after != pos_before:
                     side = 'BUY' if pos_after > pos_before else 'SELL'

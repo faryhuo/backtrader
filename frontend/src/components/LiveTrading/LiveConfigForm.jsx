@@ -16,7 +16,9 @@ import {
   ClockCircleOutlined,
   DollarOutlined,
   DownOutlined,
+  PercentageOutlined,
   PlayCircleOutlined,
+  PieChartOutlined,
   RadarChartOutlined,
   RightOutlined,
   SafetyCertificateOutlined,
@@ -36,7 +38,14 @@ const COMMON_PAIRS = [
   'DOGE/USDT', 'ADA/USDT', 'AVAX/USDT', 'DOT/USDT', 'MATIC/USDT',
 ];
 
-const TIMEFRAMES = ['1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d'];
+const TIMEFRAMES = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d'];
+const SIZER_OPTIONS = [
+  { value: 'fixed_size', label: 'Fixed Size' },
+  { value: 'percent_sizer', label: 'Percent Sizer' },
+  { value: 'all_in_sizer', label: 'All In' },
+  { value: 'risk_sizer', label: 'Risk Control' },
+  { value: 'kelly_sizer', label: 'Kelly Criterion' },
+];
 
 const PARAM_LABELS = {
   target_trade_value_usd: 'Trade Value per Order (USD)',
@@ -66,6 +75,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   const [paramsExpanded, setParamsExpanded] = useState(true);
   const [symbolRules, setSymbolRules] = useState(null);
   const [rulesLoading, setRulesLoading] = useState(false);
+  const [sizerType, setSizerType] = useState('percent_sizer');
 
   const formValues = Form.useWatch([], form) || {};
   const selectedStrategyName = formValues.strategy_name || '';
@@ -138,6 +148,14 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
       mode: values.mode,
       timeframe: values.timeframe,
       params: getParamsForApi(),
+      sizer_type: values.sizer_type || sizerType,
+      sizer_config: values.sizer_type === 'percent_sizer'
+        ? { percents: values.sizer_percents ?? 10 }
+        : values.sizer_type === 'fixed_size'
+          ? { stake: values.sizer_stake ?? 1 }
+          : values.sizer_type === 'risk_sizer' || values.sizer_type === 'kelly_sizer'
+            ? { risk_percent: values.sizer_risk_percent ?? 2 }
+            : {},
       commission: values.commission,
     });
   };
@@ -178,6 +196,8 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
           initialValues={{
             mode: 'paper',
             timeframe: '1m',
+            sizer_type: 'percent_sizer',
+            sizer_percents: 10,
             commission: 0.001,
             symbol: 'BTC/USDT',
           }}
@@ -324,6 +344,65 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
                 }))}
               />
             </Form.Item>
+
+            <Row gutter={[16, 0]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="sizer_type"
+                  label={t('config_form.sizer_type', 'Position Sizing')}
+                >
+                  <Select
+                    suffixIcon={<PieChartOutlined />}
+                    onChange={(value) => setSizerType(value)}
+                    options={SIZER_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: t(`sizer.${option.value}`, option.label),
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} md={12}>
+                {sizerType === 'fixed_size' && (
+                  <Form.Item
+                    name="sizer_stake"
+                    label={t('config_form.order_size', 'Order Size')}
+                  >
+                    <InputNumber min={1} step={1} style={{ width: '100%' }} />
+                  </Form.Item>
+                )}
+
+                {sizerType === 'percent_sizer' && (
+                  <Form.Item
+                    name="sizer_percents"
+                    label={t('config_form.sizer_percent', 'Position %')}
+                  >
+                    <InputNumber
+                      min={0.1}
+                      max={100}
+                      step={0.1}
+                      prefix={<PercentageOutlined />}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                )}
+
+                {(sizerType === 'risk_sizer' || sizerType === 'kelly_sizer') && (
+                  <Form.Item
+                    name="sizer_risk_percent"
+                    label={t('config_form.sizer_risk', 'Risk per Trade %')}
+                  >
+                    <InputNumber
+                      min={0.1}
+                      max={100}
+                      step={0.1}
+                      prefix={<PercentageOutlined />}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                )}
+              </Col>
+            </Row>
           </div>
 
           <div className="launch-section">

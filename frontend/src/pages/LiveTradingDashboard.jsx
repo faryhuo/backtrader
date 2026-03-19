@@ -8,6 +8,7 @@ import OrderLog from '../components/LiveTrading/OrderLog';
 import PnLChart from '../components/LiveTrading/PnLChart';
 import PriceChart from '../components/LiveTrading/PriceChart';
 import StrategyLog from '../components/LiveTrading/StrategyLog';
+import TradeErrorPanel from '../components/LiveTrading/TradeErrorPanel';
 import { useLiveTrading } from '../hooks/useLiveTrading';
 import './LiveTradingDashboard.css';
 
@@ -25,6 +26,7 @@ const LiveTradingDashboard = () => {
     loading,
     positions,
     orders,
+    recentErrors,
     pnlHistory,
     currentPnl,
     portfolioValue,
@@ -198,6 +200,10 @@ const LiveTradingDashboard = () => {
 
                 <Card className="dashboard-card" title={t('live.open_positions', 'Open Positions')}>
                   <PositionTable positions={positions} ticker={ticker} />
+                </Card>
+
+                <Card className="dashboard-card" title={t('live.errors.title', 'Recent Trading Errors')}>
+                  <TradeErrorPanel errors={recentErrors} />
                 </Card>
               </Col>
 

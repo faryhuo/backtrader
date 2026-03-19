@@ -8,6 +8,7 @@ Responsibilities:
 - Binance testnet/live connection management
 """
 
+import asyncio
 import logging
 from decimal import Decimal, ROUND_DOWN
 import threading
@@ -59,7 +60,11 @@ class BinanceStore:
         # WebSocket state
         self._twm = None
         self._twm_started = False
+        self._twm_loop: Optional[asyncio.AbstractEventLoop] = None
         self._active_streams: Dict[str, str] = {}
+        self._stream_specs: Dict[str, dict] = {}
+        self._stream_lock = threading.Lock()
+        self._ws_recovering = False
 
         # Callbacks
         self._ticker_callback: Optional[Callable] = None
@@ -96,15 +101,9 @@ class BinanceStore:
         """Stop the store and clean up all connections."""
         logger.info("BinanceStore stopping")
         self._running = False
-        self._stop_all_streams()
+        self._stop_all_streams(clear_specs=True)
         self._stop_user_data_stream()
-        if self._twm:
-            try:
-                self._twm.stop()
-            except Exception as e:
-                logger.debug(f"TWM stop error (expected): {e}")
-            self._twm = None
-            self._twm_started = False
+        self._shutdown_twm()
         logger.info("BinanceStore stopped")
 
     @property
@@ -133,21 +132,54 @@ class BinanceStore:
 
     def _ensure_twm(self) -> None:
         """Lazily initialize ThreadedWebsocketManager."""
-        if self._twm_started:
+        if self._twm_started and self._twm and self._twm.is_alive():
             return
+        if self._twm_started:
+            logger.warning("ThreadedWebsocketManager is marked started but not alive; recreating it")
+            self._shutdown_twm()
         try:
+            self._twm_loop = asyncio.new_event_loop()
             self._twm = ThreadedWebsocketManager(
                 api_key=self.api_key,
                 api_secret=self.api_secret,
                 testnet=self._paper_mode,
+                loop=self._twm_loop,
             )
             self._twm.start()
             self._twm_started = True
             logger.info("ThreadedWebsocketManager started")
         except Exception as e:
             logger.error(f"Failed to start ThreadedWebsocketManager: {e}")
-            self._twm = None
-            self._twm_started = False
+            self._shutdown_twm()
+
+    def _shutdown_twm(self) -> None:
+        """Stop the websocket manager thread and release its private event loop."""
+        twm = self._twm
+        loop = self._twm_loop
+
+        if twm:
+            try:
+                twm.stop()
+            except Exception as e:
+                logger.debug(f"TWM stop error (expected): {e}")
+
+            try:
+                if twm.is_alive():
+                    twm.join(timeout=5)
+                    if twm.is_alive():
+                        logger.warning("ThreadedWebsocketManager did not stop within timeout")
+            except Exception as e:
+                logger.debug(f"TWM join error: {e}")
+
+        if loop and not loop.is_closed():
+            try:
+                loop.close()
+            except Exception as e:
+                logger.debug(f"TWM loop close error: {e}")
+
+        self._twm = None
+        self._twm_started = False
+        self._twm_loop = None
 
     def start_ticker_stream(self, symbol: str) -> None:
         """Start real-time ticker stream."""
@@ -157,6 +189,10 @@ class BinanceStore:
         stream_name = f"ticker_{symbol}"
         if stream_name in self._active_streams:
             return
+        self._stream_specs[stream_name] = {
+            'kind': 'ticker',
+            'symbol': symbol,
+        }
 
         self._ensure_twm()
         if not self._twm:
@@ -165,6 +201,7 @@ class BinanceStore:
         def _on_msg(msg: dict):
             if msg.get('e') == 'error':
                 logger.error(f"Ticker stream error: {msg}")
+                self._handle_socket_error(stream_name, msg)
                 return
             if self._ticker_callback:
                 try:
@@ -197,6 +234,12 @@ class BinanceStore:
         stream_name = f"kline_{symbol}_{interval}"
         if stream_name in self._active_streams:
             return
+        self._stream_specs[stream_name] = {
+            'kind': 'kline',
+            'symbol': symbol,
+            'interval': interval,
+            'callback': callback,
+        }
 
         self._ensure_twm()
         if not self._twm:
@@ -207,6 +250,7 @@ class BinanceStore:
         def _on_msg(msg: dict):
             if msg.get('e') == 'error':
                 logger.error(f"Kline stream error: {msg}")
+                self._handle_socket_error(stream_name, msg)
                 return
             k = msg.get('k', {})
             if not k:
@@ -241,6 +285,11 @@ class BinanceStore:
         """Start User Data Stream for account/order push."""
         if callback:
             self._user_data_callback = callback
+        if 'user_data' in self._active_streams:
+            return
+        self._stream_specs['user_data'] = {
+            'kind': 'user_data',
+        }
         self._ensure_twm()
         if not self._twm:
             return
@@ -248,6 +297,7 @@ class BinanceStore:
         def _on_msg(msg: dict):
             if msg.get('e') == 'error':
                 logger.error(f"User data stream error: {msg}")
+                self._handle_socket_error('user_data', msg)
                 return
             if self._user_data_callback:
                 try:
@@ -262,8 +312,10 @@ class BinanceStore:
         except Exception as e:
             logger.error(f"Failed to start user data stream: {e}")
 
-    def _stop_all_streams(self) -> None:
+    def _stop_all_streams(self, clear_specs: bool = False) -> None:
         if not self._twm:
+            if clear_specs:
+                self._stream_specs.clear()
             return
         for name, key in list(self._active_streams.items()):
             try:
@@ -272,6 +324,62 @@ class BinanceStore:
                 pass
         self._active_streams.clear()
         self._kline_callbacks.clear()
+        if clear_specs:
+            self._stream_specs.clear()
+
+    def _handle_socket_error(self, stream_name: str, msg: dict) -> None:
+        if not self._running:
+            return
+
+        error_type = str(msg.get('type') or '')
+        error_message = str(msg.get('m') or '')
+        should_recover = (
+            error_type == 'ReadLoopClosed'
+            or 'read loop has been closed' in error_message.lower()
+        )
+        if not should_recover:
+            return
+
+        logger.warning("Recovering Binance websocket connection after %s on %s", error_type or 'socket error', stream_name)
+        self._schedule_websocket_recovery()
+
+    def _schedule_websocket_recovery(self) -> None:
+        with self._stream_lock:
+            if self._ws_recovering or not self._running:
+                return
+            self._ws_recovering = True
+
+        def _recover():
+            try:
+                self._recover_websocket_connection()
+            finally:
+                with self._stream_lock:
+                    self._ws_recovering = False
+
+        threading.Thread(target=_recover, name="binance-ws-recover", daemon=True).start()
+
+    def _recover_websocket_connection(self) -> None:
+        specs = dict(self._stream_specs)
+        if not specs or not self._running:
+            return
+
+        self._stop_all_streams(clear_specs=False)
+        self._shutdown_twm()
+        time.sleep(0.2)
+
+        for stream_name, spec in specs.items():
+            kind = spec.get('kind')
+            try:
+                if kind == 'ticker':
+                    self.start_ticker_stream(spec['symbol'])
+                elif kind == 'kline':
+                    callback = spec.get('callback')
+                    if callback:
+                        self.start_kline_stream(spec['symbol'], spec['interval'], callback)
+                elif kind == 'user_data':
+                    self.start_user_data_stream()
+            except Exception as exc:
+                logger.warning(f"Failed to recover stream {stream_name}: {exc}")
 
     def _stop_user_data_stream(self) -> None:
         if self._listen_key_timer:
@@ -312,15 +420,6 @@ class BinanceStore:
                 [k[0], float(k[1]), float(k[2]), float(k[3]), float(k[4]), float(k[5])]
                 for k in self._client.get_klines(**params)
             ]
-            logger.info(
-                "fetch_ohlcv symbol=%s interval=%s limit=%s since_ms=%s -> %s bars%s",
-                sym,
-                interval,
-                limit,
-                since_ms,
-                len(bars),
-                "" if not bars else f" last_open_ms={bars[-1][0]}",
-            )
             return bars
         except BinanceAPIException as e:
             logger.error(f"Failed to fetch OHLCV for {symbol}: {e}")
@@ -411,6 +510,26 @@ class BinanceStore:
             return self._client.get_open_orders(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to get open orders: {e}")
+            raise
+
+    def get_all_orders(self, symbol: str, limit: int = 100) -> list:
+        try:
+            return self._client.get_all_orders(
+                symbol=normalize_symbol(symbol),
+                limit=limit,
+            )
+        except BinanceAPIException as e:
+            logger.error(f"Failed to get all orders for {symbol}: {e}")
+            raise
+
+    def get_my_trades(self, symbol: str, limit: int = 100) -> list:
+        try:
+            return self._client.get_my_trades(
+                symbol=normalize_symbol(symbol),
+                limit=limit,
+            )
+        except BinanceAPIException as e:
+            logger.error(f"Failed to get trade history for {symbol}: {e}")
             raise
 
     def get_account(self) -> dict:

@@ -19,6 +19,7 @@ import backtrader as bt
 from binance.client import Client
 
 TIMEFRAME_INTERVALS = {
+    "1s": getattr(Client, "KLINE_INTERVAL_1SECOND", "1s"),
     "1m": Client.KLINE_INTERVAL_1MINUTE,
     "3m": Client.KLINE_INTERVAL_3MINUTE,
     "5m": Client.KLINE_INTERVAL_5MINUTE,
@@ -36,6 +37,7 @@ TIMEFRAME_INTERVALS = {
 }
 
 TIMEFRAME_SECONDS = {
+    "1s": 1,
     "1m": 60,
     "3m": 180,
     "5m": 300,
@@ -66,6 +68,8 @@ def map_to_bt_timeframe(timeframe: str) -> Tuple[int, int]:
         return bt.TimeFrame.Minutes, 1
 
     quantity, unit = int(match.group(1)), match.group(2)
+    if unit == "s":
+        return bt.TimeFrame.Seconds, quantity
     if unit == "m":
         return bt.TimeFrame.Minutes, quantity
     if unit == "h":
