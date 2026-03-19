@@ -114,6 +114,34 @@ def _get_free_quote_balance(account: dict, quote_asset: str) -> float:
     )
 
 
+def _extract_balance_components(account: dict, symbol: str) -> Dict[str, float]:
+    """Extract base/quote balance components for a symbol from an exchange account payload."""
+    balances = account.get('balances')
+    if not isinstance(balances, list):
+        raise LiveTradingError("Exchange account response did not include balances.")
+
+    base_asset, quote_asset = _extract_symbol_assets(symbol)
+    balance_map = {
+        str(item.get('asset') or '').upper(): item
+        for item in balances
+    }
+    base_balance = balance_map.get(base_asset, {})
+    quote_balance = balance_map.get(quote_asset, {})
+
+    base_free = _safe_float(base_balance.get('free')) or 0.0
+    base_locked = _safe_float(base_balance.get('locked')) or 0.0
+    quote_free = _safe_float(quote_balance.get('free')) or 0.0
+    quote_locked = _safe_float(quote_balance.get('locked')) or 0.0
+
+    return {
+        'base_free': base_free,
+        'base_locked': base_locked,
+        'base_size': base_free + base_locked,
+        'quote_free': quote_free,
+        'quote_locked': quote_locked,
+    }
+
+
 def _safe_float(value) -> Optional[float]:
     if value in (None, ''):
         return None
@@ -133,6 +161,31 @@ def _format_exchange_timestamp(value) -> Optional[str]:
     if timestamp_ms is None or timestamp_ms <= 0:
         return None
     return datetime.fromtimestamp(timestamp_ms / 1000).isoformat()
+
+
+def _build_session_result(current_pnl: float, baseline_value: float) -> Dict[str, float | str | bool]:
+    """Build a normalized session profit/loss payload for REST and WebSocket consumers."""
+    safe_pnl = float(current_pnl or 0.0)
+    safe_baseline = float(baseline_value or 0.0)
+    pnl_percent = ((safe_pnl / safe_baseline) * 100.0) if safe_baseline > 0 else 0.0
+
+    if safe_pnl > 0:
+        status = 'profit'
+    elif safe_pnl < 0:
+        status = 'loss'
+    else:
+        status = 'flat'
+
+    return {
+        'status': status,
+        'amount': safe_pnl,
+        'absolute_amount': abs(safe_pnl),
+        'percent': pnl_percent,
+        'baseline_value': safe_baseline,
+        'is_profit': status == 'profit',
+        'is_loss': status == 'loss',
+        'is_flat': status == 'flat',
+    }
 
 
 def _get_timeframe_seconds(timeframe: str) -> int:
@@ -372,7 +425,8 @@ def start_session(
         )
         store.start()
         account = store.get_account()
-        effective_initial_cash = _get_free_quote_balance(account, quote_asset)
+        balance_snapshot = _extract_balance_components(account, symbol)
+        effective_initial_cash = balance_snapshot['quote_free']
 
         bars_probe = store.fetch_ohlcv(
             symbol=symbol,
@@ -383,6 +437,14 @@ def start_session(
             raise LiveTradingError(
                 f"Exchange API returned no OHLCV data for {symbol} [{timeframe}]."
             )
+
+        ticker = store.fetch_ticker(symbol)
+        baseline_price = _safe_float(ticker.get('last')) or 0.0
+        baseline_portfolio_value = (
+            balance_snapshot['quote_free']
+            + balance_snapshot['quote_locked']
+            + (balance_snapshot['base_size'] * baseline_price)
+        )
 
         # 4. Create in-memory session with exchange-derived cash snapshot.
         session = session_manager.create_session(
@@ -395,6 +457,14 @@ def start_session(
             initial_cash=effective_initial_cash,
             commission=commission,
             user_id=user_id,
+        )
+        session_manager.update_session(
+            session_id,
+            baseline_quote_free=balance_snapshot['quote_free'],
+            baseline_quote_locked=balance_snapshot['quote_locked'],
+            baseline_base_size=balance_snapshot['base_size'],
+            baseline_price=baseline_price,
+            baseline_portfolio_value=baseline_portfolio_value,
         )
 
         # Set up ticker callback for real-time price broadcast via WebSocket
@@ -803,45 +873,40 @@ def get_session_account_snapshot(session_id: str) -> Dict:
         raise LiveTradingError("Exchange connection is not active")
 
     try:
-        base_asset, quote_asset = _extract_symbol_assets(session.symbol)
         account = session.store.get_account()
-        balances = account.get('balances')
-        if not isinstance(balances, list):
-            raise LiveTradingError("Exchange account response did not include balances.")
-
-        balance_map = {
-            str(item.get('asset') or '').upper(): item
-            for item in balances
-        }
-        base_balance = balance_map.get(base_asset, {})
-        quote_balance = balance_map.get(quote_asset, {})
-
-        base_free = _safe_float(base_balance.get('free')) or 0.0
-        base_locked = _safe_float(base_balance.get('locked')) or 0.0
-        quote_free = _safe_float(quote_balance.get('free')) or 0.0
-        quote_locked = _safe_float(quote_balance.get('locked')) or 0.0
+        balance_snapshot = _extract_balance_components(account, session.symbol)
+        base_free = balance_snapshot['base_free']
+        base_locked = balance_snapshot['base_locked']
+        quote_free = balance_snapshot['quote_free']
+        quote_locked = balance_snapshot['quote_locked']
+        base_size = balance_snapshot['base_size']
 
         ticker = session.store.fetch_ticker(session.symbol)
         current_price = _safe_float(ticker.get('last')) or 0.0
 
-        base_value = (base_free + base_locked) * current_price
+        base_value = base_size * current_price
         portfolio_value = quote_free + quote_locked + base_value
-        current_pnl = portfolio_value - float(session.initial_cash)
+        baseline_portfolio_value = _safe_float(
+            getattr(session, 'baseline_portfolio_value', None)
+        )
+        if baseline_portfolio_value is None or baseline_portfolio_value <= 0:
+            baseline_portfolio_value = float(session.initial_cash)
+        current_pnl = portfolio_value - baseline_portfolio_value
+        session_result = _build_session_result(current_pnl, baseline_portfolio_value)
 
         return {
             'session_id': session_id,
             'symbol': session.symbol,
             'cash': quote_free,
             'cash_locked': quote_locked,
-            'base_size': base_free + base_locked,
+            'base_size': base_size,
             'base_value': base_value,
             'current_price': current_price,
+            'baseline_portfolio_value': baseline_portfolio_value,
             'portfolio_value': portfolio_value,
             'current_pnl': current_pnl,
-            'total_pnl_percent': (
-                (current_pnl / float(session.initial_cash)) * 100
-                if float(session.initial_cash) > 0 else 0.0
-            ),
+            'total_pnl_percent': session_result['percent'],
+            'session_result': session_result,
         }
     except LiveTradingError:
         raise

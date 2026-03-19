@@ -374,6 +374,10 @@ def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
         def fetch_ohlcv(self, **_kwargs):
             return [[1, 1.0, 1.0, 1.0, 1.0, 1.0]]
 
+        def fetch_ticker(self, symbol):
+            assert symbol == "DOGE/USDT"
+            return {"last": "0.25"}
+
         def set_ticker_callback(self, _callback):
             return None
 
@@ -761,3 +765,42 @@ def test_get_session_account_snapshot_includes_base_asset_value(monkeypatch):
     assert snapshot["base_value"] == pytest.approx(25.0)
     assert snapshot["portfolio_value"] == pytest.approx(845.0)
     assert snapshot["current_pnl"] == pytest.approx(-155.0)
+
+
+def test_get_session_account_snapshot_uses_session_baseline_portfolio_value(monkeypatch):
+    class StubStore:
+        _running = True
+
+        def get_account(self):
+            return {
+                "balances": [
+                    {"asset": "BTC", "free": "1", "locked": "0"},
+                    {"asset": "USDT", "free": "1000", "locked": "0"},
+                ]
+            }
+
+        def fetch_ticker(self, symbol):
+            assert symbol == "BTC/USDT"
+            return {"last": "70000"}
+
+    session = types.SimpleNamespace(
+        session_id="session-baseline",
+        symbol="BTC/USDT",
+        initial_cash=1000.0,
+        baseline_portfolio_value=71000.0,
+        store=StubStore(),
+    )
+
+    monkeypatch.setattr(
+        live_engine,
+        "get_session_manager",
+        lambda: types.SimpleNamespace(
+            get_session=lambda session_id: session if session_id == "session-baseline" else None
+        ),
+    )
+
+    snapshot = live_engine.get_session_account_snapshot("session-baseline")
+
+    assert snapshot["portfolio_value"] == pytest.approx(71000.0)
+    assert snapshot["current_pnl"] == pytest.approx(0.0)
+    assert snapshot["total_pnl_percent"] == pytest.approx(0.0)

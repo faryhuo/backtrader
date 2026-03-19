@@ -1,0 +1,97 @@
+.order-fill-list {
+  padding: 0 12px 4px;
+  display: grid;
+  gap: 10px;
+}
+
+.order-fill-empty {
+  padding: 18px 8px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  border: 1px dashed rgba(120, 146, 196, 0.24);
+  border-radius: 12px;
+  background: rgba(14, 21, 38, 0.28);
+}
+
+.order-fill-card {
+  padding: 12px 14px;
+  border: 1px solid rgba(90, 122, 196, 0.22);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(28, 35, 57, 0.96), rgba(18, 23, 39, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.order-fill-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.order-fill-time {
+  min-width: 0;
+}
+
+.order-fill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.order-fill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.order-fill-metric {
+  min-width: 0;
+}
+
+.order-fill-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(171, 184, 211, 0.66);
+}
+
+.order-fill-value,
+.order-fill-metric strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  color: rgba(244, 247, 255, 0.96);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .order-fill-list {
+    padding: 0 8px 4px;
+  }
+
+  .order-fill-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .order-fill-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .order-fill-tags {
+    justify-content: flex-start;
+  }
+
+  .order-fill-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

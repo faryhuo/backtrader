@@ -62,6 +62,11 @@ class TradingSession:
     orders: List[Dict] = field(default_factory=list)
     feed_status: str = "warming_up"
     error_message: Optional[str] = None
+    baseline_quote_free: float = 0.0
+    baseline_quote_locked: float = 0.0
+    baseline_base_size: float = 0.0
+    baseline_price: float = 0.0
+    baseline_portfolio_value: float = 0.0
 
     def to_dict(self) -> Dict:
         """

@@ -27,6 +27,36 @@ const initialState = {
     error: null,
 };
 
+function appendPnlPoint(history, payload) {
+    const timestamp = payload?.timestamp || new Date().toISOString();
+    const pnl = payload?.current_pnl ?? 0;
+    const portfolioValue = payload?.portfolio_value ?? 0;
+    const cash = payload?.cash ?? 0;
+    const nextPoint = { timestamp, pnl, portfolioValue, cash };
+    const nextEpoch = new Date(timestamp).getTime();
+
+    if (!Number.isFinite(nextEpoch)) {
+        return [...history, nextPoint].slice(-500);
+    }
+
+    if (history.length === 0) {
+        return [nextPoint];
+    }
+
+    const updated = [...history];
+    const lastPoint = updated[updated.length - 1];
+    const lastEpoch = new Date(lastPoint.timestamp).getTime();
+
+    // Replace the last point when the update lands in the same second or is out-of-order.
+    if (Number.isFinite(lastEpoch) && nextEpoch <= lastEpoch + 999) {
+        updated[updated.length - 1] = nextPoint;
+        return updated.slice(-500);
+    }
+
+    updated.push(nextPoint);
+    return updated.slice(-500);
+}
+
 function reducer(state, action) {
     switch (action.type) {
         case 'SET_LOADING':
@@ -96,13 +126,10 @@ function reducer(state, action) {
             const d = action.payload;
             return {
                 ...state,
-                currentPnl: d.current_pnl || 0,
-                portfolioValue: d.portfolio_value || 0,
-                cash: d.cash || 0,
-                pnlHistory: [
-                    ...state.pnlHistory,
-                    { timestamp: new Date().toISOString(), pnl: d.current_pnl || 0 },
-                ],
+                currentPnl: d.current_pnl ?? 0,
+                portfolioValue: d.portfolio_value ?? 0,
+                cash: d.cash ?? 0,
+                pnlHistory: appendPnlPoint(state.pnlHistory, d),
                 stats: d.total_trades !== undefined ? {
                     totalTrades: d.total_trades || 0,
                     winningTrades: d.winning_trades || 0,

@@ -6,6 +6,7 @@ broadcasting events to connected clients for live trading monitoring.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 from typing import Dict, List, Set
@@ -242,6 +243,7 @@ class WebSocketManager:
         await self.broadcast(session_id, {
             'type': 'pnl',
             'data': {
+                'timestamp': datetime.utcnow().isoformat(),
                 'current_pnl': current_pnl,
                 'total_pnl_percent': total_pnl_percent,
                 'cash': cash,
