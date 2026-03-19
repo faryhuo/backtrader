@@ -151,3 +151,78 @@ def test_wrapped_strategy_emits_feed_status_callback():
 
     assert statuses == [("delayed", "BTC/USDT"), ("live", "BTC/USDT")]
     assert strategy.__dict__["_data_live"] is True
+
+
+def test_wrapped_strategy_logs_signal_when_pending_order_created():
+    logs = []
+
+    class BaseStrategy(bt.Strategy):
+        def next(self):
+            self.order = types.SimpleNamespace(ref=77, isbuy=lambda: True)
+
+    class DummyDateTime:
+        def datetime(self, index=0):
+            return "2024-01-01T00:00:00"
+
+    class DummyData:
+        def __init__(self):
+            self.close = [100.0]
+            self.datetime = DummyDateTime()
+
+        def __len__(self):
+            return 1
+
+    wrapped = wrap_strategy_with_live_gate(BaseStrategy, lambda level, msg: logs.append((level, msg)))
+    wrapped.position = property(lambda self: types.SimpleNamespace(size=0))
+    strategy = object.__new__(wrapped)
+    strategy.__dict__["_log_cb"] = lambda level, msg: logs.append((level, msg))
+    strategy.__dict__["_data_live"] = True
+    strategy.__dict__["_last_signal_order_ref"] = None
+    strategy.order = None
+    strategy.datas = [DummyData()]
+
+    wrapped.next(strategy)
+
+    assert any("BUY signal created" in msg for _level, msg in logs)
+    assert any(level == "debug" for level, _msg in logs)
+
+
+def test_wrapped_strategy_logs_submitted_and_accepted_orders():
+    logs = []
+
+    class BaseStrategy(bt.Strategy):
+        def notify_order(self, order):
+            return None
+
+    wrapped = wrap_strategy_with_live_gate(BaseStrategy, lambda level, msg: logs.append((level, msg)))
+    strategy = object.__new__(wrapped)
+    strategy.__dict__["_log_cb"] = lambda level, msg: logs.append((level, msg))
+    strategy.__dict__["_last_signal_order_ref"] = None
+
+    class DummyOrder:
+        Submitted = 1
+        Accepted = 2
+        Completed = 3
+        Rejected = 4
+        Canceled = 5
+        Margin = 6
+        Expired = 7
+
+        def __init__(self, status):
+            self.status = status
+            self.ref = 9
+            self.created = types.SimpleNamespace(size=1.23)
+            self.executed = types.SimpleNamespace(size=1.23, price=100.0)
+            self.info = {}
+
+        def isbuy(self):
+            return True
+
+        def getstatusname(self):
+            return "Accepted"
+
+    wrapped.notify_order(strategy, DummyOrder(DummyOrder.Submitted))
+    wrapped.notify_order(strategy, DummyOrder(DummyOrder.Accepted))
+
+    assert any("submitted" in msg.lower() for _level, msg in logs)
+    assert any("accepted" in msg.lower() for _level, msg in logs)

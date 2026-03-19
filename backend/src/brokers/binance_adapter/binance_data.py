@@ -79,6 +79,11 @@ class BinanceData(bt.DataBase):
             loaded = self._consume_bar(self._hist_buffer)
             if loaded and not self._hist_buffer:
                 self._historical_mode = False
+                logger.info(
+                    "Historical warmup finished for %s at %s; waiting for first live bar",
+                    self._symbol,
+                    self._last_bar_time.isoformat() if self._last_bar_time else "unknown",
+                )
             return loaded
 
         # Then serve live bars collected from websocket / polling.
@@ -131,12 +136,11 @@ class BinanceData(bt.DataBase):
 
     def _fetch_bars(self) -> List[list]:
         """Fetch OHLCV bars from Binance, filtering forming bars."""
+        now_ms = int(time.time() * 1000)
         if self._last_bar_time:
             since = self._datetime_to_ms(self._last_bar_time) + 1
         else:
-            since = int(
-                (datetime.utcnow() - timedelta(seconds=self._tf_seconds * 5)).timestamp() * 1000
-            )
+            since = now_ms - (self._tf_seconds * 5 * 1000)
 
         try:
             ohlcv = self.store.fetch_ohlcv(
@@ -145,6 +149,14 @@ class BinanceData(bt.DataBase):
                 limit=self.params.limit,
                 since_ms=since,
             )
+            logger.info(
+                "Fetched %s raw bars for %s [%s] since=%s last_bar=%s",
+                len(ohlcv or []),
+                self._symbol,
+                self.ccxt_timeframe,
+                since,
+                self._last_bar_time.isoformat() if self._last_bar_time else "none",
+            )
         except Exception as e:
             logger.error(f"Failed to fetch OHLCV: {e}")
             return []
@@ -152,7 +164,6 @@ class BinanceData(bt.DataBase):
         if not ohlcv:
             return []
 
-        now_ms = int(datetime.utcnow().timestamp() * 1000)
         valid = []
 
         for bar in ohlcv:
@@ -165,6 +176,25 @@ class BinanceData(bt.DataBase):
             if self._last_bar_time and bar_dt <= self._last_bar_time:
                 continue
             valid.append(bar)
+
+        if not valid:
+            logger.info(
+                "No new closed bars for %s [%s]; raw=%s last_bar=%s now_ms=%s",
+                self._symbol,
+                self.ccxt_timeframe,
+                len(ohlcv or []),
+                self._last_bar_time.isoformat() if self._last_bar_time else "none",
+                now_ms,
+            )
+        else:
+            logger.info(
+                "Accepted %s new closed bars for %s [%s]; first=%s last=%s",
+                len(valid),
+                self._symbol,
+                self.ccxt_timeframe,
+                datetime.utcfromtimestamp(valid[0][0] / 1000).isoformat(),
+                datetime.utcfromtimestamp(valid[-1][0] / 1000).isoformat(),
+            )
 
         if self.params.debug and valid:
             logger.debug(f"Fetched {len(valid)} new bars for {self._symbol}")
@@ -240,6 +270,11 @@ class BinanceData(bt.DataBase):
 
     def _notify_live(self) -> None:
         if not self._live_notified:
+            logger.info(
+                "First live bar available for %s [%s]; switching feed to LIVE",
+                self._symbol,
+                self.ccxt_timeframe,
+            )
             self.put_notification(self.LIVE)
             self._live_notified = True
 
@@ -257,7 +292,7 @@ class BinanceData(bt.DataBase):
             logger.info(f"Backfilling {self._symbol} from {start_dt}...")
 
             since = self._datetime_to_ms(start_dt)
-            now_ms = int(datetime.utcnow().timestamp() * 1000)
+            now_ms = int(time.time() * 1000)
 
             if since > now_ms:
                 since = now_ms - (100 * self._tf_ms)

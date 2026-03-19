@@ -1,5 +1,6 @@
 """Tests for BinanceData live/historical transition helpers."""
 
+import time
 from datetime import datetime
 
 from src.brokers.binance_adapter.binance_data import BinanceData
@@ -70,3 +71,25 @@ class TestBinanceData:
         result = BinanceData._datetime_to_ms(dt_obj)
 
         assert result == 1773833640000
+
+    def test_fetch_bars_uses_epoch_clock_for_forming_bar_filter(self, monkeypatch):
+        store = DummyStore()
+        data = BinanceData(store=store, symbol="BTCUSDT", timeframe="1m")
+        data._last_bar_time = datetime.utcfromtimestamp(1_700_000_220)
+
+        monkeypatch.setattr(time, "time", lambda: 1_700_000_341)
+
+        captured = {}
+
+        def fetch_ohlcv(**kwargs):
+            captured.update(kwargs)
+            return [
+                [1_700_000_280_000, 100, 101, 99, 100, 10],
+            ]
+
+        store.fetch_ohlcv = fetch_ohlcv
+
+        bars = data._fetch_bars()
+
+        assert captured["since_ms"] == 1_700_000_220_001
+        assert bars == [[1_700_000_280_000, 100, 101, 99, 100, 10]]

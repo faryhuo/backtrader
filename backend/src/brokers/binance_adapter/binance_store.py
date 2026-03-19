@@ -332,14 +332,34 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         if self._paper_mode:
-            return self._generate_paper_klines(sym, interval, limit, since_ms=since_ms)
+            bars = self._generate_paper_klines(sym, interval, limit, since_ms=since_ms)
+            logger.info(
+                "[PAPER] fetch_ohlcv symbol=%s interval=%s limit=%s since_ms=%s -> %s bars%s",
+                sym,
+                interval,
+                limit,
+                since_ms,
+                len(bars),
+                "" if not bars else f" last_open_ms={bars[-1][0]}",
+            )
+            return bars
 
         try:
             params = self._build_kline_params(sym, interval, limit, since_ms)
-            return [
+            bars = [
                 [k[0], float(k[1]), float(k[2]), float(k[3]), float(k[4]), float(k[5])]
                 for k in self._client.get_klines(**params)
             ]
+            logger.info(
+                "fetch_ohlcv symbol=%s interval=%s limit=%s since_ms=%s -> %s bars%s",
+                sym,
+                interval,
+                limit,
+                since_ms,
+                len(bars),
+                "" if not bars else f" last_open_ms={bars[-1][0]}",
+            )
+            return bars
         except BinanceAPIException as e:
             logger.error(f"Failed to fetch OHLCV for {symbol}: {e}")
             raise

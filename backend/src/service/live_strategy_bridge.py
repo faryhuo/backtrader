@@ -17,6 +17,7 @@ def wrap_strategy_with_live_gate(
         def __init__(self, *args, **kwargs):
             self.__dict__['_log_cb'] = log_callback
             self.__dict__['_data_live'] = False
+            self.__dict__['_last_signal_order_ref'] = None
             super().__init__(*args, **kwargs)
 
         def log(self, txt, dt=None, level='info'):
@@ -44,37 +45,68 @@ def wrap_strategy_with_live_gate(
                 return
 
             pos_before = self.position.size if self.position else 0
-            super().next()
+            pending_before = getattr(getattr(self, 'order', None), 'ref', None)
+            try:
+                super().next()
+            except Exception as exc:
+                self._log_cb('error', f"Strategy next() failed: {exc}")
+                raise
 
             try:
                 dt = self.datas[0].datetime.datetime(0)
                 close = self.datas[0].close[0]
                 pos_after = self.position.size if self.position else 0
+                pending_after = getattr(getattr(self, 'order', None), 'ref', None)
+
+                if (
+                    pending_after is not None
+                    and pending_after != pending_before
+                    and pending_after != self._last_signal_order_ref
+                ):
+                    current_order = getattr(self, 'order', None)
+                    side = 'BUY' if current_order and current_order.isbuy() else 'SELL'
+                    self._last_signal_order_ref = pending_after
+                    self._log_cb(
+                        'info',
+                        f"{dt} | {side} signal created | price={close:.2f} | pos={pos_before}",
+                    )
 
                 if pos_after != pos_before:
                     side = 'BUY' if pos_after > pos_before else 'SELL'
                     self._log_cb('info', f"{dt} | {side} signal | price={close:.2f} | pos: {pos_before} -> {pos_after}")
 
-                if len(self.datas[0]) % 10 == 0:
-                    parts = [f"{dt} | close={close:.2f}"]
-                    for attr_name in ('fast_ma', 'slow_ma', 'sma', 'ema', 'rsi', 'crossover'):
-                        ind = getattr(self, attr_name, None)
-                        if ind is not None and len(ind) > 0:
-                            parts.append(f"{attr_name}={ind[0]:.4f}")
-                    self._log_cb('debug', ' | '.join(parts))
+                parts = [f"{dt} | close={close:.2f}", f"pos={pos_after:.6f}"]
+                for attr_name in ('fast_ma', 'slow_ma', 'sma', 'ema', 'rsi', 'crossover'):
+                    ind = getattr(self, attr_name, None)
+                    if ind is not None and len(ind) > 0:
+                        parts.append(f"{attr_name}={ind[0]:.4f}")
+                if pending_after is not None:
+                    parts.append(f"pending_order={pending_after}")
+                self._log_cb('debug', ' | '.join(parts))
             except Exception:
                 pass
 
         def notify_order(self, order):
             super().notify_order(order)
             try:
-                if order.status == order.Completed:
+                if order.status == order.Submitted:
+                    side = 'BUY' if order.isbuy() else 'SELL'
+                    self._log_cb('info', f"Order {side} submitted: ref={order.ref} size={order.created.size:.6f}")
+                elif order.status == order.Accepted:
+                    side = 'BUY' if order.isbuy() else 'SELL'
+                    self._log_cb('info', f"Order {side} accepted: ref={order.ref}")
+                elif order.status == order.Completed:
                     side = 'BUY' if order.isbuy() else 'SELL'
                     self._log_cb('info', f"Order {side} completed: size={order.executed.size:.6f} @ {order.executed.price:.2f}")
                 elif order.status == order.Rejected:
                     self._log_cb('warning', f"Order REJECTED: {order.info}")
                 elif order.status == order.Canceled:
                     self._log_cb('warning', 'Order CANCELED')
+                    self._last_signal_order_ref = None
+                elif order.status in (order.Margin, order.Expired):
+                    self._log_cb('warning', f"Order ended with status={order.getstatusname()}")
+                if order.status in (order.Completed, order.Canceled, order.Rejected, order.Margin, order.Expired):
+                    self._last_signal_order_ref = None
             except Exception:
                 pass
 
