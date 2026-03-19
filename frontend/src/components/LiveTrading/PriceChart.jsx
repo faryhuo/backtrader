@@ -13,7 +13,7 @@ const PriceChart = ({ priceHistory, currentPrice, symbol }) => {
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || chartRef.current) return;
 
     // Create chart
     const chart = createChart(containerRef.current, {
@@ -67,6 +67,8 @@ const PriceChart = ({ priceHistory, currentPrice, symbol }) => {
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
     };
   }, []);
 
@@ -159,32 +161,31 @@ const PriceChart = ({ priceHistory, currentPrice, symbol }) => {
     }
   }, [currentPrice, priceHistory]);
 
-  // Show empty state if no data
-  if (!hasData && (!priceHistory || priceHistory.length === 0)) {
-    return (
-      <div
-        style={{
-          width: '100%',
-          height: '280px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#9ca3af',
-          background: 'rgba(31, 41, 55, 0.5)',
-          borderRadius: '8px',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>$</div>
-          <div>{t('live.waiting_for_price_data', 'Waiting for price data...')}</div>
-          {symbol && <div style={{ fontSize: '12px', marginTop: '4px' }}>{symbol}</div>}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '280px' }} />
+    <div style={{ position: 'relative', width: '100%', height: '280px' }}>
+      <div ref={containerRef} style={{ width: '100%', height: '280px' }} />
+      {!hasData && (!priceHistory || priceHistory.length === 0) && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#9ca3af',
+            background: 'rgba(31, 41, 55, 0.5)',
+            borderRadius: '8px',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}>$</div>
+            <div>{t('live.waiting_for_price_data', 'Waiting for price data...')}</div>
+            {symbol && <div style={{ fontSize: '12px', marginTop: '4px' }}>{symbol}</div>}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

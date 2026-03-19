@@ -1,7 +1,10 @@
 {
-    "1d": "Daily",
-    "1h": "Hourly",
-    "15m": "15 Min",
-    "5m": "5 Min",
-    "1m": "1 Min"
+  "1d": "Daily",
+  "4h": "4 Hours",
+  "1h": "1 Hour",
+  "30m": "30 Min",
+  "15m": "15 Min",
+  "5m": "5 Min",
+  "3m": "3 Min",
+  "1m": "1 Min"
 }

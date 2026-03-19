@@ -4,34 +4,25 @@ Binance Store - Connection management for Binance Spot via python-binance.
 Responsibilities:
 - REST client for market data and trading
 - ThreadedWebsocketManager for real-time ticker/kline streams
-- User Data Stream for account/order updates (live mode)
-- Paper trading simulation
+- User Data Stream for account/order updates
+- Binance testnet/live connection management
 """
 
 import logging
-import random
+from decimal import Decimal, ROUND_DOWN
 import threading
 import time
-import uuid
 from typing import Callable, Dict, List, Optional
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
+from binance import ThreadedWebsocketManager
 
 logger = logging.getLogger(__name__)
 
 # Import shared constants from package — avoids duplication
 # (circular import safe: __init__.py imports us, but these are module-level constants)
 from .common import TIMEFRAME_INTERVALS, TIMEFRAME_SECONDS, normalize_symbol
-
-# Default simulated base prices for paper trading
-_PAPER_BASE_PRICES = {
-    'BTCUSDT': 75000.0,
-    'ETHUSDT': 3500.0,
-    'BNBUSDT': 600.0,
-    'SOLUSDT': 150.0,
-}
-
 
 class BinanceStore:
     """
@@ -64,8 +55,6 @@ class BinanceStore:
 
         # Paper trading state
         self._paper_mode = mode == "paper"
-        self._paper_balances: Dict[str, float] = {'USDT': 10000.0}
-        self._paper_orders: Dict[int, dict] = {}
 
         # WebSocket state
         self._twm = None
@@ -80,21 +69,23 @@ class BinanceStore:
         # User Data Stream
         self._listen_key: Optional[str] = None
         self._listen_key_timer: Optional[threading.Timer] = None
+        self._symbol_info_cache: Dict[str, dict] = {}
 
         logger.info(f"BinanceStore initialized: mode={mode}, session={session_id}")
 
     # ═══════════════════════════════ Lifecycle ═══════════════════════════════
 
     def start(self) -> None:
-        """Start the store and connect to Binance when live trading is enabled."""
+        """Start the store and connect to Binance or Binance testnet."""
         if self._running:
             return
         try:
-            if self._paper_mode:
-                self._client = None
-            else:
-                self._client = Client(self.api_key, self.api_secret)
-                self._client.ping()
+            self._client = Client(
+                self.api_key,
+                self.api_secret,
+                testnet=self._paper_mode,
+            )
+            self._client.ping()
             logger.info(f"BinanceStore started ({self.mode} mode)")
         except Exception as e:
             logger.error(f"Failed to connect to Binance: {e}")
@@ -145,9 +136,10 @@ class BinanceStore:
         if self._twm_started:
             return
         try:
-            from binance.streams import ThreadedWebsocketManager
             self._twm = ThreadedWebsocketManager(
-                api_key=self.api_key, api_secret=self.api_secret,
+                api_key=self.api_key,
+                api_secret=self.api_secret,
+                testnet=self._paper_mode,
             )
             self._twm.start()
             self._twm_started = True
@@ -158,8 +150,8 @@ class BinanceStore:
             self._twm_started = False
 
     def start_ticker_stream(self, symbol: str) -> None:
-        """Start real-time ticker stream (live mode only)."""
-        if self._paper_mode or not self._ticker_callback:
+        """Start real-time ticker stream."""
+        if not self._ticker_callback:
             return
 
         stream_name = f"ticker_{symbol}"
@@ -199,12 +191,9 @@ class BinanceStore:
             logger.error(f"Failed to start ticker stream: {e}")
 
     def start_kline_stream(self, symbol: str, interval: str, callback: Callable) -> None:
-        """Start real-time kline stream (live mode only).
+        """Start real-time kline stream.
         Callback receives: {time_ms, open, high, low, close, volume, is_closed}
         """
-        if self._paper_mode:
-            return
-
         stream_name = f"kline_{symbol}_{interval}"
         if stream_name in self._active_streams:
             return
@@ -249,9 +238,7 @@ class BinanceStore:
             logger.error(f"Failed to start kline stream: {e}")
 
     def start_user_data_stream(self, callback: Optional[Callable] = None) -> None:
-        """Start User Data Stream for account/order push (live mode only)."""
-        if self._paper_mode:
-            return
+        """Start User Data Stream for account/order push."""
         if callback:
             self._user_data_callback = callback
         self._ensure_twm()
@@ -297,18 +284,6 @@ class BinanceStore:
         """Fetch ticker via REST. Returns {last, bid, ask, high, low, volume, timestamp}."""
         sym = normalize_symbol(symbol)
 
-        if self._paper_mode:
-            price = self._get_paper_price(sym)
-            return {
-                'last': price,
-                'bid': price * 0.9999,
-                'ask': price * 1.0001,
-                'high': price * 1.005,
-                'low': price * 0.995,
-                'volume': random.uniform(1000, 10000),
-                'timestamp': int(time.time() * 1000),
-            }
-
         try:
             t = self._client.get_ticker(symbol=sym)
             return {
@@ -330,19 +305,6 @@ class BinanceStore:
     ) -> List[list]:
         """Fetch OHLCV via REST. Returns [[ts, o, h, l, c, v], ...]."""
         sym = normalize_symbol(symbol)
-
-        if self._paper_mode:
-            bars = self._generate_paper_klines(sym, interval, limit, since_ms=since_ms)
-            logger.info(
-                "[PAPER] fetch_ohlcv symbol=%s interval=%s limit=%s since_ms=%s -> %s bars%s",
-                sym,
-                interval,
-                limit,
-                since_ms,
-                len(bars),
-                "" if not bars else f" last_open_ms={bars[-1][0]}",
-            )
-            return bars
 
         try:
             params = self._build_kline_params(sym, interval, limit, since_ms)
@@ -368,9 +330,6 @@ class BinanceStore:
         """Get current price. Returns {symbol, price}."""
         sym = normalize_symbol(symbol)
 
-        if self._paper_mode:
-            return {'symbol': sym, 'price': self._get_paper_price(sym)}
-
         try:
             r = self._client.get_symbol_ticker(symbol=sym)
             return {'symbol': r['symbol'], 'price': float(r['price'])}
@@ -381,10 +340,6 @@ class BinanceStore:
     def get_order_book_ticker(self, symbol: str) -> dict:
         """Get best bid/ask."""
         sym = normalize_symbol(symbol)
-
-        if self._paper_mode:
-            price = self._get_paper_price(sym)
-            return {'symbol': sym, 'bidPrice': str(price * 0.999), 'askPrice': str(price * 1.001)}
 
         try:
             return self._client.get_order_book_ticker(symbol=sym)
@@ -398,9 +353,6 @@ class BinanceStore:
     ) -> list:
         """Get raw klines (12-element Binance format). Use fetch_ohlcv() for normalized output."""
         sym = normalize_symbol(symbol)
-
-        if self._paper_mode:
-            return self._generate_paper_klines_raw(sym, interval, limit, since_ms=start_time)
 
         try:
             params = self._build_kline_params(sym, interval, limit, start_time)
@@ -417,11 +369,14 @@ class BinanceStore:
     ) -> dict:
         sym = normalize_symbol(symbol)
 
-        if self._paper_mode:
-            return self._create_paper_order(sym, side, order_type, quantity, price)
-
         try:
-            params = {'symbol': sym, 'side': side, 'type': order_type, 'quantity': quantity}
+            normalized_quantity = self.normalize_quantity(sym, quantity)
+            params = {
+                'symbol': sym,
+                'side': side,
+                'type': order_type,
+                'quantity': self._decimal_to_str(normalized_quantity),
+            }
             if order_type == 'LIMIT' and price:
                 params['price'] = str(price)
                 params['timeInForce'] = 'GTC'
@@ -433,12 +388,6 @@ class BinanceStore:
     def cancel_order(self, symbol: str, order_id: int) -> dict:
         sym = normalize_symbol(symbol)
 
-        if self._paper_mode:
-            if order_id in self._paper_orders:
-                self._paper_orders[order_id]['status'] = 'CANCELED'
-                return self._paper_orders[order_id]
-            return {'symbol': sym, 'orderId': order_id, 'status': 'NOT_FOUND'}
-
         try:
             return self._client.cancel_order(symbol=sym, orderId=order_id)
         except BinanceAPIException as e:
@@ -448,11 +397,6 @@ class BinanceStore:
     def get_order(self, symbol: str, order_id: int) -> dict:
         sym = normalize_symbol(symbol)
 
-        if self._paper_mode:
-            return self._paper_orders.get(
-                order_id, {'symbol': sym, 'orderId': order_id, 'status': 'NOT_FOUND'}
-            )
-
         try:
             return self._client.get_order(symbol=sym, orderId=order_id)
         except BinanceAPIException as e:
@@ -460,11 +404,6 @@ class BinanceStore:
             raise
 
     def get_open_orders(self, symbol: Optional[str] = None) -> list:
-        if self._paper_mode:
-            return [
-                o for o in self._paper_orders.values()
-                if o.get('status') in ('NEW', 'PARTIALLY_FILLED')
-            ]
         try:
             params = {}
             if symbol:
@@ -475,11 +414,6 @@ class BinanceStore:
             raise
 
     def get_account(self) -> dict:
-        if self._paper_mode:
-            return {'balances': [
-                {'asset': a, 'free': str(q), 'locked': '0'}
-                for a, q in self._paper_balances.items()
-            ]}
         try:
             return self._client.get_account()
         except BinanceAPIException as e:
@@ -491,111 +425,86 @@ class BinanceStore:
     def is_paper_mode(self) -> bool:
         return self._paper_mode
 
-    def set_paper_balance(self, asset: str, amount: float) -> None:
-        self._paper_balances[asset] = amount
+    def uses_exchange_account_data(self) -> bool:
+        """Whether balances/orders are sourced from exchange APIs."""
+        return True
 
-    def get_paper_balance(self, asset: str = 'USDT') -> float:
-        return self._paper_balances.get(asset, 0.0)
+    def get_symbol_trading_rules(self, symbol: str) -> dict:
+        sym = normalize_symbol(symbol)
+        lot_filter = self._get_symbol_filter(sym, 'LOT_SIZE')
 
-    def _get_paper_price(self, symbol: str) -> float:
-        base = _PAPER_BASE_PRICES.get(symbol.upper(), 1000.0)
-        return base * (1 + random.uniform(-0.001, 0.001))
+        min_notional = None
+        try:
+            notional_filter = self._get_symbol_filter(sym, 'NOTIONAL')
+            min_notional = notional_filter.get('minNotional')
+        except ValueError:
+            try:
+                notional_filter = self._get_symbol_filter(sym, 'MIN_NOTIONAL')
+                min_notional = notional_filter.get('minNotional')
+            except ValueError:
+                min_notional = None
 
-    def _create_paper_order(
-        self, symbol: str, side: str, order_type: str,
-        quantity: float, price: Optional[float],
-    ) -> dict:
-        order_id = int(time.time() * 1000) % 1000000
-        exec_price = price or self._get_paper_price(symbol)
-
-        if order_type == 'MARKET':
-            status = 'FILLED'
-            base_asset = symbol.replace('USDT', '')
-            if side == 'BUY':
-                self._paper_balances[base_asset] = self._paper_balances.get(base_asset, 0.0) + quantity
-                self._paper_balances['USDT'] -= quantity * exec_price
-            else:
-                current_balance = self._paper_balances.get(base_asset, 0.0)
-                if current_balance < quantity:
-                    raise ValueError(
-                        f"Insufficient paper balance for {base_asset}: {quantity} > {current_balance}"
-                    )
-                self._paper_balances[base_asset] = self._paper_balances.get(base_asset, 0.0) - quantity
-                self._paper_balances['USDT'] += quantity * exec_price
-        else:
-            status = 'NEW'
-
-        order = {
-            'symbol': symbol, 'orderId': order_id,
-            'clientOrderId': str(uuid.uuid4()),
-            'transactTime': int(time.time() * 1000),
-            'price': str(exec_price), 'origQty': str(quantity),
-            'executedQty': str(quantity if status == 'FILLED' else 0),
-            'status': status, 'side': side, 'type': order_type,
+        return {
+            'symbol': sym,
+            'min_qty': lot_filter.get('minQty'),
+            'max_qty': lot_filter.get('maxQty'),
+            'step_size': lot_filter.get('stepSize'),
+            'min_notional': min_notional,
         }
-        self._paper_orders[order_id] = order
-        logger.info(f"[PAPER] Order: {side} {quantity} {symbol} @ {exec_price} ({status})")
-        return order
 
-    def _generate_paper_klines(
-        self,
-        symbol: str,
-        interval: str,
-        limit: int,
-        since_ms: Optional[int] = None,
-    ) -> List[list]:
-        """Simulated klines in normalized [ts, o, h, l, c, v] format."""
-        return [
-            [bar[0], float(bar[1]), float(bar[2]), float(bar[3]), float(bar[4]), float(bar[5])]
-            for bar in self._generate_paper_klines_raw(symbol, interval, limit, since_ms=since_ms)
-        ]
+    def get_symbol_info(self, symbol: str) -> dict:
+        sym = normalize_symbol(symbol)
+        cached = self._symbol_info_cache.get(sym)
+        if cached:
+            return cached
 
-    def _generate_paper_klines_raw(
-        self,
-        symbol: str,
-        interval: str,
-        limit: int,
-        since_ms: Optional[int] = None,
-    ) -> list:
-        """Simulated klines in raw Binance 12-element format."""
-        base_price = self._get_paper_price(symbol)
-        seconds = TIMEFRAME_SECONDS.get(interval, 60)
-        interval_ms = seconds * 1000
+        try:
+            info = self._client.get_symbol_info(sym)
+        except BinanceAPIException as e:
+            logger.error(f"Failed to get symbol info for {sym}: {e}")
+            raise
 
-        # Align timestamps to closed-bar boundaries so polling produces one
-        # deterministic new candle per interval instead of a drifting stream.
-        now_ms = int(time.time() * 1000)
-        current_open_ms = now_ms - (now_ms % interval_ms)
-        last_closed_open_ms = current_open_ms - interval_ms
+        if not info:
+            raise ValueError(f"Symbol info unavailable for {sym}")
 
-        if since_ms is not None:
-            start_ms = ((max(0, since_ms) + interval_ms - 1) // interval_ms) * interval_ms
-            if start_ms > last_closed_open_ms:
-                return []
-        else:
-            start_ms = last_closed_open_ms - ((max(1, limit) - 1) * interval_ms)
+        self._symbol_info_cache[sym] = info
+        return info
 
-        bars = []
-        ts_ms = start_ms
-        while ts_ms <= last_closed_open_ms and len(bars) < max(1, limit):
-            seed = (hash((symbol, interval, ts_ms // interval_ms)) & 0xFFFFFFFF)
-            rng = random.Random(seed)
-            drift = ((ts_ms // interval_ms) % 32 - 16) / 3200.0
-            anchor = base_price * (1 + drift)
-            o = anchor * (1 + rng.uniform(-0.002, 0.002))
-            c = anchor * (1 + rng.uniform(-0.002, 0.002))
-            h = max(o, c) * (1 + rng.uniform(0, 0.0015))
-            lo = min(o, c) * (1 - rng.uniform(0, 0.0015))
-            v = rng.uniform(10, 100)
-            bars.append([
-                ts_ms, str(o), str(h), str(lo), str(c), str(v),
-                ts_ms + interval_ms, str(v * c), 123, str(v),
-                str(v * c / max(base_price, 1.0)), '0',
-            ])
-            ts_ms += interval_ms
+    def normalize_quantity(self, symbol: str, quantity: float) -> Decimal:
+        sym = normalize_symbol(symbol)
+        quantity_decimal = Decimal(str(quantity))
+        lot_filter = self._get_symbol_filter(sym, 'LOT_SIZE')
+        min_qty = Decimal(lot_filter['minQty'])
+        max_qty = Decimal(lot_filter['maxQty'])
+        step_size = Decimal(lot_filter['stepSize'])
 
-        return bars
+        normalized = quantity_decimal.quantize(step_size, rounding=ROUND_DOWN)
+        if step_size > 0:
+            normalized = (normalized // step_size) * step_size
 
+        if normalized < min_qty:
+            raise ValueError(
+                f"Order quantity {self._decimal_to_str(normalized)} is below Binance minQty "
+                f"{self._decimal_to_str(min_qty)} for {sym}"
+            )
+        if normalized > max_qty:
+            raise ValueError(
+                f"Order quantity {self._decimal_to_str(normalized)} exceeds Binance maxQty "
+                f"{self._decimal_to_str(max_qty)} for {sym}"
+            )
+
+        return normalized
+
+    def _get_symbol_filter(self, symbol: str, filter_type: str) -> dict:
+        info = self.get_symbol_info(symbol)
+        for symbol_filter in info.get('filters', []):
+            if symbol_filter.get('filterType') == filter_type:
+                return symbol_filter
+        raise ValueError(f"Filter {filter_type} unavailable for {symbol}")
+
+    @staticmethod
+    def _decimal_to_str(value: Decimal) -> str:
+        return format(value.normalize(), 'f')
 
     def _build_kline_params(
         self,

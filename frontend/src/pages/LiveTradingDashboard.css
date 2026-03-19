@@ -9,6 +9,14 @@
     margin-bottom: 24px;
 }
 
+.dashboard-launch-shell {
+    margin-top: 12px;
+}
+
+.dashboard-launch-card .ant-card-body {
+    padding: 28px;
+}
+
 .dashboard-title {
     color: #f8fafc !important; /* Slate 50 */
     margin-bottom: 8px !important;
@@ -62,4 +70,10 @@
 
 .ws-status-disconnected {
     color: #f87171; /* Red 400 */
+}
+
+@media (max-width: 768px) {
+    .dashboard-launch-card .ant-card-body {
+        padding: 18px;
+    }
 }

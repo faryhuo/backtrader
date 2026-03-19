@@ -16,7 +16,9 @@ from typing import Callable, Dict, List, Optional
 import backtrader as bt
 
 from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore
+from src.config.config_manager import get_global_config_manager, get_user_config_manager
 from src.db import SessionStorage
+from src.db.storage.session import build_session_order_pk
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.live_strategy_bridge import wrap_strategy_with_live_gate
 from src.service.session_manager import SessionStatus, get_session_manager
@@ -51,6 +53,57 @@ class LiveTradingError(Exception):
     """Raised when live trading encounters an error."""
 
 
+def _get_config_manager(user_id: Optional[str]):
+    return get_user_config_manager(user_id) if user_id else get_global_config_manager()
+
+
+def _get_exchange_credentials(exchange: str, mode: str, user_id: Optional[str]) -> Dict[str, str]:
+    config_manager = _get_config_manager(user_id)
+    credentials = config_manager.get_ccxt_credentials(exchange, mode)
+    api_key = credentials.get('api_key')
+    api_secret = credentials.get('secret')
+
+    if not api_key or not api_secret:
+        raise LiveTradingError(
+            f"Missing {exchange} {mode} API credentials. "
+            f"Configure API key and secret before starting the session."
+        )
+
+    return {
+        'api_key': api_key,
+        'api_secret': api_secret,
+    }
+
+
+def _extract_quote_asset(symbol: str) -> str:
+    if '/' not in symbol:
+        raise LiveTradingError(f"Unsupported symbol format: {symbol}")
+    base_asset, quote_asset = symbol.split('/', 1)
+    if not base_asset or not quote_asset:
+        raise LiveTradingError(f"Unsupported symbol format: {symbol}")
+    return quote_asset.upper()
+
+
+def _get_free_quote_balance(account: dict, quote_asset: str) -> float:
+    balances = account.get('balances')
+    if not isinstance(balances, list):
+        raise LiveTradingError("Exchange account response did not include balances.")
+
+    for balance in balances:
+        if balance.get('asset', '').upper() != quote_asset:
+            continue
+        free_value = balance.get('free')
+        if free_value in (None, ''):
+            raise LiveTradingError(
+                f"Exchange account did not provide free balance for quote asset {quote_asset}."
+            )
+        return float(free_value)
+
+    raise LiveTradingError(
+        f"Exchange account does not contain quote asset balance for {quote_asset}."
+    )
+
+
 # Event types emitted by broker
 class BrokerEvent:
     """Lightweight event emitted by the broker."""
@@ -69,6 +122,7 @@ def start_session(
     symbol: str,
     mode: str = 'paper',
     timeframe: str = '1m',
+    params: Optional[dict] = None,
     initial_cash: float = 10000.0,
     commission: float = 0.001,
     user_id: Optional[str] = None,
@@ -88,9 +142,44 @@ def start_session(
 
     session_manager = get_session_manager()
     store: Optional[BinanceStore] = None
+    effective_initial_cash = float(initial_cash)
 
     try:
-        # 1. Create in-memory session
+        # 1. Load strategy class
+        strategy_cls = load_user_strategy(strategy_name)
+
+        # 2. Load broker config & risk limits
+        broker_config = load_broker_config()
+        risk_config = get_risk_config(broker_config)
+        ex_config = get_exchange_config(exchange, broker_config)
+        credentials = _get_exchange_credentials(exchange, mode, user_id)
+        quote_asset = _extract_quote_asset(symbol)
+
+        # 3. Initialise Binance adapter components and verify exchange-backed data.
+        store = BinanceStore(
+            api_key=credentials['api_key'],
+            api_secret=credentials['api_secret'],
+            mode=mode,
+            exchange_id=ex_config.ccxt_id,
+            config={'default_market': 'spot', 'markets': ['spot']},
+            user_id=user_id,
+            session_id=session_id,
+        )
+        store.start()
+        account = store.get_account()
+        effective_initial_cash = _get_free_quote_balance(account, quote_asset)
+
+        bars_probe = store.fetch_ohlcv(
+            symbol=symbol,
+            interval=timeframe,
+            limit=2,
+        )
+        if not bars_probe:
+            raise LiveTradingError(
+                f"Exchange API returned no OHLCV data for {symbol} [{timeframe}]."
+            )
+
+        # 4. Create in-memory session with exchange-derived cash snapshot.
         session = session_manager.create_session(
             session_id=session_id,
             strategy_name=strategy_name,
@@ -98,27 +187,10 @@ def start_session(
             exchange=exchange,
             mode=mode,
             timeframe=timeframe,
-            initial_cash=initial_cash,
+            initial_cash=effective_initial_cash,
             commission=commission,
             user_id=user_id,
         )
-
-        # 2. Load strategy class
-        strategy_cls = load_user_strategy(strategy_name)
-
-        # 3. Load broker config & risk limits
-        broker_config = load_broker_config()
-        risk_config = get_risk_config(broker_config)
-        ex_config = get_exchange_config(exchange, broker_config)
-
-        # 4. Initialise Binance adapter components
-        store = BinanceStore(
-            mode=mode,
-            exchange_id=ex_config.ccxt_id,
-            config={'default_market': 'spot', 'markets': ['spot']},
-            user_id=user_id,
-        )
-        store.start()
 
         # Set up ticker callback for real-time price broadcast via WebSocket
         def on_ticker(ticker):
@@ -141,9 +213,10 @@ def start_session(
 
         broker = BinanceBroker(
             store=store,
-            cash=initial_cash,
+            cash=effective_initial_cash,
             commission=commission,
             session_id=session_id,
+            quote_asset=quote_asset,
             max_position_size_usd=risk_config.position_limits.max_position_size_usd,
             max_positions_count=risk_config.position_limits.max_positions_count,
             min_order_size_usd=risk_config.order_limits.min_order_size_usd,
@@ -225,8 +298,10 @@ def start_session(
         )
 
         # 6. Build Cerebro
+        strategy_params = dict(params or {})
+
         cerebro = bt.Cerebro()
-        cerebro.addstrategy(strategy_cls)
+        cerebro.addstrategy(strategy_cls, **strategy_params)
         cerebro.adddata(data_feed)
         cerebro.setbroker(broker)
 
@@ -264,20 +339,22 @@ def start_session(
 
                 logger.info(f"Fetched {len(bars) if bars else 0} bars")
 
-                if bars:
-                    ws = _get_ws_manager()
-                    logger.info(f"WebSocket manager: {ws}")
-                    if ws:
-                        _run_ws(ws.broadcast_ohlcv(
-                            session_id=session_id,
-                            symbol=symbol,
-                            ohlcv_list=bars,
-                        ))
-                        logger.info(f"Sent {len(bars)} historical bars to frontend")
-                    else:
-                        logger.warning("WS is None, cannot broadcast OHLCV")
+                if not bars:
+                    raise LiveTradingError(
+                        f"Exchange API returned no OHLCV data for {symbol} [{timeframe}]."
+                    )
+
+                ws = _get_ws_manager()
+                logger.info(f"WebSocket manager: {ws}")
+                if ws:
+                    _run_ws(ws.broadcast_ohlcv(
+                        session_id=session_id,
+                        symbol=symbol,
+                        ohlcv_list=bars,
+                    ))
+                    logger.info(f"Sent {len(bars)} historical bars to frontend")
                 else:
-                    logger.warning("No bars fetched")
+                    logger.warning("WS is None, cannot broadcast OHLCV")
             except Exception as e:
                 logger.warning(f"Failed to send initial OHLCV: {e}")
 
@@ -467,6 +544,10 @@ def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
             limit=limit,
             since_ms=since_ms,
         )
+        if not bars:
+            raise LiveTradingError(
+                f"Exchange API returned no OHLCV data for {session.symbol} [{session.timeframe}]."
+            )
         formatted = []
         for bar in (bars or []):
             formatted.append({
@@ -490,6 +571,32 @@ def get_strategy_logs(session_id: str, limit: int = 100) -> Dict:
 
     logs = getattr(session, '_strategy_logs', [])
     return {'session_id': session_id, 'logs': logs[-limit:]}
+
+
+def get_symbol_trading_rules(symbol: str, mode: str = 'paper', user_id: Optional[str] = None) -> Dict:
+    """Fetch exchange trading rules for a symbol."""
+    exchange = 'binance'
+    broker_config = load_broker_config()
+    ex_config = get_exchange_config(exchange, broker_config)
+    credentials = _get_exchange_credentials(exchange, mode, user_id)
+    store: Optional[BinanceStore] = None
+
+    try:
+        store = BinanceStore(
+            api_key=credentials['api_key'],
+            api_secret=credentials['api_secret'],
+            mode=mode,
+            exchange_id=ex_config.ccxt_id,
+            config={'default_market': 'spot', 'markets': ['spot']},
+            user_id=user_id,
+        )
+        store.start()
+        return store.get_symbol_trading_rules(symbol)
+    except Exception as e:
+        raise LiveTradingError(f"Failed to fetch symbol trading rules: {e}") from e
+    finally:
+        if store:
+            store.stop()
 
 
 # ─────────────────────────────── event handling ───────────────────────────────
@@ -539,7 +646,7 @@ def _route_broker_event(
             filled_size=data['size'],
             filled_price=data['price'],
         ))
-        _update_order_status(data['order_id'], 'filled', data)
+        _update_order_status(session_id, data['order_id'], 'filled', data)
 
     elif event_type == BrokerEvent.ORDER_PARTIAL:
         _run_ws(ws.broadcast_order_update(
@@ -564,7 +671,7 @@ def _route_broker_event(
             price=0,
             status='cancelled',
         ))
-        _update_order_status(data['order_id'], 'cancelled', data)
+        _update_order_status(session_id, data['order_id'], 'cancelled', data)
 
     elif event_type == BrokerEvent.ORDER_REJECTED:
         _run_ws(ws.broadcast_error(
@@ -675,19 +782,22 @@ def _persist_order(session_id: str, data: dict, status: str) -> None:
             'size': data['size'],
             'price': data.get('price'),
             'status': status,
+            'metadata': {
+                'client_order_id': str(data['order_id']),
+            },
         })
     except Exception as e:
         logger.warning(f"Failed to persist order: {e}")
 
 
-def _update_order_status(order_id: str, status: str, data: dict) -> None:
+def _update_order_status(session_id: str, order_id: str, status: str, data: dict) -> None:
     """Update an existing order's status in DB."""
     try:
         storage = _get_storage()
         with storage.managed_session() as db:
             from src.db.models import OrderModel, OrderStatusEnum
             order = db.query(OrderModel).filter(
-                OrderModel.order_id == order_id
+                OrderModel.order_id == build_session_order_pk(session_id, order_id)
             ).first()
             if order:
                 order.status = OrderStatusEnum[status.upper()]
@@ -697,5 +807,6 @@ def _update_order_status(order_id: str, status: str, data: dict) -> None:
                     order.commission = data.get('commission', 0)
                     order.cost = data.get('cost', 0)
                     order.filled_at = datetime.utcnow()
+                order.updated_at = datetime.utcnow()
     except Exception as e:
         logger.warning(f"Failed to update order status: {e}")

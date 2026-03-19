@@ -65,6 +65,12 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async getSymbolRules(symbol, mode = 'paper') {
+        const params = new URLSearchParams({ symbol, mode })
+        const res = await buildRequest(`/live/symbol-rules?${params.toString()}`)
+        return await parseResponse(res)
+    },
+
     async getExchanges() {
         const res = await buildRequest('/live/exchanges')
         return await parseResponse(res)

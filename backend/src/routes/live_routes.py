@@ -44,7 +44,13 @@ class StartLiveRequest(BaseModel):
     symbol: str = Field(..., description="Trading pair (e.g., 'BTC/USDT')")
     mode: str = Field(default="paper", description="'paper' (testnet) or 'live'")
     timeframe: str = Field(default="1m", description="Bar timeframe")
-    initial_cash: float = Field(default=10000.0, ge=100, le=10_000_000)
+    params: dict | None = Field(default=None, description="Strategy parameter overrides")
+    initial_cash: float = Field(
+        default=10000.0,
+        ge=100,
+        le=10_000_000,
+        description="Deprecated. Exchange-backed modes load balance from the exchange account.",
+    )
     commission: float = Field(default=0.001, ge=0, le=0.1)
 
     model_config = {
@@ -54,7 +60,7 @@ class StartLiveRequest(BaseModel):
                 "symbol": "BTC/USDT",
                 "mode": "paper",
                 "timeframe": "1m",
-                "initial_cash": 10000.0,
+                "params": {"target_trade_value_usd": 50},
                 "commission": 0.001,
             }
         }
@@ -124,6 +130,7 @@ async def start_live_trading(
             symbol=request.symbol,
             mode=request.mode,
             timeframe=request.timeframe,
+            params=request.params,
             initial_cash=request.initial_cash,
             commission=request.commission,
             user_id=user_id,
@@ -248,6 +255,26 @@ async def get_strategy_logs(session_id: str, limit: int = 100):
     except Exception as e:
         logger.error(f"Failed to fetch logs: {e}")
         raise HTTPException(503, detail=f"Logs unavailable: {e}")
+
+
+@router.get("/live/symbol-rules", tags=["Live Trading"])
+async def get_symbol_rules(
+    symbol: str,
+    mode: str = Query("paper"),
+    user_id: str = Depends(get_optional_user_id),
+):
+    """Get exchange trading rules for a symbol."""
+    if mode not in ('paper', 'live'):
+        raise HTTPException(400, f"Invalid mode: '{mode}'. Must be 'paper' or 'live'")
+
+    try:
+        config = load_broker_config()
+        validate_symbol(symbol, 'binance', config)
+        return live_engine.get_symbol_trading_rules(symbol=symbol, mode=mode, user_id=user_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except LiveTradingError as e:
+        raise HTTPException(500, detail=str(e))
 
 
 @router.get("/live/exchanges", tags=["Live Trading"])

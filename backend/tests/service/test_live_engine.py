@@ -6,6 +6,7 @@ import pytest
 from src.service import live_engine
 from src.service.live_engine import LiveTradingError
 from src.service.live_strategy_bridge import wrap_strategy_with_live_gate
+from src.db.storage.session import SessionStorage
 
 
 def test_live_trading_error():
@@ -226,3 +227,176 @@ def test_wrapped_strategy_logs_submitted_and_accepted_orders():
 
     assert any("submitted" in msg.lower() for _level, msg in logs)
     assert any("accepted" in msg.lower() for _level, msg in logs)
+
+
+def test_persist_and_update_order_uses_session_scoped_db_key(tmp_path, monkeypatch):
+    db_path = (tmp_path / "live_orders.sqlite").as_posix()
+    storage = SessionStorage(f"sqlite:///{db_path}")
+    monkeypatch.setattr(live_engine, "_session_storage", storage)
+
+    event = {
+        'order_id': '1',
+        'binance_order_id': 123456,
+        'symbol': 'DOGE/USDT',
+        'side': 'buy',
+        'size': 0.25,
+        'price': 0.2,
+        'commission': 0.01,
+        'cost': 0.05,
+    }
+
+    live_engine._persist_order('session-a', event, 'submitted')
+    live_engine._persist_order('session-b', event, 'submitted')
+    live_engine._update_order_status('session-b', '1', 'filled', event)
+
+    orders_a = storage.get_session_orders('session-a')
+    orders_b = storage.get_session_orders('session-b')
+
+    assert orders_a[0]['order_id'] == '1'
+    assert orders_a[0]['db_order_id'] == 'session-a:1'
+    assert orders_a[0]['status'] == 'submitted'
+
+    assert orders_b[0]['order_id'] == '1'
+    assert orders_b[0]['db_order_id'] == 'session-b:1'
+    assert orders_b[0]['status'] == 'filled'
+    assert orders_b[0]['filled_price'] == 0.2
+
+
+def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
+    captured = {}
+
+    class StubSession:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+            self.status = live_engine.SessionStatus.STARTING
+            self.feed_status = "warming_up"
+            self.current_pnl = 0.0
+            self.total_trades = 0
+            self.positions = []
+            self.orders = []
+            self.error_message = None
+            self.end_time = None
+            self.ws_token = "token"
+
+        def to_dict(self):
+            return {
+                "session_id": self.session_id,
+                "strategy_name": self.strategy_name,
+                "symbol": self.symbol,
+                "exchange": self.exchange,
+                "mode": self.mode,
+                "timeframe": self.timeframe,
+                "initial_cash": self.initial_cash,
+                "commission": self.commission,
+                "status": self.status.value,
+                "feed_status": self.feed_status,
+                "ws_token": self.ws_token,
+            }
+
+    class StubSessionManager:
+        def create_session(self, **kwargs):
+            return StubSession(**kwargs)
+
+        def remove_session(self, _sid):
+            return True
+
+        def update_session(self, *_args, **_kwargs):
+            return None
+
+    class StubStore:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self._running = True
+
+        def start(self):
+            return None
+
+        def stop(self):
+            self._running = False
+
+        def get_account(self):
+            return {"balances": [{"asset": "USDT", "free": "123.45"}]}
+
+        def fetch_ohlcv(self, **_kwargs):
+            return [[1, 1.0, 1.0, 1.0, 1.0, 1.0]]
+
+        def set_ticker_callback(self, _callback):
+            return None
+
+        def start_ticker_stream(self, _symbol):
+            return None
+
+    class StubBroker:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def set_event_callback(self, _callback):
+            return None
+
+        def set_log_callback(self, _callback):
+            return None
+
+    class StubData:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class StubCerebro:
+        def addstrategy(self, strategy_cls, **kwargs):
+            captured["strategy_cls"] = strategy_cls
+            captured["params"] = kwargs
+
+        def adddata(self, data_feed):
+            captured["data_feed"] = data_feed
+
+        def setbroker(self, broker):
+            self.broker = broker
+            captured["broker"] = broker
+
+        def run(self):
+            return []
+
+    class DummyStrategy(bt.Strategy):
+        pass
+
+    storage_stub = types.SimpleNamespace(save_session=lambda _session: None)
+
+    monkeypatch.setattr(live_engine, "get_session_manager", lambda: StubSessionManager())
+    monkeypatch.setattr(live_engine, "load_user_strategy", lambda _name: DummyStrategy)
+    monkeypatch.setattr(live_engine, "load_broker_config", lambda: object())
+    monkeypatch.setattr(
+        live_engine,
+        "get_risk_config",
+        lambda _cfg: types.SimpleNamespace(
+            position_limits=types.SimpleNamespace(max_position_size_usd=1_000, max_positions_count=5),
+            order_limits=types.SimpleNamespace(min_order_size_usd=10, max_order_size_usd=1_000),
+        ),
+    )
+    monkeypatch.setattr(live_engine, "get_exchange_config", lambda _exchange, _cfg: types.SimpleNamespace(ccxt_id="binance"))
+    monkeypatch.setattr(live_engine, "BinanceStore", StubStore)
+    monkeypatch.setattr(live_engine, "BinanceBroker", StubBroker)
+    monkeypatch.setattr(live_engine, "BinanceData", StubData)
+    monkeypatch.setattr(live_engine.bt, "Cerebro", StubCerebro)
+    monkeypatch.setattr(live_engine, "_get_storage", lambda: storage_stub)
+    monkeypatch.setattr(live_engine, "_get_ws_manager", lambda: None)
+
+    analyzer_module = types.SimpleNamespace(
+        AnalyzerMode=types.SimpleNamespace(LIVE="live"),
+        configure_analyzers=lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setitem(__import__("sys").modules, "src.service.analyzer_config", analyzer_module)
+    monkeypatch.setattr(
+        live_engine,
+        "wrap_strategy_with_live_gate",
+        lambda strategy_cls, *_args: strategy_cls,
+    )
+
+    result = live_engine.start_session(
+        strategy_name="easy_live_trigger_test",
+        symbol="DOGE/USDT",
+        mode="paper",
+        timeframe="1m",
+        params={"target_trade_value_usd": 88, "min_trade_value_usd": 22},
+    )
+
+    assert captured["params"] == {"target_trade_value_usd": 88, "min_trade_value_usd": 22}
+    assert result["initial_cash"] == 123.45

@@ -39,6 +39,7 @@ class BinanceBroker(bt.BrokerBase):
         ('cash', 10000.0),
         ('commission', 0.001),
         ('session_id', None),
+        ('quote_asset', 'USDT'),
         ('max_position_size_usd', None),
         ('max_positions_count', None),
         ('min_order_size_usd', None),
@@ -103,11 +104,12 @@ class BinanceBroker(bt.BrokerBase):
 
     def start(self):
         super().start()
-        if self.store.is_paper_mode():
-            self._cash = float(self.params.cash)
-            logger.info(f"Paper trading mode: starting with ${self._cash:.2f}")
-        else:
-            self._sync_balance()
+        self._sync_balance()
+        logger.info(
+            "%s mode account synced: cash=%s",
+            "Paper/testnet" if self.store.is_paper_mode() else "Live",
+            f"${self._cash:.2f}",
+        )
 
     def stop(self):
         for order in list(self._open_orders.values()):
@@ -341,7 +343,11 @@ class BinanceBroker(bt.BrokerBase):
 
         position = self._positions[order.data]
         position.update(order.executed.size, price)
-        self._apply_cash_change(order, cost, commission)
+
+        if getattr(self.store, 'uses_exchange_account_data', lambda: False)():
+            self._sync_balance()
+        else:
+            self._apply_cash_change(order, cost, commission)
 
         self._open_orders.pop(order.ref, None)
         self.notify(order)
@@ -547,11 +553,14 @@ class BinanceBroker(bt.BrokerBase):
         """Sync balance from exchange."""
         try:
             account = self.store.get_account()
+            quote_asset = str(self.params.quote_asset or 'USDT').upper()
             for balance in account.get('balances', []):
-                if balance['asset'] == 'USDT':
+                if balance['asset'].upper() == quote_asset:
                     self._cash = float(balance.get('free', 0))
-                    logger.info(f"Synced balance: ${self._cash:.2f}")
+                    logger.info("Synced %s balance: $%.2f", quote_asset, self._cash)
                     break
+            else:
+                raise ValueError(f"Quote asset {quote_asset} not found in account balances")
         except Exception as e:
             logger.error(f"Failed to sync balance: {e}")
 

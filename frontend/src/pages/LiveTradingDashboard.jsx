@@ -77,14 +77,11 @@ const LiveTradingDashboard = () => {
         </div>
 
         {!isSessionActive ? (
-          /* ──── Config Form (no active session) ──── */
-          <Row justify="center" style={{ marginTop: 40 }}>
-            <Col xs={24} lg={16} xl={12}>
-              <Card className="dashboard-card" title={t('live.start_new_session', 'Start New Session')} bordered={false}>
-                <LiveConfigForm onSubmit={handleStartSession} loading={loading} />
-              </Card>
-            </Col>
-          </Row>
+          <div className="dashboard-launch-shell">
+            <Card className="dashboard-card dashboard-launch-card" bordered={false}>
+              <LiveConfigForm onSubmit={handleStartSession} loading={loading} />
+            </Card>
+          </div>
         ) : (
           /* ──── Active Trading Dashboard ──── */
           <>

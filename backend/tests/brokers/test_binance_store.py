@@ -11,6 +11,7 @@ Tests cover:
 """
 
 import time
+from decimal import Decimal
 
 import pytest
 
@@ -297,3 +298,40 @@ class TestWebSocketPaperMode:
     def test_start_user_data_stream_is_noop(self, paper_store):
         paper_store.start_user_data_stream(lambda x: None)
         assert 'user_data' not in paper_store._active_streams
+
+
+class TestExchangeOrderSizing:
+    def test_normalize_quantity_rounds_down_to_step_size(self, unstarted_store):
+        unstarted_store._client = object()
+        unstarted_store._symbol_info_cache["DOGEUSDT"] = {
+            "symbol": "DOGEUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "1.00000000",
+                    "maxQty": "1000000.00000000",
+                    "stepSize": "1.00000000",
+                }
+            ],
+        }
+
+        normalized = unstarted_store.normalize_quantity("DOGEUSDT", 12.987654)
+
+        assert normalized == Decimal("12")
+
+    def test_normalize_quantity_rejects_below_min_qty(self, unstarted_store):
+        unstarted_store._client = object()
+        unstarted_store._symbol_info_cache["BTCUSDT"] = {
+            "symbol": "BTCUSDT",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100.00000000",
+                    "stepSize": "0.00100000",
+                }
+            ],
+        }
+
+        with pytest.raises(ValueError, match="below Binance minQty"):
+            unstarted_store.normalize_quantity("BTCUSDT", 0.0009)

@@ -26,6 +26,25 @@ from src.service.session_manager import SessionStatus, TradingSession
 logger = logging.getLogger(__name__)
 
 
+def build_session_order_pk(session_id: str, order_id: str) -> str:
+    """Build a database-safe order primary key scoped by session."""
+    return f"{session_id}:{order_id}"
+
+
+def extract_client_order_id(order: OrderModel) -> str:
+    """Return the original client-visible order id from stored order data."""
+    metadata = order.metadata_json or {}
+    client_order_id = metadata.get('client_order_id')
+    if client_order_id:
+        return str(client_order_id)
+
+    prefix = f"{order.session_id}:"
+    if order.order_id.startswith(prefix):
+        return order.order_id[len(prefix):]
+
+    return order.order_id
+
+
 class SessionStorage(BaseStorage):
     """
     Storage layer for trading sessions.
@@ -224,8 +243,16 @@ class SessionStorage(BaseStorage):
         """
         with self.managed_session(db) as db_session:
             try:
+                client_order_id = str(order_dict['order_id'])
+                session_order_pk = build_session_order_pk(
+                    order_dict['session_id'],
+                    client_order_id,
+                )
+                metadata_json = dict(order_dict.get('metadata') or {})
+                metadata_json['client_order_id'] = client_order_id
+
                 order = OrderModel(
-                    order_id=order_dict['order_id'],
+                    order_id=session_order_pk,
                     session_id=order_dict['session_id'],
                     exchange_order_id=order_dict.get('exchange_order_id'),
                     symbol=order_dict['symbol'],
@@ -238,12 +265,13 @@ class SessionStorage(BaseStorage):
                     filled_price=order_dict.get('filled_price'),
                     commission=order_dict.get('commission', 0),
                     cost=order_dict.get('cost'),
-                    pnl=order_dict.get('pnl')
+                    pnl=order_dict.get('pnl'),
+                    metadata_json=metadata_json,
                 )
 
                 db_session.add(order)
 
-                logger.debug(f"Saved order {order_dict['order_id']} to database")
+                logger.debug(f"Saved order {session_order_pk} to database")
 
             except Exception as e:
                 logger.error(f"Failed to save order: {e}")
@@ -271,7 +299,8 @@ class SessionStorage(BaseStorage):
 
             return [
                 {
-                    'order_id': o.order_id,
+                    'order_id': extract_client_order_id(o),
+                    'db_order_id': o.order_id,
                     'exchange_order_id': o.exchange_order_id,
                     'symbol': o.symbol,
                     'side': o.side,
