@@ -1,11 +1,19 @@
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+def _resolve_project_root() -> Path:
+    """Resolve the runtime backend root for source and frozen builds."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent.parent
+
+
 # Resolve key paths for the backend.
-BASE_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = BASE_DIR.parent
+PROJECT_ROOT = _resolve_project_root()
+BASE_DIR = PROJECT_ROOT / "src"
 RESOURCES_DIR = PROJECT_ROOT / "resources"
 FRONTEND_DIR = RESOURCES_DIR / "frontend"
 ASSETS_DIR = FRONTEND_DIR / "assets"

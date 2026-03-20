@@ -446,6 +446,16 @@ class BinanceStore:
             logger.error(f"Failed to get order book ticker: {e}")
             raise
 
+    def get_order_book(self, symbol: str, limit: int = 10) -> dict:
+        """Get market depth for a symbol."""
+        sym = normalize_symbol(symbol)
+
+        try:
+            return self._client.get_order_book(symbol=sym, limit=limit)
+        except BinanceAPIException as e:
+            logger.error(f"Failed to get order book for {symbol}: {e}")
+            raise
+
     def get_klines(
         self, symbol: str, interval: str,
         limit: int = 500, start_time: Optional[int] = None,

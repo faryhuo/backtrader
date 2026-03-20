@@ -25,12 +25,82 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import backtrader as bt
+
 from src.config.sandbox_config import SandboxConfig, get_config
+from src.service.strategy_sandbox import StrategySandboxError, execute_strategy_code
 
 logger = logging.getLogger(__name__)
 
 # Path to the executor script
 EXECUTOR_SCRIPT = Path(__file__).parent / "strategy_executor.py"
+
+
+def _is_frozen_app() -> bool:
+    """Return True when running from a frozen executable."""
+    return getattr(sys, "frozen", False)
+
+
+def _build_in_process_result(module_globals: Dict[str, Any]) -> Dict[str, Any]:
+    """Build an executor-compatible response for frozen-app fallback mode."""
+    result = {
+        "globals": {},
+        "strategy_class": None,
+        "strategy_params": [],
+    }
+
+    def is_json_serializable(val: Any) -> bool:
+        if val is None:
+            return True
+        if isinstance(val, (bool, int, float, str)):
+            return True
+        if isinstance(val, (list, tuple)):
+            return all(is_json_serializable(item) for item in val)
+        if isinstance(val, dict):
+            return all(isinstance(k, str) and is_json_serializable(v) for k, v in val.items())
+        return False
+
+    for key, value in module_globals.items():
+        if key.startswith("_") or key in {"bt", "pd"}:
+            continue
+        if isinstance(value, (int, float, str, bool)) or value is None:
+            result["globals"][key] = value
+            continue
+        if isinstance(value, (list, tuple)) and is_json_serializable(value):
+            result["globals"][key] = list(value) if isinstance(value, tuple) else value
+            continue
+        if isinstance(value, dict) and is_json_serializable(value):
+            result["globals"][key] = value
+            continue
+        if not isinstance(value, type):
+            continue
+        try:
+            if not issubclass(value, bt.Strategy):
+                continue
+        except TypeError:
+            continue
+
+        result["strategy_class"] = key
+        params_cls = getattr(value, "params", None)
+        if not params_cls or not hasattr(params_cls, "_getdefaults"):
+            continue
+        try:
+            defaults = params_cls._getdefaults()
+        except Exception:
+            continue
+        for param_name in defaults:
+            param_value = getattr(params_cls, param_name, None)
+            if not is_json_serializable(param_value):
+                continue
+            result["strategy_params"].append(
+                {
+                    "name": str(param_name),
+                    "value": param_value,
+                    "type": type(param_value).__name__,
+                }
+            )
+
+    return result
 
 
 class SandboxError(Exception):
@@ -202,6 +272,21 @@ class IsolatedSandbox:
             SandboxError: If execution fails
             SandboxTimeoutError: If execution times out
         """
+        if _is_frozen_app():
+            logger.warning(
+                "Frozen executable detected; isolated subprocess sandbox is unavailable. "
+                "Falling back to in-process strategy validation."
+            )
+            try:
+                module_globals = execute_strategy_code(
+                    source,
+                    module_name=module_name,
+                    filename=filename,
+                )
+            except StrategySandboxError as exc:
+                raise SandboxExecutionError(str(exc)) from exc
+            return _build_in_process_result(module_globals)
+
         with self._lock:
             process = None
             try:
@@ -294,6 +379,28 @@ class IsolatedSandbox:
                 - errors: List of error messages
                 - warnings: List of warning messages
         """
+        if _is_frozen_app():
+            logger.warning(
+                "Frozen executable detected; validating strategy in-process because the "
+                "isolated subprocess sandbox is unavailable."
+            )
+            try:
+                execute_strategy_code(
+                    source,
+                    module_name="strategy_validation",
+                    filename="<strategy_validation>",
+                )
+            except StrategySandboxError as exc:
+                return {"valid": False, "errors": [str(exc)], "warnings": []}
+            return {
+                "valid": True,
+                "errors": [],
+                "warnings": [
+                    "PyInstaller executable mode uses in-process validation instead of the "
+                    "isolated subprocess sandbox."
+                ],
+            }
+
         with self._lock:
             process = None
             try:

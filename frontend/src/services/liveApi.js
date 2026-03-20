@@ -65,6 +65,11 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async getSessionOrderBook(sessionId, limit = 10) {
+        const res = await buildRequest(`/live/order-book/${sessionId}?limit=${limit}`)
+        return await parseResponse(res)
+    },
+
     async getOhlcv(sessionId, limit = 100) {
         const res = await buildRequest(`/live/ohlcv/${sessionId}?limit=${limit}`)
         return await parseResponse(res)

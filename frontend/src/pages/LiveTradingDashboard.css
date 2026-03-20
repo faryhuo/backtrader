@@ -1,6 +1,6 @@
 .dashboard-shell {
   min-height: 100vh;
-  padding: 28px;
+  padding: 10px;
   background:
     radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
     radial-gradient(circle at top right, rgba(74, 222, 128, 0.08), transparent 24%),
@@ -80,6 +80,19 @@
 .dashboard-chart-stack {
   display: grid;
   gap: 18px;
+}
+
+.dashboard-combined-chart {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.9fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.dashboard-combined-order-book,
+.dashboard-combined-price-chart {
+  display: grid;
+  gap: 12px;
 }
 
 .dashboard-panel {
@@ -251,6 +264,10 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-combined-chart {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-sidebar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -263,7 +280,7 @@
 
 @media (max-width: 960px) {
   .dashboard-shell {
-    padding: 18px;
+    padding: 10px;
   }
 
   .dashboard-topbar,
@@ -285,7 +302,7 @@
 
 @media (max-width: 640px) {
   .dashboard-shell {
-    padding: 14px;
+    padding: 10px;
   }
 
   .dashboard-panel .ant-card-body,

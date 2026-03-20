@@ -3,7 +3,7 @@ Settings Routes - API endpoints for user settings and credentials management.
 """
 
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
@@ -11,10 +11,66 @@ from pydantic import BaseModel, Field
 from src.db import SettingsStorage
 from src.routes.common.dependencies import get_settings_storage
 from src.routes.common.auth_dependencies import get_optional_user_id
+from src.utils.encryption import mask_credential
 from src.utils.credential_validator import validate_credential
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _resolve_masked_credential_value(
+    storage: SettingsStorage,
+    credential_key: str,
+    incoming_value: Any,
+    user_id: Optional[str],
+) -> Any:
+    """Keep the current secret when the client submits a masked placeholder."""
+    if not isinstance(incoming_value, str) or not incoming_value:
+        return incoming_value
+
+    current_value, _ = storage.get_credential_with_fallback(credential_key, user_id)
+    if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
+        return current_value
+
+    return incoming_value
+
+
+def _resolve_masked_ccxt_value(
+    storage: SettingsStorage,
+    exchange: str,
+    mode: str,
+    field: str,
+    incoming_value: Optional[str],
+    user_id: Optional[str],
+) -> Optional[str]:
+    """Keep the current CCXT secret when the client submits a masked placeholder."""
+    if not incoming_value:
+        return incoming_value
+
+    all_credentials, _ = storage.get_ccxt_credentials_all(user_id=user_id, mask_sensitive=False)
+    current_value = all_credentials.get(exchange, {}).get(mode, {}).get(field)
+    if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
+        return current_value
+
+    return incoming_value
+
+
+def _resolve_masked_data_source_value(
+    storage: SettingsStorage,
+    field: str,
+    incoming_value: Optional[str],
+    user_id: Optional[str],
+) -> Optional[str]:
+    """Keep the current data-source secret when the client submits a masked placeholder."""
+    if not incoming_value:
+        return incoming_value
+
+    if field == "eodhd_api_key":
+        current_value = storage.get_eodhd_api_key(user_id=user_id)
+        if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
+            return current_value
+
+    return incoming_value
 
 
 class UserSettingsRequest(BaseModel):
@@ -240,6 +296,7 @@ def update_credentials(
     updated_fields = []
     for key, value in request.dict(exclude_unset=True).items():
         if value is not None:  # Allow empty string to clear a value
+            value = _resolve_masked_credential_value(storage, key, value, user_id)
             success = storage.save_credential(key, value, user_id)
             if success:
                 updated_fields.append(key)
@@ -270,11 +327,17 @@ def update_ccxt_credentials(
     # Extract credentials dict
     credentials = {}
     if request.api_key is not None:
-        credentials["api_key"] = request.api_key
+        credentials["api_key"] = _resolve_masked_ccxt_value(
+            storage, request.exchange, request.mode, "api_key", request.api_key, user_id
+        )
     if request.secret is not None:
-       credentials["secret"] = request.secret
+        credentials["secret"] = _resolve_masked_ccxt_value(
+            storage, request.exchange, request.mode, "secret", request.secret, user_id
+        )
     if request.passphrase is not None:
-        credentials["passphrase"] = request.passphrase
+        credentials["passphrase"] = _resolve_masked_ccxt_value(
+            storage, request.exchange, request.mode, "passphrase", request.passphrase, user_id
+        )
 
     if not credentials:
         raise ValidationError("At least one credential field must be provided")
@@ -331,21 +394,30 @@ def test_credentials(
     This validates that credentials are correct and have proper permissions.
     """
     try:
+        storage = get_settings_storage()
         credential_type = request.credential_type.lower()
 
         # Prepare kwargs based on credential type
         if credential_type == 'openai':
             kwargs = {
-                'api_key': request.api_key,
+                'api_key': _resolve_masked_credential_value(
+                    storage, 'openai_api_key', request.api_key, user_id
+                ),
                 'base_url': request.base_url or 'https://api.openai.com/v1'
             }
         elif credential_type == 'ccxt':
             kwargs = {
                 'exchange': request.exchange,
                 'mode': request.mode,
-                'api_key': request.api_key,
-                'secret': request.secret,
-                'passphrase': request.passphrase
+                'api_key': _resolve_masked_ccxt_value(
+                    storage, request.exchange or '', request.mode or '', 'api_key', request.api_key, user_id
+                ),
+                'secret': _resolve_masked_ccxt_value(
+                    storage, request.exchange or '', request.mode or '', 'secret', request.secret, user_id
+                ),
+                'passphrase': _resolve_masked_ccxt_value(
+                    storage, request.exchange or '', request.mode or '', 'passphrase', request.passphrase, user_id
+                )
             }
         elif credential_type == 'logto':
             kwargs = {
@@ -436,7 +508,9 @@ def update_data_source_settings(
 
     success = storage.save_data_source_settings(
         data_source_priority=request.data_source_priority,
-        eodhd_api_key=request.eodhd_api_key,
+        eodhd_api_key=_resolve_masked_data_source_value(
+            storage, "eodhd_api_key", request.eodhd_api_key, user_id
+        ),
         user_id=user_id
     )
 

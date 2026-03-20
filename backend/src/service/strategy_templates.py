@@ -7,7 +7,8 @@ for users to browse, learn, and import into their own strategies.
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
-from pathlib import Path
+
+from src.config.settings import STRATEGY_DIR
 
 
 # Strategy Categories
@@ -49,7 +50,7 @@ def _register_template(template: StrategyTemplate) -> None:
 
 def _load_template_code(template_id: str) -> str:
     """Load template code from file."""
-    template_dir = Path(__file__).parent.parent.parent / "resources" / "strategy" / "templates"
+    template_dir = STRATEGY_DIR / "templates"
     template_file = template_dir / f"{template_id}.py"
     if template_file.exists():
         return template_file.read_text(encoding="utf-8")

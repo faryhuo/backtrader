@@ -6,6 +6,7 @@ import LiveConfigForm from '../components/LiveTrading/LiveConfigForm';
 import SessionControls from '../components/LiveTrading/SessionControls';
 import PositionTable from '../components/LiveTrading/PositionTable';
 import OrderLog from '../components/LiveTrading/OrderLog';
+import OrderBookPanel from '../components/LiveTrading/OrderBookPanel';
 import PnLChart from '../components/LiveTrading/PnLChart';
 import PriceChart from '../components/LiveTrading/PriceChart';
 import StrategyLog from '../components/LiveTrading/StrategyLog';
@@ -37,6 +38,7 @@ export default function LiveTradingDashboard() {
     loading,
     positions,
     orders,
+    orderBook,
     recentErrors,
     pnlHistory,
     currentPnl,
@@ -54,6 +56,7 @@ export default function LiveTradingDashboard() {
     handleStopSession,
     handleRefreshSession,
     handleCancelOrder,
+    handleOrderBookDepthChange,
   } = useLiveTrading();
 
   const isSessionActive = session && !['stopped', 'error'].includes(session.status);
@@ -230,11 +233,28 @@ export default function LiveTradingDashboard() {
 
               <div className="dashboard-chart-stack">
                 <Card className="dashboard-panel dashboard-chart-panel" title={t('live.price_chart', 'Price Chart')} bordered={false}>
-                  <PriceChart
-                    priceHistory={priceHistory}
-                    currentPrice={ticker?.last}
-                    symbol={session?.symbol}
-                  />
+                  <div className="dashboard-combined-chart">
+                    <div className="dashboard-combined-price-chart">
+                      <Text className="dashboard-section-label">
+                        {t('live.price_chart', 'Price Chart')}
+                      </Text>
+                      <PriceChart
+                        priceHistory={priceHistory}
+                        currentPrice={ticker?.last}
+                        symbol={session?.symbol}
+                      />
+                    </div>
+
+                    <div className="dashboard-combined-order-book">
+                      <Text className="dashboard-section-label">
+                        {t('live.order_book.title', 'Order Book')}
+                      </Text>
+                      <OrderBookPanel
+                        orderBook={orderBook}
+                        onDepthChange={handleOrderBookDepthChange}
+                      />
+                    </div>
+                  </div>
                 </Card>
 
                 <Card className="dashboard-panel dashboard-chart-panel" title={t('live.performance', 'Performance')} bordered={false}>

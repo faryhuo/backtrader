@@ -12,6 +12,15 @@ const initialState = {
     loading: false,
     positions: [],
     orders: [],
+    orderBook: {
+        bids: [],
+        asks: [],
+        limit: 10,
+        bestBid: null,
+        bestAsk: null,
+        spread: null,
+        timestamp: null,
+    },
     recentErrors: [],
     pnlHistory: [],
     currentPnl: 0,
@@ -68,6 +77,7 @@ function reducer(state, action) {
                 session: action.payload,
                 positions: [],
                 orders: [],
+                orderBook: { ...initialState.orderBook },
                 recentErrors: [],
                 pnlHistory: [{ timestamp: new Date().toISOString(), pnl: 0 }],
                 currentPnl: 0,
@@ -228,6 +238,20 @@ function reducer(state, action) {
         case 'ORDERS_LOADED':
             return { ...state, orders: action.payload };
 
+        case 'ORDER_BOOK_LOADED':
+            return {
+                ...state,
+                orderBook: {
+                    bids: action.payload?.bids || [],
+                    asks: action.payload?.asks || [],
+                    limit: action.payload?.limit || state.orderBook.limit,
+                    bestBid: action.payload?.best_bid ?? null,
+                    bestAsk: action.payload?.best_ask ?? null,
+                    spread: action.payload?.spread ?? null,
+                    timestamp: action.payload?.timestamp ?? null,
+                },
+            };
+
         case 'LOG_UPDATE': {
             const newLog = action.payload;
             const logs = [newLog, ...state.logs].slice(0, 100); // Keep max 100
@@ -286,12 +310,15 @@ export const useLiveTrading = () => {
         return fallbackMessage;
     }, [t]);
 
+    const orderBookLimitRef = useRef(10);
+
     const loadTradingState = useCallback(async (sessionId) => {
-        const [ordersResult, positionsResult, tradeErrorsResult, accountResult] = await Promise.allSettled([
+        const [ordersResult, positionsResult, tradeErrorsResult, accountResult, orderBookResult] = await Promise.allSettled([
             liveApi.getSessionOrders(sessionId),
             liveApi.getSessionPositions(sessionId),
             liveApi.getTradeErrors(sessionId),
             liveApi.getSessionAccountSnapshot(sessionId),
+            liveApi.getSessionOrderBook(sessionId, orderBookLimitRef.current),
         ]);
 
         if (ordersResult.status === 'fulfilled') {
@@ -322,6 +349,12 @@ export const useLiveTrading = () => {
             dispatch({ type: 'PNL_UPDATE', payload: accountResult.value });
         } else {
             console.warn('[POLLING] Account snapshot fetch failed:', accountResult.reason?.message || accountResult.reason);
+        }
+
+        if (orderBookResult.status === 'fulfilled') {
+            dispatch({ type: 'ORDER_BOOK_LOADED', payload: orderBookResult.value });
+        } else {
+            console.warn('[POLLING] Order book fetch failed:', orderBookResult.reason?.message || orderBookResult.reason);
         }
     }, [resolveTradingErrorMessage]);
 
@@ -417,7 +450,7 @@ export const useLiveTrading = () => {
             default:
                 break;
         }
-    }, [addNotification, t]);
+    }, [addNotification, resolveTradingErrorMessage, t]);
 
     // WebSocket connection — sessionId/token as state drives the hook
     const {
@@ -626,6 +659,29 @@ export const useLiveTrading = () => {
         }
     }, [state.session, t]);
 
+    const handleOrderBookDepthChange = useCallback(async (nextLimit) => {
+        const safeLimit = nextLimit === 5 ? 5 : 10;
+        orderBookLimitRef.current = safeLimit;
+
+        if (!state.session?.session_id) {
+            dispatch({
+                type: 'ORDER_BOOK_LOADED',
+                payload: {
+                    ...state.orderBook,
+                    limit: safeLimit,
+                },
+            });
+            return;
+        }
+
+        try {
+            const data = await liveApi.getSessionOrderBook(state.session.session_id, safeLimit);
+            dispatch({ type: 'ORDER_BOOK_LOADED', payload: data });
+        } catch (error) {
+            console.warn('[ORDER_BOOK] Depth change fetch failed:', error?.message || error);
+        }
+    }, [state.orderBook, state.session]);
+
     // ──────────────── auto-load active session on mount ────────────────
 
     useEffect(() => {
@@ -666,6 +722,7 @@ export const useLiveTrading = () => {
         loading: state.loading,
         positions: state.positions,
         orders: state.orders,
+        orderBook: state.orderBook,
         recentErrors: state.recentErrors,
         pnlHistory: state.pnlHistory,
         currentPnl: state.currentPnl,
@@ -686,5 +743,6 @@ export const useLiveTrading = () => {
         handleStopSession,
         handleRefreshSession,
         handleCancelOrder,
+        handleOrderBookDepthChange,
     };
 };

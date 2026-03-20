@@ -1,5 +1,6 @@
 import os
 import logging
+import multiprocessing
 from urllib.parse import urlparse, urlunparse
 
 import uvicorn
@@ -40,6 +41,8 @@ def mask_database_url(url: str) -> str:
 
 
 def main() -> None:
+    multiprocessing.freeze_support()
+
     # Configure logging from config file
     setup_logging()
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()

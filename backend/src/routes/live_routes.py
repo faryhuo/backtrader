@@ -53,7 +53,12 @@ class StartLiveRequest(BaseModel):
         le=10_000_000,
         description="Deprecated. Exchange-backed modes load balance from the exchange account.",
     )
-    commission: float = Field(default=0.001, ge=0, le=0.1)
+    commission: float | None = Field(
+        default=None,
+        ge=0,
+        le=0.1,
+        description="Deprecated. Live and paper trading fees should be sourced from exchange fills.",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -65,7 +70,6 @@ class StartLiveRequest(BaseModel):
                 "params": {"target_trade_value_usd": 50},
                 "sizer_type": "percent_sizer",
                 "sizer_config": {"percents": 10},
-                "commission": 0.001,
             }
         }
     }
@@ -138,7 +142,6 @@ async def start_live_trading(
             sizer_type=request.sizer_type,
             sizer_config=request.sizer_config,
             initial_cash=request.initial_cash,
-            commission=request.commission,
             user_id=user_id,
         )
 
@@ -256,6 +259,18 @@ async def get_ticker_price(session_id: str):
     except Exception as e:
         logger.error(f"Failed to fetch ticker: {e}")
         raise HTTPException(503, detail=f"Ticker unavailable: {e}")
+
+
+@router.get("/live/order-book/{session_id}", tags=["Live Trading"])
+async def get_order_book(session_id: str, limit: int = Query(10, ge=1, le=20)):
+    """Get current order book depth for the session symbol."""
+    try:
+        return live_engine.get_session_order_book(session_id, limit=limit)
+    except LiveTradingError as e:
+        raise HTTPException(404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to fetch order book: {e}")
+        raise HTTPException(503, detail=f"Order book unavailable: {e}")
 
 
 @router.get("/live/ohlcv/{session_id}", tags=["Live Trading"])

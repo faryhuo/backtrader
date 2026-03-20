@@ -148,9 +148,9 @@
 
 /* Content Area - improved spacing and centering */
 .content-area {
-    padding: 2rem 3rem;
+    padding: 0.75rem 0.75rem;
     flex: 1;
-    max-width: 1400px;
+    max-width: none;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
@@ -166,7 +166,7 @@
 /* Responsive adjustments */
 @media (max-width: 1400px) {
     .content-area {
-        padding: 2rem;
+        padding: 0.75rem;
     }
 }
 
@@ -180,6 +180,6 @@
     }
 
     .content-area {
-        padding: 1.5rem;
+        padding: 0.5rem;
     }
 }

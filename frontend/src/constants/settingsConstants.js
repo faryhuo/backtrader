@@ -40,7 +40,5 @@ export const DEFAULT_CREDENTIALS = {
 };
 
 export const SUPPORTED_EXCHANGES = [
-    { key: 'binance', label: 'Binance', hasPassphrase: false },
-    { key: 'okx', label: 'OKX', hasPassphrase: true },
-    { key: 'bybit', label: 'Bybit', hasPassphrase: false }
+    { key: 'binance', label: 'Binance', hasPassphrase: false }
 ];

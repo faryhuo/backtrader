@@ -11,7 +11,11 @@ from src.routes.settings_routes import (
     CCXTCredentialUpdate,
     CredentialTestRequest,
     DataSourceSettingsRequest,
+    test_credentials as route_test_credentials,
+    update_ccxt_credentials as route_update_ccxt_credentials,
+    update_data_source_settings as route_update_data_source_settings,
 )
+from src.utils.encryption import mask_credential
 
 
 class TestUserSettingsRequest:
@@ -152,3 +156,101 @@ class TestSettingsRouter:
         """Test that router is configured."""
         assert router is not None
         assert len(router.routes) > 0
+
+
+class TestCredentialMaskResolution:
+    """Tests for masked credential handling in settings routes."""
+
+    @patch("src.routes.settings_routes.get_settings_storage")
+    @patch("src.routes.settings_routes.validate_credential")
+    def test_test_credentials_uses_stored_openai_key_for_masked_value(
+        self,
+        mock_validate_credential,
+        mock_get_settings_storage,
+    ):
+        """Masked OpenAI keys should resolve to the stored plaintext before validation."""
+        storage = MagicMock()
+        storage.get_credential_with_fallback.return_value = ("sk-live-secret", "database")
+        mock_get_settings_storage.return_value = storage
+        mock_validate_credential.return_value = (True, "ok")
+
+        request = CredentialTestRequest(
+            credential_type="openai",
+            api_key=mask_credential("sk-live-secret"),
+            base_url="https://api.openai.com/v1",
+        )
+
+        response = route_test_credentials(request, user_id="u1")
+
+        assert response["valid"] is True
+        mock_validate_credential.assert_called_once_with(
+            "openai",
+            api_key="sk-live-secret",
+            base_url="https://api.openai.com/v1",
+        )
+
+    @patch("src.routes.settings_routes.get_settings_storage")
+    def test_update_ccxt_credentials_keeps_stored_secret_for_masked_value(
+        self,
+        mock_get_settings_storage,
+    ):
+        """Masked Binance credentials should not overwrite stored secrets with placeholder text."""
+        storage = MagicMock()
+        storage.get_ccxt_credentials_all.return_value = (
+            {
+                "binance": {
+                    "paper": {
+                        "api_key": "binance-key-123",
+                        "secret": "binance-secret-456",
+                    }
+                }
+            },
+            "database",
+        )
+        storage.save_ccxt_credentials.return_value = True
+        mock_get_settings_storage.return_value = storage
+
+        request = CCXTCredentialUpdate(
+            exchange="binance",
+            mode="paper",
+            api_key=mask_credential("binance-key-123"),
+            secret=mask_credential("binance-secret-456"),
+        )
+
+        response = route_update_ccxt_credentials(request, user_id="u1")
+
+        assert response["status"] == "ok"
+        storage.save_ccxt_credentials.assert_called_once_with(
+            exchange="binance",
+            mode="paper",
+            credentials={
+                "api_key": "binance-key-123",
+                "secret": "binance-secret-456",
+            },
+            user_id="u1",
+        )
+
+    @patch("src.routes.settings_routes.get_settings_storage")
+    def test_update_data_source_settings_keeps_stored_eodhd_key_for_masked_value(
+        self,
+        mock_get_settings_storage,
+    ):
+        """Masked EODHD keys should not overwrite the stored plaintext value."""
+        storage = MagicMock()
+        storage.get_eodhd_api_key.return_value = "eodhd-live-key-123"
+        storage.save_data_source_settings.return_value = True
+        mock_get_settings_storage.return_value = storage
+
+        request = DataSourceSettingsRequest(
+            data_source_priority=["eodhd", "yahoo"],
+            eodhd_api_key=mask_credential("eodhd-live-key-123"),
+        )
+
+        response = route_update_data_source_settings(request, user_id="u1")
+
+        assert response["status"] == "ok"
+        storage.save_data_source_settings.assert_called_once_with(
+            data_source_priority=["eodhd", "yahoo"],
+            eodhd_api_key="eodhd-live-key-123",
+            user_id="u1",
+        )

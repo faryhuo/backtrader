@@ -22,8 +22,9 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.config.settings import CONFIG_DIR
+
 # Default config path
-CONFIG_DIR = Path(__file__).parent.parent.parent / "resources" / "config"
 DEFAULT_CONFIG_FILE = CONFIG_DIR / "logger_config.json"
 TEMPLATE_CONFIG_FILE = CONFIG_DIR / "logger_config.template.json"
 

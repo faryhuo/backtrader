@@ -382,7 +382,7 @@ def start_session(
     sizer_type: str = 'fixed_size',
     sizer_config: Optional[dict] = None,
     initial_cash: float = 10000.0,
-    commission: float = 0.001,
+    commission: float = 0.0,
     user_id: Optional[str] = None,
 ) -> Dict:
     """
@@ -401,6 +401,7 @@ def start_session(
     session_manager = get_session_manager()
     store: Optional[BinanceStore] = None
     effective_initial_cash = float(initial_cash)
+    effective_commission = 0.0
 
     try:
         # 1. Load strategy class
@@ -455,7 +456,7 @@ def start_session(
             mode=mode,
             timeframe=timeframe,
             initial_cash=effective_initial_cash,
-            commission=commission,
+            commission=effective_commission,
             user_id=user_id,
         )
         session_manager.update_session(
@@ -489,7 +490,7 @@ def start_session(
         broker = BinanceBroker(
             store=store,
             cash=effective_initial_cash,
-            commission=commission,
+            commission=effective_commission,
             session_id=session_id,
             quote_asset=quote_asset,
             max_position_size_usd=risk_config.position_limits.max_position_size_usd,
@@ -968,6 +969,54 @@ def get_ticker_price(session_id: str) -> Dict:
         'volume': ticker.get('volume'),
         'timestamp': ticker.get('timestamp'),
     }
+
+
+def get_session_order_book(session_id: str, limit: int = 10) -> Dict:
+    """Get the current order book depth for the session symbol."""
+    session = get_session_manager().get_session(session_id)
+    if not session:
+        raise LiveTradingError(f"Session {session_id} not found")
+
+    if not session.store or not session.store._running:
+        raise LiveTradingError("Exchange connection is not active")
+
+    safe_limit = max(1, min(int(limit or 10), 20))
+
+    try:
+        order_book = session.store.get_order_book(session.symbol, limit=safe_limit)
+        bids = [
+            {
+                'price': _safe_float(level[0]) or 0.0,
+                'size': _safe_float(level[1]) or 0.0,
+                'total': (_safe_float(level[0]) or 0.0) * (_safe_float(level[1]) or 0.0),
+            }
+            for level in order_book.get('bids', [])[:safe_limit]
+        ]
+        asks = [
+            {
+                'price': _safe_float(level[0]) or 0.0,
+                'size': _safe_float(level[1]) or 0.0,
+                'total': (_safe_float(level[0]) or 0.0) * (_safe_float(level[1]) or 0.0),
+            }
+            for level in order_book.get('asks', [])[:safe_limit]
+        ]
+        best_bid = bids[0]['price'] if bids else None
+        best_ask = asks[0]['price'] if asks else None
+        spread = (best_ask - best_bid) if best_bid is not None and best_ask is not None else None
+
+        return {
+            'session_id': session_id,
+            'symbol': session.symbol,
+            'limit': safe_limit,
+            'bids': bids,
+            'asks': asks,
+            'best_bid': best_bid,
+            'best_ask': best_ask,
+            'spread': spread,
+            'timestamp': datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        raise LiveTradingError(f"Failed to fetch order book: {e}") from e
 
 
 def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
