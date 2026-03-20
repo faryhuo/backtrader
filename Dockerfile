@@ -3,6 +3,10 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /frontend
 
+# Raise the V8 heap limit for Vite builds in constrained Docker environments.
+ARG FRONTEND_BUILD_NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS=${FRONTEND_BUILD_NODE_OPTIONS}
+
 # Copy frontend source
 COPY frontend/package*.json ./
 RUN npm install

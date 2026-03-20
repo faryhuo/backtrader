@@ -14,12 +14,12 @@ DOCKER_BUILDKIT=1 docker build \
   .
 
 if [ $? -ne 0 ]; then
-  echo "❌ Build failed!"
+  echo "Build failed!"
   exit 1
 fi
 
 echo ""
-echo "✅ Build completed successfully!"
+echo "Build completed successfully!"
 echo ""
 echo "To run the container:"
 echo "  docker-compose up"
