@@ -35,6 +35,17 @@
     "total": "Total",
     "empty": "Waiting for order book depth..."
   },
+  "price_card": {
+    "last_price": "Last Price",
+    "day_high": "Day High",
+    "day_low": "Day Low",
+    "candles": "Loaded Bars",
+    "bid": "Bid",
+    "ask": "Ask",
+    "volume": "Volume",
+    "updated": "Updated",
+    "volume_panel": "Volume"
+  },
   "performance": "Performance",
   "open_positions": "Open Positions",
   "order_history": "Orders",

@@ -76,41 +76,11 @@ echo.
 echo [4/6] Cleaning previous PyInstaller output...
 if exist "%ROOT%build\%APP_NAME%" rmdir /s /q "%ROOT%build\%APP_NAME%"
 if exist "%ROOT%dist\%APP_NAME%" rmdir /s /q "%ROOT%dist\%APP_NAME%"
-if exist "%ROOT%%APP_NAME%.spec" del /q "%ROOT%%APP_NAME%.spec"
 
 echo.
 echo [5/6] Building executable...
-cd /d "%ROOT%backend" || exit /b 1
-python -m PyInstaller ^
-  --noconfirm ^
-  --clean ^
-  --onedir ^
-  --name "%APP_NAME%" ^
-  --distpath "%ROOT%dist" ^
-  --workpath "%ROOT%build" ^
-  --specpath "%ROOT%" ^
-  --paths "%ROOT%backend" ^
-  --hidden-import uvicorn.logging ^
-  --hidden-import uvicorn.loops.auto ^
-  --hidden-import uvicorn.protocols.http.auto ^
-  --hidden-import uvicorn.protocols.websockets.auto ^
-  --hidden-import uvicorn.lifespan.on ^
-  --collect-all uvicorn ^
-  --collect-all fastapi ^
-  --collect-all starlette ^
-  --collect-all pydantic ^
-  --collect-all sqlalchemy ^
-  --collect-all pandas ^
-  --collect-all numpy ^
-  --collect-all matplotlib ^
-  --collect-all jinja2 ^
-  --collect-all aiohttp ^
-  --collect-all websockets ^
-  --collect-all backtrader ^
-  --collect-all ccxt ^
-  --collect-all yfinance ^
-  --collect-all openai ^
-  main.py
+cd /d "%ROOT%" || exit /b 1
+python -m PyInstaller --noconfirm --clean --distpath "%ROOT%dist" --workpath "%ROOT%build" "%ROOT%%APP_NAME%.spec"
 if errorlevel 1 (
     echo PyInstaller build failed.
     exit /b 1

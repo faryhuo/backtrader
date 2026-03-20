@@ -57,28 +57,13 @@ export default function OrderBookPanel({
         </div>
         <Segmented
           size="small"
-          value={orderBook?.limit || 10}
+          value={orderBook?.limit || 5}
           onChange={onDepthChange}
           options={[
             { label: t('live.order_book.depth_5', 'Top 5'), value: 5 },
             { label: t('live.order_book.depth_10', 'Top 10'), value: 10 },
           ]}
         />
-      </div>
-
-      <div className="order-book-summary">
-        <div className="order-book-summary-card">
-          <span>{t('live.order_book.best_bid', 'Best Bid')}</span>
-          <strong className="bid">{formatPrice(orderBook?.bestBid)}</strong>
-        </div>
-        <div className="order-book-summary-card">
-          <span>{t('live.order_book.spread', 'Spread')}</span>
-          <strong>{formatPrice(orderBook?.spread)}</strong>
-        </div>
-        <div className="order-book-summary-card">
-          <span>{t('live.order_book.best_ask', 'Best Ask')}</span>
-          <strong className="ask">{formatPrice(orderBook?.bestAsk)}</strong>
-        </div>
       </div>
 
       {!hasDepth ? (

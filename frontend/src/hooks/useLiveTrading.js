@@ -168,6 +168,7 @@ function reducer(state, action) {
                     high: Math.max(lastCandle.high, newTicker.last),
                     low: Math.min(lastCandle.low, newTicker.last),
                     close: newTicker.last,
+                    volume: lastCandle.volume ?? 0,
                 };
             } else {
                 // Create new candle
@@ -177,6 +178,7 @@ function reducer(state, action) {
                     high: newTicker.last,
                     low: newTicker.last,
                     close: newTicker.last,
+                    volume: 0,
                 });
             }
 
@@ -203,6 +205,7 @@ function reducer(state, action) {
                 high: bar.high,
                 low: bar.low,
                 close: bar.close,
+                volume: bar.volume ?? 0,
             }));
 
             return {

@@ -35,6 +35,17 @@
                        "total":  "总额",
                        "empty":  "等待盘口深度数据..."
                    },
+    "price_card":  {
+                       "last_price":  "最新价",
+                       "day_high":  "日内高点",
+                       "day_low":  "日内低点",
+                       "candles":  "已加载K线",
+                       "bid":  "买一",
+                       "ask":  "卖一",
+                       "volume":  "成交量",
+                       "updated":  "更新时间",
+                       "volume_panel":  "成交量"
+                   },
     "performance":  "收益表现",
     "open_positions":  "当前持仓",
     "order_history":  "订单记录",

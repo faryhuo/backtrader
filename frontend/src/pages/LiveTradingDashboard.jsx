@@ -242,6 +242,9 @@ export default function LiveTradingDashboard() {
                         priceHistory={priceHistory}
                         currentPrice={ticker?.last}
                         symbol={session?.symbol}
+                        ticker={ticker}
+                        openPrice={openPrice}
+                        prevTicker={prevTicker}
                       />
                     </div>
 

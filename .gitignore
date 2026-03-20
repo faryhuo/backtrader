@@ -35,3 +35,5 @@ auto_test/.env
 auto_test/test_screenshots
 auto_test/test/trading_sessions.db
 
+build
+dist
