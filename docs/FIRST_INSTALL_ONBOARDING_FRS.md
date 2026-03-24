@@ -30,7 +30,6 @@
 
 ### 3.1 主要配置文件
 - `backend/.env`：后端环境变量，包含加密、认证、AI、CORS、交易开关等。
-- `frontend/.env`：前端运行时环境变量，当前主要是 `VITE_API_BASE_URL`。
 - `backend/resources/config/database_config.json`：数据库类型与路径配置。
 - `backend/resources/config/strategy_config.json`：策略目录、沙箱、Worker Pool 配置。
 - `backend/resources/config/broker_config.json`：交易所、风控、交易参数配置。
@@ -41,7 +40,6 @@
 - 通用凭证类配置：数据库设置 > `.env` > 代码默认值。
 - 数据库连接：`DATABASE_URL` > `database_config.json` > 默认 SQLite (`backend/trading_sessions.db`)。
 - 报告配置：`report_config.json` > `report_config.template.json` > 内置默认值。
-- 前端 API 地址：`frontend/.env` 中 `VITE_API_BASE_URL` > `/api`。
 - Logto 前端配置：数据库 > `LOGTO_*` / `VITE_LOGTO_*` > 关闭登录。
 
 ### 3.3 首次安装页的建议写入目标
@@ -67,7 +65,7 @@
 | `ENCRYPTION_KEY` | `backend/.env` | 强必填 | 用于加密保存 OpenAI、交易所、EODHD 等敏感凭证 | string；非空；建议 Fernet key 或高强度随机字符串 | 无安全默认值；缺失时保存/解密凭证会失败 | 虽然应用可在部分场景下启动，但首次安装页应强制要求填写或生成 |
 | `ENABLE_LOGIN` | `backend/.env` | 必填 | 明确是否启用登录认证 | boolean；`true/false` | 模板默认 `false` | 必须显式写入，避免后端默认值与前端展示默认值不一致 |
 | `DATABASE_URL` 或 `database.type + sqlite.path` | `backend/.env` / `database_config.json` | 二选一必填（向导可自动填默认） | 决定数据存储位置 | `DATABASE_URL` 为 SQLAlchemy URL；或 `sqlite/postgresql` 配置 | 未配置时回退到 `sqlite:///backend/trading_sessions.db` | 向导可默认选择 SQLite，本质上可免手填，但页面必须让用户确认存储方案 |
-| `VITE_API_BASE_URL` | `frontend/.env` | 条件必填 | 前端访问后端 API 的基地址 | string URL 或 `/api` | 默认 `/api` | 本地同域或 Vite 代理时可不改；前后端分离部署时必须配置 |
+
 
 ### 4.2 P1：按功能开启时必须完成
 
@@ -148,29 +146,6 @@
   - 类型：string。
 - 注意：`database_config.json` 中的 `wal_mode`、`timeout_seconds`、`pool_size`、`max_overflow`、`backup`、`maintenance` 等字段当前代码未实际消费，不建议在首版向导中重点暴露，可放在“预留/高级未启用字段”说明中。
 
-### 5.2 前后端访问与跨域
-
-#### `VITE_API_BASE_URL`
-- 作用：前端访问后端 API 的地址。
-- 类型：string。
-- 范围：
-  - 同域部署：`/api`
-  - 分离部署：`http://host:8000/api`
-- 页面要求：
-  - 若用户选择“前后端同域/开发模式”，自动填 `/api`。
-  - 若选择“前后端分离部署”，要求输入完整 URL。
-
-#### CORS 组
-- `CORS_ALLOW_ORIGINS`
-  - 类型：comma-separated string。
-  - 范围：如 `http://localhost:5173,http://127.0.0.1:5173`。
-- `CORS_ALLOW_ORIGIN_REGEX`
-  - 类型：string regex。
-- `CORS_ALLOW_CREDENTIALS`
-  - 类型：boolean。
-- 规则约束：
-  - 当 `CORS_ALLOW_CREDENTIALS=true` 时，`CORS_ALLOW_ORIGINS` 不能为 `*`。
-  - 若启用登录，推荐显式填写前端域名列表，不要使用 `*`。
 
 ### 5.3 认证（Logto）
 
@@ -375,9 +350,8 @@
 #### Step 1：欢迎页 / 安装模式
 - 选择部署模式：
   - 本地单机开发
-  - 内网服务
   - 公网部署
-- 作用：后续用于决定默认值（如 CORS、API Base URL、是否推荐登录）。
+- 作用：后续用于决定默认值（如 是否推荐登录）。
 
 #### Step 2：安全基础
 - 生成 `ENCRYPTION_KEY`
@@ -390,44 +364,33 @@
 - PostgreSQL：填写 host/port/database/username/password
 - 目标：保证系统有稳定存储落点
 
-#### Step 4：前后端连通
-- 配置 `VITE_API_BASE_URL`
-- 若为分离部署，配置 `CORS_ALLOW_ORIGINS`
-- 若为登录场景，进一步配置 `CORS_ALLOW_CREDENTIALS`
-
-#### Step 5：认证（条件步骤）
+#### Step 4：认证（条件步骤）
 - 仅当 `ENABLE_LOGIN=true` 时出现
 - 填写 Logto 服务端与前端 OAuth 配置
 - 校验 JWKS 可访问、redirect URI 格式正确
 
-#### Step 6：数据源（推荐步骤）
+#### Step 5：数据源（推荐步骤）
 - 选择默认数据源优先级
 - 如选择 EODHD，填写 `EODHD_API_KEY`
 - 不配置 EODHD 时默认 `yahoo -> database`
 
-#### Step 7：AI（可跳过）
+#### Step 6：AI（可跳过）
 - 填写 `OPENAI_API_KEY`
 - 可选改写 `OPENAI_BASE_URL`
 - 进行连通性测试
 
-#### Step 8：交易（可跳过）
+#### Step 7：交易（可跳过）
 - 是否启用 live trading
 - 设置默认交易所与默认模式
 - 配置 `broker_config.json` 中的启用交易所与基础风控
 - 再填写 paper/live 对应凭证
 - 强制先提示“先完成 paper，后开启 live”
 
-#### Step 9：执行与资源（高级）
-- 策略目录
-- sandbox mode
-- workerPool enabled / poolSize
-- 可折叠展示其他资源限制项
-
-#### Step 10：品牌与报告（可跳过）
+#### Step 8：品牌与报告（可跳过）
 - 配置 `SITE_*`
 - 若开启公开分享，填写 `REPORT_SHARE_SECRET`
 
-#### Step 11：确认与落盘
+#### Step 9：确认与落盘
 - 展示：
   - 将写入哪些文件
   - 哪些值为默认值
@@ -462,7 +425,6 @@
 - 实时校验：格式、范围、依赖关系
 - 提交前校验：跨字段关系，例如：
   - `ENABLE_LOGIN=true` 但 Logto 字段不全
-  - `CORS_ALLOW_CREDENTIALS=true` 且 origins 为 `*`
   - `LIVE_TRADING_ENABLED=true` 但未填写 live 凭证
   - `DEFAULT_TRADE_MODE=live` 但 live 被全局禁用
 - 敏感项提示：隐藏显示、复制、不回显原文
@@ -523,17 +485,6 @@
 - 开启实盘后，若缺失任何必要凭证或全局开关未打开，不能完成交易配置步骤。
 - 开启跨域凭证后，如果 origins 仍为 `*`，页面必须阻止提交。
 
-## 12. 推荐的首版 UI 步骤拆分
-
-建议首版以 7 步完成，避免过长：
-1. 安装模式
-2. 安全与存储
-3. 网络与访问
-4. 登录认证（条件）
-5. 数据源与 AI（可合并）
-6. 交易与执行（可跳过）
-7. 品牌与确认
-
 ## 13. 输出文件建议
 
 建议将引导页最终写入以下文件：
@@ -556,8 +507,4 @@
 ### 14.2 对后续开发最有价值的切分方式
 - 先实现“配置模型 + 配置校验器 + 文件读写服务”
 - 再实现前端 Step Wizard
-- 最后实现 OpenAI / Logto / CCXT 的测试动作
-
----
-
-如果后续进入开发阶段，建议下一步先补一份“首次安装引导页字段 Schema + API/文件写入契约”设计文档，确保前后端对字段名、默认值和回写目标完全一致。
+- 最后实现 OpenAI / Logto / Binance 的测试动作
