@@ -10,7 +10,7 @@
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `filePath` | string | `"data/strategies/"` | 用户策略文件存储目录（相对于项目根目录） |
+| `filePath` | string | `"resources/strategy"` | 用户策略文件存储目录（相对于项目根目录） |
 
 ### sandbox - 沙箱配置
 

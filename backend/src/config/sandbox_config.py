@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
-from src.config.settings import CONFIG_DIR, PROJECT_ROOT
+from src.config.settings import CONFIG_DIR, PROJECT_ROOT, STRATEGY_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class StrategyConfig:
     Attributes:
         file_path: Directory path for user strategy files (relative to PROJECT_ROOT)
     """
-    file_path: str = "data/strategies/"
+    file_path: str = STRATEGY_DIR.relative_to(PROJECT_ROOT).as_posix()
     
     def get_absolute_path(self) -> Path:
         """Get the absolute path for strategy files."""
@@ -112,7 +112,7 @@ def get_strategy_config() -> StrategyConfig:
     strategy_data = config_data.get("strategy", {})
     
     return StrategyConfig(
-        file_path=strategy_data.get("filePath", "data/strategies/"),
+        file_path=strategy_data.get("filePath", STRATEGY_DIR.relative_to(PROJECT_ROOT).as_posix()),
     )
 
 

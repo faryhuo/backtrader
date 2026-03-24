@@ -1,6 +1,6 @@
 {
     "strategy": {
-        "filePath": "data/strategies/"
+        "filePath": "resources/strategy"
     },
     "sandbox": {
         "mode": "subprocess",

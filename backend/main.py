@@ -6,7 +6,7 @@ from urllib.parse import urlparse, urlunparse
 import uvicorn
 
 from api import app
-from src.config.settings import DATABASE_URL, DEFAULT_DB_PATH
+from src.config.settings import DATABASE_URL, get_sqlite_db_path_from_url
 from src.utils.logger import setup_logging
 
 
@@ -52,7 +52,9 @@ def main() -> None:
 
     # Log database configuration (with masked password)
     logging.info(f"Database URL: {mask_database_url(DATABASE_URL)}")
-    logging.info(f"Database absolute path: {DEFAULT_DB_PATH.absolute()}")
+    db_path = get_sqlite_db_path_from_url(DATABASE_URL)
+    if db_path is not None:
+        logging.info(f"Database absolute path: {db_path.resolve()}")
 
     logging.info(f"Starting Uvicorn server on {host}:{port} with log level {log_level}")
     

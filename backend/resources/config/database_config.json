@@ -3,7 +3,7 @@
     "database": {
         "type": "sqlite",
         "sqlite": {
-            "path": "data/trading_sessions.db",
+            "path": "trading_sessions.db",
             "wal_mode": true,
             "timeout_seconds": 30,
             "pool_size": 5,

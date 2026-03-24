@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 from dotenv import load_dotenv
 
@@ -41,6 +42,7 @@ LOGTO_REQUIRED_SCOPES = [
 # Database configuration with centralized default path
 DEFAULT_DB_PATH = PROJECT_ROOT / "trading_sessions.db"
 DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH}"
+DEFAULT_STRATEGY_PATH = STRATEGY_DIR
 
 
 def load_database_config() -> dict:
@@ -65,7 +67,7 @@ def load_database_config() -> dict:
     return {
         "database": {
             "type": "sqlite",
-            "sqlite": {"path": "trading_sessions.db"}
+            "sqlite": {"path": str(DEFAULT_DB_PATH.name)}
         }
     }
 
@@ -178,6 +180,26 @@ def _build_sqlite_url(sqlite_config: dict) -> str:
     return f"sqlite:///{Path(db_path)}"
 
 
+def get_sqlite_db_path_from_url(database_url: str) -> Path | None:
+    """
+    Extract a SQLite database path from a SQLAlchemy database URL.
+
+    Relative SQLite URLs are resolved against ``PROJECT_ROOT`` so startup
+    directory creation matches the actual runtime database location.
+    """
+    if not database_url.lower().startswith("sqlite:///"):
+        return None
+
+    raw_path = unquote(database_url[len("sqlite:///"):]).split("?", 1)[0]
+    if not raw_path:
+        return None
+
+    db_path = Path(raw_path)
+    if not db_path.is_absolute():
+        db_path = PROJECT_ROOT / db_path
+    return db_path
+
+
 def get_database_url_from_config() -> str:
     """
     Build database URL from configuration file.
@@ -279,22 +301,11 @@ def ensure_database_dir() -> None:
     import logging
     logger = logging.getLogger(__name__)
     
-    config = load_database_config()
-    db_config = config.get("database", {})
-    db_type = db_config.get("type", "sqlite")
-    
-    if db_type != "sqlite":
-        # PostgreSQL doesn't need local directory creation
+    db_path = get_sqlite_db_path_from_url(DATABASE_URL)
+    if db_path is None:
+        # Non-SQLite databases do not require local directory creation.
         return
-    
-    sqlite_config = db_config.get("sqlite", {})
-    db_path = sqlite_config.get("path", "trading_sessions.db")
-    
-    # Make path absolute if relative
-    if not Path(db_path).is_absolute():
-        db_path = PROJECT_ROOT / db_path
-    
-    db_path = Path(db_path)
+
     try:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Database directory ensured: {db_path.parent}")
@@ -313,6 +324,7 @@ __all__ = [
     "DEBUG",
     "DEFAULT_DB_PATH",
     "DEFAULT_DB_URL",
+    "DEFAULT_STRATEGY_PATH",
     "DEFAULT_EXCHANGE",
     "DEFAULT_TRADE_MODE",
     "ENABLE_LOGIN",
@@ -336,6 +348,7 @@ __all__ = [
     "TEMPLATES_DIR",
     "ensure_database_dir",
     "ensure_resource_dirs",
+    "get_sqlite_db_path_from_url",
     "load_database_config",
     "load_report_config",
     "get_database_url_from_config",

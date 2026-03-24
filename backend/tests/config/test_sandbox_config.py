@@ -2,9 +2,7 @@
 Unit tests for sandbox configuration module.
 """
 import json
-import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open
 
 from src.config.sandbox_config import (
     SandboxConfig,
@@ -53,7 +51,7 @@ class TestStrategyConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = StrategyConfig()
-        assert config.file_path == "data/strategies/"
+        assert config.file_path == "resources/strategy"
 
     def test_custom_values(self):
         """Test custom configuration values."""
@@ -62,10 +60,10 @@ class TestStrategyConfig:
 
     def test_get_absolute_path_relative(self):
         """Test get_absolute_path with relative path."""
-        config = StrategyConfig(file_path="data/strategies/")
+        config = StrategyConfig(file_path="resources/strategy")
         path = config.get_absolute_path()
         assert path.is_absolute()
-        assert path.name == "strategies" or "strategies" in str(path)
+        assert path.name == "strategy" or "strategy" in str(path)
 
     def test_get_absolute_path_absolute(self, tmp_path):
         """Test get_absolute_path with absolute path."""
@@ -155,7 +153,7 @@ class TestGetStrategyConfig:
         """Test getting strategy config when config file doesn't exist."""
         monkeypatch.setattr("src.config.sandbox_config.CONFIG_DIR", tmp_path)
         config = get_strategy_config()
-        assert config.file_path == "data/strategies/"
+        assert config.file_path == "resources/strategy"
 
     def test_get_strategy_config_with_file(self, tmp_path, monkeypatch):
         """Test getting strategy config from config file."""
@@ -199,3 +197,10 @@ class TestSingletons:
         # After reset, should be a new instance
         # Note: They have same values but should be different objects
         assert config1 is not config2
+
+    def test_get_strategy_config_defaults_to_resources_strategy(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("src.config.sandbox_config.CONFIG_DIR", tmp_path)
+
+        config = get_strategy_config()
+
+        assert config.get_absolute_path().name == "strategy"

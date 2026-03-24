@@ -2,6 +2,15 @@ from src.db.storage.walkforward import WalkForwardStorage
 from src.service.walkforward_optimizer import OptimizationWindow, WalkForwardResult
 
 
+def test_walkforward_storage_uses_configured_database_url(tmp_path, monkeypatch):
+    configured_db = (tmp_path / "configured.sqlite").as_posix()
+    monkeypatch.setattr("src.db.storage.walkforward.DATABASE_URL", f"sqlite:///{configured_db}")
+
+    storage = WalkForwardStorage()
+
+    assert storage.database_url == f"sqlite:///{configured_db}"
+
+
 def test_walkforward_storage_create_update_and_save_result(tmp_path):
     db_path = (tmp_path / "wf.sqlite").as_posix()
     storage = WalkForwardStorage(f"sqlite:///{db_path}")

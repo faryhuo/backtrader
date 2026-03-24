@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 class WalkForwardStorage(BaseStorage):
     """Storage layer for walk-forward optimization results."""
 
-    def __init__(self, database_url: str = "sqlite:///trading_sessions.db"):
+    def __init__(self, database_url: str | None = None):
         """Initialize walk-forward storage."""
-        super().__init__(database_url)
+        super().__init__(database_url or DATABASE_URL)
         logger.info(f"WalkForwardStorage initialized with database: {self.database_url}")
 
     def create_optimization(
