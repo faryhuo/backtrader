@@ -3,7 +3,7 @@ Settings Routes - API endpoints for user settings and credentials management.
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
@@ -29,6 +29,38 @@ def _resolve_masked_credential_value(
         return incoming_value
 
     current_value, _ = storage.get_credential_with_fallback(credential_key, user_id)
+    if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
+        return current_value
+
+    return incoming_value
+
+
+def _resolve_masked_ai_provider_value(
+    storage: SettingsStorage,
+    provider: str,
+    field: str,
+    incoming_value: Optional[str],
+    user_id: Optional[str],
+) -> Optional[str]:
+    """Keep nested AI provider secrets when the client submits masked placeholders."""
+    if not incoming_value:
+        return incoming_value
+
+    current_value = None
+    try:
+        if hasattr(storage, "get_ai_provider_config"):
+            current_config, _ = storage.get_ai_provider_config(
+                provider,
+                user_id=user_id,
+                mask_sensitive=False,
+            )
+            current_value = current_config.get(field)
+    except Exception:
+        current_value = None
+
+    if current_value is None and provider == "openai" and field == "api_key":
+        current_value, _ = storage.get_credential_with_fallback("openai_api_key", user_id)
+
     if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
         return current_value
 
@@ -75,7 +107,7 @@ def _resolve_masked_data_source_value(
 
 class UserSettingsRequest(BaseModel):
     """Request model for updating user settings."""
-    selected_models: List[str] = Field(..., min_length=1, description="List of AI model names")
+    selected_models: Optional[List[str]] = Field(None, min_length=1, description="Legacy hidden list of AI model names")
     code_analysis_prompt: str = Field(..., min_length=1)
     code_rewrite_prompt: str = Field(..., min_length=1)
     full_strategy_analysis_prompt: str = Field(..., min_length=1)
@@ -110,12 +142,7 @@ def update_user_settings(
     Creates new settings if none exist, updates existing settings otherwise.
     Frontend should migrate localStorage data on first save.
     """
-    from src.routes.common.error_utils import validate_list_not_empty
-
     storage = get_settings_storage()
-
-    # Validate at least one model selected
-    validate_list_not_empty(request.selected_models, "selected_models")
 
     settings = storage.save_settings(
         selected_models=request.selected_models,
@@ -173,6 +200,9 @@ def get_logto_config(user_id: str = Depends(get_optional_user_id)) -> dict:
 
 class CredentialUpdate(BaseModel):
     """Request model for updating general credentials."""
+    ai_provider: Optional[str] = None
+    ai_provider_priority: Optional[List[str]] = None
+    ai_provider_configs: Optional[Dict[str, Dict[str, Optional[str]]]] = None
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
     # Server-side JWT validation settings
@@ -203,8 +233,9 @@ class CCXTCredentialUpdate(BaseModel):
 
 class CredentialTestRequest(BaseModel):
     """Request model for testing credentials."""
-    credential_type: str = Field(..., description="Type: openai, ccxt, logto, proxy")
-    # For OpenAI
+    credential_type: str = Field(..., description="Type: ai_model, openai, ccxt, logto, proxy")
+    provider: Optional[str] = None
+    # For AI providers
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     # For CCXT
@@ -233,6 +264,9 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
 
     # Flatten the structure to match frontend expectations
     credentials_flat = {
+        "ai_provider": credentials_nested["ai_models"]["active_provider"],
+        "ai_provider_priority": credentials_nested["ai_models"]["provider_priority"],
+        "ai_provider_configs": credentials_nested["ai_models"]["providers"],
         "openai_api_key": credentials_nested["openai"]["api_key"],
         "openai_base_url": credentials_nested["openai"]["base_url"],
         # Server-side JWT validation
@@ -254,6 +288,9 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
 
     # Flatten sources as well
     sources = {
+        "ai_provider": credentials_nested["ai_models"]["active_provider_source"],
+        "ai_provider_priority": credentials_nested["ai_models"]["provider_priority_source"],
+        "ai_provider_configs": credentials_nested["ai_models"]["provider_sources"],
         "openai_api_key": credentials_nested["openai"]["api_key_source"],
         "openai_base_url": credentials_nested["openai"]["base_url_source"],
         # Server-side JWT validation sources
@@ -292,9 +329,51 @@ def update_credentials(
     """
     storage = get_settings_storage()
 
-    # Update each credential that was provided
+    # Backward-compatible legacy OpenAI fields
+    payload = request.dict(exclude_unset=True)
+    legacy_openai = {}
+    if "openai_api_key" in payload:
+        legacy_openai["api_key"] = _resolve_masked_credential_value(
+            storage, "openai_api_key", payload.pop("openai_api_key"), user_id
+        )
+    if "openai_base_url" in payload:
+        legacy_openai["base_url"] = payload.pop("openai_base_url")
+    if legacy_openai:
+        payload.setdefault("ai_provider_configs", {})
+        payload["ai_provider_configs"].setdefault("openai", {}).update(legacy_openai)
+
     updated_fields = []
-    for key, value in request.dict(exclude_unset=True).items():
+    for key, value in payload.items():
+        if key == "ai_provider" and value:
+            if storage.save_ai_provider(value.lower(), user_id):
+                updated_fields.append(key)
+            continue
+
+        if key == "ai_provider_priority" and value is not None:
+            if storage.save_ai_provider_priority(value, user_id):
+                updated_fields.append(key)
+            continue
+
+        if key == "ai_provider_configs" and value:
+            for provider, provider_config in value.items():
+                resolved_config = dict(provider_config or {})
+                if "api_key" in resolved_config:
+                    resolved_config["api_key"] = _resolve_masked_ai_provider_value(
+                        storage,
+                        provider,
+                        "api_key",
+                        resolved_config.get("api_key"),
+                        user_id,
+                    )
+                success = storage.save_ai_provider_config(
+                    provider.lower(),
+                    resolved_config,
+                    user_id=user_id,
+                )
+                if success:
+                    updated_fields.append(f"ai_provider_configs.{provider}")
+            continue
+
         if value is not None:  # Allow empty string to clear a value
             value = _resolve_masked_credential_value(storage, key, value, user_id)
             success = storage.save_credential(key, value, user_id)
@@ -372,7 +451,19 @@ def reset_credential(
 
     storage = get_settings_storage()
 
-    success = storage.delete_credential(credential_key, user_id)
+    if credential_key.startswith("ai_provider:"):
+        try:
+            _, provider, field = credential_key.split(":", 2)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid AI provider credential key") from exc
+
+        success = storage.save_ai_provider_config(
+            provider,
+            {field: None},
+            user_id=user_id,
+        )
+    else:
+        success = storage.delete_credential(credential_key, user_id)
 
     if not success:
         raise CredentialError("Failed to delete credential")
@@ -398,13 +489,16 @@ def test_credentials(
         credential_type = request.credential_type.lower()
 
         # Prepare kwargs based on credential type
-        if credential_type == 'openai':
+        if credential_type in {'openai', 'ai_model'}:
+            provider = (request.provider or "openai").lower()
             kwargs = {
-                'api_key': _resolve_masked_credential_value(
-                    storage, 'openai_api_key', request.api_key, user_id
+                'api_key': _resolve_masked_ai_provider_value(
+                    storage, provider, 'api_key', request.api_key, user_id
                 ),
-                'base_url': request.base_url or 'https://api.openai.com/v1'
+                'base_url': request.base_url,
             }
+            if credential_type == 'ai_model':
+                kwargs['provider'] = provider
         elif credential_type == 'ccxt':
             kwargs = {
                 'exchange': request.exchange,

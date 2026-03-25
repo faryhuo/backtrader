@@ -231,8 +231,16 @@ def get_database_url_from_config() -> str:
 # Load database URL from config (environment variable takes precedence)
 DATABASE_URL = get_database_url_from_config()
 
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai")
+AI_PROVIDER_PRIORITY = os.getenv("AI_PROVIDER_PRIORITY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY")
+MINIMAX_BASE_URL = os.getenv("MINIMAX_BASE_URL")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL")
+CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+CLAUDE_BASE_URL = os.getenv("CLAUDE_BASE_URL") or os.getenv("ANTHROPIC_BASE_URL")
 # Optional outbound proxies for backend requests.
 HTTP_PROXY = os.getenv("HTTP_PROXY") or os.getenv("http_proxy")
 HTTPS_PROXY = os.getenv("HTTPS_PROXY") or os.getenv("https_proxy")
@@ -315,11 +323,15 @@ def ensure_database_dir() -> None:
 
 __all__ = [
     "ASSETS_DIR",
+    "AI_PROVIDER",
+    "AI_PROVIDER_PRIORITY",
     "BASE_DIR",
     "CONFIG_DIR",
     "CORS_ALLOW_CREDENTIALS",
     "CORS_ALLOW_ORIGINS",
     "CORS_ALLOW_ORIGIN_REGEX",
+    "CLAUDE_API_KEY",
+    "CLAUDE_BASE_URL",
     "DATABASE_URL",
     "DEBUG",
     "DEFAULT_DB_PATH",
@@ -329,12 +341,16 @@ __all__ = [
     "DEFAULT_TRADE_MODE",
     "ENABLE_LOGIN",
     "FRONTEND_DIR",
+    "GEMINI_API_KEY",
+    "GEMINI_BASE_URL",
     "IMAGES_DIR",
     "LIVE_TRADING_ENABLED",
     "LOGTO_AUDIENCE",
     "LOGTO_ISSUER",
     "LOGTO_JWKS_URI",
     "LOGTO_REQUIRED_SCOPES",
+    "MINIMAX_API_KEY",
+    "MINIMAX_BASE_URL",
     "HTTP_PROXY",
     "HTTPS_PROXY",
     "OPENAI_API_KEY",

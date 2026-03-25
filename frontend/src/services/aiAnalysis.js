@@ -19,7 +19,9 @@ const getEffectiveSettings = (providedSettings) => {
 export const analyzeChart = async (message, model, file) => {
     const formData = new FormData()
     formData.append('message', message)
-    formData.append('model', model)
+    if (model) {
+        formData.append('model', model)
+    }
     if (file) {
         formData.append('file', file)
     }
@@ -42,7 +44,7 @@ export const performFullStrategyAnalysis = async ({
     ticker,
     startDate,
     endDate,
-    model = "gpt-5.1",
+    model = null,
     initialStrategyCode,
     settings: providedSettings
 }) => {
@@ -114,11 +116,9 @@ ${strategyCode}
  */
 export const analyzeCode = async (code, model = null, providedSettings = null) => {
     const settings = getEffectiveSettings(providedSettings);
-    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : DEFAULT_SETTINGS.selectedModels[0]);
     const prompt = settings.codeAnalysisPrompt.replace('{code}', code);
 
-    const data = await analyzeChart(prompt, effectiveModel, null);
-    return data.analysis;
+    return await analyzeChart(prompt, model, null);
 };
 
 /**
@@ -129,10 +129,9 @@ export const analyzeCode = async (code, model = null, providedSettings = null) =
  */
 export const rewriteCode = async (code, model = null, providedSettings = null) => {
     const settings = getEffectiveSettings(providedSettings);
-    const effectiveModel = model || (settings.selectedModels && settings.selectedModels.length > 0 ? settings.selectedModels[0] : DEFAULT_SETTINGS.selectedModels[0]);
     const prompt = settings.codeRewritePrompt.replace('{code}', code);
 
-    const data = await analyzeChart(prompt, effectiveModel, null);
+    const data = await analyzeChart(prompt, model, null);
     let cleanCode = data.analysis;
     if (cleanCode.startsWith('```python')) {
         cleanCode = cleanCode.replace(/^```python\n/, '').replace(/\n```$/, '');

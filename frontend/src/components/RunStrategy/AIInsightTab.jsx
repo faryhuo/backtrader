@@ -1,4 +1,4 @@
-import { Select, Button, Space } from 'antd';
+import { Button } from 'antd';
 import { RobotOutlined } from '@ant-design/icons';
 import AIInsight from './AIInsight';
 
@@ -7,8 +7,7 @@ import AIInsight from './AIInsight';
  * Provides model selection, analysis button, and displays AI analysis results
  */
 function AIInsightTab({
-    t, analyses, activeTab, setActiveTab, aiLoading, selectedModel, setSelectedModel,
-    availableModels, handleAIAnalysis, plotUrl, result
+    t, analyses, activeTab, setActiveTab, aiLoading, handleAIAnalysis, plotUrl, result
 }) {
     return (
         <div style={{ padding: '20px' }}>
@@ -29,23 +28,6 @@ function AIInsightTab({
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <Select
-                        value={selectedModel}
-                        onChange={setSelectedModel}
-                        style={{ width: 180 }}
-                        className="custom-select"
-                        bordered={false}
-                        dropdownStyle={{ background: '#1a1b23', border: '1px solid #374151' }}
-                    >
-                        {availableModels.map(m => (
-                            <Select.Option key={m} value={m}>
-                                <Space>
-                                    <RobotOutlined />
-                                    {m}
-                                </Space>
-                            </Select.Option>
-                        ))}
-                    </Select>
                     <Button
                         type="primary"
                         icon={<RobotOutlined />}

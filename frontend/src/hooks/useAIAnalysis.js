@@ -7,7 +7,7 @@ import { performFullStrategyAnalysis } from '../services/aiAnalysis';
  *
  * Provides a unified interface for running AI analysis on backtest results,
  * with support for:
- * - Multiple model selection and switching
+ * - Provider-priority backend execution
  * - Pre-loaded analyses (from database)
  * - Optional persistence callback for saving analyses
  *
@@ -19,13 +19,10 @@ import { performFullStrategyAnalysis } from '../services/aiAnalysis';
  * @returns {Object} AI analysis state and handlers
  */
 export function useAIAnalysis({
-    getAvailableModels,
     settings,
     initialAnalyses = {},
     onAnalysisSaved = null,
 }) {
-    const availableModels = getAvailableModels?.() || ['gpt-4o'];
-    const [selectedModel, setSelectedModel] = useState(availableModels[0] || 'gpt-4o');
     const [analyses, setAnalyses] = useState({});
     const [activeTab, setActiveTab] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
@@ -67,22 +64,24 @@ export function useAIAnalysis({
                 ticker,
                 startDate,
                 endDate,
-                model: selectedModel,
+                model: null,
                 initialStrategyCode: strategyCode,
                 settings,
             });
 
+            const analysisKey = `${data.provider}:${data.model}`;
+
             // Update local state
             setAnalyses(prev => ({
                 ...prev,
-                [selectedModel]: data.analysis
+                [analysisKey]: data.analysis
             }));
-            setActiveTab(selectedModel);
+            setActiveTab(analysisKey);
 
             // Call persistence callback if provided
             if (onAnalysisSaved && backtestId) {
                 try {
-                    await onAnalysisSaved(backtestId, selectedModel, data.analysis);
+                    await onAnalysisSaved(backtestId, analysisKey, data.analysis);
                     message.success(t?.('history.ai_analysis_saved', 'AI analysis saved successfully') ||
                         'AI analysis saved successfully');
                 } catch (err) {
@@ -101,7 +100,7 @@ export function useAIAnalysis({
         } finally {
             setAiLoading(false);
         }
-    }, [selectedModel, settings, onAnalysisSaved]);
+    }, [settings, onAnalysisSaved]);
 
     // Clear all analyses
     const clearAnalyses = useCallback(() => {
@@ -113,8 +112,6 @@ export function useAIAnalysis({
     const hasAnalysis = Object.keys(allAnalyses).length > 0;
 
     return {
-        selectedModel,
-        setSelectedModel,
         analyses: allAnalyses,  // Return merged analyses
         activeTab,
         setActiveTab,
@@ -122,7 +119,6 @@ export function useAIAnalysis({
         runAnalysis,
         clearAnalyses,
         hasAnalysis,
-        availableModels,
     };
 }
 

@@ -20,3 +20,5 @@
 
 
 - Runtime defaults now align with the deployed backend layout: SQLite defaults to `trading_sessions.db` under the backend root, and strategies default to `resources/strategy`.
+
+- AI provider settings now support `AI_PROVIDER_PRIORITY` plus provider-specific keys for OpenAI, MiniMax, Gemini, and Claude. Database-backed settings override environment variables.

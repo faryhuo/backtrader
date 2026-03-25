@@ -30,13 +30,16 @@ FastAPI 路由与接口层目录，集中维护 HTTP/WebSocket API。
   - `/api/analyze` - 基础分析
 
 ### 其他路由模块
-- `ai_routes.py`：AI 分析接口（`/api/ai_analyze`），集成 OpenAI 进行回测结果分析。
+- `ai_routes.py`：AI 分析接口（`/api/ai_analyze`），通过统一 AI service 调用多 provider 并支持优先级回退。
 - `frontend_routes.py`：静态资源挂载与前端路由托管。
 - `live_routes.py`：实盘/模拟盘交易接口（`/api/live/*`），会话管理与交易操作。
 - `portfolio_routes.py`：投资组合回测接口（`/api/portfolio/*`）。
 - `settings_routes.py`：用户设置与凭证管理接口（`/api/settings/*`）。
 - `walkforward_routes.py`：Walk-Forward 参数优化接口（`/api/walkforward/*`）。
 - `websocket_routes.py`：WebSocket 实时推送接口，交易状态与系统事件广播。
+
+- `settings_routes.py` now exposes unified AI model provider settings instead of a single OpenAI-only credential pair.
+- `ai_routes.py` now delegates to the unified AI service and supports ordered provider fallback across OpenAI, MiniMax, Gemini, and Claude.
 
 ## 非功能性要求（Non-Functional）
 - 一致性：错误码/响应结构统一，便于前端与监控消费。

@@ -1,6 +1,6 @@
 // Settings Components
 export { AISettingsSection } from './AISettingsSection';
-export { OpenAISettingsSection } from './OpenAISettingsSection';
+export { AIModelSettingsSection } from './AIModelSettingsSection';
 export { AuthSettingsSection } from './AuthSettingsSection';
 export { ProxySettingsSection } from './ProxySettingsSection';
 export { ExchangeSettingsSection } from './ExchangeSettingsSection';

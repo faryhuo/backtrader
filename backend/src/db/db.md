@@ -73,3 +73,8 @@ from src.db.storage import BacktestStorage, get_raw_data_json
 2. **Session Management**: Use `BaseStorage.session_scope()` context manager for automatic commit/rollback
 3. **Model Naming**: Models end with `Model` suffix (e.g., `TradingSessionModel`)
 4. **Storage Naming**: Storage classes end with `Storage` suffix (e.g., `BacktestStorage`)
+
+## Recent Notes
+
+- `user_settings` now supports unified AI provider settings via `ai_provider_priority` and `ai_provider_configs`.
+- Legacy `openai_api_key` and `openai_base_url` are retained for backward compatibility and migration fallback.

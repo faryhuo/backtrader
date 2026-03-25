@@ -20,6 +20,14 @@ export const AVAILABLE_MODELS = [
 ];
 
 export const DEFAULT_CREDENTIALS = {
+    ai_provider: 'openai',
+    ai_provider_priority: ['openai', 'minimax', 'gemini', 'claude'],
+    ai_provider_configs: {
+        openai: { api_key: '', base_url: 'https://api.openai.com/v1', default_model: '' },
+        minimax: { api_key: '', base_url: '', default_model: '' },
+        gemini: { api_key: '', base_url: 'https://generativelanguage.googleapis.com/v1beta', default_model: '' },
+        claude: { api_key: '', base_url: 'https://api.anthropic.com/v1', default_model: '' }
+    },
     openai_api_key: '',
     openai_base_url: '',
     // Server-side JWT validation
@@ -38,6 +46,13 @@ export const DEFAULT_CREDENTIALS = {
     https_proxy: '',
     ccxt: {}
 };
+
+export const AI_PROVIDERS = [
+    { key: 'openai', label: 'OpenAI' },
+    { key: 'minimax', label: 'MiniMax' },
+    { key: 'gemini', label: 'Gemini' },
+    { key: 'claude', label: 'Claude' }
+];
 
 export const SUPPORTED_EXCHANGES = [
     { key: 'binance', label: 'Binance', hasPassphrase: false }

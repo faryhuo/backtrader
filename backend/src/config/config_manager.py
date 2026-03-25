@@ -12,10 +12,8 @@ backward compatibility with .env-based configuration.
 Example usage:
     from src.config.config_manager import ConfigManager
 
-    # Get OpenAI config for a specific user
     config_manager = ConfigManager(user_id="auth0|123456")
-    openai_config = config_manager.get_openai_config()
-    client = OpenAI(**openai_config)
+    ai_config = config_manager.get_ai_model_config()
 
     # Get CCXT credentials
     ccxt_creds = config_manager.get_ccxt_credentials("binance", "paper")
@@ -105,28 +103,69 @@ class ConfigManager:
 
         return None, 'none'
 
-    # ========== OpenAI Configuration ==========
+    # ========== AI Model Configuration ==========
 
-    def get_openai_config(self) -> Dict[str, str]:
+    def get_ai_model_config(self, provider: Optional[str] = None) -> Dict[str, str]:
         """
-        Get OpenAI API configuration.
+        Get AI model provider configuration.
 
         Returns:
-            Dict with 'api_key' and 'base_url' keys
-
-        Example:
-            >>> config = manager.get_openai_config()
-            >>> client = OpenAI(**config)
+            Dict with provider, api_key, base_url, and default_model keys
         """
-        api_key = self.get("OPENAI_API_KEY")
-        base_url = self.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        if hasattr(self.settings_storage, "get_ai_provider"):
+            resolved_provider, _ = self.settings_storage.get_ai_provider(self.user_id)
+        else:
+            resolved_provider = os.getenv("AI_PROVIDER", "openai")
+        provider_name = (provider or resolved_provider or "openai").lower()
+        if hasattr(self.settings_storage, "get_ai_provider_config"):
+            config, source = self.settings_storage.get_ai_provider_config(
+                provider_name,
+                user_id=self.user_id,
+                mask_sensitive=False,
+            )
+        else:
+            default_base_urls = {
+                "openai": "https://api.openai.com/v1",
+                "gemini": "https://generativelanguage.googleapis.com/v1beta",
+                "claude": "https://api.anthropic.com/v1",
+                "minimax": "",
+            }
+            config = {
+                "api_key": self.get(f"{provider_name.upper()}_API_KEY"),
+                "base_url": self.get(f"{provider_name.upper()}_BASE_URL", default_base_urls.get(provider_name)),
+                "default_model": None,
+            }
+            source = "fallback"
 
-        if not api_key:
-            logger.warning("OpenAI API key not configured (neither in DB nor env)")
+        if not config.get("api_key"):
+            logger.warning(f"AI provider '{provider_name}' API key not configured")
 
         return {
-            "api_key": api_key,
-            "base_url": base_url
+            "provider": provider_name,
+            "api_key": config.get("api_key"),
+            "base_url": config.get("base_url"),
+            "default_model": config.get("default_model"),
+            "source": source,
+        }
+
+    def get_ai_provider_priority(self) -> list[str]:
+        """Get AI provider priority list."""
+        if hasattr(self.settings_storage, "get_ai_provider_priority"):
+            priority, _ = self.settings_storage.get_ai_provider_priority(self.user_id)
+            return priority
+
+        env_priority = os.getenv("AI_PROVIDER_PRIORITY")
+        if env_priority:
+            return [item.strip().lower() for item in env_priority.split(",") if item.strip()]
+
+        return [os.getenv("AI_PROVIDER", "openai").lower()]
+
+    def get_openai_config(self) -> Dict[str, str]:
+        """Backward-compatible alias for the OpenAI provider config."""
+        config = self.get_ai_model_config("openai")
+        return {
+            "api_key": config.get("api_key"),
+            "base_url": config.get("base_url"),
         }
 
     # ========== Logto Authentication Configuration ==========
@@ -298,9 +337,19 @@ class ConfigManager:
         """
         sources = {}
 
-        # OpenAI
-        _, sources["openai_api_key"] = self.get_with_source("OPENAI_API_KEY")
-        _, sources["openai_base_url"] = self.get_with_source("OPENAI_BASE_URL")
+        if hasattr(self.settings_storage, "get_all_ai_provider_configs"):
+            ai_configs = self.settings_storage.get_all_ai_provider_configs(
+                user_id=self.user_id,
+                mask_sensitive=True,
+            )
+            sources["ai_provider"] = ai_configs["active_provider_source"]
+            for provider, provider_source in ai_configs["provider_sources"].items():
+                sources[f"ai_provider_{provider}"] = provider_source
+            sources["openai_api_key"] = ai_configs["provider_sources"]["openai"]
+            sources["openai_base_url"] = ai_configs["provider_sources"]["openai"]
+        else:
+            _, sources["openai_api_key"] = self.get_with_source("OPENAI_API_KEY")
+            _, sources["openai_base_url"] = self.get_with_source("OPENAI_BASE_URL")
 
         # Logto
         _, sources["logto_issuer"] = self.get_with_source("LOGTO_ISSUER")

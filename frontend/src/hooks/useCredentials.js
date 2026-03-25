@@ -52,7 +52,19 @@ export function useCredentials() {
             setLoading(true);
             let response;
 
-            if (credentialType === 'openai') {
+            if (credentialType.startsWith('ai_model-')) {
+                const [, provider] = credentialType.split('-');
+                response = await api.updateCredentials({
+                    ai_provider_priority: credentials.ai_provider_priority,
+                    ai_provider_configs: {
+                        [provider]: credentials.ai_provider_configs?.[provider] || {}
+                    }
+                });
+            } else if (credentialType === 'ai_model_priority') {
+                response = await api.updateCredentials({
+                    ai_provider_priority: credentials.ai_provider_priority
+                });
+            } else if (credentialType === 'openai') {
                 response = await api.updateCredentials({
                     openai_api_key: credentials.openai_api_key,
                     openai_base_url: credentials.openai_base_url
@@ -109,7 +121,16 @@ export function useCredentials() {
             setTestingCredential(credentialType);
             let params = {};
 
-            if (credentialType === 'openai') {
+            if (credentialType.startsWith('ai_model-')) {
+                const [, provider] = credentialType.split('-');
+                const config = credentials.ai_provider_configs?.[provider] || {};
+                params = {
+                    credential_type: 'ai_model',
+                    provider,
+                    api_key: config.api_key,
+                    base_url: config.base_url
+                };
+            } else if (credentialType === 'openai') {
                 params = {
                     credential_type: 'openai',
                     api_key: credentials.openai_api_key,

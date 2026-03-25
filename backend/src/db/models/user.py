@@ -44,9 +44,15 @@ class UserSettingsModel(Base):
     # Note: All credential fields are encrypted using Fernet encryption
     # Values are stored as base64-encoded ciphertext
 
-    # OpenAI Configuration (encrypted)
+    # Legacy OpenAI configuration (encrypted)
+    # Kept for backward compatibility with older deployments.
     openai_api_key = Column(Text, nullable=True)  # Encrypted API key
     openai_base_url = Column(String(500), nullable=True)  # Base URL (not encrypted)
+
+    # AI provider configuration
+    ai_provider = Column(String(50), nullable=True, default="openai")
+    ai_provider_priority = Column(JSON, nullable=True)
+    ai_provider_configs = Column(JSON, nullable=True)
 
     # Logto Authentication Configuration (encrypted where sensitive)
     logto_issuer = Column(String(500), nullable=True)  # Issuer URL (not encrypted)

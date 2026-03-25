@@ -8,7 +8,7 @@ import { useSiteConfig } from '../hooks/useSiteConfig';
 import { api } from '../services/api';
 import {
     AISettingsSection,
-    OpenAISettingsSection,
+    AIModelSettingsSection,
     AuthSettingsSection,
     ProxySettingsSection,
     ExchangeSettingsSection,
@@ -30,7 +30,6 @@ function Settings() {
         saved,
         loadSettings,
         handleChange,
-        handleModelChange,
         handleSave,
         handleReset
     } = useSettings();
@@ -132,12 +131,12 @@ function Settings() {
         {
             key: 'ai',
             icon: <SettingOutlined />,
-            label: t('settings.ai_configuration', 'AI Configuration')
+            label: t('settings.ai_prompts', 'AI Prompts')
         },
         {
-            key: 'openai',
+            key: 'aiModel',
             icon: <ApiOutlined />,
-            label: t('settings.openai_credentials', 'OpenAI Credentials')
+            label: t('settings.ai_model_credentials', 'AI Model')
         },
         {
             key: 'datasource',
@@ -175,15 +174,14 @@ function Settings() {
                         settings={settings}
                         loading={loading}
                         saved={saved}
-                        onModelChange={handleModelChange}
                         onChange={handleChange}
                         onSave={handleSave}
                         onReset={handleReset}
                     />
                 );
-            case 'openai':
+            case 'aiModel':
                 return (
-                    <OpenAISettingsSection
+                    <AIModelSettingsSection
                         credentials={credentials}
                         sources={credentialSources}
                         loading={loading}
@@ -258,7 +256,6 @@ function Settings() {
                         settings={settings}
                         loading={loading}
                         saved={saved}
-                        onModelChange={handleModelChange}
                         onChange={handleChange}
                         onSave={handleSave}
                         onReset={handleReset}

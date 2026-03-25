@@ -68,3 +68,8 @@
 - 读取配置统一来自 `backend/src/config/settings.py`。
 - Worker 配置来自 `backend/src/config/worker_config.py`。
 - 新增长耗时任务需考虑异步/后台执行与取消机制。
+
+## Recent Notes
+
+- `ai_service.py` is now the unified backend AI entry point. Provider-specific calls should go through it instead of being implemented directly in route handlers.
+- AI provider selection now supports multiple enabled providers with ordered fallback priority.

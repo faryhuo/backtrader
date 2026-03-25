@@ -25,3 +25,7 @@
 ## 约定与规范
 - 以功能域分文件/子目录，避免单文件过大。
 - 路由变更需同步更新 `App.jsx` 或路由配置。
+
+## Recent Notes
+
+- `Settings.jsx` now presents a unified AI model provider section for OpenAI, MiniMax, Gemini, and Claude.

@@ -5,19 +5,14 @@ Contains the base SettingsStorage class with core AI settings methods.
 """
 
 import logging
-import os
-import json
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.orm import Session
 
-from src.config.settings import DATABASE_URL
 from src.db.storage.base import BaseStorage
-from src.db.models import UserSettingsModel, init_database
-from src.utils.encryption import encrypt_value, decrypt_value, mask_credential, is_encryption_enabled
+from src.db.models import UserSettingsModel
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +63,8 @@ class SettingsStorageBase(BaseStorage):
     def get_settings(
         self,
         user_id: Optional[str] = None,
-        db: Optional[Session] = None
-    ) -> Dict[str, any]:
+        db=None
+    ) -> Dict[str, object]:
         """
         Get user settings from database.
 
@@ -95,18 +90,18 @@ class SettingsStorageBase(BaseStorage):
 
     def save_settings(
         self,
-        selected_models: List[str],
+        selected_models: Optional[List[str]],
         code_analysis_prompt: str,
         code_rewrite_prompt: str,
         full_strategy_analysis_prompt: str,
         user_id: Optional[str] = None,
         db: Optional[Session] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, object]:
         """
         Save or update user settings.
 
         Args:
-            selected_models: List of AI model names
+            selected_models: Legacy hidden list of AI model names
             code_analysis_prompt: Code analysis prompt template
             code_rewrite_prompt: Code rewrite prompt template
             full_strategy_analysis_prompt: Full analysis prompt template
@@ -164,7 +159,7 @@ class SettingsStorageBase(BaseStorage):
         self,
         user_id: Optional[str] = None,
         db: Optional[Session] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, object]:
         """
         Reset settings to defaults for a user.
 
@@ -202,7 +197,7 @@ class SettingsStorageBase(BaseStorage):
             return None
         return user_id
 
-    def _model_to_dict(self, model: UserSettingsModel) -> Dict[str, any]:
+    def _model_to_dict(self, model: UserSettingsModel) -> Dict[str, object]:
         """Convert database model to dict."""
         return {
             "selected_models": model.selected_models.split(",") if model.selected_models else [],
@@ -213,7 +208,7 @@ class SettingsStorageBase(BaseStorage):
             "updated_at": model.updated_at.isoformat() if model.updated_at else None
         }
 
-    def _get_default_dict(self) -> Dict[str, any]:
+    def _get_default_dict(self) -> Dict[str, object]:
         """Get default settings as dict."""
         return {
             "selected_models": DEFAULT_SETTINGS["selected_models"].split(","),

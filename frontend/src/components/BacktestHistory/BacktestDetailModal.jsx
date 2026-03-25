@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Modal, Tabs, Descriptions, Tag, Button, Select, Dropdown, message, Space } from 'antd'
+import { Modal, Tabs, Descriptions, Tag, Button, Dropdown, message, Space } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { FileTextOutlined, DownloadOutlined, AreaChartOutlined, DownOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -15,7 +15,7 @@ import DeepAnalysis from '../DeepAnalysis'
 
 function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
     const { t, i18n } = useTranslation()
-    const { settings, getAvailableModels } = useSettingsContext()
+    const { settings } = useSettingsContext()
     const [reportLoading, setReportLoading] = useState(false)
     const [pyfolioLoading, setPyfolioLoading] = useState(false)
     const [tearsheetLoading, setTearsheetLoading] = useState(false)
@@ -35,16 +35,12 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
     // Use the unified AI analysis hook
     const {
-        selectedModel,
-        setSelectedModel,
         analyses,
         activeTab,
         setActiveTab,
         aiLoading,
         runAnalysis,
-        availableModels,
     } = useAIAnalysis({
-        getAvailableModels,
         settings,
         initialAnalyses: backtest?.ai_analysis || {},
         onAnalysisSaved: handleSaveAnalysis,
@@ -345,15 +341,6 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                             borderRadius: '8px',
                             marginBottom: '1.5rem'
                         }}>
-                            <Select
-                                value={selectedModel}
-                                onChange={(value) => setSelectedModel(value)}
-                                style={{ width: 150 }}
-                            >
-                                {availableModels.map(m => (
-                                    <Select.Option key={m} value={m}>{m}</Select.Option>
-                                ))}
-                            </Select>
                             <Button
                                 type="primary"
                                 onClick={handleAIAnalysis}

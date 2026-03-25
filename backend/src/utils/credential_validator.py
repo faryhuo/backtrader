@@ -5,10 +5,10 @@ Provides utilities to test API credentials by making actual API calls
 to verify they are valid and have proper permissions.
 
 Example usage:
-    from src.utils.credential_validator import validate_openai_key, validate_ccxt_credentials
+    from src.utils.credential_validator import validate_ai_provider_key, validate_ccxt_credentials
 
     # Test OpenAI key
-    is_valid, message = validate_openai_key("sk-...", "https://api.openai.com/v1")
+    is_valid, message = validate_ai_provider_key("openai", "sk-...", "https://api.openai.com/v1")
     if is_valid:
         print(f"OpenAI credentials valid: {message}")
 
@@ -17,8 +17,7 @@ Example usage:
 """
 
 import logging
-from typing import Tuple, Optional
-import asyncio
+from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +62,80 @@ def validate_openai_key(api_key: str, base_url: str = "https://api.openai.com/v1
             return False, f"Connection error: {error_msg}"
         else:
             return False, f"Validation failed: {error_msg[:100]}"
+
+
+def validate_gemini_key(
+    api_key: str,
+    base_url: str = "https://generativelanguage.googleapis.com/v1beta",
+) -> Tuple[bool, str]:
+    """Validate Gemini API key with a lightweight generateContent call."""
+    if not api_key:
+        return False, "API key is empty"
+
+    try:
+        import requests
+
+        response = requests.post(
+            f"{base_url.rstrip('/')}/models/gemini-2.0-flash:generateContent",
+            params={"key": api_key},
+            json={"contents": [{"parts": [{"text": "ping"}]}]},
+            timeout=10,
+        )
+        if response.status_code == 200:
+            return True, "Valid - Gemini request succeeded"
+        if response.status_code in {401, 403}:
+            return False, f"Invalid API key ({response.status_code})"
+        return False, f"Validation failed: HTTP {response.status_code}"
+    except Exception as exc:
+        return False, f"Validation failed: {str(exc)[:100]}"
+
+
+def validate_claude_key(
+    api_key: str,
+    base_url: str = "https://api.anthropic.com/v1",
+) -> Tuple[bool, str]:
+    """Validate Claude API key using the Messages API."""
+    if not api_key:
+        return False, "API key is empty"
+
+    try:
+        import requests
+
+        response = requests.post(
+            f"{base_url.rstrip('/')}/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-3-5-haiku-latest",
+                "max_tokens": 16,
+                "messages": [{"role": "user", "content": "ping"}],
+            },
+            timeout=10,
+        )
+        if response.status_code == 200:
+            return True, "Valid - Claude request succeeded"
+        if response.status_code in {401, 403}:
+            return False, f"Invalid API key ({response.status_code})"
+        return False, f"Validation failed: HTTP {response.status_code}"
+    except Exception as exc:
+        return False, f"Validation failed: {str(exc)[:100]}"
+
+
+def validate_ai_provider_key(
+    provider: str,
+    api_key: str,
+    base_url: Optional[str] = None,
+) -> Tuple[bool, str]:
+    """Validate a configured AI provider key."""
+    provider_name = (provider or "openai").lower()
+    if provider_name == "gemini":
+        return validate_gemini_key(api_key, base_url or "https://generativelanguage.googleapis.com/v1beta")
+    if provider_name == "claude":
+        return validate_claude_key(api_key, base_url or "https://api.anthropic.com/v1")
+    return validate_openai_key(api_key, base_url or "https://api.openai.com/v1")
 
 
 def validate_ccxt_credentials(
@@ -331,10 +404,11 @@ def validate_credential(
         >>> validate_credential('logto', issuer='...', jwks_uri='...')
         >>> validate_credential('proxy', proxy_url='http://...')
     """
-    if credential_type == 'openai':
-        return validate_openai_key(
+    if credential_type in {'openai', 'ai_model'}:
+        return validate_ai_provider_key(
+            kwargs.get('provider', 'openai'),
             kwargs.get('api_key'),
-            kwargs.get('base_url', 'https://api.openai.com/v1')
+            kwargs.get('base_url')
         )
 
     elif credential_type == 'ccxt':

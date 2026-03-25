@@ -54,6 +54,15 @@
     "break_even":  "持平",
     "no_pnl_data":  "暂无盈亏数据。启动交易后可在这里查看实时表现。",
     "form":  {
+                 "symbol_search":  {
+                                     "title":  "搜索交易对",
+                                     "placeholder":  "按交易对名称或币种搜索…",
+                                     "col_symbol":  "交易对",
+                                     "col_description":  "名称",
+                                     "col_quote":  "计价",
+                                     "pairs_found":  "个交易对",
+                                     "total":  "总计"
+                                 },
                  "eyebrow":  "会话启动器",
                  "title":  "创建下一条实时交易会话",
                  "description":  "先确定策略、市场、执行模式和成本，再让交易引擎开始接收信号与行情。",

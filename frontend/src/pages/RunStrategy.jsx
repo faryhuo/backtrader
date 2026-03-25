@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
  */
 function RunStrategy() {
     const { t } = useTranslation();
-    const { settings, getAvailableModels } = useSettingsContext();
+    const { settings } = useSettingsContext();
     const defaults = getDefaults().backtest;
 
     // Form State - persisted in localStorage across page navigations
@@ -69,16 +69,13 @@ function RunStrategy() {
     } = useBacktest();
 
     const {
-        selectedModel,
-        setSelectedModel,
         analyses,
         activeTab,
         setActiveTab,
         aiLoading,
         runAnalysis,
         clearAnalyses,
-        availableModels,
-    } = useAIAnalysis({ getAvailableModels, settings });
+    } = useAIAnalysis({ settings });
 
     const handleBacktest = async (e) => {
         e.preventDefault();
@@ -128,9 +125,6 @@ function RunStrategy() {
         activeTab,
         setActiveTab,
         aiLoading,
-        selectedModel,
-        setSelectedModel,
-        availableModels,
         handleAIAnalysis,
         strategyCode,
         paramOverrides,

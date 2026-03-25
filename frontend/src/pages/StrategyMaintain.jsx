@@ -165,7 +165,7 @@ class UserStrategy(bt.Strategy):
         try {
             setCodeLoading(true);
             const result = await analyzeCode(code, null, settings);
-            setAnalysisResult(result);
+            setAnalysisResult(result.analysis);
             setShowAnalysisModal(true);
         } catch (err) {
             console.error("AI Analysis failed", err);

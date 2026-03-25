@@ -1,0 +1,83 @@
+.symbol-search-modal .ant-modal-header {
+  border-bottom: 1px solid #1e293b;
+  padding: 16px 20px;
+}
+
+.symbol-search-modal .ant-modal-header .ant-modal-title {
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.symbol-search-header {
+  padding: 14px 16px 8px;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.symbol-search-input .ant-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.symbol-search-input .ant-input::placeholder {
+  color: #475569;
+}
+
+.symbol-search-input .ant-input:hover,
+.symbol-search-input .ant-input:focus {
+  border-color: #67e8f9;
+  box-shadow: 0 0 0 2px rgba(103, 232, 249, 0.1);
+}
+
+.symbol-search-count {
+  font-size: 12px;
+  align-self: flex-end;
+}
+
+.symbol-search-table .ant-table {
+  background: transparent;
+}
+
+.symbol-search-table .ant-table-thead > tr > th {
+  background: #0f172a;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e293b;
+  padding: 8px 16px;
+}
+
+.symbol-search-table .ant-table-tbody > tr > td {
+  color: #e2e8f0;
+  border-bottom: 1px solid #1a2332;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.symbol-search-table .ant-table-tbody > tr:hover > td {
+  background: #0f2744;
+}
+
+.symbol-search-table .ant-table-pagination {
+  margin: 8px 0 0;
+}
+
+.symbol-search-table .ant-pagination-total-text {
+  color: #475569;
+  font-size: 12px;
+}
+
+/* Modal overlay (dark theme) */
+.symbol-search-modal .ant-modal-content {
+  background: #0d1117;
+  border: 1px solid #1e293b;
+}
+
+.symbol-search-modal .ant-modal-close {
+  color: #64748b;
+}

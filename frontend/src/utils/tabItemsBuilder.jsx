@@ -21,7 +21,7 @@ import CodeViewer from '../components/RunStrategy/CodeViewer';
  */
 export function buildTabItems({
     t, result, tradeList, plotUrl, analyses, activeTab, setActiveTab,
-    aiLoading, selectedModel, setSelectedModel, availableModels, handleAIAnalysis,
+    aiLoading, handleAIAnalysis,
     strategyCode, paramOverrides, ticker, startDate, endDate, initialCash
 }) {
     const tabItems = [
@@ -54,9 +54,6 @@ export function buildTabItems({
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     aiLoading={aiLoading}
-                    selectedModel={selectedModel}
-                    setSelectedModel={setSelectedModel}
-                    availableModels={availableModels}
                     handleAIAnalysis={handleAIAnalysis}
                     plotUrl={plotUrl}
                     result={result}

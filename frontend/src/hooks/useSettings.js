@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { DEFAULT_SETTINGS } from '../constants/settingsConstants';
 
+const FALLBACK_SELECTED_MODELS = DEFAULT_SETTINGS.selectedModels;
+
 /**
  * Custom hook for managing AI settings state and operations
  */
@@ -15,7 +17,9 @@ export function useSettings() {
 
     const saveToDatabase = useCallback(async (settingsToSave, showMessage = true) => {
         const payload = {
-            selected_models: settingsToSave.selectedModels,
+            selected_models: settingsToSave.selectedModels?.length
+                ? settingsToSave.selectedModels
+                : FALLBACK_SELECTED_MODELS,
             code_analysis_prompt: settingsToSave.codeAnalysisPrompt,
             code_rewrite_prompt: settingsToSave.codeRewritePrompt,
             full_strategy_analysis_prompt: settingsToSave.fullStrategyAnalysisPrompt
@@ -95,19 +99,9 @@ export function useSettings() {
         setSaved(false);
     }, []);
 
-    const handleModelChange = useCallback((value) => {
-        setSettings(prev => ({ ...prev, selectedModels: value }));
-        setSaved(false);
-    }, []);
-
     const handleSave = useCallback(async () => {
         try {
             setLoading(true);
-
-            if (!settings.selectedModels || settings.selectedModels.length === 0) {
-                message.error(t('settings.select_at_least_one', 'Please select at least one model.'));
-                return;
-            }
 
             try {
                 await saveToDatabase(settings, true);
@@ -158,7 +152,6 @@ export function useSettings() {
         saved,
         loadSettings,
         handleChange,
-        handleModelChange,
         handleSave,
         handleReset
     };

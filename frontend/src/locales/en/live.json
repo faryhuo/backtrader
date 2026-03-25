@@ -54,6 +54,15 @@
   "break_even": "Break Even",
   "no_pnl_data": "No P&L data yet. Start trading to see real-time performance.",
   "form": {
+    "symbol_search": {
+      "title": "Search Trading Pairs",
+      "placeholder": "Search by symbol or name…",
+      "col_symbol": "Symbol",
+      "col_description": "Description",
+      "col_quote": "Quote",
+      "pairs_found": "pairs found",
+      "total": "total"
+    },
     "eyebrow": "Session Launcher",
     "title": "Build the next live trading session",
     "description": "Choose strategy, market, execution mode, and costs before the engine starts routing signals and market data.",

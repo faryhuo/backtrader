@@ -10,11 +10,14 @@ Endpoints:
 - GET  /api/live/orders/{session_id}              — Get session orders
 - GET  /api/live/ticker/{session_id}              — Get current price
 - GET  /api/live/health                           — Health check
+- GET  /api/live/symbols                          — Get available trading pairs from Binance
 """
 
 import logging
+import time
 from typing import List, Optional
 
+from binance.client import Client
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -29,6 +32,56 @@ from src.utils.config_loader import (
     validate_symbol,
     validate_timeframe,
 )
+
+# ──────────────────────────── In-memory cache for exchange symbols ────────────────────────────
+# Binance public endpoint (no API key required), cache for 5 minutes to avoid rate limits
+_symbols_cache: Optional[dict] = None
+_symbols_cache_time: float = 0.0
+_SYMBOLS_CACHE_TTL: float = 300.0  # 5 minutes
+
+
+def _fetch_binance_symbols() -> dict:
+    """Fetch available SPOT trading pairs from Binance (public API, no credentials)."""
+    global _symbols_cache, _symbols_cache_time
+
+    now = time.time()
+    if _symbols_cache is not None and (now - _symbols_cache_time) < _SYMBOLS_CACHE_TTL:
+        return _symbols_cache
+
+    try:
+        client = Client()  # no key/secret needed for public endpoints
+        exchange_info = client.get_exchange_info()
+
+        # Filter: SPOT market only, quote asset USDT or USDC for common trading
+        symbols = []
+        for symbol in exchange_info.get('symbols', []):
+            if (
+                symbol.get('status') == 'TRADING'
+                and symbol.get('isSpotTradingAllowed')
+                and symbol.get('quoteAsset') in ('USDT', 'USDC')
+            ):
+                # Binance returns BTCUSDT, convert to BTC/USDT
+                pair = f"{symbol['baseAsset']}/{symbol['quoteAsset']}"
+                symbols.append({
+                    'symbol': pair,
+                    'baseAsset': symbol['baseAsset'],
+                    'quoteAsset': symbol['quoteAsset'],
+                })
+
+        # Sort by base asset name
+        symbols.sort(key=lambda x: x['baseAsset'])
+
+        _symbols_cache = {'symbols': symbols, 'count': len(symbols)}
+        _symbols_cache_time = now
+        logger.info(f"Fetched {len(symbols)} trading pairs from Binance (cached)")
+        return _symbols_cache
+
+    except Exception as e:
+        logger.error(f"Failed to fetch Binance symbols: {e}")
+        # Return stale cache if available, otherwise empty
+        if _symbols_cache is not None:
+            return _symbols_cache
+        raise HTTPException(503, f"Failed to fetch trading pairs from Binance: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -334,6 +387,17 @@ async def get_exchanges():
     """Get list of available exchanges."""
     exchanges = list_enabled_exchanges()
     return [ExchangeInfo(**ex) for ex in exchanges]
+
+
+@router.get("/live/symbols", tags=["Live Trading"])
+async def get_symbols():
+    """
+    Get available SPOT trading pairs from Binance.
+
+    Returns all TRADING-status pairs quoted in USDT or USDC.
+    Results are cached for 5 minutes to avoid Binance API rate limits.
+    """
+    return _fetch_binance_symbols()
 
 
 @router.get("/live/health", tags=["Live Trading"])

@@ -18,6 +18,7 @@ from sqlalchemy import (
     Column, DateTime, Enum, Float, Integer, String, Text, TypeDecorator,
     create_engine, event
 )
+from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -113,10 +114,35 @@ def init_database(database_url: str, echo: bool = False):
             _configure_sqlite_engine(engine)
 
         Base.metadata.create_all(bind=engine)
+        _apply_runtime_migrations(engine)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         _DB_CACHE[cache_key] = (engine, SessionLocal)
         return engine, SessionLocal
+
+
+def _apply_runtime_migrations(engine: Engine) -> None:
+    """Apply lightweight schema migrations for deployments without Alembic."""
+    inspector = inspect(engine)
+    try:
+        columns = {column["name"] for column in inspector.get_columns("user_settings")}
+    except Exception:
+        return
+
+    alter_statements: list[str] = []
+    if "ai_provider" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN ai_provider VARCHAR(50)")
+    if "ai_provider_priority" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN ai_provider_priority TEXT")
+    if "ai_provider_configs" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN ai_provider_configs TEXT")
+
+    if not alter_statements:
+        return
+
+    with engine.begin() as connection:
+        for statement in alter_statements:
+            connection.execute(text(statement))
 
 
 __all__ = [

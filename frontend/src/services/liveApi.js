@@ -99,5 +99,10 @@ export const liveApi = {
     async getHealth() {
         const res = await buildRequest('/live/health')
         return await parseResponse(res)
+    },
+
+    async getSymbols() {
+        const res = await buildRequest('/live/symbols')
+        return await parseResponse(res)
     }
 }

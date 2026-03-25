@@ -4,11 +4,11 @@ Credentials Mixin - Credential management methods for SettingsStorage.
 Handles encryption, decryption, and storage of API keys and secrets.
 """
 
+import json
 import logging
 import os
-import json
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, Optional, Tuple
 
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
@@ -20,9 +20,288 @@ from .base import DEFAULT_SETTINGS
 
 logger = logging.getLogger(__name__)
 
+AI_PROVIDER_ENV_MAPPING = {
+    "openai": {
+        "api_key": ["OPENAI_API_KEY"],
+        "base_url": ["OPENAI_BASE_URL"],
+        "default_base_url": "https://api.openai.com/v1",
+    },
+    "minimax": {
+        "api_key": ["MINIMAX_API_KEY"],
+        "base_url": ["MINIMAX_BASE_URL"],
+        "default_base_url": "",
+    },
+    "gemini": {
+        "api_key": ["GEMINI_API_KEY"],
+        "base_url": ["GEMINI_BASE_URL"],
+        "default_base_url": "https://generativelanguage.googleapis.com/v1beta",
+    },
+    "claude": {
+        "api_key": ["CLAUDE_API_KEY", "ANTHROPIC_API_KEY"],
+        "base_url": ["CLAUDE_BASE_URL", "ANTHROPIC_BASE_URL"],
+        "default_base_url": "https://api.anthropic.com/v1",
+    },
+}
+DEFAULT_AI_PROVIDER_PRIORITY = ["openai", "minimax", "gemini", "claude"]
+
 
 class CredentialsMixin:
     """Mixin providing credential management methods."""
+
+    def get_ai_provider_priority(
+        self,
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None,
+    ) -> Tuple[list[str], str]:
+        """Return enabled AI providers ordered by priority."""
+        with self.managed_session(db, commit_on_success=False) as session:
+            normalized_user_id = self._normalize_user_id(user_id)
+            settings = session.query(UserSettingsModel).filter(
+                UserSettingsModel.user_id == normalized_user_id
+            ).first()
+
+            if settings and settings.ai_provider_priority:
+                priority = settings.ai_provider_priority
+                if isinstance(priority, str):
+                    try:
+                        priority = json.loads(priority)
+                    except json.JSONDecodeError:
+                        priority = [item.strip() for item in priority.split(",") if item.strip()]
+                if isinstance(priority, list) and priority:
+                    return [str(item).lower() for item in priority], "database"
+
+            if settings and settings.ai_provider:
+                return [settings.ai_provider.lower()], "database_legacy"
+
+            env_priority = os.getenv("AI_PROVIDER_PRIORITY")
+            if env_priority:
+                parsed = [item.strip().lower() for item in env_priority.split(",") if item.strip()]
+                if parsed:
+                    return parsed, "env"
+
+            env_provider = os.getenv("AI_PROVIDER")
+            if env_provider:
+                return [env_provider.lower()], "env_legacy"
+
+            return DEFAULT_AI_PROVIDER_PRIORITY.copy(), "default"
+
+    def save_ai_provider_priority(
+        self,
+        priority: list[str],
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """Persist ordered AI provider priority list."""
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
+                normalized_priority = [provider.lower() for provider in priority if provider]
+                settings.ai_provider_priority = normalized_priority
+                settings.ai_provider = normalized_priority[0] if normalized_priority else None
+                flag_modified(settings, "ai_provider_priority")
+                settings.updated_at = datetime.utcnow()
+                return True
+            except Exception as exc:
+                logger.error(f"Failed to save AI provider priority for user {user_id}: {exc}")
+                return False
+
+    def _get_ai_provider_configs_db(
+        self,
+        settings: UserSettingsModel | None,
+        mask_sensitive: bool = False,
+    ) -> Dict[str, Dict[str, Any]]:
+        """Load AI provider configs from DB and decrypt nested secrets."""
+        configs: Dict[str, Dict[str, Any]] = {}
+        raw_configs = settings.ai_provider_configs if settings else None
+
+        if isinstance(raw_configs, str):
+            try:
+                raw_configs = json.loads(raw_configs)
+            except json.JSONDecodeError:
+                raw_configs = None
+
+        if isinstance(raw_configs, dict):
+            for provider, provider_config in raw_configs.items():
+                if not isinstance(provider_config, dict):
+                    continue
+                configs[provider] = {
+                    "api_key": None,
+                    "base_url": provider_config.get("base_url"),
+                    "default_model": provider_config.get("default_model"),
+                }
+                api_key = provider_config.get("api_key")
+                if api_key:
+                    decrypted_key = decrypt_value(api_key)
+                    configs[provider]["api_key"] = (
+                        mask_credential(decrypted_key)
+                        if mask_sensitive and decrypted_key
+                        else decrypted_key
+                    )
+
+        if settings and (settings.openai_api_key or settings.openai_base_url):
+            openai_config = configs.setdefault(
+                "openai",
+                {"api_key": None, "base_url": None, "default_model": None},
+            )
+            if settings.openai_api_key and not openai_config.get("api_key"):
+                decrypted_key = decrypt_value(settings.openai_api_key)
+                openai_config["api_key"] = (
+                    mask_credential(decrypted_key)
+                    if mask_sensitive and decrypted_key
+                    else decrypted_key
+                )
+            if settings.openai_base_url and not openai_config.get("base_url"):
+                openai_config["base_url"] = settings.openai_base_url
+
+        return configs
+
+    def _get_ai_provider_env_config(self, provider: str, mask_sensitive: bool = False) -> Dict[str, Any]:
+        """Load provider config from environment variables."""
+        mapping = AI_PROVIDER_ENV_MAPPING.get(provider, {})
+        api_key = None
+        for env_key in mapping.get("api_key", []):
+            env_value = os.getenv(env_key)
+            if env_value:
+                api_key = env_value
+                break
+
+        base_url = None
+        for env_key in mapping.get("base_url", []):
+            env_value = os.getenv(env_key)
+            if env_value:
+                base_url = env_value
+                break
+
+        if base_url is None:
+            base_url = mapping.get("default_base_url")
+
+        return {
+            "api_key": mask_credential(api_key) if mask_sensitive and api_key else api_key,
+            "base_url": base_url,
+            "default_model": None,
+        }
+
+    def get_ai_provider(self, user_id: Optional[str] = None, db: Optional[Session] = None) -> Tuple[str, str]:
+        """Return active AI provider and its source."""
+        priority, source = self.get_ai_provider_priority(user_id=user_id, db=db)
+        return (priority[0] if priority else "openai"), source
+
+    def save_ai_provider(self, provider: str, user_id: Optional[str] = None, db: Optional[Session] = None) -> bool:
+        """Persist active AI provider selection."""
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
+                settings.ai_provider = provider
+                settings.updated_at = datetime.utcnow()
+                return True
+            except Exception as exc:
+                logger.error(f"Failed to save AI provider for user {user_id}: {exc}")
+                return False
+
+    def get_ai_provider_config(
+        self,
+        provider: str,
+        user_id: Optional[str] = None,
+        mask_sensitive: bool = True,
+        db: Optional[Session] = None,
+    ) -> Tuple[Dict[str, Any], str]:
+        """Get a single AI provider config with DB and env fallback."""
+        with self.managed_session(db, commit_on_success=False) as session:
+            normalized_user_id = self._normalize_user_id(user_id)
+            settings = session.query(UserSettingsModel).filter(
+                UserSettingsModel.user_id == normalized_user_id
+            ).first()
+            configs = self._get_ai_provider_configs_db(settings, mask_sensitive=mask_sensitive)
+            config = configs.get(provider)
+            if config and any(config.get(field) for field in ("api_key", "base_url", "default_model")):
+                return config, "database"
+
+            env_config = self._get_ai_provider_env_config(provider, mask_sensitive=mask_sensitive)
+            if env_config.get("api_key") or env_config.get("base_url"):
+                return env_config, "env"
+
+            return {
+                "api_key": None,
+                "base_url": AI_PROVIDER_ENV_MAPPING.get(provider, {}).get("default_base_url"),
+                "default_model": None,
+            }, "none"
+
+    def save_ai_provider_config(
+        self,
+        provider: str,
+        config: Dict[str, Any],
+        user_id: Optional[str] = None,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """Save one provider config inside the unified AI provider JSON blob."""
+        with self.managed_session(db) as session:
+            try:
+                normalized_user_id = self._normalize_user_id(user_id)
+                settings = self._get_or_create_settings(normalized_user_id, session)
+                current_configs = settings.ai_provider_configs or {}
+                if isinstance(current_configs, str):
+                    try:
+                        current_configs = json.loads(current_configs)
+                    except json.JSONDecodeError:
+                        current_configs = {}
+                provider_config = dict(current_configs.get(provider, {}))
+
+                for key in ("base_url", "default_model"):
+                    if key in config:
+                        provider_config[key] = config.get(key) or None
+
+                if "api_key" in config:
+                    api_key = config.get("api_key")
+                    provider_config["api_key"] = encrypt_value(str(api_key)) if api_key else None
+
+                current_configs[provider] = provider_config
+                settings.ai_provider_configs = current_configs
+                flag_modified(settings, "ai_provider_configs")
+                settings.updated_at = datetime.utcnow()
+
+                if provider == "openai":
+                    if "api_key" in config:
+                        settings.openai_api_key = provider_config.get("api_key")
+                    if "base_url" in config:
+                        settings.openai_base_url = provider_config.get("base_url")
+
+                return True
+            except Exception as exc:
+                logger.error(f"Failed to save AI provider config for {provider}: {exc}")
+                return False
+
+    def get_all_ai_provider_configs(
+        self,
+        user_id: Optional[str] = None,
+        mask_sensitive: bool = True,
+        db: Optional[Session] = None,
+    ) -> Dict[str, Any]:
+        """Get active provider and all provider configs with source info."""
+        active_provider, active_source = self.get_ai_provider(user_id=user_id, db=db)
+        provider_priority, provider_priority_source = self.get_ai_provider_priority(user_id=user_id, db=db)
+        providers: Dict[str, Dict[str, Any]] = {}
+        provider_sources: Dict[str, str] = {}
+
+        for provider in AI_PROVIDER_ENV_MAPPING:
+            config, source = self.get_ai_provider_config(
+                provider,
+                user_id=user_id,
+                mask_sensitive=mask_sensitive,
+                db=db,
+            )
+            providers[provider] = config
+            provider_sources[provider] = source
+
+        return {
+            "active_provider": active_provider,
+            "active_provider_source": active_source,
+            "provider_priority": provider_priority,
+            "provider_priority_source": provider_priority_source,
+            "providers": providers,
+            "provider_sources": provider_sources,
+        }
 
     def get_credential(
         self,
@@ -206,20 +485,25 @@ class CredentialsMixin:
         """
         with self.managed_session(db, commit_on_success=False) as session:
             result = {
+                "ai_models": {},
                 "openai": {},
                 "logto": {},
                 "proxies": {},
                 "exchanges": {}
             }
 
-            # OpenAI credentials
-            api_key, api_key_source = self.get_credential_with_fallback("openai_api_key", user_id, session)
-            base_url, base_url_source = self.get_credential_with_fallback("openai_base_url", user_id, session)
-
-            result["openai"]["api_key"] = mask_credential(api_key) if mask_sensitive and api_key else api_key
-            result["openai"]["api_key_source"] = api_key_source
-            result["openai"]["base_url"] = base_url
-            result["openai"]["base_url_source"] = base_url_source
+            ai_models = self.get_all_ai_provider_configs(
+                user_id=user_id,
+                mask_sensitive=mask_sensitive,
+                db=session,
+            )
+            result["ai_models"] = ai_models
+            result["openai"] = {
+                "api_key": ai_models["providers"]["openai"]["api_key"],
+                "api_key_source": ai_models["provider_sources"]["openai"],
+                "base_url": ai_models["providers"]["openai"]["base_url"],
+                "base_url_source": ai_models["provider_sources"]["openai"],
+            }
 
             # Logto credentials (both server-side and frontend OAuth)
             logto_fields = [

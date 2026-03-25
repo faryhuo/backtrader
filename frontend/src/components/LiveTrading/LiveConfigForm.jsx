@@ -22,6 +22,7 @@ import {
   RadarChartOutlined,
   RightOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
   SettingOutlined,
   SwapOutlined,
   WarningOutlined,
@@ -29,11 +30,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useStrategyParams } from '../../hooks/useStrategyParams';
 import { api } from '../../services/api';
+import SymbolSearchModal from './SymbolSearchModal';
 import './LiveConfigForm.css';
 
 const { Text, Title, Paragraph } = Typography;
 
-const COMMON_PAIRS = [
+// Fallback pairs used only when the Binance API is unavailable
+const FALLBACK_PAIRS = [
   'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'XRP/USDT',
   'DOGE/USDT', 'ADA/USDT', 'AVAX/USDT', 'DOT/USDT', 'MATIC/USDT',
 ];
@@ -71,6 +74,9 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   const [form] = Form.useForm();
   const [strategies, setStrategies] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [symbols, setSymbols] = useState(FALLBACK_PAIRS);
+  const [symbolsLoading, setSymbolsLoading] = useState(false);
+  const [symbolModalOpen, setSymbolModalOpen] = useState(false);
   const [mode, setMode] = useState('paper');
   const [paramsExpanded, setParamsExpanded] = useState(true);
   const [symbolRules, setSymbolRules] = useState(null);
@@ -104,6 +110,27 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     };
 
     loadStrategies();
+  }, []);
+
+  useEffect(() => {
+    const loadSymbols = async () => {
+      try {
+        setSymbolsLoading(true);
+        const data = await api.getSymbols();
+        const pairs = Array.isArray(data?.symbols)
+          ? data.symbols.map((s) => s.symbol)
+          : null;
+        if (pairs && pairs.length > 0) {
+          setSymbols(pairs);
+        }
+      } catch (_error) {
+        // Silently fall back to hardcoded pairs on network/API error
+      } finally {
+        setSymbolsLoading(false);
+      }
+    };
+
+    loadSymbols();
   }, []);
 
   const selectedSymbol = formValues.symbol || 'BTC/USDT';
@@ -161,6 +188,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   };
 
   return (
+    <>
     <div className="live-launch-grid">
       <div className="live-launch-panel">
         <div className="live-launch-hero">
@@ -237,7 +265,18 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
                   <Select
                     showSearch
                     optionFilterProp="label"
-                    options={COMMON_PAIRS.map((pair) => ({ value: pair, label: pair }))}
+                    loading={symbolsLoading}
+                    suffixIcon={
+                      <SearchOutlined
+                        style={{ cursor: 'pointer' }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSymbolModalOpen(true);
+                        }}
+                      />
+                    }
+                    options={symbols.map((pair) => ({ value: pair, label: pair }))}
                   />
                 </Form.Item>
               </Col>
@@ -532,6 +571,13 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
         </Card>
       </div>
     </div>
+
+    <SymbolSearchModal
+      open={symbolModalOpen}
+      onClose={() => setSymbolModalOpen(false)}
+      onSelect={(symbol) => form.setFieldsValue({ symbol })}
+    />
+    </>
   );
 };
 
