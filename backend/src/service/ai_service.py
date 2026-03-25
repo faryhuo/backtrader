@@ -18,6 +18,14 @@ def _encode_image(image_bytes: bytes) -> str:
     return base64.b64encode(image_bytes).decode("utf-8")
 
 
+def _build_anthropic_messages_url(base_url: str) -> str:
+    """Build the Anthropic-compatible messages endpoint from a base URL."""
+    normalized = (base_url or "https://api.anthropic.com/v1").rstrip("/")
+    if normalized.endswith("/v1"):
+        return f"{normalized}/messages"
+    return f"{normalized}/v1/messages"
+
+
 async def _call_openai_compatible(
     api_key: str,
     base_url: str,
@@ -123,7 +131,7 @@ async def _call_claude(
 
     async with httpx.AsyncClient(**kwargs) as client:
         response = await client.post(
-            f"{base_url.rstrip('/')}/messages",
+            _build_anthropic_messages_url(base_url),
             json={
                 "model": model,
                 "max_tokens": 4096,
@@ -165,6 +173,7 @@ async def call_ai(
         api_key = provider_config.get("api_key")
         base_url = provider_config.get("base_url")
         resolved_model = model or provider_config.get("default_model") or legacy_default_model
+        normalized_base_url = (base_url or "").rstrip("/").lower()
 
         if not api_key or not base_url:
             errors.append(f"{provider}: missing credentials")
@@ -176,6 +185,11 @@ async def call_ai(
         try:
             if provider == "gemini":
                 analysis = await _call_gemini(api_key, base_url, resolved_model, message, image_bytes, proxy)
+            elif provider == "minimax" and "/anthropic" in normalized_base_url:
+                if image_bytes is not None:
+                    errors.append(f"{provider}: anthropic-compatible endpoint does not support image input")
+                    continue
+                analysis = await _call_claude(api_key, base_url, resolved_model, message, image_bytes, proxy)
             elif provider == "claude":
                 analysis = await _call_claude(api_key, base_url, resolved_model, message, image_bytes, proxy)
             else:

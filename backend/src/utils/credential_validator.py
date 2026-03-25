@@ -22,6 +22,14 @@ from typing import Optional, Tuple
 logger = logging.getLogger(__name__)
 
 
+def _build_anthropic_messages_url(base_url: str) -> str:
+    """Build the Anthropic-compatible messages endpoint from a base URL."""
+    normalized = (base_url or "https://api.anthropic.com/v1").rstrip("/")
+    if normalized.endswith("/v1"):
+        return f"{normalized}/messages"
+    return f"{normalized}/v1/messages"
+
+
 def validate_openai_key(api_key: str, base_url: str = "https://api.openai.com/v1") -> Tuple[bool, str]:
     """
     Validate OpenAI API key by attempting to list models.
@@ -93,6 +101,7 @@ def validate_gemini_key(
 def validate_claude_key(
     api_key: str,
     base_url: str = "https://api.anthropic.com/v1",
+    model: str = "claude-3-5-haiku-latest",
 ) -> Tuple[bool, str]:
     """Validate Claude API key using the Messages API."""
     if not api_key:
@@ -102,14 +111,14 @@ def validate_claude_key(
         import requests
 
         response = requests.post(
-            f"{base_url.rstrip('/')}/messages",
+            _build_anthropic_messages_url(base_url),
             headers={
                 "x-api-key": api_key,
                 "anthropic-version": "2023-06-01",
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-3-5-haiku-latest",
+                "model": model,
                 "max_tokens": 16,
                 "messages": [{"role": "user", "content": "ping"}],
             },
@@ -128,13 +137,17 @@ def validate_ai_provider_key(
     provider: str,
     api_key: str,
     base_url: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """Validate a configured AI provider key."""
     provider_name = (provider or "openai").lower()
+    normalized_base_url = (base_url or "").rstrip("/").lower()
     if provider_name == "gemini":
         return validate_gemini_key(api_key, base_url or "https://generativelanguage.googleapis.com/v1beta")
+    if provider_name == "minimax" and "/anthropic" in normalized_base_url:
+        return validate_claude_key(api_key, base_url, model or "MiniMax-M2.7")
     if provider_name == "claude":
-        return validate_claude_key(api_key, base_url or "https://api.anthropic.com/v1")
+        return validate_claude_key(api_key, base_url or "https://api.anthropic.com/v1", model or "claude-3-5-haiku-latest")
     return validate_openai_key(api_key, base_url or "https://api.openai.com/v1")
 
 
@@ -408,7 +421,8 @@ def validate_credential(
         return validate_ai_provider_key(
             kwargs.get('provider', 'openai'),
             kwargs.get('api_key'),
-            kwargs.get('base_url')
+            kwargs.get('base_url'),
+            kwargs.get('model'),
         )
 
     elif credential_type == 'ccxt':

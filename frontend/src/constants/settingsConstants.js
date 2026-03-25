@@ -24,7 +24,7 @@ export const DEFAULT_CREDENTIALS = {
     ai_provider_priority: ['openai', 'minimax', 'gemini', 'claude'],
     ai_provider_configs: {
         openai: { api_key: '', base_url: 'https://api.openai.com/v1', default_model: '' },
-        minimax: { api_key: '', base_url: '', default_model: '' },
+        minimax: { api_key: '', base_url: 'https://api.minimaxi.com/anthropic', default_model: 'MiniMax-M2.7' },
         gemini: { api_key: '', base_url: 'https://generativelanguage.googleapis.com/v1beta', default_model: '' },
         claude: { api_key: '', base_url: 'https://api.anthropic.com/v1', default_model: '' }
     },

@@ -128,12 +128,15 @@ class ConfigManager:
                 "openai": "https://api.openai.com/v1",
                 "gemini": "https://generativelanguage.googleapis.com/v1beta",
                 "claude": "https://api.anthropic.com/v1",
-                "minimax": "",
+                "minimax": "https://api.minimaxi.com/anthropic",
+            }
+            default_models = {
+                "minimax": "MiniMax-M2.7",
             }
             config = {
                 "api_key": self.get(f"{provider_name.upper()}_API_KEY"),
                 "base_url": self.get(f"{provider_name.upper()}_BASE_URL", default_base_urls.get(provider_name)),
-                "default_model": None,
+                "default_model": default_models.get(provider_name),
             }
             source = "fallback"
 

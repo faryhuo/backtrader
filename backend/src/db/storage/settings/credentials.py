@@ -29,7 +29,8 @@ AI_PROVIDER_ENV_MAPPING = {
     "minimax": {
         "api_key": ["MINIMAX_API_KEY"],
         "base_url": ["MINIMAX_BASE_URL"],
-        "default_base_url": "",
+        "default_base_url": "https://api.minimaxi.com/anthropic",
+        "default_model": "MiniMax-M2.7",
     },
     "gemini": {
         "api_key": ["GEMINI_API_KEY"],
@@ -179,7 +180,7 @@ class CredentialsMixin:
         return {
             "api_key": mask_credential(api_key) if mask_sensitive and api_key else api_key,
             "base_url": base_url,
-            "default_model": None,
+            "default_model": mapping.get("default_model"),
         }
 
     def get_ai_provider(self, user_id: Optional[str] = None, db: Optional[Session] = None) -> Tuple[str, str]:
@@ -225,7 +226,7 @@ class CredentialsMixin:
             return {
                 "api_key": None,
                 "base_url": AI_PROVIDER_ENV_MAPPING.get(provider, {}).get("default_base_url"),
-                "default_model": None,
+                "default_model": AI_PROVIDER_ENV_MAPPING.get(provider, {}).get("default_model"),
             }, "none"
 
     def save_ai_provider_config(

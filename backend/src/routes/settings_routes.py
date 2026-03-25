@@ -238,6 +238,7 @@ class CredentialTestRequest(BaseModel):
     # For AI providers
     api_key: Optional[str] = None
     base_url: Optional[str] = None
+    model: Optional[str] = None
     # For CCXT
     exchange: Optional[str] = None
     mode: Optional[str] = None
@@ -496,6 +497,7 @@ def test_credentials(
                     storage, provider, 'api_key', request.api_key, user_id
                 ),
                 'base_url': request.base_url,
+                'model': request.model,
             }
             if credential_type == 'ai_model':
                 kwargs['provider'] = provider

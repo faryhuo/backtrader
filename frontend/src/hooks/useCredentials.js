@@ -128,7 +128,8 @@ export function useCredentials() {
                     credential_type: 'ai_model',
                     provider,
                     api_key: config.api_key,
-                    base_url: config.base_url
+                    base_url: config.base_url,
+                    model: config.default_model
                 };
             } else if (credentialType === 'openai') {
                 params = {
