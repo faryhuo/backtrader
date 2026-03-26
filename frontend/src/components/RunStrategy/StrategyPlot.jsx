@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Empty, Image, Segmented, Space, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Empty, Image, Segmented, Space, Tooltip, Typography } from 'antd';
 import ReactECharts from 'echarts-for-react';
 
 
@@ -8,6 +9,10 @@ const UP_COLOR = '#22c55e';
 const DOWN_COLOR = '#ef4444';
 const OVERLAY_COLORS = ['#38bdf8', '#f59e0b', '#a78bfa', '#f97316', '#14b8a6', '#f472b6'];
 const SUBPLOT_COLORS = ['#60a5fa', '#facc15', '#c084fc', '#34d399', '#fb7185', '#22d3ee'];
+const AXIS_TEXT_COLOR = '#cbd5e1';
+const AXIS_MUTED_COLOR = '#94a3b8';
+const PANE_LABEL_BG = 'rgba(15, 23, 42, 0.88)';
+const PANE_LABEL_BORDER = 'rgba(148, 163, 184, 0.3)';
 const { Text } = Typography;
 
 
@@ -51,9 +56,18 @@ function StrategyPlot({ result, t }) {
                             </Text>
                         )}
                         {hasUiChart && (
-                            <Text type="secondary" className="strategy-chart-summary">
-                                {chartSummary}
-                            </Text>
+                            <>
+                                <Tooltip
+                                    placement="bottomLeft"
+                                    title={buildChartLegendHelp(t)}
+                                    overlayClassName="strategy-chart-help-tooltip"
+                                >
+                                    <InfoCircleOutlined className="strategy-chart-help-icon" />
+                                </Tooltip>
+                                <Text type="secondary" className="strategy-chart-summary">
+                                    {chartSummary}
+                                </Text>
+                            </>
                         )}
                     </Space>
                 </div>
@@ -108,10 +122,41 @@ function buildChartSummary(chartData, t) {
 }
 
 
+function buildChartLegendHelp(t) {
+    return (
+        <div className="strategy-chart-help-content">
+            <div className="strategy-chart-help-title">
+                {t?.('history.chart_panels_title', 'Chart Panels')}
+            </div>
+            <div>
+                <strong>{t?.('history.price_chart', 'Price')}:</strong>{' '}
+                {t?.('history.chart_panel_price_desc', 'Candlesticks, overlay indicators, and buy/sell markers on the main price pane.')}
+            </div>
+            <div>
+                <strong>{t?.('history.volume', 'Volume')}:</strong>{' '}
+                {t?.('history.chart_panel_volume_desc', 'Trading volume bars for each candle.')}
+            </div>
+            <div>
+                <strong>Broker:</strong>{' '}
+                {t?.('history.chart_panel_broker_desc', 'Broker observer lines showing available cash and total portfolio value over time.')}
+            </div>
+            <div>
+                <strong>Trades:</strong>{' '}
+                {t?.('history.chart_panel_trades_desc', 'Trade observer bars showing profit and loss from closed trades.')}
+            </div>
+            <div>
+                <strong>{t?.('history.equity_curve', 'Equity Curve')}:</strong>{' '}
+                {t?.('history.chart_panel_equity_desc', 'Overall account equity trend across the backtest.')}
+            </div>
+        </div>
+    );
+}
+
+
 function buildChartHeight(chartData) {
     const subplotCount = (chartData.indicators || []).filter(indicator => indicator.subplot).length;
     const hasEquity = (chartData.equity_curve || []).length > 0;
-    return 520 + (subplotCount * 180) + (hasEquity ? 180 : 0);
+    return 560 + (subplotCount * 190) + (hasEquity ? 190 : 0);
 }
 
 
@@ -133,9 +178,9 @@ function buildChartOption(chartData, t) {
 
     const layout = buildPaneLayout(panes);
     const grids = layout.map((pane) => ({
-        left: 56,
+        left: 88,
         right: 24,
-        top: `${pane.top}%`,
+        top: `${pane.top + 1.6}%`,
         height: `${pane.height}%`,
         containLabel: true,
     }));
@@ -147,8 +192,9 @@ function buildChartOption(chartData, t) {
         boundaryGap: pane.key !== 'equity',
         axisLine: { lineStyle: { color: '#475569' } },
         axisLabel: {
-            color: '#94a3b8',
+            color: AXIS_MUTED_COLOR,
             hideOverlap: true,
+            margin: 10,
             show: index === layout.length - 1,
         },
         splitLine: { show: false },
@@ -160,13 +206,29 @@ function buildChartOption(chartData, t) {
         gridIndex: pane.gridIndex,
         scale: true,
         splitNumber: pane.key === 'price' ? 4 : 3,
+        nameLocation: 'end',
+        nameGap: 18,
         axisLine: { lineStyle: { color: '#475569' } },
-        axisLabel: { color: '#94a3b8' },
+        axisLabel: {
+            color: AXIS_MUTED_COLOR,
+            margin: 12,
+        },
         splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.12)' } },
         name: resolvePaneName(pane, t),
-        nameTextStyle: { color: '#94a3b8', padding: [0, 0, 8, 0] },
-        ...(pane.key === 'volume' ? { axisLabel: { color: '#94a3b8', formatter: formatCompactNumber } } : {}),
-        ...(pane.key === 'equity' ? { axisLabel: { color: '#94a3b8', formatter: value => `$${formatCompactNumber(value)}` } } : {}),
+        nameTextStyle: {
+            color: AXIS_TEXT_COLOR,
+            fontSize: 12,
+            fontWeight: 700,
+            align: 'left',
+            verticalAlign: 'bottom',
+            backgroundColor: PANE_LABEL_BG,
+            borderColor: PANE_LABEL_BORDER,
+            borderWidth: 1,
+            borderRadius: 6,
+            padding: [4, 8, 4, 8],
+        },
+        ...(pane.key === 'volume' ? { axisLabel: { color: AXIS_MUTED_COLOR, margin: 12, formatter: formatCompactNumber } } : {}),
+        ...(pane.key === 'equity' ? { axisLabel: { color: AXIS_MUTED_COLOR, margin: 12, formatter: value => `$${formatCompactNumber(value)}` } } : {}),
     }));
 
     const dataZoomAxisIndex = layout.map((_, index) => index);

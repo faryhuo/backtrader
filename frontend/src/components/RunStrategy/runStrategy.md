@@ -23,3 +23,5 @@
 
 - `StrategyPlot.jsx` should prefer structured backend `chart_data` over static images, using `plot_url` only as a compatibility fallback.
 - `StrategyPlot.jsx` now routes chart summary text, OHLC tooltip labels, broker legend labels, and image alt text through i18n keys in `history.json`.
+- Pane labels in `StrategyPlot.jsx` use higher-contrast axis title styling and wider left spacing so subplot names remain readable on dark charts.
+- The chart toolbar includes an info icon tooltip that explains the purpose of the main price pane, volume pane, broker observer, trades observer, and equity curve pane.

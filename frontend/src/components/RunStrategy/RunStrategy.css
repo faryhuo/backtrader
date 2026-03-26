@@ -522,6 +522,31 @@
     font-size: 12px;
 }
 
+.strategy-chart-help-icon {
+    color: var(--text-muted);
+    cursor: help;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.strategy-chart-help-icon:hover {
+    color: var(--text-main);
+}
+
+.strategy-chart-help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 360px;
+    line-height: 1.5;
+}
+
+.strategy-chart-help-title {
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 2px;
+}
+
 .strategy-chart-empty {
     min-height: 240px;
     display: flex;
