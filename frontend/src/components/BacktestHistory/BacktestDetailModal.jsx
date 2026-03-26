@@ -52,7 +52,8 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
 
     const result = {
         metrics: backtest.metrics,
-        plot_url: backtest.plot_url
+        plot_url: backtest.plot_url,
+        chart_data: backtest.chart_data || backtest.metrics?.chart_data || null,
     }
 
     const handleAIAnalysis = async () => {
@@ -320,6 +321,7 @@ function BacktestDetailModal({ visible, backtest, onClose, onAnalysisUpdate }) {
                     <div style={{ padding: '20px 0' }}>
                         <StrategyPlot
                             result={result}
+                            t={t}
                         />
                     </div>
                 </Tabs.TabPane>

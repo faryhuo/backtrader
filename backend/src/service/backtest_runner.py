@@ -23,6 +23,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.db.storage.market_data import get_bt_feed as get_data
+from src.db.storage.market_data import get_raw_data_json
+from src.service.chart_data_extractor import build_backtest_chart_data
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +157,12 @@ def run_backtest_legacy(
     metrics["sharpe"] = metrics["sharpe_ratio"]
     metrics["drawdown"] = metrics["max_drawdown"]
     metrics["returns"] = metrics["total_return"]
+    metrics["chart_data"] = build_backtest_chart_data(
+        strat,
+        get_raw_data_json(ticker, start_date, end_date),
+        metrics,
+        initial_cash,
+    )
 
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)

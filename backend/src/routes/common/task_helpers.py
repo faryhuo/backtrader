@@ -121,6 +121,7 @@ def create_task_config(request: BaseModel, task_type: str) -> Dict[str, Any]:
             "sizer_type": config.get("sizer_type", "fixed_size"),
             "sizer_config": config.get("sizer_config"),
             "timeframe": config.get("timeframe", "1d"),
+            "generate_chart_image": config.get("generate_chart_image", False),
         }
 
     

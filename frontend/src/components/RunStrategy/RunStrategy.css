@@ -508,6 +508,27 @@
     background: var(--sidebar-bg);
 }
 
+.strategy-chart-container {
+    min-height: 540px;
+}
+
+.strategy-chart-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.strategy-chart-summary {
+    font-size: 12px;
+}
+
+.strategy-chart-empty {
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .plot-container img {
     max-width: 100%;
     height: auto;

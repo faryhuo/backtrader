@@ -60,6 +60,7 @@ class BacktestRequest(BaseModel):
     timeframe: str | None = BACKTEST_DEFAULTS.TIMEFRAME
     strategy_name: str | None = None
     params: dict | None = None  # Strategy parameter overrides
+    generate_chart_image: bool = False
 
 
 class BacktestHistoryQuery(BaseModel):

@@ -47,11 +47,13 @@ async def backtest_executor(config: Dict[str, Any], progress_callback: Callable)
             - id: Backtest ID
             - backtest_id: Backtest ID (alias)
             - metrics: Performance metrics
-            - plot_url: URL to plot image
+            - chart_data: Structured chart payload
+            - plot_url: URL to plot image when image generation is enabled
     """
     backtest_id = str(uuid.uuid4())
-    filename = f"{backtest_id}.png"
-    save_path = IMAGES_DIR / filename
+    generate_chart_image = bool(config.get("generate_chart_image", False))
+    filename = f"{backtest_id}.png" if generate_chart_image else None
+    save_path = IMAGES_DIR / filename if filename else None
     
     await progress_callback(10, "Loading strategy")
     
@@ -118,7 +120,8 @@ async def backtest_executor(config: Dict[str, Any], progress_callback: Callable)
         "id": backtest_id,
         "backtest_id": backtest_id,
         "metrics": metrics,
-        "plot_url": f"/images/{filename}",
+        "chart_data": metrics.get("chart_data"),
+        "plot_url": f"/images/{filename}" if filename else None,
     }
 
 

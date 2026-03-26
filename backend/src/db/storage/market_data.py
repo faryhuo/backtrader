@@ -403,12 +403,26 @@ def get_bt_feed(
     return bt.feeds.PandasData(dataname=data)
 
 
-def get_raw_data_json(ticker: str, start_date: str, end_date: str):
+def get_raw_data_json(
+    ticker: str,
+    start_date: str,
+    end_date: str,
+    timeframe: str = "1d",
+):
     """
     Fetch market data and return as a list of dictionaries for the frontend.
     """
     try:
-        data = get_data(ticker, start_date, end_date)
+        interval_map = {
+            "1d": "1d",
+            "1h": "1h",
+            "15m": "15m",
+            "5m": "5m",
+            "1m": "1m",
+        }
+        interval = interval_map.get(timeframe, "1d")
+
+        data = get_data(ticker, start_date, end_date, interval=interval)
         
         # Reset index to make Date a column if it's the index
         if 'Date' not in data.columns:
@@ -424,8 +438,14 @@ def get_raw_data_json(ticker: str, start_date: str, end_date: str):
             if pd.isna(date_val):
                 continue
                 
+            time_format = "%Y-%m-%d"
+            if hasattr(date_val, "hour") and (
+                date_val.hour != 0 or date_val.minute != 0 or date_val.second != 0
+            ):
+                time_format = "%Y-%m-%d %H:%M:%S"
+
             results.append({
-                "time": date_val.strftime("%Y-%m-%d"),
+                "time": date_val.strftime(time_format),
                 "open": float(row["Open"]),
                 "high": float(row["High"]),
                 "low": float(row["Low"]),

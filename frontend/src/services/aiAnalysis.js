@@ -66,17 +66,19 @@ export const performFullStrategyAnalysis = async ({
 
     // 2. Fetch Plot Image Blob
     let file = null;
-    try {
-        const imageUrl = `${API_URL}${result.plot_url}`;
-        const res = await fetch(imageUrl);
-        if (res.ok) {
-            const blob = await res.blob();
-            file = new File([blob], "chart.png", { type: "image/png" });
-        } else {
-            console.warn("Failed to download chart image for analysis");
+    if (result.plot_url) {
+        try {
+            const imageUrl = `${API_URL}${result.plot_url}`;
+            const res = await fetch(imageUrl);
+            if (res.ok) {
+                const blob = await res.blob();
+                file = new File([blob], "chart.png", { type: "image/png" });
+            } else {
+                console.warn("Failed to download chart image for analysis");
+            }
+        } catch (e) {
+            console.warn("Error fetching chart image", e);
         }
-    } catch (e) {
-        console.warn("Error fetching chart image", e);
     }
 
     // 3. Prepare Prompt Content - using shared formatters to ensure consistency with UI

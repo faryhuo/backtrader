@@ -35,7 +35,7 @@ export function buildTabItems({
             label: <span><BarChartOutlined className="tab-icon" /> {t('history.tab_chart', 'Chart')}</span>,
             children: (
                 <div style={{ padding: '20px 0' }}>
-                    <StrategyPlot result={result} />
+                    <StrategyPlot result={result} t={t} />
                 </div>
             )
         },

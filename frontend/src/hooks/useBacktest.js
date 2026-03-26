@@ -92,7 +92,8 @@ export function useBacktest() {
                 sizer_config: sizerConfig || null,
                 timeframe: timeframe || '1d',
                 strategy_name: selectedStrategy,
-                params: paramsToSend
+                params: paramsToSend,
+                generate_chart_image: true,
             });
 
             // Handle async task-based response

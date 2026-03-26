@@ -73,3 +73,4 @@
 
 - `ai_service.py` is now the unified backend AI entry point. Provider-specific calls should go through it instead of being implemented directly in route handlers.
 - AI provider selection now supports multiple enabled providers with ordered fallback priority.
+- Single-asset backtests now emit structured `chart_data` (OHLCV, indicators, trade markers, equity curve) so the frontend can render charts without relying on generated PNG output.

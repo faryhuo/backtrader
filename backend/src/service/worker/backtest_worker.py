@@ -79,8 +79,10 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         import matplotlib.pyplot as plt
         
         from src.db.storage.market_data import get_bt_feed
+        from src.db.storage.market_data import get_raw_data_json
         from src.service.strategy_repo import read_user_strategy_source
         from src.service.strategy_sandbox import execute_strategy_code
+        from src.service.chart_data_extractor import build_backtest_chart_data
         
         # Disable matplotlib popups
         plt.ioff()
@@ -179,6 +181,17 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         metrics["drawdown"] = max_dd
         metrics["returns"] = total_return
         metrics["calmar"] = metrics.get("calmar_ratio")
+        metrics["chart_data"] = build_backtest_chart_data(
+            strat,
+            get_raw_data_json(
+                task.ticker,
+                task.start_date,
+                task.end_date,
+                timeframe=getattr(task, "timeframe", "1d") or "1d",
+            ),
+            metrics,
+            task.initial_cash,
+        )
 
 
         

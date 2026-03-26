@@ -29,3 +29,6 @@
 - 服务方法按业务域分组导出，避免“巨型 api 文件”。
 - WebSocket 事件名与 payload schema 必须与后端 `backend/src/routes/websocket_routes.py` 约定一致。
 - 新增接口需同步更新类型/注释与对应页面/组件使用方式。
+## Recent Notes
+
+- Backtest result consumers should treat structured `chart_data` as the primary chart source and handle `plot_url` as optional.

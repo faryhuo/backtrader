@@ -58,6 +58,7 @@ class TestPydanticModels:
         assert request.stake == 100
         assert request.strategy_name is None
         assert request.params is None
+        assert request.generate_chart_image is False
 
     def test_backtest_history_query_defaults(self):
         """Test BacktestHistoryQuery with default values."""

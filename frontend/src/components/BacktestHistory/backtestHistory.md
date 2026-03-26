@@ -15,4 +15,6 @@
 
 ## 约定与规范
 - 与回测结果数据结构保持一致，变更需同步后端 `routes` 与 `service` 约定。
+## Recent Notes
 
+- `BacktestDetailModal.jsx` now passes structured `chart_data` through to the shared `StrategyPlot` component so history detail charts match the Run Strategy page behavior.

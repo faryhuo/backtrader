@@ -19,4 +19,7 @@
 
 ## 约定与规范
 - 参数 schema 与后端策略执行接口保持一致。
+## Recent Notes
 
+- `StrategyPlot.jsx` should prefer structured backend `chart_data` over static images, using `plot_url` only as a compatibility fallback.
+- `StrategyPlot.jsx` now routes chart summary text, OHLC tooltip labels, broker legend labels, and image alt text through i18n keys in `history.json`.

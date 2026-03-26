@@ -462,6 +462,7 @@ class BacktestStorage(BaseStorage):
 
         if include_full_metrics:
             result["metrics"] = record.metrics if record.metrics is not None else {}
+            result["chart_data"] = result["metrics"].get("chart_data")
             result["ai_analysis"] = record.ai_analysis if record.ai_analysis is not None else None
             result["strategy_code"] = record.strategy_code
             result["params"] = record.params if record.params is not None else None
