@@ -26,6 +26,45 @@ def _build_anthropic_messages_url(base_url: str) -> str:
     return f"{normalized}/v1/messages"
 
 
+def _supports_image_input(provider: str, model: str | None, base_url: str | None) -> bool:
+    """Best-effort capability check to avoid sending images to text-only models."""
+    provider_name = (provider or "").lower()
+    model_name = (model or "").lower()
+    normalized_base_url = (base_url or "").rstrip("/").lower()
+
+    # MiniMax anthropic-compatible endpoint in this project is treated as text-only.
+    if provider_name == "minimax" and "/anthropic" in normalized_base_url:
+        return False
+
+    # Common text-only model hints across OpenAI-compatible providers.
+    text_only_markers = (
+        "mini",
+        "nano",
+        "text",
+        "chat",
+        "coder",
+        "instruct",
+        "reasoner",
+        "m2.7",
+    )
+    if any(marker in model_name for marker in text_only_markers):
+        if any(marker in model_name for marker in ("vision", "vl", "omni", "4o", "sonnet", "opus", "gemini")):
+            return True
+        if provider_name in {"openai", "minimax"}:
+            return False
+
+    # Gemini multimodal models generally support image input.
+    if provider_name == "gemini":
+        return True
+
+    # Claude 3+/4 models support image input.
+    if provider_name == "claude":
+        return True
+
+    # OpenAI-compatible default: allow unless model name strongly indicates text-only.
+    return True
+
+
 async def _call_openai_compatible(
     api_key: str,
     base_url: str,
@@ -174,6 +213,7 @@ async def call_ai(
         base_url = provider_config.get("base_url")
         resolved_model = model or provider_config.get("default_model") or legacy_default_model
         normalized_base_url = (base_url or "").rstrip("/").lower()
+        effective_image_bytes = image_bytes
 
         if not api_key or not base_url:
             errors.append(f"{provider}: missing credentials")
@@ -182,23 +222,28 @@ async def call_ai(
             errors.append(f"{provider}: missing runtime model")
             continue
 
+        if effective_image_bytes is not None and not _supports_image_input(provider, resolved_model, base_url):
+            logger.info(
+                "AI provider '%s' model '%s' does not support image input, sending text-only request",
+                provider,
+                resolved_model,
+            )
+            effective_image_bytes = None
+
         try:
             if provider == "gemini":
-                analysis = await _call_gemini(api_key, base_url, resolved_model, message, image_bytes, proxy)
+                analysis = await _call_gemini(api_key, base_url, resolved_model, message, effective_image_bytes, proxy)
             elif provider == "minimax" and "/anthropic" in normalized_base_url:
-                if image_bytes is not None:
-                    errors.append(f"{provider}: anthropic-compatible endpoint does not support image input")
-                    continue
-                analysis = await _call_claude(api_key, base_url, resolved_model, message, image_bytes, proxy)
+                analysis = await _call_claude(api_key, base_url, resolved_model, message, effective_image_bytes, proxy)
             elif provider == "claude":
-                analysis = await _call_claude(api_key, base_url, resolved_model, message, image_bytes, proxy)
+                analysis = await _call_claude(api_key, base_url, resolved_model, message, effective_image_bytes, proxy)
             else:
                 analysis = await _call_openai_compatible(
                     api_key,
                     base_url,
                     resolved_model,
                     message,
-                    image_bytes,
+                    effective_image_bytes,
                     proxy,
                 )
 
