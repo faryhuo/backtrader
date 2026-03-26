@@ -11,5 +11,6 @@
   "data_management": "Data Management",
   "task_center": "Task Center",
   "reports": "Reports",
-  "settings": "Settings"
+  "settings": "Settings",
+  "onboarding": "Setup Wizard"
 }

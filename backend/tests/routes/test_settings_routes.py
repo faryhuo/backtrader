@@ -187,6 +187,7 @@ class TestCredentialMaskResolution:
             "openai",
             api_key="sk-live-secret",
             base_url="https://api.openai.com/v1",
+            model=None,
         )
 
     @patch("src.routes.settings_routes.get_settings_storage")

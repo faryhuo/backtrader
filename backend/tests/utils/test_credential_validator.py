@@ -78,9 +78,12 @@ def make_fake_ccxt(monkeypatch, *, balance_total=None, raise_exc=None, sandbox_s
         pass
 
     class FakeExchange:
+        last_instance = None
+
         def __init__(self, config):
             self.config = config
             self.sandbox_enabled = False
+            FakeExchange.last_instance = self
 
         def set_sandbox_mode(self, enabled: bool):
             if not sandbox_supported:
@@ -106,11 +109,21 @@ def make_fake_ccxt(monkeypatch, *, balance_total=None, raise_exc=None, sandbox_s
 
 
 def test_validate_ccxt_credentials_success(monkeypatch):
-    make_fake_ccxt(monkeypatch, balance_total={"USDT": 1.0, "BTC": 0.0})
+    _, fake_exchange = make_fake_ccxt(monkeypatch, balance_total={"USDT": 1.0, "BTC": 0.0})
 
     ok, msg = validate_ccxt_credentials("binance", "paper", "k", "s")
     assert ok is True
-    assert "Connected to binance (paper)" in msg
+    assert "Connected to binance (paper slot, production endpoint)" in msg
+    assert fake_exchange.last_instance.sandbox_enabled is False
+
+
+def test_validate_ccxt_credentials_can_use_testnet_when_requested(monkeypatch):
+    _, fake_exchange = make_fake_ccxt(monkeypatch, balance_total={"USDT": 1.0})
+
+    ok, msg = validate_ccxt_credentials("binance", "paper", "k", "s", use_testnet=True)
+    assert ok is True
+    assert "testnet endpoint" in msg
+    assert fake_exchange.last_instance.sandbox_enabled is True
 
 
 def test_validate_ccxt_credentials_unsupported_exchange(monkeypatch):
@@ -130,7 +143,7 @@ def test_validate_ccxt_credentials_auth_error(monkeypatch):
 
     ok, msg = validate_ccxt_credentials("binance", "live", "k", "s")
     assert ok is False
-    assert "Authentication failed" in msg
+    assert "Authentication failed on production endpoint" in msg
 
 
 def test_validate_ccxt_credentials_empty_inputs():
@@ -161,7 +174,7 @@ def test_validate_ccxt_credentials_async_success(monkeypatch):
 
     ok, msg = asyncio.run(validate_ccxt_credentials_async("binance", "paper", "k", "s"))
     assert ok is True
-    assert "Connected to binance (paper)" in msg
+    assert "Connected to binance (paper slot, production endpoint)" in msg
 
 
 def test_validate_logto_config_requests(monkeypatch):

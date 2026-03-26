@@ -74,3 +74,8 @@
 - `ai_service.py` is now the unified backend AI entry point. Provider-specific calls should go through it instead of being implemented directly in route handlers.
 - AI provider selection now supports multiple enabled providers with ordered fallback priority.
 - Single-asset backtests now emit structured `chart_data` (OHLCV, indicators, trade markers, equity curve) so the frontend can render charts without relying on generated PNG output.
+- `setup_wizard_service.py` now manages first-run bootstrap configuration by reading and writing `.env` and JSON config files used during initial installation.
+- The onboarding bootstrap flow now writes backend files only; it no longer manages `frontend/.env` or `VITE_API_BASE_URL`.
+- The onboarding AI payload mirrors the unified provider model and supports ordered fallback across OpenAI, MiniMax, Gemini, and Claude.
+- The onboarding trading bootstrap is intentionally scoped to Binance and exposes paper/live credentials together in one flow.
+- The onboarding setup test endpoint now accepts per-mode Binance validation targets so paper tabs can validate against testnet while live tabs validate against production.

@@ -12,6 +12,7 @@ import {
     UnorderedListOutlined,
     FileTextOutlined,
     SettingOutlined,
+    DeploymentUnitOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
 } from '@ant-design/icons'
@@ -135,6 +136,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><SettingOutlined /></span>
                     {!collapsed && <span>{t('nav.settings', 'Settings')}</span>}
+                </Link>
+                <Link
+                    to="/onboarding"
+                    className={getNavClass('/onboarding')}
+                    title={t('nav.onboarding', 'Setup Wizard')}
+                >
+                    <span className="icon"><DeploymentUnitOutlined /></span>
+                    {!collapsed && <span>{t('nav.onboarding', 'Setup Wizard')}</span>}
                 </Link>
             </nav>
             <div className="sidebar-footer">

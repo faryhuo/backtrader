@@ -30,6 +30,29 @@ def _build_anthropic_messages_url(base_url: str) -> str:
     return f"{normalized}/v1/messages"
 
 
+def _should_use_testnet_for_validation(
+    exchange: str,
+    mode: str,
+    use_testnet: Optional[bool] = None,
+) -> bool:
+    """
+    Decide whether credential validation should target a sandbox/testnet endpoint.
+
+    Setup and settings credential tests default to production endpoint validation,
+    even for the "paper" credential slot, because users may store official Binance
+    API keys in both paper/live slots during onboarding.
+    """
+    if use_testnet is not None:
+        return use_testnet
+
+    _ = exchange, mode
+    return False
+
+
+def _validation_endpoint_label(use_testnet: bool) -> str:
+    return "testnet" if use_testnet else "production"
+
+
 def validate_openai_key(api_key: str, base_url: str = "https://api.openai.com/v1") -> Tuple[bool, str]:
     """
     Validate OpenAI API key by attempting to list models.
@@ -156,7 +179,8 @@ def validate_ccxt_credentials(
     mode: str,
     api_key: str,
     secret: str,
-    passphrase: Optional[str] = None
+    passphrase: Optional[str] = None,
+    use_testnet: Optional[bool] = None,
 ) -> Tuple[bool, str]:
     """
     Validate CCXT exchange credentials by fetching account balance.
@@ -195,8 +219,12 @@ def validate_ccxt_credentials(
 
         ex = exchange_class(config)
 
-        # Enable sandbox mode for paper trading
-        if mode == 'paper':
+        validate_on_testnet = _should_use_testnet_for_validation(exchange, mode, use_testnet)
+        endpoint_label = _validation_endpoint_label(validate_on_testnet)
+
+        # Sandbox validation is opt-in. By default we validate against the
+        # production endpoint so official API keys can be checked from setup UIs.
+        if validate_on_testnet:
             if hasattr(ex, 'set_sandbox_mode'):
                 ex.set_sandbox_mode(True)
             else:
@@ -209,19 +237,26 @@ def validate_ccxt_credentials(
         total_balance = balance.get('total', {})
         currency_count = len([k for k, v in total_balance.items() if v > 0])
 
-        return True, f"Valid - Connected to {exchange} ({mode}), {currency_count} currencies with balance"
+        return (
+            True,
+            f"Valid - Connected to {exchange} ({mode} slot, {endpoint_label} endpoint), "
+            f"{currency_count} currencies with balance",
+        )
 
     except ccxt.AuthenticationError as e:
-        return False, f"Authentication failed: Invalid API key or secret ({str(e)[:100]})"
+        return False, (
+            f"Authentication failed on {_validation_endpoint_label(_should_use_testnet_for_validation(exchange, mode, use_testnet))} "
+            f"endpoint: Invalid API key or secret ({str(e)[:100]})"
+        )
     except ccxt.PermissionDenied as e:
         return False, f"Permission denied: API key lacks required permissions ({str(e)[:100]})"
     except ccxt.InvalidNonce as e:
         return False, f"Invalid nonce: Check system time synchronization ({str(e)[:100]})"
     except ccxt.NetworkError as e:
-        if mode == 'paper':
-            return False, f"Network error: Check if {exchange} testnet is accessible ({str(e)[:100]})"
-        else:
-            return False, f"Network error: {str(e)[:100]}"
+        endpoint_label = _validation_endpoint_label(
+            _should_use_testnet_for_validation(exchange, mode, use_testnet)
+        )
+        return False, f"Network error on {endpoint_label} endpoint: {str(e)[:100]}"
     except ccxt.ExchangeError as e:
         return False, f"Exchange error: {str(e)[:100]}"
     except AttributeError as e:
@@ -235,7 +270,8 @@ async def validate_ccxt_credentials_async(
     mode: str,
     api_key: str,
     secret: str,
-    passphrase: Optional[str] = None
+    passphrase: Optional[str] = None,
+    use_testnet: Optional[bool] = None,
 ) -> Tuple[bool, str]:
     """
     Async version of validate_ccxt_credentials.
@@ -277,8 +313,12 @@ async def validate_ccxt_credentials_async(
         ex = exchange_class(config)
 
         try:
-            # Enable sandbox mode for paper trading
-            if mode == 'paper':
+            validate_on_testnet = _should_use_testnet_for_validation(exchange, mode, use_testnet)
+            endpoint_label = _validation_endpoint_label(validate_on_testnet)
+
+            # Sandbox validation is opt-in. By default we validate against the
+            # production endpoint so official API keys can be checked from setup UIs.
+            if validate_on_testnet:
                 if hasattr(ex, 'set_sandbox_mode'):
                     ex.set_sandbox_mode(True)
 
@@ -289,7 +329,11 @@ async def validate_ccxt_credentials_async(
             total_balance = balance.get('total', {})
             currency_count = len([k for k, v in total_balance.items() if v > 0])
 
-            return True, f"Valid - Connected to {exchange} ({mode}), {currency_count} currencies with balance"
+            return (
+                True,
+                f"Valid - Connected to {exchange} ({mode} slot, {endpoint_label} endpoint), "
+                f"{currency_count} currencies with balance",
+            )
 
         finally:
             await ex.close()
@@ -299,17 +343,18 @@ async def validate_ccxt_credentials_async(
         error_type = type(e).__name__
         error_msg = str(e)[:100]
 
+        endpoint_label = _validation_endpoint_label(
+            _should_use_testnet_for_validation(exchange, mode, use_testnet)
+        )
+
         if "Authentication" in error_type:
-            return False, f"Authentication failed: Invalid API key or secret ({error_msg})"
+            return False, f"Authentication failed on {endpoint_label} endpoint: Invalid API key or secret ({error_msg})"
         elif "PermissionDenied" in error_type:
             return False, f"Permission denied: API key lacks required permissions ({error_msg})"
         elif "InvalidNonce" in error_type:
             return False, f"Invalid nonce: Check system time synchronization ({error_msg})"
         elif "Network" in error_type:
-            if mode == 'paper':
-                return False, f"Network error: Check if {exchange} testnet is accessible ({error_msg})"
-            else:
-                return False, f"Network error: {error_msg}"
+            return False, f"Network error on {endpoint_label} endpoint: {error_msg}"
         elif "Exchange" in error_type:
             return False, f"Exchange error: {error_msg}"
         else:
@@ -431,7 +476,8 @@ def validate_credential(
             kwargs.get('mode'),
             kwargs.get('api_key'),
             kwargs.get('secret'),
-            kwargs.get('passphrase')
+            kwargs.get('passphrase'),
+            kwargs.get('use_testnet'),
         )
 
     elif credential_type == 'logto':

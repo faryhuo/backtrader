@@ -15,6 +15,7 @@ import WalkForward from './pages/WalkForward'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
 import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
+import OnboardingSetup from './pages/OnboardingSetup'
 import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
@@ -64,6 +65,7 @@ function AppContent() {
                         {/* Landing Page - Accessible to everyone */}
                         <Route path="/" element={<Home />} />
                         <Route path="/welcome" element={<Home />} />
+                        <Route path="/onboarding" element={<OnboardingSetup />} />
 
                         {/* Auth Routes */}
                         {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}

@@ -18,3 +18,7 @@
 - 按功能域拆分文件，接口保持小而清晰。
 - 不在 utils 中依赖具体业务模块，防止循环引用。
 
+## Recent Notes
+
+- `credential_validator.py` now validates Binance credentials against the production endpoint by default, even for the `paper` credential slot. Testnet validation is now opt-in.
+

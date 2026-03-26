@@ -21,6 +21,7 @@ from src.routes.websocket_routes import router as websocket_router
 from src.routes.task_routes import router as task_router
 from src.routes.site_config_routes import router as site_config_router
 from src.routes.report_routes import router as report_router
+from src.routes.setup_routes import router as setup_router
 from src.routes.frontend_routes import mount_frontend
 from src.utils.exception_handlers import create_exception_handlers
 from src.utils.request_context import RequestContextMiddleware
@@ -132,6 +133,7 @@ app.include_router(websocket_router)  # WebSocket routes (no prefix)
 app.include_router(task_router, prefix=prefix)
 app.include_router(site_config_router, prefix=prefix)  # Site config (public, no auth)
 app.include_router(report_router, prefix=prefix)  
+app.include_router(setup_router, prefix=prefix)
 mount_frontend(app)
 
 __all__ = ["app"]

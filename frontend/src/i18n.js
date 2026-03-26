@@ -27,6 +27,7 @@ import reportcenterEn from './locales/en/report_center.json';
 import taskcenterEn from './locales/en/task_center.json';
 import sizerEn from './locales/en/sizer.json';
 import timeframeEn from './locales/en/timeframe.json';
+import onboardingEn from './locales/en/onboarding.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -53,6 +54,7 @@ import reportcenterZh from './locales/zh/report_center.json';
 import taskcenterZh from './locales/zh/task_center.json';
 import sizerZh from './locales/zh/sizer.json';
 import timeframeZh from './locales/zh/timeframe.json';
+import onboardingZh from './locales/zh/onboarding.json';
 
 const en = {
   app: appEn,
@@ -79,6 +81,7 @@ const en = {
   taskcenter: taskcenterEn,
   sizer: sizerEn,
   timeframe: timeframeEn,
+  onboarding: onboardingEn,
 };
 
 const zh = {
@@ -106,6 +109,7 @@ const zh = {
   taskcenter: taskcenterZh,
   sizer: sizerZh,
   timeframe: timeframeZh,
+  onboarding: onboardingZh,
 };
 
 i18n

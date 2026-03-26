@@ -29,3 +29,8 @@
 ## Recent Notes
 
 - `Settings.jsx` now presents a unified AI model provider section for OpenAI, MiniMax, Gemini, and Claude.
+- `OnboardingSetup.jsx` now provides a dedicated first-run setup wizard for file-backed bootstrap configuration.
+- `OnboardingSetup.jsx` now mirrors the unified AI provider model, removes `DATABASE_URL` / `VITE_API_BASE_URL` onboarding inputs, and keeps trading bootstrap limited to Binance with paper/live credentials shown together.
+- `OnboardingSetup.jsx` now provides an official Binance API guide card directly above the Binance API key inputs, including creation, permission, and IP restriction guidance.
+- `OnboardingSetup.jsx` review step now focuses on a grouped change summary so operators can confirm what settings changed, instead of reading backend file targets.
+- `OnboardingSetup.jsx` now splits Binance trading setup into `paper` and `live` tabs, each with its own guide and mode-specific configuration block.
