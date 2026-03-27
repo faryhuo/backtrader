@@ -9,11 +9,15 @@
   "test_success": "Connection test passed",
   "test_failed": "Connection test failed",
   "milestone_title": "MVP scope",
-  "milestone_desc": "This wizard focuses on file-based bootstrap settings: security, storage, data source, AI, trading, branding, and review.",
+  "milestone_desc": "This wizard focuses on file-based bootstrap settings: deployment, storage, data source, AI, trading, branding, and review.",
   "deployment": {
     "local": "Local development or single-machine install",
     "public": "Public deployment with stricter auth expectations"
   },
+  "deployment_local_title": "Local mode keeps login disabled",
+  "deployment_local_desc": "Selecting local deployment keeps authentication disabled and skips the Logto step.",
+  "deployment_public_title": "Public mode will require login",
+  "deployment_public_desc": "Selecting public deployment automatically enables authentication and adds the Logto step to this wizard.",
   "steps": {
     "welcome": "Welcome",
     "security": "Security",
@@ -45,8 +49,10 @@
     "default_market": "Default market",
     "paper_balance": "Paper balance (USDT)",
     "sandbox_url": "Sandbox URL",
+    "base_url": "Base URL",
     "api_key": "API key",
     "secret": "Secret",
+    "default_model": "Default runtime model",
     "passphrase": "Passphrase",
     "site_title": "Site title",
     "site_description": "Site description",
@@ -58,7 +64,6 @@
   },
   "hints": {
     "encryption_key": "Changing this later can make previously encrypted credentials unreadable.",
-    "enable_login": "When disabled, the app stays accessible without authentication.",
     "enable_ai": "AI is optional. Leaving it disabled keeps analysis features unavailable.",
     "enable_trading": "Prefer paper mode first. Live mode requires explicit acknowledgement and full credentials."
   },
@@ -80,13 +85,14 @@
   "validation": {
     "encryption_key": "Encryption key is required.",
     "sqlite_path": "SQLite path is required.",
-    "logto": "All Logto fields are required when login is enabled.",
+    "logto": "All Logto fields are required when public deployment enables authentication.",
     "eodhd": "EODHD API key is required when EODHD is enabled.",
     "openai": "OpenAI API key is required when AI is enabled.",
     "trading_credentials": "Trading credentials are required for the selected exchange and mode.",
     "live_ack": "Live mode requires explicit risk acknowledgement.",
     "ai_provider": "Enable at least one AI provider.",
     "ai_provider_keys": "API key is required for all enabled AI providers.",
+    "ai_provider_models": "Runtime model name is required for all enabled AI providers.",
     "paper_credentials": "Binance paper credentials require both API key and secret.",
     "live_credentials": "Binance live credentials require both API key and secret.",
     "live_mode": "Enable live trading before selecting live as the default mode.",
@@ -128,30 +134,60 @@
     "live_warning_title": "Security checklist",
     "live_warning": "Binance recommends enabling only required permissions, storing secrets outside source control, rotating keys regularly, and deleting or replacing a key immediately if it may have been exposed."
   },
-  "ai_note": "The wizard stores provider credentials and fallback priority. Runtime model names can be configured later in Settings.",
+  "datasource": {
+    "title": "Data Source Priority",
+    "priority_help": "Drag to reorder. Data will be fetched from sources in order until successful.",
+    "enabled_sources": "Enabled Sources",
+    "priority_order": "Priority Order",
+    "min_source_warning": "At least one data source is required.",
+    "eodhd_api_key": "EODHD API Key",
+    "enter_api_key": "Enter EODHD API Key",
+    "eodhd_requires_key": "Requires API key",
+    "empty_priority": "Enable at least one source to define priority.",
+    "sources": {
+      "yahoo": "Yahoo Finance",
+      "yahoo_desc": "Free, supports major global markets",
+      "eodhd": "EODHD",
+      "eodhd_desc": "Premium data source, requires API key",
+      "database": "Local Database",
+      "database_desc": "Cached data from previous fetches"
+    }
+  },
+  "ai_note": "The wizard stores provider credentials, fallback priority, and the runtime model name used by each enabled provider.",
   "trading_note": "The onboarding flow only supports Binance and lets you configure paper and live credentials together.",
+  "security_auth_enabled": "Authentication is enabled for this setup",
+  "security_auth_enabled_desc": "This is controlled by the deployment mode you selected on the first step. Public deployment requires Logto configuration before finishing setup.",
+  "security_auth_disabled": "Authentication is disabled for this setup",
+  "security_auth_disabled_desc": "This is controlled by the deployment mode you selected on the first step. Switch back to public deployment if this instance should require login.",
   "enabled": "Enabled",
   "disabled": "Disabled",
   "live_ack": "I understand live trading can place real orders and accept that risk.",
   "review_title": "Review before saving",
-  "review_desc": "This page summarizes what changed in your setup so you can confirm the effective configuration before saving.",
+  "review_desc": "This page summarizes the effective overrides that will be saved so you can confirm what actually changed before applying them.",
   "review": {
     "metrics": {
       "changed_areas": "Changed areas",
       "changed_items": "Changed items",
+      "override_groups": "Override groups",
+      "override_items": "Override items",
       "items_label": "items"
     },
     "no_changes_title": "No unsaved setup changes",
     "no_changes_desc": "Your current selections match the saved bootstrap configuration.",
+    "override_preview_title": "Effective override preview",
+    "override_preview_desc": "Only values that differ from the currently saved bootstrap configuration are shown here.",
+    "previous_value": "Previous",
     "sections": {
       "security": "Security & access",
       "storage": "Storage & data",
       "ai": "AI",
       "trading": "Trading",
-      "brand": "Brand & report"
+      "brand": "Brand & report",
+      "other": "Other overrides"
     },
     "fields": {
       "deployment_mode": "Deployment mode",
+      "login_access": "Login access",
       "encryption_key": "Encryption key",
       "logto_issuer": "Logto issuer",
       "logto_app_id": "Logto app ID",

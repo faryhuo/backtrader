@@ -5,41 +5,53 @@ import {
     Alert,
     Button,
     Card,
-    Checkbox,
     Col,
     Divider,
     Input,
     InputNumber,
     Radio,
     Row,
-    Select,
     Space,
     Spin,
     Steps,
     Switch,
     Tag,
-    Tabs,
     Typography,
     message
 } from 'antd'
 import {
-    ArrowDownOutlined,
-    ArrowUpOutlined,
     CheckCircleOutlined,
     LoadingOutlined,
     RocketOutlined,
     SafetyOutlined
 } from '@ant-design/icons'
+
+import AISetupSection from '../components/OnboardingSetup/AISetupSection'
+import DataSourceSetupSection from '../components/OnboardingSetup/DataSourceSetupSection'
+import ReviewSummary from '../components/OnboardingSetup/ReviewSummary'
+import SettingRow from '../components/OnboardingSetup/SettingRow'
+import TradingSetupSection from '../components/OnboardingSetup/TradingSetupSection'
 import { AI_PROVIDERS } from '../constants/settingsConstants'
 import { setupApi } from '../services/setupApi'
 import './OnboardingSetup.css'
 
-const { Title, Paragraph, Text } = Typography
+const { Title, Paragraph } = Typography
 
-const DATA_SOURCES = ['yahoo', 'eodhd', 'database']
-const BINANCE_LIVE_API_MANAGEMENT_URL = 'https://www.binance.com/en/my/settings/api-management'
-const BINANCE_SPOT_TESTNET_URL = 'https://testnet.binance.vision/'
-const BINANCE_API_SECURITY_GUIDE_URL = 'https://www.binance.com/en/academy/articles/what-are-api-keys-and-security-types'
+const DEFAULT_DATA_SOURCE_PRIORITY = ['yahoo', 'database']
+const ONBOARDING_AI_PROVIDER_DEFAULTS = {
+    openai: { base_url: 'https://api.openai.com/v1', default_model: 'gpt-5.1' },
+    minimax: { base_url: 'https://api.minimaxi.com/anthropic', default_model: 'MiniMax-M2.7' },
+    gemini: { base_url: 'https://generativelanguage.googleapis.com/v1beta', default_model: 'gemini-2.0-flash' },
+    claude: { base_url: 'https://api.anthropic.com/v1', default_model: 'claude-3-5-haiku-latest' }
+}
+
+function deriveLoginEnabled(deploymentMode) {
+    return deploymentMode === 'public'
+}
+
+function hasText(value) {
+    return typeof value === 'string' ? value.trim().length > 0 : Boolean(value)
+}
 
 function setValueAtPath(target, path, value) {
     const next = structuredClone(target)
@@ -69,27 +81,49 @@ function moveItem(items, item, direction) {
 
 function createProviderDefaults() {
     return AI_PROVIDERS.reduce((accumulator, provider) => {
-        accumulator[provider.key] = { api_key: '', base_url: '', configured: false }
+        accumulator[provider.key] = {
+            api_key: '',
+            base_url: ONBOARDING_AI_PROVIDER_DEFAULTS[provider.key]?.base_url || '',
+            default_model: ONBOARDING_AI_PROVIDER_DEFAULTS[provider.key]?.default_model || '',
+            configured: false
+        }
         return accumulator
     }, {})
 }
 
-function normalizeWizardConfig(rawConfig) {
+function normalizeWizardConfig(rawConfig, generatedEncryptionKey = '') {
     const providerDefaults = createProviderDefaults()
-    const mergedProviders = {
-        ...providerDefaults,
-        ...(rawConfig?.ai?.providers || {})
-    }
+    const rawProviders = rawConfig?.ai?.providers || {}
+    const mergedProviders = AI_PROVIDERS.reduce((accumulator, provider) => {
+        accumulator[provider.key] = {
+            ...(providerDefaults[provider.key] || {}),
+            ...(rawProviders[provider.key] || {})
+        }
+        return accumulator
+    }, {})
+    const deploymentMode = rawConfig?.deployment_mode ?? 'local'
 
     return {
         ...rawConfig,
+        deployment_mode: deploymentMode,
+        security: {
+            ...(rawConfig?.security || {}),
+            encryption_key: rawConfig?.security?.encryption_key || generatedEncryptionKey,
+            enable_login: deriveLoginEnabled(deploymentMode)
+        },
         ai: {
             enabled: rawConfig?.ai?.enabled ?? false,
             provider_priority: rawConfig?.ai?.provider_priority ?? ['openai'],
             providers: mergedProviders
         },
+        data_source: {
+            ...(rawConfig?.data_source || {}),
+            priority: rawConfig?.data_source?.priority ?? DEFAULT_DATA_SOURCE_PRIORITY,
+            eodhd_api_key: rawConfig?.data_source?.eodhd_api_key ?? ''
+        },
         trading: {
             ...rawConfig?.trading,
+            default_trade_mode: 'paper',
             binance: {
                 enabled: true,
                 markets: ['spot'],
@@ -107,377 +141,6 @@ function normalizeWizardConfig(rawConfig) {
     }
 }
 
-function SettingRow({ label, hint, children }) {
-    return (
-        <div className="onboarding-field">
-            <div className="onboarding-field-header">
-                <Text strong>{label}</Text>
-                {hint ? <Text type="secondary">{hint}</Text> : null}
-            </div>
-            {children}
-        </div>
-    )
-}
-
-function ProviderPriorityItem({ provider, index, total, onMove }) {
-    const label = AI_PROVIDERS.find((item) => item.key === provider)?.label || provider
-
-    return (
-        <div className="onboarding-priority-item">
-            <Space>
-                <Tag color="processing">{index + 1}</Tag>
-                <Text>{label}</Text>
-            </Space>
-            <Space>
-                <Button
-                    size="small"
-                    icon={<ArrowUpOutlined />}
-                    disabled={index === 0}
-                    onClick={() => onMove(provider, 'up')}
-                />
-                <Button
-                    size="small"
-                    icon={<ArrowDownOutlined />}
-                    disabled={index === total - 1}
-                    onClick={() => onMove(provider, 'down')}
-                />
-            </Space>
-        </div>
-    )
-}
-
-function BinanceApiGuide({ t, mode }) {
-    const isPaper = mode === 'paper'
-    const title = isPaper
-        ? t('onboarding.sections.paper_api_guide', 'Binance paper guide')
-        : t('onboarding.sections.live_api_guide', 'Binance live guide')
-    const intro = isPaper
-        ? t('onboarding.guide.paper_intro', 'Use Binance Spot Test Network to generate sandbox credentials for paper mode, then keep the sandbox URL and credentials in the paper configuration below.')
-        : t('onboarding.guide.live_intro', 'Create the key from Binance API Management, enable only the permissions you actually need, then lock it down with IP restrictions before pasting it back here.')
-    const steps = isPaper
-        ? [
-            t('onboarding.guide.paper_step_1', 'Open Binance Spot Test Network and sign in with a supported account to access the sandbox environment.'),
-            t('onboarding.guide.paper_step_2', 'Generate a sandbox API key and secret from the testnet page, then copy both values immediately.'),
-            t('onboarding.guide.paper_step_3', 'Keep the sandbox URL set to https://testnet.binance.vision and use these credentials only for paper mode.'),
-            t('onboarding.guide.paper_step_4', 'Do not reuse live exchange keys here. Paper mode should stay isolated from your real trading account.'),
-            t('onboarding.guide.paper_step_5', 'Paste the sandbox key pair into the paper tab below and run the paper test against testnet.')
-        ]
-        : [
-            t('onboarding.guide.live_step_1', 'Open Binance API Management and click Create API, then choose a system-generated key.'),
-            t('onboarding.guide.live_step_2', 'Complete Binance security verification and copy the API Key and Secret Key immediately.'),
-            t('onboarding.guide.live_step_3', 'Enable only the permissions you need. For this app, keep Enable Reading on; enable Spot & Margin Trading only if you plan to place live orders.'),
-            t('onboarding.guide.live_step_4', 'In API restrictions, set Restrict access to trusted IPs only and add the server public IP that will run this platform.'),
-            t('onboarding.guide.live_step_5', 'Use separate keys for separate environments when possible, then paste the key pair here and run the live test button.')
-        ]
-    const primaryHref = isPaper ? BINANCE_SPOT_TESTNET_URL : BINANCE_LIVE_API_MANAGEMENT_URL
-    const primaryLabel = isPaper
-        ? t('onboarding.actions.open_binance_testnet', 'Open Binance Spot Test Network')
-        : t('onboarding.actions.create_binance_api', 'Create Binance API Key')
-    const warningTitle = isPaper
-        ? t('onboarding.guide.paper_warning_title', 'Paper mode checklist')
-        : t('onboarding.guide.live_warning_title', 'Security checklist')
-    const warningDescription = isPaper
-        ? t('onboarding.guide.paper_warning', 'Sandbox credentials are for paper mode only. Keep live credentials out of the paper tab, and leave the sandbox URL pointed at Binance Spot Test Network.')
-        : t('onboarding.guide.live_warning', 'Binance recommends enabling only required permissions, storing secrets outside source control, rotating keys regularly, and deleting or replacing a key immediately if it may have been exposed.')
-
-    return (
-        <Card size="small" className="onboarding-nested-card" title={title}>
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                <Paragraph style={{ marginBottom: 0 }}>
-                    {intro}
-                </Paragraph>
-                <Space wrap>
-                    <Button type="primary" href={primaryHref} target="_blank" rel="noreferrer">
-                        {primaryLabel}
-                    </Button>
-                    <Button href={BINANCE_API_SECURITY_GUIDE_URL} target="_blank" rel="noreferrer">
-                        {t('onboarding.actions.open_binance_security_guide', 'Open Binance permissions guide')}
-                    </Button>
-                </Space>
-                <ol className="onboarding-guide-list">
-                    {steps.map((step) => <li key={step}>{step}</li>)}
-                </ol>
-                <Alert
-                    type="warning"
-                    showIcon
-                    message={warningTitle}
-                    description={warningDescription}
-                />
-            </Space>
-        </Card>
-    )
-}
-
-function areValuesEqual(left, right) {
-    return JSON.stringify(left ?? null) === JSON.stringify(right ?? null)
-}
-
-function formatReviewValue(value, t) {
-    if (value === true) {
-        return t('onboarding.review.values.enabled', 'Enabled')
-    }
-    if (value === false) {
-        return t('onboarding.review.values.disabled', 'Disabled')
-    }
-    if (value === null || value === undefined || value === '') {
-        return t('onboarding.review.values.not_set', 'Not set')
-    }
-    if (Array.isArray(value)) {
-        return value.length > 0 ? value.join(' > ') : t('onboarding.review.values.none', 'None')
-    }
-    return String(value)
-}
-
-function summarizeEncryptionState(currentValue, baselineValue, t) {
-    if (!currentValue) {
-        return t('onboarding.review.values.not_set', 'Not set')
-    }
-    if (!baselineValue) {
-        return t('onboarding.review.values.configured', 'Configured')
-    }
-    if (currentValue === baselineValue) {
-        return t('onboarding.review.values.configured', 'Configured')
-    }
-    return t('onboarding.review.values.updated', 'Updated')
-}
-
-function summarizeCredentialState(credentials, t) {
-    if (credentials?.api_key && credentials?.secret) {
-        return t('onboarding.review.values.configured', 'Configured')
-    }
-    return t('onboarding.review.values.not_configured', 'Not configured')
-}
-
-function summarizeDatabaseTarget(databaseConfig, t) {
-    if (databaseConfig?.mode === 'postgresql') {
-        const host = databaseConfig?.postgresql?.host || t('onboarding.review.values.not_set', 'Not set')
-        const port = databaseConfig?.postgresql?.port || 5432
-        const database = databaseConfig?.postgresql?.database || t('onboarding.review.values.not_set', 'Not set')
-        return `${host}:${port}/${database}`
-    }
-    return databaseConfig?.sqlite_path || t('onboarding.review.values.not_set', 'Not set')
-}
-
-function summarizeAiPriority(aiConfig, t) {
-    if (!aiConfig?.enabled) {
-        return t('onboarding.review.values.disabled', 'Disabled')
-    }
-    const providers = aiConfig?.provider_priority || []
-    if (providers.length === 0) {
-        return t('onboarding.review.values.none', 'None')
-    }
-    return providers.map((providerKey) => AI_PROVIDERS.find((item) => item.key === providerKey)?.label || providerKey).join(' > ')
-}
-
-function summarizeConfiguredAiProviders(aiConfig, t) {
-    if (!aiConfig?.enabled) {
-        return t('onboarding.review.values.disabled', 'Disabled')
-    }
-    const configuredProviders = AI_PROVIDERS
-        .filter((provider) => Boolean(aiConfig?.providers?.[provider.key]?.api_key))
-        .map((provider) => provider.label)
-    if (configuredProviders.length === 0) {
-        return t('onboarding.review.values.none', 'None')
-    }
-    return configuredProviders.join(', ')
-}
-
-function summarizeProxyState(networkConfig, t) {
-    if (networkConfig?.http_proxy || networkConfig?.https_proxy) {
-        return t('onboarding.review.values.configured', 'Configured')
-    }
-    return t('onboarding.review.values.not_configured', 'Not configured')
-}
-
-function createReviewItem({ label, before, after, changed }) {
-    return { label, before, after, changed }
-}
-
-function buildReviewSections(baselineConfig, currentConfig, t) {
-    if (!baselineConfig || !currentConfig) {
-        return []
-    }
-
-    const sections = [
-        {
-            key: 'security',
-            title: t('onboarding.review.sections.security', 'Security & access'),
-            items: [
-                createReviewItem({
-                    label: t('onboarding.review.fields.deployment_mode', 'Deployment mode'),
-                    before: formatReviewValue(baselineConfig.deployment_mode, t),
-                    after: formatReviewValue(currentConfig.deployment_mode, t),
-                    changed: !areValuesEqual(baselineConfig.deployment_mode, currentConfig.deployment_mode)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.encryption_key', 'Encryption key'),
-                    before: summarizeEncryptionState(baselineConfig?.security?.encryption_key, baselineConfig?.security?.encryption_key, t),
-                    after: summarizeEncryptionState(currentConfig?.security?.encryption_key, baselineConfig?.security?.encryption_key, t),
-                    changed: !areValuesEqual(baselineConfig?.security?.encryption_key, currentConfig?.security?.encryption_key)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.enable_login', 'Enable login'),
-                    before: formatReviewValue(baselineConfig?.security?.enable_login, t),
-                    after: formatReviewValue(currentConfig?.security?.enable_login, t),
-                    changed: !areValuesEqual(baselineConfig?.security?.enable_login, currentConfig?.security?.enable_login)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.logto_issuer', 'Logto issuer'),
-                    before: formatReviewValue(baselineConfig?.auth?.logto_issuer, t),
-                    after: formatReviewValue(currentConfig?.auth?.logto_issuer, t),
-                    changed: !areValuesEqual(baselineConfig?.auth?.logto_issuer, currentConfig?.auth?.logto_issuer)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.logto_app_id', 'Logto app ID'),
-                    before: formatReviewValue(baselineConfig?.auth?.logto_app_id, t),
-                    after: formatReviewValue(currentConfig?.auth?.logto_app_id, t),
-                    changed: !areValuesEqual(baselineConfig?.auth?.logto_app_id, currentConfig?.auth?.logto_app_id)
-                })
-            ].filter((item) => item.changed)
-        },
-        {
-            key: 'storage',
-            title: t('onboarding.review.sections.storage', 'Storage & data'),
-            items: [
-                createReviewItem({
-                    label: t('onboarding.fields.database_mode', 'Database mode'),
-                    before: formatReviewValue(baselineConfig?.database?.mode, t),
-                    after: formatReviewValue(currentConfig?.database?.mode, t),
-                    changed: !areValuesEqual(baselineConfig?.database?.mode, currentConfig?.database?.mode)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.database_target', 'Database target'),
-                    before: summarizeDatabaseTarget(baselineConfig?.database, t),
-                    after: summarizeDatabaseTarget(currentConfig?.database, t),
-                    changed: !areValuesEqual(baselineConfig?.database, currentConfig?.database)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.data_sources', 'Data sources'),
-                    before: formatReviewValue(baselineConfig?.data_source?.priority, t),
-                    after: formatReviewValue(currentConfig?.data_source?.priority, t),
-                    changed: !areValuesEqual(baselineConfig?.data_source?.priority, currentConfig?.data_source?.priority)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.eodhd_key', 'EODHD API key'),
-                    before: summarizeEncryptionState(baselineConfig?.data_source?.eodhd_api_key, baselineConfig?.data_source?.eodhd_api_key, t),
-                    after: summarizeEncryptionState(currentConfig?.data_source?.eodhd_api_key, baselineConfig?.data_source?.eodhd_api_key, t),
-                    changed: !areValuesEqual(baselineConfig?.data_source?.eodhd_api_key, currentConfig?.data_source?.eodhd_api_key)
-                })
-            ].filter((item) => item.changed)
-        },
-        {
-            key: 'ai',
-            title: t('onboarding.review.sections.ai', 'AI'),
-            items: [
-                createReviewItem({
-                    label: t('onboarding.fields.enable_ai', 'Enable AI analysis'),
-                    before: formatReviewValue(baselineConfig?.ai?.enabled, t),
-                    after: formatReviewValue(currentConfig?.ai?.enabled, t),
-                    changed: !areValuesEqual(baselineConfig?.ai?.enabled, currentConfig?.ai?.enabled)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.ai_priority', 'Provider priority'),
-                    before: summarizeAiPriority(baselineConfig?.ai, t),
-                    after: summarizeAiPriority(currentConfig?.ai, t),
-                    changed: !areValuesEqual(baselineConfig?.ai?.provider_priority, currentConfig?.ai?.provider_priority)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.ai_credentials', 'Configured providers'),
-                    before: summarizeConfiguredAiProviders(baselineConfig?.ai, t),
-                    after: summarizeConfiguredAiProviders(currentConfig?.ai, t),
-                    changed: !areValuesEqual(
-                        AI_PROVIDERS.map((provider) => Boolean(baselineConfig?.ai?.providers?.[provider.key]?.api_key)),
-                        AI_PROVIDERS.map((provider) => Boolean(currentConfig?.ai?.providers?.[provider.key]?.api_key))
-                    )
-                })
-            ].filter((item) => item.changed)
-        },
-        {
-            key: 'trading',
-            title: t('onboarding.review.sections.trading', 'Trading'),
-            items: [
-                createReviewItem({
-                    label: t('onboarding.review.fields.live_entry', 'Live trading entry'),
-                    before: formatReviewValue(baselineConfig?.trading?.live_trading_enabled, t),
-                    after: formatReviewValue(currentConfig?.trading?.live_trading_enabled, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.live_trading_enabled, currentConfig?.trading?.live_trading_enabled)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.default_trade_mode', 'Default trade mode'),
-                    before: formatReviewValue(baselineConfig?.trading?.default_trade_mode, t),
-                    after: formatReviewValue(currentConfig?.trading?.default_trade_mode, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.default_trade_mode, currentConfig?.trading?.default_trade_mode)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.default_market', 'Default market'),
-                    before: formatReviewValue(baselineConfig?.trading?.binance?.default_market, t),
-                    after: formatReviewValue(currentConfig?.trading?.binance?.default_market, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.binance?.default_market, currentConfig?.trading?.binance?.default_market)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.paper_credentials', 'Binance paper credentials'),
-                    before: summarizeCredentialState(baselineConfig?.trading?.credentials?.paper, t),
-                    after: summarizeCredentialState(currentConfig?.trading?.credentials?.paper, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.credentials?.paper, currentConfig?.trading?.credentials?.paper)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.live_credentials', 'Binance live credentials'),
-                    before: summarizeCredentialState(baselineConfig?.trading?.credentials?.live, t),
-                    after: summarizeCredentialState(currentConfig?.trading?.credentials?.live, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.credentials?.live, currentConfig?.trading?.credentials?.live)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.risk_acknowledgement', 'Live risk acknowledgement'),
-                    before: formatReviewValue(baselineConfig?.trading?.live_risk_acknowledged, t),
-                    after: formatReviewValue(currentConfig?.trading?.live_risk_acknowledged, t),
-                    changed: !areValuesEqual(baselineConfig?.trading?.live_risk_acknowledged, currentConfig?.trading?.live_risk_acknowledged)
-                })
-            ].filter((item) => item.changed)
-        },
-        {
-            key: 'brand',
-            title: t('onboarding.review.sections.brand', 'Brand & report'),
-            items: [
-                createReviewItem({
-                    label: t('onboarding.fields.site_title', 'Site title'),
-                    before: formatReviewValue(baselineConfig?.site?.site_title, t),
-                    after: formatReviewValue(currentConfig?.site?.site_title, t),
-                    changed: !areValuesEqual(baselineConfig?.site?.site_title, currentConfig?.site?.site_title)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.enable_share', 'Enable public report sharing'),
-                    before: formatReviewValue(baselineConfig?.report?.enable_public_share, t),
-                    after: formatReviewValue(currentConfig?.report?.enable_public_share, t),
-                    changed: !areValuesEqual(baselineConfig?.report?.enable_public_share, currentConfig?.report?.enable_public_share)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.report_max_age_days', 'Report max age (days)'),
-                    before: formatReviewValue(baselineConfig?.report?.report_max_age_days, t),
-                    after: formatReviewValue(currentConfig?.report?.report_max_age_days, t),
-                    changed: !areValuesEqual(baselineConfig?.report?.report_max_age_days, currentConfig?.report?.report_max_age_days)
-                }),
-                createReviewItem({
-                    label: t('onboarding.fields.output_directory', 'Report output directory'),
-                    before: formatReviewValue(baselineConfig?.report?.output_directory, t),
-                    after: formatReviewValue(currentConfig?.report?.output_directory, t),
-                    changed: !areValuesEqual(baselineConfig?.report?.output_directory, currentConfig?.report?.output_directory)
-                }),
-                createReviewItem({
-                    label: t('onboarding.review.fields.proxy', 'Proxy'),
-                    before: summarizeProxyState(baselineConfig?.network, t),
-                    after: summarizeProxyState(currentConfig?.network, t),
-                    changed: !areValuesEqual(
-                        [baselineConfig?.network?.http_proxy, baselineConfig?.network?.https_proxy],
-                        [currentConfig?.network?.http_proxy, currentConfig?.network?.https_proxy]
-                    )
-                })
-            ].filter((item) => item.changed)
-        }
-    ]
-
-    return sections.filter((section) => section.items.length > 0)
-}
-
 export default function OnboardingSetup() {
     const { t } = useTranslation()
     const navigate = useNavigate()
@@ -488,13 +151,15 @@ export default function OnboardingSetup() {
     const [initialConfig, setInitialConfig] = useState(null)
     const [config, setConfig] = useState(null)
     const [stepIndex, setStepIndex] = useState(0)
-    const [activeTradingTab, setActiveTradingTab] = useState('paper')
 
     const loadWizard = useCallback(async () => {
         setLoading(true)
         try {
             const response = await setupApi.getSetupWizard()
-            const normalizedConfig = normalizeWizardConfig(response.config)
+            const normalizedConfig = normalizeWizardConfig(
+                response.config,
+                response.meta?.generated_encryption_key || ''
+            )
             setWizardState(response)
             setInitialConfig(structuredClone(normalizedConfig))
             setConfig(structuredClone(normalizedConfig))
@@ -509,13 +174,14 @@ export default function OnboardingSetup() {
         loadWizard()
     }, [loadWizard])
 
+    const requiresLogin = deriveLoginEnabled(config?.deployment_mode)
+
     const steps = useMemo(() => {
         const base = [
             { key: 'welcome', title: t('onboarding.steps.welcome', 'Welcome') },
-            { key: 'security', title: t('onboarding.steps.security', 'Security') },
             { key: 'database', title: t('onboarding.steps.database', 'Database') }
         ]
-        if (config?.security?.enable_login) {
+        if (requiresLogin) {
             base.push({ key: 'auth', title: t('onboarding.steps.auth', 'Authentication') })
         }
         return [
@@ -526,21 +192,18 @@ export default function OnboardingSetup() {
             { key: 'brand', title: t('onboarding.steps.brand', 'Brand & Report') },
             { key: 'review', title: t('onboarding.steps.review', 'Review') }
         ]
-    }, [config?.security?.enable_login, t])
+    }, [requiresLogin, t])
 
     useEffect(() => {
         setStepIndex((current) => Math.min(current, Math.max(steps.length - 1, 0)))
     }, [steps.length])
 
     const currentStep = steps[stepIndex]?.key
+    const enabledProviders = config?.ai?.provider_priority || []
 
     const updateConfig = (path, value) => {
         setConfig((previous) => setValueAtPath(previous, path, value))
     }
-
-    const enabledProviders = config?.ai?.provider_priority || []
-    const reviewSections = useMemo(() => buildReviewSections(initialConfig, config, t), [config, initialConfig, t])
-    const changedItemCount = reviewSections.reduce((total, section) => total + section.items.length, 0)
 
     const toggleProvider = (providerKey, checked) => {
         const currentPriority = config.ai.provider_priority || []
@@ -558,15 +221,11 @@ export default function OnboardingSetup() {
         if (!config) {
             return false
         }
-        if (currentStep === 'security' && !config.security.encryption_key) {
-            message.warning(t('onboarding.validation.encryption_key', 'Encryption key is required.'))
-            return false
-        }
         if (currentStep === 'database' && config.database.mode === 'sqlite' && !config.database.sqlite_path) {
             message.warning(t('onboarding.validation.sqlite_path', 'SQLite path is required.'))
             return false
         }
-        if (currentStep === 'auth' && config.security.enable_login) {
+        if (currentStep === 'auth' && requiresLogin) {
             const required = [
                 config.auth.logto_issuer,
                 config.auth.logto_jwks_uri,
@@ -581,21 +240,33 @@ export default function OnboardingSetup() {
                 return false
             }
         }
-        if (currentStep === 'data' && config.data_source.priority.includes('eodhd') && !config.data_source.eodhd_api_key) {
-            message.warning(t('onboarding.validation.eodhd', 'EODHD API key is required when EODHD is enabled.'))
-            return false
+        if (currentStep === 'data') {
+            const dataPriority = config.data_source?.priority || []
+            if (dataPriority.length === 0) {
+                message.warning(t('onboarding.datasource.min_source_warning', 'At least one data source is required.'))
+                return false
+            }
+            if (dataPriority.includes('eodhd') && !config.data_source.eodhd_api_key) {
+                message.warning(t('onboarding.validation.eodhd', 'EODHD API key is required when EODHD is enabled.'))
+                return false
+            }
         }
         if (currentStep === 'ai' && config.ai.enabled) {
             if (enabledProviders.length === 0) {
                 message.warning(t('onboarding.validation.ai_provider', 'Enable at least one AI provider.'))
                 return false
             }
-            const missingProviders = enabledProviders.filter((provider) => {
-                return !config.ai.providers?.[provider]?.api_key
-            })
+            const missingProviders = enabledProviders.filter((provider) => !hasText(config.ai.providers?.[provider]?.api_key))
             if (missingProviders.length > 0) {
                 message.warning(
                     t('onboarding.validation.ai_provider_keys', 'API key is required for all enabled AI providers.')
+                )
+                return false
+            }
+            const missingModels = enabledProviders.filter((provider) => !hasText(config.ai.providers?.[provider]?.default_model))
+            if (missingModels.length > 0) {
+                message.warning(
+                    t('onboarding.validation.ai_provider_models', 'Runtime model name is required for all enabled AI providers.')
                 )
                 return false
             }
@@ -612,10 +283,6 @@ export default function OnboardingSetup() {
             }
             if (livePartial && (!live.api_key || !live.secret)) {
                 message.warning(t('onboarding.validation.live_credentials', 'Binance live credentials require both API key and secret.'))
-                return false
-            }
-            if (config.trading.default_trade_mode === 'live' && !config.trading.live_trading_enabled) {
-                message.warning(t('onboarding.validation.live_mode', 'Enable live trading before selecting live as the default mode.'))
                 return false
             }
             if (config.trading.live_trading_enabled) {
@@ -651,7 +318,13 @@ export default function OnboardingSetup() {
     const handleSave = async () => {
         setSaving(true)
         try {
-            await setupApi.saveSetupWizard(config)
+            await setupApi.saveSetupWizard({
+                ...config,
+                security: {
+                    ...config.security,
+                    enable_login: requiresLogin
+                }
+            })
             message.success(t('onboarding.save_success', 'Setup configuration saved'))
             await loadWizard()
         } catch (error) {
@@ -694,37 +367,19 @@ export default function OnboardingSetup() {
                     type="info"
                     showIcon
                     message={t('onboarding.milestone_title', 'MVP scope')}
-                    description={t('onboarding.milestone_desc', 'This wizard focuses on backend bootstrap settings: security, storage, data source, AI, Binance trading, branding, and review.')}
+                    description={t('onboarding.milestone_desc', 'This wizard focuses on backend bootstrap settings: deployment, storage, data source, AI, Binance trading, branding, and review.')}
+                />
+                <Alert
+                    type={requiresLogin ? 'warning' : 'success'}
+                    showIcon
+                    message={requiresLogin
+                        ? t('onboarding.deployment_public_title', 'Public mode will require login')
+                        : t('onboarding.deployment_local_title', 'Local mode keeps login disabled')}
+                    description={requiresLogin
+                        ? t('onboarding.deployment_public_desc', 'Selecting public deployment automatically enables authentication and adds the Logto step to this wizard.')
+                        : t('onboarding.deployment_local_desc', 'Selecting local deployment keeps authentication disabled and skips the Logto step.')}
                 />
             </Space>
-        </Card>
-    )
-
-    const renderSecurity = () => (
-        <Card className="onboarding-card">
-            <SettingRow
-                label={t('onboarding.fields.encryption_key', 'ENCRYPTION_KEY')}
-                hint={t('onboarding.hints.encryption_key', 'Changing this later can make previously encrypted credentials unreadable.')}
-            >
-                <Space.Compact style={{ width: '100%' }}>
-                    <Input.Password
-                        value={config.security.encryption_key}
-                        onChange={(event) => updateConfig(['security', 'encryption_key'], event.target.value)}
-                    />
-                    <Button onClick={() => updateConfig(['security', 'encryption_key'], wizardState.meta.generated_encryption_key)}>
-                        {t('onboarding.actions.generate', 'Generate')}
-                    </Button>
-                </Space.Compact>
-            </SettingRow>
-            <SettingRow
-                label={t('onboarding.fields.enable_login', 'Enable login')}
-                hint={t('onboarding.hints.enable_login', 'When disabled, the app stays accessible without authentication.')}
-            >
-                <Switch
-                    checked={config.security.enable_login}
-                    onChange={(checked) => updateConfig(['security', 'enable_login'], checked)}
-                />
-            </SettingRow>
         </Card>
     )
 
@@ -785,233 +440,34 @@ export default function OnboardingSetup() {
     )
 
     const renderData = () => (
-        <Card className="onboarding-card">
-            <SettingRow label={t('onboarding.fields.data_priority', 'Enabled data sources')}>
-                <Checkbox.Group
-                    value={config.data_source.priority}
-                    options={DATA_SOURCES}
-                    onChange={(values) => updateConfig(['data_source', 'priority'], values)}
-                />
-            </SettingRow>
-            {config.data_source.priority.includes('eodhd') ? (
-                <SettingRow label="EODHD_API_KEY">
-                    <Input.Password value={config.data_source.eodhd_api_key} onChange={(event) => updateConfig(['data_source', 'eodhd_api_key'], event.target.value)} />
-                </SettingRow>
-            ) : null}
-        </Card>
+        <DataSourceSetupSection
+            config={config}
+            updateConfig={updateConfig}
+            t={t}
+        />
     )
 
     const renderAI = () => (
-        <Card className="onboarding-card">
-            <SettingRow
-                label={t('onboarding.fields.enable_ai', 'Enable AI analysis')}
-                hint={t('onboarding.hints.enable_ai', 'AI is optional. Leaving it disabled keeps analysis features unavailable.')}
-            >
-                <Switch checked={config.ai.enabled} onChange={(checked) => updateConfig(['ai', 'enabled'], checked)} />
-            </SettingRow>
-            <Alert
-                type="info"
-                showIcon
-                message={t('onboarding.ai_note', 'The wizard stores provider credentials and fallback priority. Runtime model names can be configured later in Settings.')}
-                style={{ marginBottom: 20 }}
-            />
-            {config.ai.enabled ? (
-                <>
-                    <Card size="small" className="onboarding-nested-card" title={t('onboarding.sections.ai_priority', 'Provider priority')}>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            {enabledProviders.length === 0 ? (
-                                <Text type="secondary">{t('onboarding.ai_empty', 'Enable at least one provider to define fallback order.')}</Text>
-                            ) : enabledProviders.map((provider, index) => (
-                                <ProviderPriorityItem
-                                    key={provider}
-                                    provider={provider}
-                                    index={index}
-                                    total={enabledProviders.length}
-                                    onMove={reorderProvider}
-                                />
-                            ))}
-                        </Space>
-                    </Card>
-                    {AI_PROVIDERS.map((provider) => {
-                        const providerConfig = config.ai.providers?.[provider.key] || {}
-                        const providerEnabled = enabledProviders.includes(provider.key)
-                        const testKey = `ai:${provider.key}`
-                        return (
-                            <Card key={provider.key} size="small" className="onboarding-nested-card" title={provider.label}>
-                                <Space direction="vertical" style={{ width: '100%' }}>
-                                    <Switch
-                                        checked={providerEnabled}
-                                        onChange={(checked) => toggleProvider(provider.key, checked)}
-                                        checkedChildren={t('onboarding.enabled', 'Enabled')}
-                                        unCheckedChildren={t('onboarding.disabled', 'Disabled')}
-                                    />
-                                    <SettingRow label={t('onboarding.fields.api_key', 'API key')}>
-                                        <Input.Password
-                                            value={providerConfig.api_key}
-                                            onChange={(event) => updateConfig(['ai', 'providers', provider.key, 'api_key'], event.target.value)}
-                                        />
-                                    </SettingRow>
-                                    <SettingRow label={t('onboarding.fields.base_url', 'Base URL')}>
-                                        <Input
-                                            value={providerConfig.base_url}
-                                            onChange={(event) => updateConfig(['ai', 'providers', provider.key, 'base_url'], event.target.value)}
-                                        />
-                                    </SettingRow>
-                                    <Button
-                                        onClick={() => testConnection('ai_model', {
-                                            provider: provider.key,
-                                            api_key: providerConfig.api_key,
-                                            base_url: providerConfig.base_url
-                                        }, testKey)}
-                                        loading={testing === testKey}
-                                    >
-                                        {t('onboarding.actions.test_provider', 'Test provider')}
-                                    </Button>
-                                </Space>
-                            </Card>
-                        )
-                    })}
-                </>
-            ) : null}
-        </Card>
+        <AISetupSection
+            config={config}
+            enabledProviders={enabledProviders}
+            updateConfig={updateConfig}
+            toggleProvider={toggleProvider}
+            reorderProvider={reorderProvider}
+            testConnection={testConnection}
+            testing={testing}
+            t={t}
+        />
     )
 
     const renderTrading = () => (
-        <Card className="onboarding-card">
-            <Alert
-                type="warning"
-                showIcon
-                message={t('onboarding.trading_note', 'The onboarding flow only supports Binance and lets you configure paper and live credentials together.')}
-                style={{ marginBottom: 20 }}
-            />
-            <Row gutter={16}>
-                <Col span={12}>
-                    <SettingRow
-                        label={t('onboarding.fields.enabled', 'Enabled')}
-                    >
-                        <Switch
-                            checked={config.trading.binance.enabled}
-                            onChange={(checked) => updateConfig(['trading', 'binance', 'enabled'], checked)}
-                        />
-                    </SettingRow>
-                </Col>
-                <Col span={12}>
-                    <SettingRow label={t('onboarding.fields.default_trade_mode', 'Default trade mode')}>
-                        <Select
-                            value={config.trading.default_trade_mode}
-                            options={[
-                                { value: 'paper', label: 'paper' },
-                                { value: 'live', label: 'live' }
-                            ]}
-                            onChange={(value) => updateConfig(['trading', 'default_trade_mode'], value)}
-                        />
-                    </SettingRow>
-                </Col>
-            </Row>
-            <Card size="small" className="onboarding-nested-card" title="Binance">
-                <Row gutter={16}>
-                    <Col span={12}><SettingRow label={t('onboarding.fields.default_market', 'Default market')}><Input value={config.trading.binance.default_market} onChange={(event) => updateConfig(['trading', 'binance', 'default_market'], event.target.value)} /></SettingRow></Col>
-                    <Col span={12}><SettingRow label={t('onboarding.fields.default_exchange', 'Default exchange')}><Input value="binance" disabled /></SettingRow></Col>
-                </Row>
-            </Card>
-            <Divider>{t('onboarding.sections.trading_modes', 'Paper and live setup')}</Divider>
-            <Tabs
-                className="onboarding-mode-tabs"
-                activeKey={activeTradingTab}
-                onChange={setActiveTradingTab}
-                items={[
-                    {
-                        key: 'paper',
-                        label: t('onboarding.tabs.paper', 'Paper'),
-                        children: (
-                            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                                <BinanceApiGuide t={t} mode="paper" />
-                                <Card size="small" className="onboarding-nested-card" title={t('onboarding.sections.paper_config', 'Paper configuration')}>
-                                    <Row gutter={16}>
-                                        <Col xs={24} md={12}><SettingRow label={t('onboarding.fields.paper_enabled', 'Paper mode enabled')}><Switch checked={config.trading.binance.paper_enabled} onChange={(checked) => updateConfig(['trading', 'binance', 'paper_enabled'], checked)} /></SettingRow></Col>
-                                        <Col xs={24} md={12}><SettingRow label={t('onboarding.fields.paper_balance', 'Paper balance (USDT)')}><InputNumber style={{ width: '100%' }} value={config.trading.binance.initial_balance_usdt} onChange={(value) => updateConfig(['trading', 'binance', 'initial_balance_usdt'], value ?? 10000)} /></SettingRow></Col>
-                                        <Col span={24}><SettingRow label={t('onboarding.fields.sandbox_url', 'Sandbox URL')}><Input value={config.trading.binance.sandbox_url} onChange={(event) => updateConfig(['trading', 'binance', 'sandbox_url'], event.target.value)} /></SettingRow></Col>
-                                    </Row>
-                                </Card>
-                                <Card size="small" className="onboarding-nested-card" title={t('onboarding.sections.paper_credentials', 'Binance paper')}>
-                                    <Space direction="vertical" style={{ width: '100%' }}>
-                                        <SettingRow label={t('onboarding.fields.api_key', 'API key')}>
-                                            <Input.Password value={config.trading.credentials.paper.api_key} onChange={(event) => updateConfig(['trading', 'credentials', 'paper', 'api_key'], event.target.value)} />
-                                        </SettingRow>
-                                        <SettingRow label={t('onboarding.fields.secret', 'Secret')}>
-                                            <Input.Password value={config.trading.credentials.paper.secret} onChange={(event) => updateConfig(['trading', 'credentials', 'paper', 'secret'], event.target.value)} />
-                                        </SettingRow>
-                                        <Button
-                                            onClick={() => testConnection('ccxt', {
-                                                exchange: 'binance',
-                                                mode: 'paper',
-                                                api_key: config.trading.credentials.paper.api_key,
-                                                secret: config.trading.credentials.paper.secret,
-                                                use_testnet: true
-                                            }, 'ccxt:paper')}
-                                            loading={testing === 'ccxt:paper'}
-                                        >
-                                            {t('onboarding.actions.test_paper', 'Test paper')}
-                                        </Button>
-                                    </Space>
-                                </Card>
-                            </Space>
-                        )
-                    },
-                    {
-                        key: 'live',
-                        label: t('onboarding.tabs.live', 'Live'),
-                        children: (
-                            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                                <BinanceApiGuide t={t} mode="live" />
-                                <Card size="small" className="onboarding-nested-card" title={t('onboarding.sections.live_config', 'Live configuration')}>
-                                    <Row gutter={16}>
-                                        <Col xs={24} md={12}>
-                                            <SettingRow
-                                                label={t('onboarding.fields.enable_trading', 'Enable live trading entry')}
-                                                hint={t('onboarding.hints.enable_trading', 'Prefer paper mode first. Live mode requires explicit acknowledgement and full credentials.')}
-                                            >
-                                                <Switch
-                                                    checked={config.trading.live_trading_enabled}
-                                                    onChange={(checked) => updateConfig(['trading', 'live_trading_enabled'], checked)}
-                                                />
-                                            </SettingRow>
-                                        </Col>
-                                    </Row>
-                                    {(config.trading.live_trading_enabled || config.trading.default_trade_mode === 'live') ? (
-                                        <Checkbox checked={config.trading.live_risk_acknowledged} onChange={(event) => updateConfig(['trading', 'live_risk_acknowledged'], event.target.checked)}>
-                                            {t('onboarding.live_ack', 'I understand live trading can place real orders and accept that risk.')}
-                                        </Checkbox>
-                                    ) : null}
-                                </Card>
-                                <Card size="small" className="onboarding-nested-card" title={t('onboarding.sections.live_credentials', 'Binance live')}>
-                                    <Space direction="vertical" style={{ width: '100%' }}>
-                                        <SettingRow label={t('onboarding.fields.api_key', 'API key')}>
-                                            <Input.Password value={config.trading.credentials.live.api_key} onChange={(event) => updateConfig(['trading', 'credentials', 'live', 'api_key'], event.target.value)} />
-                                        </SettingRow>
-                                        <SettingRow label={t('onboarding.fields.secret', 'Secret')}>
-                                            <Input.Password value={config.trading.credentials.live.secret} onChange={(event) => updateConfig(['trading', 'credentials', 'live', 'secret'], event.target.value)} />
-                                        </SettingRow>
-                                        <Button
-                                            onClick={() => testConnection('ccxt', {
-                                                exchange: 'binance',
-                                                mode: 'live',
-                                                api_key: config.trading.credentials.live.api_key,
-                                                secret: config.trading.credentials.live.secret,
-                                                use_testnet: false
-                                            }, 'ccxt:live')}
-                                            loading={testing === 'ccxt:live'}
-                                        >
-                                            {t('onboarding.actions.test_live', 'Test live')}
-                                        </Button>
-                                    </Space>
-                                </Card>
-                            </Space>
-                        )
-                    }
-                ]}
-            />
-        </Card>
+        <TradingSetupSection
+            config={config}
+            updateConfig={updateConfig}
+            testConnection={testConnection}
+            testing={testing}
+            t={t}
+        />
     )
 
     const renderBrand = () => (
@@ -1043,77 +499,11 @@ export default function OnboardingSetup() {
         </Card>
     )
 
-    const renderReview = () => (
-        <Card className="onboarding-card">
-            <Alert
-                type="info"
-                showIcon
-                message={t('onboarding.review_title', 'Review before saving')}
-                description={t('onboarding.review_desc', 'This page summarizes what changed in your setup so you can confirm the effective configuration before saving.')}
-            />
-            <Divider />
-            <Row gutter={[16, 16]} className="onboarding-review-stats">
-                <Col xs={24} md={12}>
-                    <Card size="small" className="onboarding-nested-card onboarding-review-stat-card">
-                        <Text type="secondary">{t('onboarding.review.metrics.changed_areas', 'Changed areas')}</Text>
-                        <Title level={3} style={{ margin: 0 }}>{reviewSections.length}</Title>
-                    </Card>
-                </Col>
-                <Col xs={24} md={12}>
-                    <Card size="small" className="onboarding-nested-card onboarding-review-stat-card">
-                        <Text type="secondary">{t('onboarding.review.metrics.changed_items', 'Changed items')}</Text>
-                        <Title level={3} style={{ margin: 0 }}>{changedItemCount}</Title>
-                    </Card>
-                </Col>
-            </Row>
-            <Divider />
-            {reviewSections.length === 0 ? (
-                <Alert
-                    type="success"
-                    showIcon
-                    message={t('onboarding.review.no_changes_title', 'No unsaved setup changes')}
-                    description={t('onboarding.review.no_changes_desc', 'Your current selections match the saved bootstrap configuration.')}
-                    style={{ marginBottom: 20 }}
-                />
-            ) : (
-                <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 20 }}>
-                    {reviewSections.map((section) => (
-                        <Card
-                            key={section.key}
-                            size="small"
-                            className="onboarding-nested-card"
-                            title={section.title}
-                            extra={<Tag color="processing">{`${section.items.length} ${t('onboarding.review.metrics.items_label', 'items')}`}</Tag>}
-                        >
-                            <div className="onboarding-review-items">
-                                {section.items.map((item) => (
-                                    <div key={`${section.key}-${item.label}`} className="onboarding-review-item">
-                                        <Text strong>{item.label}</Text>
-                                        <div className="onboarding-review-item-values">
-                                            <Tag>{item.before}</Tag>
-                                            <Text type="secondary">to</Text>
-                                            <Tag color="processing">{item.after}</Tag>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    ))}
-                </Space>
-            )}
-            <Space wrap>
-                <Tag color={config.security.enable_login ? 'processing' : 'default'}>{config.security.enable_login ? 'Logto enabled' : 'Login disabled'}</Tag>
-                <Tag color={config.ai.enabled ? 'success' : 'default'}>{config.ai.enabled ? `AI: ${enabledProviders.join(' > ')}` : 'AI skipped'}</Tag>
-                <Tag color={config.trading.live_trading_enabled ? 'warning' : 'default'}>{config.trading.live_trading_enabled ? 'Binance live enabled' : 'Binance live skipped'}</Tag>
-                <Tag color={config.report.enable_public_share ? 'processing' : 'default'}>{config.report.enable_public_share ? 'Public reports enabled' : 'Public reports skipped'}</Tag>
-            </Space>
-        </Card>
-    )
+    const renderReview = () => <ReviewSummary initialConfig={initialConfig} config={config} t={t} />
 
     const renderStep = () => {
         switch (currentStep) {
             case 'welcome': return renderWelcome()
-            case 'security': return renderSecurity()
             case 'database': return renderDatabase()
             case 'auth': return renderAuth()
             case 'data': return renderData()

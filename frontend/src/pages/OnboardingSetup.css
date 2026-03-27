@@ -66,6 +66,41 @@
     background: rgba(15, 23, 42, 0.54);
 }
 
+.onboarding-source-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.onboarding-datasource-list {
+    overflow: hidden;
+    border-radius: 14px;
+    border-color: rgba(34, 211, 238, 0.18);
+    background: rgba(15, 23, 42, 0.32);
+}
+
+.onboarding-datasource-list .ant-list-item {
+    border-block-end-color: rgba(148, 163, 184, 0.12);
+}
+
+.onboarding-datasource-item {
+    padding: 14px 16px;
+    border: 0;
+    background: transparent;
+}
+
+.onboarding-datasource-item.is-dragging {
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.9);
+    box-shadow: 0 16px 36px rgba(2, 8, 23, 0.35);
+}
+
+.onboarding-datasource-drag-handle {
+    color: rgba(148, 163, 184, 0.9);
+    cursor: grab;
+}
+
 .onboarding-actions {
     margin-top: 24px;
     display: flex;

@@ -77,5 +77,8 @@
 - `setup_wizard_service.py` now manages first-run bootstrap configuration by reading and writing `.env` and JSON config files used during initial installation.
 - The onboarding bootstrap flow now writes backend files only; it no longer manages `frontend/.env` or `VITE_API_BASE_URL`.
 - The onboarding AI payload mirrors the unified provider model and supports ordered fallback across OpenAI, MiniMax, Gemini, and Claude.
+- The onboarding AI bootstrap now validates and persists per-provider runtime model names so first-run connection tests and runtime fallback use the same configured model defaults.
 - The onboarding trading bootstrap is intentionally scoped to Binance and exposes paper/live credentials together in one flow.
 - The onboarding setup test endpoint now accepts per-mode Binance validation targets so paper tabs can validate against testnet while live tabs validate against production.
+- `setup_wizard_service.py` now derives `ENABLE_LOGIN` from onboarding `deployment_mode`, so public deployments require Logto bootstrap while local installs keep authentication disabled without a separate toggle.
+- `setup_wizard_service.py` now auto-generates `ENCRYPTION_KEY` when it is absent, so onboarding no longer needs a dedicated user-facing security step for that value.

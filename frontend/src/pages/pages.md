@@ -34,3 +34,9 @@
 - `OnboardingSetup.jsx` now provides an official Binance API guide card directly above the Binance API key inputs, including creation, permission, and IP restriction guidance.
 - `OnboardingSetup.jsx` review step now focuses on a grouped change summary so operators can confirm what settings changed, instead of reading backend file targets.
 - `OnboardingSetup.jsx` now splits Binance trading setup into `paper` and `live` tabs, each with its own guide and mode-specific configuration block.
+- `OnboardingSetup.jsx` now delegates large step sections to `components/OnboardingSetup/` so the page stays centered on workflow orchestration and validation.
+- `OnboardingSetup.jsx` now derives login requirements from the first-step deployment mode. `public` adds the Logto step automatically, while `local` keeps authentication disabled without a separate toggle.
+- `OnboardingSetup.jsx` now requires each enabled AI provider to carry a runtime model name during onboarding, and preserves provider defaults when older saved configs are reloaded.
+- `OnboardingSetup.jsx` now mirrors the Settings page data-source priority experience with source toggles, drag sorting, and conditional EODHD credential entry.
+- `OnboardingSetup.jsx` no longer exposes a dedicated security step for `ENCRYPTION_KEY`; the wizard now carries or generates that value automatically and lets deployment mode remain the only first-step security choice.
+- `OnboardingSetup.jsx` no longer exposes default exchange, trade mode, or market in the Binance step; onboarding keeps those bootstrap defaults fixed while only collecting paper/live credentials and live enablement.

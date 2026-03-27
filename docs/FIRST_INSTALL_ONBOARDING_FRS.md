@@ -9,6 +9,7 @@
 - AI 不是单一 OpenAI，而是统一 AI provider 模型，支持 `openai`、`minimax`、`gemini`、`claude`
 - Trading 首装页只支持 `binance`
 - Trading 页面需要同时配置 `paper` 与 `live` 两套凭证
+- 登录开关不单独配置，由首步 `deployment_mode`（`local` / `public`）自动推导
 - 首装页不配置 `VITE_API_BASE_URL`
 - 首装页不修改 `frontend/.env`
 - Database 步骤不配置 `DATABASE_URL`，只配置 `database_config.json`
@@ -20,7 +21,7 @@
 - 让用户在不了解项目内部结构的情况下完成首次可运行配置
 - 让“必须配置项”和“可选增强项”清晰分层
 - 在不写入数据库的前提下完成启动期 bootstrap
-- 对敏感配置提供隐藏显示、掩码回显与风险提示
+- 对需要用户输入的敏感配置提供掩码回显与风险提示
 
 ### 2.2 设计原则
 
@@ -63,17 +64,21 @@
 
 | 配置项 | 写入位置 | 级别 | 说明 |
 |---|---|---|---|
-| `ENCRYPTION_KEY` | `backend/.env` | 强必填 | 用于加密保存 API Key、交易凭证等敏感值 |
-| `ENABLE_LOGIN` | `backend/.env` | 必填 | 明确登录是否启用 |
+| `deployment_mode`（推导 `ENABLE_LOGIN`） | `backend/.env` | 必填 | `local` 自动关闭登录，`public` 自动开启登录 |
 | `database.type` | `database_config.json` | 必填 | `sqlite` 或 `postgresql` |
 | `database.sqlite.path` 或 PostgreSQL 结构化字段 | `database_config.json` | 条件必填 | 根据数据库模式填写 |
+
+补充说明：
+
+- `ENCRYPTION_KEY` 仍会写入 `backend/.env`，但不再由用户在首装页手动配置
+- 若当前实例尚未配置 `ENCRYPTION_KEY`，向导保存时应自动生成默认值并落盘
 
 ### 4.2 P1：按功能开启时必须完成
 
 | 配置组 | 写入位置 | 何时必填 | 说明 |
 |---|---|---|---|
-| Logto 认证组 | `backend/.env` | 开启登录时 | 服务端 JWT 校验 + 前端 OAuth 所需参数 |
-| AI provider 组 | `backend/.env` | 开启 AI 时 | 多 provider 优先级与各 provider API Key / Base URL |
+| Logto 认证组 | `backend/.env` | `deployment_mode=public` 时 | 服务端 JWT 校验 + 前端 OAuth 所需参数 |
+| AI provider 组 | `backend/.env` | 开启 AI 时 | 多 provider 优先级与各 provider API Key / Base URL / 运行时模型名 |
 | EODHD 数据源 | `backend/.env` | 选择 EODHD 时 | 需要 `EODHD_API_KEY` |
 | Binance live 组 | `backend/.env` + `broker_config.json` | 开启 live 时 | `LIVE_TRADING_ENABLED` + Binance live 凭证 + 风险确认 |
 | 报告公开分享组 | `backend/.env` | 开启公开分享时 | `REPORT_SHARE_SECRET` 必填 |
@@ -106,25 +111,25 @@
 |---|---|---|
 | `AI_PROVIDER_PRIORITY` | `backend/.env` | 启用 provider 的优先级顺序，逗号分隔 |
 | `AI_PROVIDER` | `backend/.env` | 与第一优先 provider 保持一致，用于兼容旧逻辑 |
-| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | `backend/.env` | OpenAI provider |
-| `MINIMAX_API_KEY` / `MINIMAX_BASE_URL` | `backend/.env` | MiniMax provider |
-| `GEMINI_API_KEY` / `GEMINI_BASE_URL` | `backend/.env` | Gemini provider |
-| `CLAUDE_API_KEY` / `CLAUDE_BASE_URL` | `backend/.env` | Claude provider |
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` | `backend/.env` | OpenAI provider |
+| `MINIMAX_API_KEY` / `MINIMAX_BASE_URL` / `MINIMAX_MODEL` | `backend/.env` | MiniMax provider |
+| `GEMINI_API_KEY` / `GEMINI_BASE_URL` / `GEMINI_MODEL` | `backend/.env` | Gemini provider |
+| `CLAUDE_API_KEY` / `CLAUDE_BASE_URL` / `CLAUDE_MODEL` | `backend/.env` | Claude provider |
 
 ### 5.3 页面要求
 
 - AI 步骤必须支持启用一个或多个 provider
 - provider 顺序必须可调整，用于表示 fallback 顺序
-- 每个 provider 独立配置 `API key` 与 `Base URL`
+- 每个 provider 独立配置 `API key`、`Base URL` 与运行时 `model name`
 - provider 必须支持单独测试
-- 首装页不强制配置默认模型名
-- 页面需要提示：默认模型名可在后续 Settings 页继续配置
+- 向导需要直接保存每个已启用 provider 的运行时模型名，供首装后的 AI 请求与连接测试复用
 
 ### 5.4 校验规则
 
 - AI 步骤允许整体跳过
 - 若开启 AI，至少启用 1 个 provider
 - 对所有已启用 provider，`API key` 必填
+- 对所有已启用 provider，运行时 `model name` 必填
 - `Base URL` 为空时应回退到代码默认值
 
 ## 6. Database 需求
@@ -161,18 +166,21 @@
 | 配置项 | 写入位置 | 说明 |
 |---|---|---|
 | `LIVE_TRADING_ENABLED` | `backend/.env` | live 总开关 |
-| `DEFAULT_EXCHANGE=binance` | `backend/.env` | 固定为 Binance |
-| `DEFAULT_TRADE_MODE` | `backend/.env` | `paper` / `live` |
 | `CCXT_BINANCE_PAPER_API_KEY` / `SECRET` | `backend/.env` | Binance 测试网凭证 |
 | `CCXT_BINANCE_LIVE_API_KEY` / `SECRET` | `backend/.env` | Binance 实盘凭证 |
-| `broker_config.json` 中的 binance 节点 | `broker_config.json` | 交易所启用、paper sandbox、基础风险限制 |
+| `broker_config.json` 中的 binance 节点 | `broker_config.json` | 交易所启用、paper sandbox、基础风险限制；默认市场固定为 `spot` |
+
+补充说明：
+
+- 首装页不暴露 `DEFAULT_EXCHANGE`、`DEFAULT_TRADE_MODE`、`default_market`
+- 向导保存时应固定写入 `DEFAULT_EXCHANGE=binance`、`DEFAULT_TRADE_MODE=paper`，并将 Binance 默认市场固定为 `spot`
 
 ### 7.3 页面要求
 
 - 页面只展示 Binance
 - 页面需要以 `paper` / `live` 两个 Tab 展示两套 guide 与配置区域
 - 每个 Tab 都需要包含各自模式的 guide、凭证配置和测试动作
-- 页面可以选择默认模式，但不能因为默认模式切换而移除另一种模式的配置能力
+- 页面不暴露默认交易所、默认交易模式和默认市场；这些值由系统固定为 Binance / paper / spot
 - `paper` 和 `live` 都应支持单独测试
 - `paper` Tab 必须展示 Binance Spot Test Network 的官方引导与 sandbox 配置说明
 - `live` Tab 必须展示 Binance API Management 的官方引导、权限说明和 IP 限制说明
@@ -184,21 +192,19 @@
 - 若只填写一半 paper 凭证，阻止进入下一步
 - 若只填写一半 live 凭证，阻止进入下一步
 - 若开启 `LIVE_TRADING_ENABLED=true`，live 凭证必须完整
-- 若默认模式是 `live`，必须先开启 `LIVE_TRADING_ENABLED`
 
 ## 8. 页面步骤
 
 ### 8.1 推荐步骤
 
 1. Welcome
-2. Security
-3. Database
-4. Authentication（仅 `ENABLE_LOGIN=true` 时出现）
-5. Data Source
-6. AI
-7. Trading
-8. Brand & Report
-9. Review
+2. Database
+3. Authentication（仅 `deployment_mode=public` 时出现）
+4. Data Source
+5. AI
+6. Trading
+7. Brand & Report
+8. Review
 
 ### 8.2 每一步展示内容
 
@@ -215,8 +221,9 @@
 
 - 读取现有配置并预填
 - 掩码回显敏感值
-- 一键生成 `ENCRYPTION_KEY`
 - 条件显示字段
+- `ENCRYPTION_KEY` 不在首装页暴露；若缺失则在保存时自动生成并写入 `backend/.env`
+- Welcome 第一步的 `local` / `public` 选择必须自动控制 `ENABLE_LOGIN`，不再单独提供登录开关
 - AI provider 单独测试
 - Binance paper/live 单独测试
 - Binance 交易配置区域必须采用 `paper` / `live` Tab，分别提供各自的官方 guide 和模式配置
@@ -235,8 +242,7 @@
 ### 10.1 MVP 验收
 
 - 用户只配置以下内容也能完成首装：
-  - `ENCRYPTION_KEY`
-  - `ENABLE_LOGIN`
+  - `deployment_mode`
   - `database_config.json` 中的数据库模式
 - 完成向导后，系统能正常启动并进入首页
 - 向导 review 页应按配置分组展示改动摘要，而不是只展示后端 bootstrap 文件列表
@@ -246,6 +252,7 @@
 - AI 步骤能配置多个 provider
 - provider 顺序调整后能正确写入 `AI_PROVIDER_PRIORITY`
 - 第一优先 provider 会同步写入 `AI_PROVIDER`
+- 每个已启用 provider 的 `*_MODEL` 能正确写入 `.env` 并在重新加载向导后回显
 - 未配置任何 provider key 时，AI 仍可跳过，系统其他功能不受阻塞
 
 ### 10.3 Trading 验收

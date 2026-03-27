@@ -9,11 +9,15 @@
   "test_success": "连接测试通过",
   "test_failed": "连接测试失败",
   "milestone_title": "MVP 范围",
-  "milestone_desc": "此向导聚焦于文件级启动配置：安全、存储、数据源、AI、交易、品牌与最终确认。",
+  "milestone_desc": "此向导聚焦于文件级启动配置：部署、存储、数据源、AI、交易、品牌与最终确认。",
   "deployment": {
     "local": "本地开发或单机部署",
     "public": "公开部署，使用更严格的认证要求"
   },
+  "deployment_local_title": "本地模式会保持登录关闭",
+  "deployment_local_desc": "选择本地部署后，系统会自动关闭认证，并跳过 Logto 配置步骤。",
+  "deployment_public_title": "公开模式将要求登录",
+  "deployment_public_desc": "选择公开部署后，系统会自动开启认证，并在向导中加入 Logto 配置步骤。",
   "steps": {
     "welcome": "欢迎",
     "security": "安全",
@@ -45,8 +49,10 @@
     "default_market": "默认市场",
     "paper_balance": "模拟盘余额（USDT）",
     "sandbox_url": "Sandbox URL",
+    "base_url": "Base URL",
     "api_key": "API Key",
     "secret": "Secret Key",
+    "default_model": "默认运行时模型",
     "passphrase": "Passphrase",
     "site_title": "站点标题",
     "site_description": "站点描述",
@@ -58,7 +64,6 @@
   },
   "hints": {
     "encryption_key": "后续修改可能会导致已加密保存的凭证无法解密。",
-    "enable_login": "关闭后，应用将允许在无认证的情况下访问。",
     "enable_ai": "AI 是可选能力。关闭后，相关分析功能不可用。",
     "enable_trading": "建议先使用 paper。启用 live 前必须明确确认风险并填写完整凭证。"
   },
@@ -80,13 +85,14 @@
   "validation": {
     "encryption_key": "必须填写加密密钥。",
     "sqlite_path": "必须填写 SQLite 路径。",
-    "logto": "启用登录后，必须完整填写全部 Logto 字段。",
+    "logto": "公开部署启用认证时，必须完整填写全部 Logto 字段。",
     "eodhd": "启用 EODHD 时必须填写 API Key。",
     "openai": "启用 AI 时必须填写 OpenAI API Key。",
     "trading_credentials": "当前选中的交易模式必须填写完整凭证。",
     "live_ack": "启用 live 之前必须明确确认风险。",
     "ai_provider": "请至少启用一个 AI provider。",
     "ai_provider_keys": "所有已启用的 AI provider 都必须填写 API Key。",
+    "ai_provider_models": "所有已启用的 AI provider 都必须填写运行时模型名。",
     "paper_credentials": "Binance paper 凭证必须同时填写 API Key 和 Secret Key。",
     "live_credentials": "Binance live 凭证必须同时填写 API Key 和 Secret Key。",
     "live_mode": "将默认模式切换到 live 前，必须先启用 live trading。",
@@ -128,30 +134,60 @@
     "live_warning_title": "安全检查清单",
     "live_warning": "Binance 官方建议只开启必要权限，密钥不要进入源码仓库，定期轮换；一旦怀疑泄露，应立即删除或替换该 key。"
   },
-  "ai_note": "向导会保存 provider 凭证和回退优先级。运行时模型名可以在后续 Settings 页面继续配置。",
+  "datasource": {
+    "title": "数据源优先级",
+    "priority_help": "拖拽调整顺序。系统将按顺序尝试获取数据，直到成功。",
+    "enabled_sources": "已启用的数据源",
+    "priority_order": "优先级顺序",
+    "min_source_warning": "至少需要一个数据源。",
+    "eodhd_api_key": "EODHD API Key",
+    "enter_api_key": "请输入 EODHD API Key",
+    "eodhd_requires_key": "需要 API Key",
+    "empty_priority": "请至少启用一个数据源后再设置优先级。",
+    "sources": {
+      "yahoo": "Yahoo Finance",
+      "yahoo_desc": "免费，支持全球主要市场",
+      "eodhd": "EODHD",
+      "eodhd_desc": "付费数据源，需要 API Key",
+      "database": "本地数据库",
+      "database_desc": "之前获取的缓存数据"
+    }
+  },
+  "ai_note": "向导会保存 provider 凭证、回退优先级，以及每个已启用 provider 的运行时模型名。",
   "trading_note": "首次安装引导目前只支持 Binance，并允许你在同一个步骤里同时配置 paper 和 live 凭证。",
+  "security_auth_enabled": "当前配置将启用认证",
+  "security_auth_enabled_desc": "这个结果由你在第一步选择的部署模式决定。公开部署在完成安装前必须补齐 Logto 配置。",
+  "security_auth_disabled": "当前配置将关闭认证",
+  "security_auth_disabled_desc": "这个结果由你在第一步选择的部署模式决定。如果当前实例需要登录保护，请返回第一步切换到公开部署。",
   "enabled": "已启用",
   "disabled": "已关闭",
   "live_ack": "我理解 live trading 会下真实订单，并愿意自行承担相关风险。",
   "review_title": "保存前确认",
-  "review_desc": "这里展示的是本次配置实际改动的摘要，方便你在保存前确认最终生效内容。",
+  "review_desc": "这里展示的是本次将被保存的有效 override，方便你在落盘前确认到底改了哪些值。",
   "review": {
     "metrics": {
       "changed_areas": "改动分组",
       "changed_items": "改动项数",
+      "override_groups": "Override 分组",
+      "override_items": "Override 项数",
       "items_label": "项"
     },
     "no_changes_title": "当前没有未保存的配置改动",
     "no_changes_desc": "你当前的选择与已保存的启动配置一致。",
+    "override_preview_title": "有效 Override 预览",
+    "override_preview_desc": "这里仅展示相对当前已保存 bootstrap 配置发生变化的值。",
+    "previous_value": "原值",
     "sections": {
       "security": "安全与访问",
       "storage": "存储与数据",
       "ai": "AI",
       "trading": "交易",
-      "brand": "品牌与报告"
+      "brand": "品牌与报告",
+      "other": "其他 Override"
     },
     "fields": {
       "deployment_mode": "部署模式",
+      "login_access": "登录访问",
       "encryption_key": "加密密钥",
       "logto_issuer": "Logto Issuer",
       "logto_app_id": "Logto App ID",

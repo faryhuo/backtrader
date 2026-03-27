@@ -29,21 +29,29 @@ AI_PROVIDER_DEFAULTS = {
         "api_key_env": "OPENAI_API_KEY",
         "base_url_env": "OPENAI_BASE_URL",
         "base_url": "https://api.openai.com/v1",
+        "model_env": "OPENAI_MODEL",
+        "default_model": "gpt-5.1",
     },
     "minimax": {
         "api_key_env": "MINIMAX_API_KEY",
         "base_url_env": "MINIMAX_BASE_URL",
         "base_url": "https://api.minimaxi.com/anthropic",
+        "model_env": "MINIMAX_MODEL",
+        "default_model": "MiniMax-M2.7",
     },
     "gemini": {
         "api_key_env": "GEMINI_API_KEY",
         "base_url_env": "GEMINI_BASE_URL",
         "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        "model_env": "GEMINI_MODEL",
+        "default_model": "gemini-2.0-flash",
     },
     "claude": {
         "api_key_env": "CLAUDE_API_KEY",
         "base_url_env": "CLAUDE_BASE_URL",
         "base_url": "https://api.anthropic.com/v1",
+        "model_env": "CLAUDE_MODEL",
+        "default_model": "claude-3-5-haiku-latest",
     },
 }
 LEGACY_EXCHANGE_ENV_KEYS = (
@@ -193,12 +201,16 @@ DEFAULT_BACKEND_ENV = {
     "EODHD_API_KEY": "",
     "OPENAI_API_KEY": "",
     "OPENAI_BASE_URL": AI_PROVIDER_DEFAULTS["openai"]["base_url"],
+    "OPENAI_MODEL": AI_PROVIDER_DEFAULTS["openai"]["default_model"],
     "MINIMAX_API_KEY": "",
     "MINIMAX_BASE_URL": AI_PROVIDER_DEFAULTS["minimax"]["base_url"],
+    "MINIMAX_MODEL": AI_PROVIDER_DEFAULTS["minimax"]["default_model"],
     "GEMINI_API_KEY": "",
     "GEMINI_BASE_URL": AI_PROVIDER_DEFAULTS["gemini"]["base_url"],
+    "GEMINI_MODEL": AI_PROVIDER_DEFAULTS["gemini"]["default_model"],
     "CLAUDE_API_KEY": "",
     "CLAUDE_BASE_URL": AI_PROVIDER_DEFAULTS["claude"]["base_url"],
+    "CLAUDE_MODEL": AI_PROVIDER_DEFAULTS["claude"]["default_model"],
     "HTTP_PROXY": "",
     "HTTPS_PROXY": "",
     "CORS_ALLOW_ORIGINS": "",
@@ -328,9 +340,14 @@ def _build_default_ai_providers() -> dict[str, dict[str, str]]:
         provider: {
             "api_key": "",
             "base_url": defaults["base_url"],
+            "default_model": defaults["default_model"],
         }
         for provider, defaults in AI_PROVIDER_DEFAULTS.items()
     }
+
+
+def _deployment_requires_login(deployment_mode: str) -> bool:
+    return deployment_mode == "public"
 
 
 class PostgreSQLConfig(BaseModel):
@@ -348,7 +365,7 @@ class DatabaseSelection(BaseModel):
 
 
 class SecurityConfig(BaseModel):
-    encryption_key: str
+    encryption_key: str = ""
     enable_login: bool = False
 
 
@@ -371,6 +388,7 @@ class DataSourceConfig(BaseModel):
 class AIProviderConfig(BaseModel):
     api_key: str = ""
     base_url: str = ""
+    default_model: str = ""
 
 
 class AIConfig(BaseModel):
@@ -460,7 +478,7 @@ class NetworkConfigPayload(BaseModel):
 
 class SetupWizardPayload(BaseModel):
     deployment_mode: str = "local"
-    security: SecurityConfig
+    security: SecurityConfig = Field(default_factory=SecurityConfig)
     database: DatabaseSelection
     auth: AuthConfig = Field(default_factory=AuthConfig)
     data_source: DataSourceConfig = Field(default_factory=DataSourceConfig)
@@ -473,8 +491,12 @@ class SetupWizardPayload(BaseModel):
 
     @model_validator(mode="after")
     def validate_cross_fields(self) -> "SetupWizardPayload":
-        if not _clean_string(self.security.encryption_key):
-            raise ValueError("ENCRYPTION_KEY is required")
+        if self.deployment_mode not in {"local", "public"}:
+            raise ValueError("Deployment mode must be local or public")
+
+        login_enabled = _deployment_requires_login(self.deployment_mode)
+        self.security.enable_login = login_enabled
+        self.security.encryption_key = _clean_string(self.security.encryption_key) or generate_encryption_key()
 
         if self.database.mode not in {"sqlite", "postgresql"}:
             raise ValueError("Database mode must be sqlite or postgresql")
@@ -493,7 +515,7 @@ class SetupWizardPayload(BaseModel):
             if missing_pg:
                 raise ValueError(f"PostgreSQL fields required: {', '.join(missing_pg)}")
 
-        if self.security.enable_login:
+        if login_enabled:
             required_auth = {
                 "LOGTO_ISSUER": self.auth.logto_issuer,
                 "LOGTO_JWKS_URI": self.auth.logto_jwks_uri,
@@ -523,6 +545,15 @@ class SetupWizardPayload(BaseModel):
                 raise ValueError(
                     "API key is required for enabled AI providers: " + ", ".join(missing_api_keys)
                 )
+            missing_models = [
+                provider
+                for provider in provider_priority
+                if not _clean_string((self.ai.providers.get(provider) or AIProviderConfig()).default_model)
+            ]
+            if missing_models:
+                raise ValueError(
+                    "Runtime model is required for enabled AI providers: " + ", ".join(missing_models)
+                )
 
         paper_creds = self.trading.credentials.paper
         live_creds = self.trading.credentials.live
@@ -539,11 +570,9 @@ class SetupWizardPayload(BaseModel):
         ):
             raise ValueError("Binance live credentials require both API key and secret")
 
-        if self.trading.default_trade_mode not in {"paper", "live"}:
-            raise ValueError("Default trade mode must be paper or live")
-
-        if self.trading.default_trade_mode == "live" and not self.trading.live_trading_enabled:
-            raise ValueError("Live trading must be enabled before live mode can be selected")
+        self.trading.default_trade_mode = "paper"
+        self.trading.binance.default_market = "spot"
+        self.trading.binance.markets = ["spot"]
 
         if self.trading.live_trading_enabled:
             if not _clean_string(live_creds.api_key) or not _clean_string(live_creds.secret):
@@ -586,9 +615,11 @@ class SetupWizardService:
         for provider, defaults in AI_PROVIDER_DEFAULTS.items():
             api_key = env_values.get(defaults["api_key_env"], "")
             base_url = env_values.get(defaults["base_url_env"], "") or defaults["base_url"]
+            default_model = env_values.get(defaults["model_env"], "") or defaults["default_model"]
             providers[provider] = {
                 "api_key": _build_masked_secret(api_key),
                 "base_url": base_url,
+                "default_model": default_model,
                 "configured": bool(_clean_string(api_key)),
             }
             if _clean_string(api_key):
@@ -620,9 +651,10 @@ class SetupWizardService:
 
     def _build_summary(self, payload: SetupWizardPayload) -> list[dict[str, Any]]:
         warnings: list[str] = []
+        login_enabled = _deployment_requires_login(payload.deployment_mode)
         if not payload.ai.enabled:
             warnings.append("AI analysis remains disabled until at least one provider key is configured.")
-        if not payload.security.enable_login:
+        if not login_enabled:
             warnings.append("Authentication remains disabled; the application will be publicly accessible.")
         if "eodhd" not in payload.data_source.priority:
             warnings.append("Only Yahoo Finance and cached database data sources are enabled.")
@@ -774,6 +806,7 @@ class SetupWizardService:
 
     def save(self, payload: dict[str, Any]) -> dict[str, Any]:
         validated = self.validate_payload(payload)
+        login_enabled = _deployment_requires_login(validated.deployment_mode)
         backend_lines, backend_env = self._backend_env()
 
         database_config = _load_json(self.database_config_path, DEFAULT_DATABASE_CONFIG)
@@ -783,19 +816,19 @@ class SetupWizardService:
 
         backend_updates = dict(backend_env)
         backend_updates["ENCRYPTION_KEY"] = _resolve_secret(backend_env.get("ENCRYPTION_KEY"), validated.security.encryption_key)
-        backend_updates["ENABLE_LOGIN"] = str(validated.security.enable_login).lower()
+        backend_updates["ENABLE_LOGIN"] = str(login_enabled).lower()
         if "DATABASE_URL" in backend_env:
             backend_updates["DATABASE_URL"] = ""
 
-        backend_updates["LOGTO_ISSUER"] = validated.auth.logto_issuer if validated.security.enable_login else ""
-        backend_updates["LOGTO_JWKS_URI"] = validated.auth.logto_jwks_uri if validated.security.enable_login else ""
-        backend_updates["LOGTO_AUDIENCE"] = validated.auth.logto_audience if validated.security.enable_login else ""
-        backend_updates["LOGTO_REQUIRED_SCOPES"] = validated.auth.logto_required_scopes if validated.security.enable_login else ""
-        backend_updates["LOGTO_ENDPOINT"] = validated.auth.logto_endpoint if validated.security.enable_login else ""
-        backend_updates["LOGTO_APP_ID"] = validated.auth.logto_app_id if validated.security.enable_login else ""
-        backend_updates["LOGTO_REDIRECT_URI"] = validated.auth.logto_redirect_uri if validated.security.enable_login else ""
+        backend_updates["LOGTO_ISSUER"] = validated.auth.logto_issuer if login_enabled else ""
+        backend_updates["LOGTO_JWKS_URI"] = validated.auth.logto_jwks_uri if login_enabled else ""
+        backend_updates["LOGTO_AUDIENCE"] = validated.auth.logto_audience if login_enabled else ""
+        backend_updates["LOGTO_REQUIRED_SCOPES"] = validated.auth.logto_required_scopes if login_enabled else ""
+        backend_updates["LOGTO_ENDPOINT"] = validated.auth.logto_endpoint if login_enabled else ""
+        backend_updates["LOGTO_APP_ID"] = validated.auth.logto_app_id if login_enabled else ""
+        backend_updates["LOGTO_REDIRECT_URI"] = validated.auth.logto_redirect_uri if login_enabled else ""
         backend_updates["LOGTO_POST_LOGOUT_REDIRECT_URI"] = (
-            validated.auth.logto_post_logout_redirect_uri if validated.security.enable_login else ""
+            validated.auth.logto_post_logout_redirect_uri if login_enabled else ""
         )
         backend_updates["EODHD_API_KEY"] = _resolve_secret(backend_env.get("EODHD_API_KEY"), validated.data_source.eodhd_api_key)
 
@@ -810,6 +843,7 @@ class SetupWizardService:
                 else ""
             )
             backend_updates[defaults["base_url_env"]] = _clean_string(provider_config.base_url) or defaults["base_url"]
+            backend_updates[defaults["model_env"]] = _clean_string(provider_config.default_model) or defaults["default_model"]
 
         backend_updates["HTTP_PROXY"] = validated.network.http_proxy
         backend_updates["HTTPS_PROXY"] = validated.network.https_proxy

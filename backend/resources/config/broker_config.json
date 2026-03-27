@@ -13,69 +13,25 @@
       "paper_mode": {
         "enabled": true,
         "sandbox_url": "https://testnet.binance.vision",
-        "initial_balance_usdt": 10000
-      },
-      "rate_limits": {
-        "orders_per_second": 10,
-        "requests_per_minute": 1200
-      }
-    },
-    "okx": {
-      "enabled": false,
-      "name": "OKX",
-      "adapter": "ccxt",
-      "ccxt_id": "okx",
-      "markets": [
-        "spot",
-        "swap"
-      ],
-      "default_market": "spot",
-      "paper_mode": {
-        "enabled": true,
-        "sandbox_url": "https://www.okx.com",
-        "initial_balance_usdt": 10000
-      },
-      "rate_limits": {
-        "orders_per_second": 20,
-        "requests_per_minute": 1200
-      }
-    },
-    "bybit": {
-      "enabled": false,
-      "name": "Bybit",
-      "adapter": "ccxt",
-      "ccxt_id": "bybit",
-      "markets": [
-        "spot",
-        "linear"
-      ],
-      "default_market": "spot",
-      "paper_mode": {
-        "enabled": true,
-        "sandbox_url": "https://api-testnet.bybit.com",
-        "initial_balance_usdt": 10000
-      },
-      "rate_limits": {
-        "orders_per_second": 10,
-        "requests_per_minute": 600
+        "initial_balance_usdt": 10000.0
       }
     }
   },
   "risk_management": {
     "position_limits": {
-      "max_position_size_usd": 10000000,
+      "max_position_size_usd": 10000000.0,
       "max_positions_count": 5,
       "max_leverage": 1
     },
     "loss_limits": {
-      "max_daily_loss_usd": 500,
-      "max_daily_loss_percent": 5,
-      "max_drawdown_percent": 10
+      "max_daily_loss_usd": 500.0,
+      "max_daily_loss_percent": 5.0,
+      "max_drawdown_percent": 10.0
     },
     "order_limits": {
-      "min_order_size_usd": 10,
-      "max_order_size_usd": 10000000,
-      "max_slippage_percent": 1
+      "min_order_size_usd": 10.0,
+      "max_order_size_usd": 10000000.0,
+      "max_slippage_percent": 1.0
     }
   },
   "trading_settings": {
@@ -89,22 +45,6 @@
       "1h",
       "4h",
       "1d"
-    ],
-    "reconnect_on_disconnect": true,
-    "max_reconnect_attempts": 5,
-    "heartbeat_interval_seconds": 30
-  },
-  "notifications": {
-    "enabled": true,
-    "channels": [
-      "websocket"
-    ],
-    "events": [
-      "order_filled",
-      "position_opened",
-      "position_closed",
-      "error",
-      "risk_alert"
     ]
   }
 }

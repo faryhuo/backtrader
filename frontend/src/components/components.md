@@ -8,9 +8,14 @@
 - `DataSource/`：数据源配置组件（符号选择、时间范围等）。
 - `Layout/`：应用布局组件（导航栏、侧边栏、页面框架）。
 - `LiveTrading/`：实盘交易组件（交易面板、订单列表、持仓展示等）。
+- `OnboardingSetup/`：首次安装引导页拆分组件（AI、Trading、Review 等步骤区域）。
 - `RunStrategy/`：策略运行组件（参数配置、执行控制等）。
 - `StrategyMaintain/`：策略维护组件（Monaco 编辑器、策略列表、模板选择等）。
 - `WalkForward/`：Walk-Forward 优化组件（参数配置、结果展示等）。
+
+## Recent Notes
+
+- `OnboardingSetup/` now hosts the larger first-run wizard step components so `pages/OnboardingSetup.jsx` stays focused on orchestration and validation.
 
 ## 功能职责（Functional）
 - 提供跨页面复用的 UI/业务组件。
@@ -25,4 +30,3 @@
 - 组件文件与目录使用 PascalCase；导出默认组件与同名文件一致。
 - 子目录内可包含 `index.js(x)` 作为聚合入口。
 - 禁止在组件中直接访问 `.env` 或硬编码后端地址，统一走 `services/`。
-

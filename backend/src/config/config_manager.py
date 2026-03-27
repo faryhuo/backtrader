@@ -131,12 +131,15 @@ class ConfigManager:
                 "minimax": "https://api.minimaxi.com/anthropic",
             }
             default_models = {
+                "openai": "gpt-5.1",
                 "minimax": "MiniMax-M2.7",
+                "gemini": "gemini-2.0-flash",
+                "claude": "claude-3-5-haiku-latest",
             }
             config = {
                 "api_key": self.get(f"{provider_name.upper()}_API_KEY"),
                 "base_url": self.get(f"{provider_name.upper()}_BASE_URL", default_base_urls.get(provider_name)),
-                "default_model": default_models.get(provider_name),
+                "default_model": self.get(f"{provider_name.upper()}_MODEL", default_models.get(provider_name)),
             }
             source = "fallback"
 

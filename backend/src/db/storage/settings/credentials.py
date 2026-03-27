@@ -24,23 +24,30 @@ AI_PROVIDER_ENV_MAPPING = {
     "openai": {
         "api_key": ["OPENAI_API_KEY"],
         "base_url": ["OPENAI_BASE_URL"],
+        "default_model_env": ["OPENAI_MODEL"],
         "default_base_url": "https://api.openai.com/v1",
+        "default_model": "gpt-5.1",
     },
     "minimax": {
         "api_key": ["MINIMAX_API_KEY"],
         "base_url": ["MINIMAX_BASE_URL"],
+        "default_model_env": ["MINIMAX_MODEL"],
         "default_base_url": "https://api.minimaxi.com/anthropic",
         "default_model": "MiniMax-M2.7",
     },
     "gemini": {
         "api_key": ["GEMINI_API_KEY"],
         "base_url": ["GEMINI_BASE_URL"],
+        "default_model_env": ["GEMINI_MODEL"],
         "default_base_url": "https://generativelanguage.googleapis.com/v1beta",
+        "default_model": "gemini-2.0-flash",
     },
     "claude": {
         "api_key": ["CLAUDE_API_KEY", "ANTHROPIC_API_KEY"],
         "base_url": ["CLAUDE_BASE_URL", "ANTHROPIC_BASE_URL"],
+        "default_model_env": ["CLAUDE_MODEL"],
         "default_base_url": "https://api.anthropic.com/v1",
+        "default_model": "claude-3-5-haiku-latest",
     },
 }
 DEFAULT_AI_PROVIDER_PRIORITY = ["openai", "minimax", "gemini", "claude"]
@@ -177,10 +184,20 @@ class CredentialsMixin:
         if base_url is None:
             base_url = mapping.get("default_base_url")
 
+        default_model = None
+        for env_key in mapping.get("default_model_env", []):
+            env_value = os.getenv(env_key)
+            if env_value:
+                default_model = env_value
+                break
+
+        if default_model is None:
+            default_model = mapping.get("default_model")
+
         return {
             "api_key": mask_credential(api_key) if mask_sensitive and api_key else api_key,
             "base_url": base_url,
-            "default_model": mapping.get("default_model"),
+            "default_model": default_model,
         }
 
     def get_ai_provider(self, user_id: Optional[str] = None, db: Optional[Session] = None) -> Tuple[str, str]:
