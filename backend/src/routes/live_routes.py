@@ -107,7 +107,7 @@ class StartLiveRequest(BaseModel):
         description="Deprecated. Exchange-backed modes load balance from the exchange account.",
     )
     commission: float | None = Field(
-        default=None,
+        default=0.001,
         ge=0,
         le=0.1,
         description="Deprecated. Live and paper trading fees should be sourced from exchange fills.",
@@ -156,8 +156,8 @@ class SessionResponse(BaseModel):
 class ExchangeInfo(BaseModel):
     id: str
     name: str
-    adapter: str = "binance"
-    binance_id: Optional[str] = None
+    adapter: str = "ccxt"
+    ccxt_id: Optional[str] = None
     markets: List[str]
     default_market: str
     paper_mode_available: bool

@@ -9,8 +9,9 @@ Provides centralized exception handling with:
 
 import logging
 import traceback
-from typing import Optional
+from typing import Any, Optional
 
+from src.utils.error_payloads import build_error_payload, is_error_payload
 from src.utils.request_context import get_request_id
 
 from fastapi import Request, HTTPException
@@ -47,13 +48,17 @@ class AppError(Exception):
         message: str,
         error_code: str = ErrorCode.INTERNAL_ERROR,
         status_code: int = 500,
-        details: Optional[dict] = None
+        details: Optional[dict] = None,
+        retryable: bool = False,
+        safe_to_expose: Optional[bool] = None,
     ):
         super().__init__(message)
         self.message = message
         self.error_code = error_code
         self.status_code = status_code
         self.details = details
+        self.retryable = retryable
+        self.safe_to_expose = status_code < 500 if safe_to_expose is None else safe_to_expose
 
 
 class ValidationError(AppError):
@@ -84,7 +89,9 @@ class ExternalServiceError(AppError):
             message=message,
             error_code=ErrorCode.EXTERNAL_SERVICE_ERROR,
             status_code=502,
-            details=details
+            details=details,
+            retryable=True,
+            safe_to_expose=True,
         )
 
 
@@ -135,27 +142,53 @@ def build_error_response(
     error_code: str,
     status_code: int,
     details: Optional[dict] = None,
+    retryable: bool = False,
     include_trace: bool = False,
     trace: Optional[str] = None
 ) -> JSONResponse:
     """Build a standardized error response."""
-    request_id = get_request_id()
-    
-    content = {
-        "detail": message,
-        "error_code": error_code,
-    }
-    
-    if request_id:
-        content["request_id"] = request_id
-    
-    if details:
-        content["details"] = details
-    
+    content = build_error_payload(
+        message,
+        error_code=error_code,
+        details=details,
+        retryable=retryable,
+    )
+
     if include_trace and trace:
         content["trace"] = trace
-    
+
     return JSONResponse(status_code=status_code, content=content)
+
+
+SAFE_5XX_ERROR_CODES = {
+    ErrorCode.EXTERNAL_SERVICE_ERROR,
+    ErrorCode.SERVICE_UNAVAILABLE,
+}
+
+
+def _normalize_http_exception_payload(exc: HTTPException, fallback_error_code: str) -> tuple[dict[str, Any], bool]:
+    detail = exc.detail
+    if is_error_payload(detail):
+        payload = dict(detail)
+    elif isinstance(detail, dict):
+        payload = build_error_payload(
+            str(detail.get("detail") or "Request failed"),
+            error_code=str(detail.get("error_code") or fallback_error_code),
+            details=detail.get("details"),
+            retryable=bool(detail.get("retryable", False)),
+        )
+    else:
+        payload = build_error_payload(
+            str(detail),
+            error_code=fallback_error_code,
+        )
+
+    safe_to_expose = bool(
+        getattr(exc, "safe_to_expose", False)
+        or (isinstance(detail, dict) and detail.get("safe_to_expose"))
+        or payload.get("error_code") in SAFE_5XX_ERROR_CODES
+    )
+    return payload, safe_to_expose
 
 
 # ========== Exception Handlers ==========
@@ -172,7 +205,8 @@ def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         message=exc.message,
         error_code=exc.error_code,
         status_code=exc.status_code,
-        details=exc.details
+        details=exc.details,
+        retryable=exc.retryable,
     )
 
 
@@ -204,10 +238,14 @@ def http_exception_handler(
             extra={"path": request.url.path}
         )
     
+    payload, safe_to_expose = _normalize_http_exception_payload(exc, error_code)
+    expose_detail = debug or exc.status_code < 500 or safe_to_expose
     return build_error_response(
-        message=str(exc.detail) if debug or exc.status_code < 500 else "Internal server error",
-        error_code=error_code,
-        status_code=exc.status_code
+        message=str(payload.get("detail") if expose_detail else "Internal server error"),
+        error_code=str(payload.get("error_code") or error_code),
+        status_code=exc.status_code,
+        details=payload.get("details"),
+        retryable=bool(payload.get("retryable", False)),
     )
 
 
@@ -240,6 +278,7 @@ def unhandled_exception_handler(
             message=str(exc),
             error_code=ErrorCode.INTERNAL_ERROR,
             status_code=500,
+            retryable=False,
             include_trace=True,
             trace=full_trace
         )
@@ -248,7 +287,8 @@ def unhandled_exception_handler(
         return build_error_response(
             message="Internal server error",
             error_code=ErrorCode.INTERNAL_ERROR,
-            status_code=500
+            status_code=500,
+            retryable=False,
         )
 
 

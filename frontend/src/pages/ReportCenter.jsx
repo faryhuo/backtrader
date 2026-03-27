@@ -22,6 +22,7 @@ import {
 import { reportApi } from '../services/reportApi';
 import { useReports, ReportStatus, ReportType } from '../hooks/useReports';
 import { ShareReportModal } from '../components/ReportCenter';
+import { formatAppError } from '../utils/appErrorFormatter';
 import './ReportCenter.css';
 
 // Helper to get report type label
@@ -66,6 +67,7 @@ function ReportCenter() {
         handleFilterChange,
         downloadReport,
     } = useReports();
+    const formattedPageError = error ? formatAppError(error, t) : null;
 
     // Modal state
     const [selectedReport, setSelectedReport] = useState(null);
@@ -116,7 +118,8 @@ function ReportCenter() {
                     fetchReports();
                 } catch (err) {
                     console.error('Failed to delete report:', err);
-                    message.error(t('reportCenter.deleteError', 'Failed to delete report'));
+                    const formattedError = formatAppError(err, t);
+                    message.error(formattedError.description || formattedError.title || t('reportCenter.deleteError', 'Failed to delete report'));
                 }
             },
         });
@@ -197,11 +200,15 @@ function ReportCenter() {
                                         <span className="progress-text">{report.progress}%</span>
                                     </div>
                                 )}
-                                {report.error_message && (
-                                    <div className="report-error-message" title={report.error_message}>
-                                        {report.error_message}
-                                    </div>
-                                )}
+                                {(report.error || report.error_message) && (() => {
+                                    const formattedReportError = formatAppError(report.error || report.error_message, t);
+                                    return (
+                                        <div className="report-error-message" title={formattedReportError.detail || report.error_message}>
+                                            {formattedReportError.description || formattedReportError.title}
+                                            {formattedReportError.requestId && ` (${t('common.request_id', 'Request ID')}: ${formattedReportError.requestId})`}
+                                        </div>
+                                    );
+                                })()}
                             </td>
                             <td className="report-sources">
                                 {report.source_ids?.length || 0}
@@ -321,7 +328,7 @@ function ReportCenter() {
             {/* Error */}
             {error && (
                 <div className="report-error" style={{ color: 'red', marginBottom: '1rem' }}>
-                    {error}
+                    {formattedPageError?.description || formattedPageError?.title}
                 </div>
             )}
 

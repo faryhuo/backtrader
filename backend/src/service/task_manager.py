@@ -16,6 +16,8 @@ from typing import Any, Callable, Dict, Optional
 
 from src.db.storage.task import TaskStorage, get_task_storage
 from src.db.models.task import TaskStatus, TaskType
+from src.utils.error_payloads import build_error_payload, get_error_detail
+from src.utils.exception_handlers import ErrorCode, AppError, ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -194,17 +196,36 @@ class TaskManager:
 
         except Exception as e:
             # Task failed
-            error_message = str(e)
+            error_code = ErrorCode.INTERNAL_ERROR
+            retryable = False
+            details = None
+
+            if isinstance(e, ExternalServiceError):
+                error_code = e.error_code
+                retryable = e.retryable
+                details = e.details
+            elif isinstance(e, AppError):
+                error_code = e.error_code
+                retryable = e.retryable
+                details = e.details
+
+            error_payload = build_error_payload(
+                str(e),
+                error_code=error_code,
+                details=details,
+                retryable=retryable,
+            )
             self.storage.update_status(
                 task_id,
                 TaskStatus.FAILED.value,
-                error_message=error_message,
+                error_message=error_payload,
             )
-            self.storage.add_log(task_id, "error", f"Task failed: {error_message}")
+            self.storage.add_log(task_id, "error", f"Task failed: {get_error_detail(error_payload)}")
             await self._broadcast_task_event(task_id, "failed", {
                 "task_id": task_id,
                 "status": TaskStatus.FAILED.value,
-                "error": error_message,
+                "error": error_payload,
+                "error_message": get_error_detail(error_payload),
             })
             logger.exception(f"Task {task_id} failed: {e}")
 

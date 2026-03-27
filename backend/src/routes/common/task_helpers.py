@@ -10,6 +10,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from src.contracts.exceptions import StrategyLoadError, DataLoadError
+from src.utils.error_payloads import build_error_payload
+from src.utils.exception_handlers import ErrorCode
 
 
 def get_user_id(user: Optional[dict]) -> Optional[str]:
@@ -174,16 +176,47 @@ def map_exception_to_http(exc: Exception) -> HTTPException:
     """
     # Map specific exception types to HTTP status codes
     if isinstance(exc, StrategyLoadError):
-        return HTTPException(status_code=400, detail=str(exc))
+        return HTTPException(
+            status_code=400,
+            detail=build_error_payload(
+                str(exc),
+                error_code=ErrorCode.BAD_REQUEST,
+                retryable=False,
+            ),
+        )
     
     if isinstance(exc, DataLoadError):
-        return HTTPException(status_code=502, detail=str(exc))
+        return HTTPException(
+            status_code=502,
+            detail={
+                **build_error_payload(
+                    str(exc),
+                    error_code=ErrorCode.EXTERNAL_SERVICE_ERROR,
+                    retryable=True,
+                ),
+                "safe_to_expose": True,
+            },
+        )
     
     if isinstance(exc, ValueError):
-        return HTTPException(status_code=400, detail=str(exc))
+        return HTTPException(
+            status_code=400,
+            detail=build_error_payload(
+                str(exc),
+                error_code=ErrorCode.BAD_REQUEST,
+                retryable=False,
+            ),
+        )
     
     if isinstance(exc, FileNotFoundError):
-        return HTTPException(status_code=404, detail=str(exc))
+        return HTTPException(
+            status_code=404,
+            detail=build_error_payload(
+                str(exc),
+                error_code=ErrorCode.NOT_FOUND,
+                retryable=False,
+            ),
+        )
     
     if isinstance(exc, HTTPException):
         # Already an HTTP exception, return as-is

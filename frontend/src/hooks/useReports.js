@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { message } from 'antd';
 import { reportApi } from '../services/reportApi';
+import { formatAppError } from '../utils/appErrorFormatter';
 
 // Report status constants
 export const ReportStatus = {
@@ -58,7 +59,7 @@ export function useReports({
             setTotal(result.total || 0);
             setError(null);
         } catch (err) {
-            setError(err.message);
+            setError(err);
         } finally {
             setLoading(false);
         }
@@ -97,7 +98,8 @@ export function useReports({
             await reportApi.downloadReport(reportId);
             message.success(t?.('reportCenter.downloadSuccess') || 'Report downloaded');
         } catch (err) {
-            message.error(t?.('reportCenter.downloadError') || 'Failed to download report');
+            const formattedError = formatAppError(err, t);
+            message.error(formattedError.description || formattedError.title || t?.('reportCenter.downloadError') || 'Failed to download report');
         }
     }, []);
 
@@ -109,7 +111,8 @@ export function useReports({
             fetchReports();
             return true;
         } catch (err) {
-            message.error(t?.('reportCenter.deleteError') || 'Failed to delete report');
+            const formattedError = formatAppError(err, t);
+            message.error(formattedError.description || formattedError.title || t?.('reportCenter.deleteError') || 'Failed to delete report');
             return false;
         }
     }, [fetchReports]);

@@ -39,6 +39,16 @@ class BinanceData(bt.DataBase):
         ('debug', False),
     )
 
+    @classmethod
+    def doprenew(cls, *args, **kwargs):
+        timeframe = kwargs.get("timeframe")
+        if isinstance(timeframe, str) and timeframe in TIMEFRAME_SECONDS:
+            kwargs["ccxt_timeframe"] = timeframe
+            bt_timeframe, compression = map_to_bt_timeframe(timeframe)
+            kwargs["timeframe"] = bt_timeframe
+            kwargs["compression"] = compression
+        return cls, args, kwargs
+
     def __init__(
         self,
         store: BinanceStore,
@@ -318,4 +328,3 @@ class BinanceData(bt.DataBase):
     def _datetime_to_ms(dt_obj: datetime) -> int:
         """Convert a datetime to epoch milliseconds, treating naive values as UTC."""
         return int(timegm(dt_obj.utctimetuple()) * 1000 + dt_obj.microsecond / 1000)
-

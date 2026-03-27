@@ -19,6 +19,11 @@ from sqlalchemy.orm import Session
 
 from src.db.storage.base import BaseStorage
 from src.db.models.task import TaskModel, TaskStatus, TaskType
+from src.utils.error_payloads import (
+    deserialize_error_payload,
+    get_error_detail,
+    serialize_error_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +170,7 @@ class TaskStorage(BaseStorage):
         task_id: str,
         status: str,
         progress: Optional[int] = None,
-        error_message: Optional[str] = None,
+        error_message: Optional[Any] = None,
         result_id: Optional[str] = None,
         result_type: Optional[str] = None,
     ) -> bool:
@@ -195,7 +200,7 @@ class TaskStorage(BaseStorage):
                 task.progress = min(100, max(0, progress))
 
             if error_message is not None:
-                task.error_message = error_message
+                task.error_message = serialize_error_payload(error_message)
 
             if result_id is not None:
                 task.result_id = result_id
@@ -372,6 +377,7 @@ class TaskStorage(BaseStorage):
 
     def _task_to_dict(self, task: TaskModel) -> Dict[str, Any]:
         """Convert TaskModel to dictionary."""
+        error_payload = deserialize_error_payload(task.error_message)
         return {
             "task_id": task.task_id,
             "task_type": task.task_type,
@@ -382,7 +388,8 @@ class TaskStorage(BaseStorage):
             "started_at": task.started_at.isoformat() if task.started_at else None,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
             "duration_seconds": task.duration_seconds,
-            "error_message": task.error_message,
+            "error": error_payload,
+            "error_message": get_error_detail(task.error_message),
             "result_id": task.result_id,
             "result_type": task.result_type,
             "user_id": task.user_id,

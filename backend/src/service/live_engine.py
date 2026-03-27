@@ -64,6 +64,17 @@ def _get_exchange_credentials(exchange: str, mode: str, user_id: Optional[str]) 
     api_key = credentials.get('api_key')
     api_secret = credentials.get('secret')
 
+    if mode == 'paper' and not api_key and not api_secret:
+        logger.warning(
+            "No %s %s API credentials configured; continuing with empty credentials",
+            exchange,
+            mode,
+        )
+        return {
+            'api_key': '',
+            'api_secret': '',
+        }
+
     if not api_key or not api_secret:
         raise LiveTradingError(
             f"Missing {exchange} {mode} API credentials. "

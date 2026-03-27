@@ -22,6 +22,8 @@ from src.config.settings import TEMPLATES_DIR, REPORTS_DIR, IMAGES_DIR, PROJECT_
 from src.db.storage import BacktestStorage, PortfolioStorage, WalkForwardStorage, get_report_storage
 from src.db.models import ReportStatus
 from src.utils.report_i18n import get_translations, get_report_type_name, DEFAULT_LANGUAGE
+from src.utils.error_payloads import build_error_payload
+from src.utils.exception_handlers import ErrorCode
 from src.service.echarts_theme import build_equity_chart, build_comparison_bar_chart
 
 logger = logging.getLogger(__name__)
@@ -199,7 +201,11 @@ class ReportGenerator:
             self.report_storage.update_status(
                 report_id,
                 ReportStatus.FAILED.value,
-                error_message=str(e),
+                error_message=build_error_payload(
+                    str(e),
+                    error_code=ErrorCode.INTERNAL_ERROR,
+                    retryable=False,
+                ),
                 user_id=user_id,
             )
             raise

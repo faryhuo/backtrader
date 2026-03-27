@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -29,11 +31,9 @@ from src.service.worker.worker_pool import get_worker_pool, shutdown_worker_pool
 
 prefix = "/api"
 
-app = FastAPI()
 
-
-@app.on_event("startup")
-async def startup_warmup():
+@asynccontextmanager
+async def app_lifespan(_app: FastAPI):
     """
     Application startup handler - Initialize resources and warmup worker pool.
 
@@ -42,7 +42,6 @@ async def startup_warmup():
     3. Pre-initializes the worker pool to eliminate cold start delays
     4. Captures the main asyncio event loop for live trading WebSocket broadcasts
     """
-    import asyncio
     import logging
     logger = logging.getLogger(__name__)
 
@@ -81,24 +80,26 @@ async def startup_warmup():
     except Exception as e:
         logger.error(f"Worker pool warmup failed: {e}")
         # Don't fail startup if worker pool fails
-
-
-@app.on_event("shutdown")
-async def shutdown_cleanup():
-    """
-    Application shutdown handler - Cleanup worker pool.
-    
-    Gracefully shutdown worker processes on app shutdown.
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    
     try:
-        logger.info("Shutting down worker pool...")
-        shutdown_worker_pool()
-        logger.info("Worker pool shutdown complete")
-    except Exception as e:
-        logger.error(f"Worker pool shutdown failed: {e}")
+        yield
+    finally:
+        """
+        Application shutdown handler - Cleanup worker pool.
+
+        Gracefully shutdown worker processes on app shutdown.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            logger.info("Shutting down worker pool...")
+            shutdown_worker_pool()
+            logger.info("Worker pool shutdown complete")
+        except Exception as e:
+            logger.error(f"Worker pool shutdown failed: {e}")
+
+
+app = FastAPI(lifespan=app_lifespan)
 
 # Request context middleware (must be added first for proper request_id propagation)
 app.add_middleware(RequestContextMiddleware)

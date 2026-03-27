@@ -14,6 +14,20 @@ export const API_URL = envApiUrl.startsWith('http')
 // Token getter function (set by App component)
 let getTokenFn = null
 
+export class ApiError extends Error {
+    constructor(payload = {}, options = {}) {
+        super(payload.detail || options.fallbackMessage || 'Request failed')
+        this.name = 'ApiError'
+        this.status = options.status ?? null
+        this.payload = payload
+        this.error_code = payload.error_code || null
+        this.request_id = payload.request_id || null
+        this.details = payload.details || null
+        this.retryable = Boolean(payload.retryable)
+        this.data = options.data ?? null
+    }
+}
+
 /**
  * Set the token getter function
  * This is called by the App component to provide access to Logto's getAccessToken
@@ -65,7 +79,11 @@ export const parseResponse = async (response) => {
     // Note: Auth redirect is handled by PrivateRoute component, not here
     if (response.status === 401) {
         console.warn('Unauthorized request')
-        throw new Error('Unauthorized')
+        throw new ApiError({
+            detail: 'Unauthorized',
+            error_code: 'UNAUTHORIZED',
+            retryable: false,
+        }, { status: 401 })
     }
 
     // Handle 204 No Content (no response body)
@@ -104,19 +122,29 @@ export const parseResponse = async (response) => {
 
     // Check if response is successful (status 200-299)
     if (!response.ok) {
-        let message = `HTTP error! status: ${response.status}`
+        let payload = {
+            detail: `HTTP error! status: ${response.status}`,
+            error_code: 'HTTP_ERROR',
+            retryable: response.status >= 500 || response.status === 429,
+        }
         if (data) {
             if (isJson && data.detail) {
-                message = data.detail
+                payload = {
+                    detail: data.detail,
+                    error_code: data.error_code || payload.error_code,
+                    request_id: data.request_id || null,
+                    details: data.details || null,
+                    retryable: data.retryable ?? payload.retryable,
+                }
             } else if (isJson && data.message) {
-                message = data.message
+                payload.detail = data.message
             } else if (data.rawText) {
                 // Include a snippet of the raw text for debugging (limit to prevent huge messages)
                 const snippet = data.rawText.substring(0, 200)
-                message = `${message} - ${snippet}${data.rawText.length > 200 ? '...' : ''}`
+                payload.detail = `${payload.detail} - ${snippet}${data.rawText.length > 200 ? '...' : ''}`
             }
         }
-        throw new Error(message)
+        throw new ApiError(payload, { status: response.status, data })
     }
 
     return data

@@ -25,7 +25,7 @@ import {
     getTaskStatusLabel,
 } from '../services/taskApi';
 import { useTaskWebSocket, TASK_EVENT_TYPES } from '../hooks/useTaskWebSocket';
-import { formatStrategyError } from '../utils/strategyErrorFormatter';
+import { formatAppError } from '../utils/appErrorFormatter';
 
 function TaskCenter() {
     const { t } = useTranslation();
@@ -89,7 +89,7 @@ function TaskCenter() {
             setTotal(result.total || 0);
             setError(null);
         } catch (err) {
-            setError(err.message);
+            setError(err);
         } finally {
             setLoading(false);
         }
@@ -272,7 +272,7 @@ function TaskCenter() {
             {/* Error */}
             {error && (
                 <div className="task-error" style={{ color: 'red', marginBottom: '1rem' }}>
-                    {error}
+                    {formatAppError(error, t).description || formatAppError(error, t).title}
                 </div>
             )}
 
@@ -319,13 +319,18 @@ function TaskCenter() {
                                             <span className={`status-dot ${task.status}`} />
                                             {getTaskStatusLabel(task.status, t)}
                                         </span>
-                                        {task.error_message && (() => {
-                                            const formattedTaskError = formatStrategyError(task.error_message, t);
+                                        {(task.error || task.error_message) && (() => {
+                                            const formattedTaskError = formatAppError(task.error || task.error_message, t);
                                             return (
                                                 <div className="task-error-message" title={formattedTaskError.detail || task.error_message}>
                                                     <div className="task-error-title">{formattedTaskError.title}</div>
                                                     {formattedTaskError.description && (
                                                         <div className="task-error-description">{formattedTaskError.description}</div>
+                                                    )}
+                                                    {formattedTaskError.requestId && (
+                                                        <div className="task-error-description">
+                                                            {t('common.request_id', 'Request ID')}: {formattedTaskError.requestId}
+                                                        </div>
                                                     )}
                                                 </div>
                                             );

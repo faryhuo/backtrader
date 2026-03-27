@@ -44,7 +44,7 @@ export function useBacktest() {
         if (taskStatus === 'completed' && taskData?.result_id) {
             return await fetchResult(taskData.result_id);
         } else if (taskStatus === 'failed') {
-            throw new Error(taskData?.error_message || 'Task failed');
+            throw taskData?.error || new Error(taskData?.error_message || 'Task failed');
         } else if (taskStatus === 'cancelled') {
             throw new Error('Task was cancelled');
         }
@@ -113,7 +113,7 @@ export function useBacktest() {
             }
         } catch (err) {
             console.error(err);
-            setError(err.message || t?.('common.error_occurred') || 'An error occurred');
+            setError(err || t?.('common.error_occurred') || 'An error occurred');
             return null;
         } finally {
             setLoading(false);
@@ -184,7 +184,7 @@ export function useBacktest() {
                 return taskResponse;
             }
         } catch (err) {
-            setError(err?.message || t?.('portfolio.error.run_failed') || 'Portfolio backtest failed');
+            setError(err || t?.('portfolio.error.run_failed') || 'Portfolio backtest failed');
             return null;
         } finally {
             setLoading(false);

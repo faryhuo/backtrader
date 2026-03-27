@@ -403,7 +403,7 @@ StrategyConfigForm.propTypes = {
     setTimeframe: PropTypes.func,
     loading: PropTypes.bool.isRequired,
     onSubmit: PropTypes.func.isRequired,
-    error: PropTypes.string,
+    error: PropTypes.any,
     strategyParams: PropTypes.array,
     paramOverrides: PropTypes.object,
     onParamChange: PropTypes.func

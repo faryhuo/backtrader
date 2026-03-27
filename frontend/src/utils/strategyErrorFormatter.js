@@ -1,5 +1,31 @@
+function extractErrorText(rawMessage) {
+    if (!rawMessage) {
+        return ''
+    }
+
+    if (typeof rawMessage === 'object') {
+        if (rawMessage.detail) {
+            return String(rawMessage.detail).trim()
+        }
+        if (rawMessage.payload?.detail) {
+            return String(rawMessage.payload.detail).trim()
+        }
+        if (rawMessage.error?.detail) {
+            return String(rawMessage.error.detail).trim()
+        }
+        if (rawMessage.error_message) {
+            return String(rawMessage.error_message).trim()
+        }
+        if (rawMessage.message) {
+            return String(rawMessage.message).trim()
+        }
+    }
+
+    return String(rawMessage || '').trim()
+}
+
 function normalizeErrorMessage(rawMessage) {
-    let normalized = String(rawMessage || '').trim()
+    let normalized = extractErrorText(rawMessage)
 
     const removablePrefixes = [
         'Backtest failed:',
@@ -80,7 +106,7 @@ function translate(t, key, defaultValue, options = null) {
 }
 
 export function formatStrategyError(rawMessage, t = (key, fallback) => fallback || key) {
-    const detail = String(rawMessage || '').trim()
+    const detail = extractErrorText(rawMessage)
     const message = normalizeErrorMessage(rawMessage)
 
     if (!message) {

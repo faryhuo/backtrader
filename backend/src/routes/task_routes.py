@@ -50,6 +50,7 @@ class TaskResponse(BaseModel):
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
     duration_seconds: Optional[float] = None
+    error: Optional[dict] = None
     error_message: Optional[str] = None
     result_id: Optional[str] = None
     result_type: Optional[str] = None

@@ -16,6 +16,11 @@ from sqlalchemy.orm import Session
 from src.config.settings import REPORTS_DIR
 from src.db.storage.base import BaseStorage
 from src.db.models import ReportModel, ReportStatus
+from src.utils.error_payloads import (
+    deserialize_error_payload,
+    get_error_detail,
+    serialize_error_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +228,7 @@ class ReportStorage(BaseStorage):
         report_id: str,
         status: str,
         progress: Optional[int] = None,
-        error_message: Optional[str] = None,
+        error_message: Optional[Any] = None,
         user_id: Optional[str] = None,
         db: Optional[Session] = None,
     ) -> bool:
@@ -259,7 +264,7 @@ class ReportStorage(BaseStorage):
                 if progress is not None:
                     record.progress = progress
                 if error_message is not None:
-                    record.error_message = error_message
+                    record.error_message = serialize_error_payload(error_message)
                 if status == ReportStatus.COMPLETED.value:
                     record.completed_at = datetime.utcnow()
 
@@ -465,6 +470,7 @@ class ReportStorage(BaseStorage):
         include_html: bool = False,
     ) -> Dict[str, Any]:
         """Convert database record to dictionary."""
+        error_payload = deserialize_error_payload(record.error_message)
         result = {
             "report_id": record.report_id,
             "report_type": record.report_type,
@@ -474,7 +480,8 @@ class ReportStorage(BaseStorage):
             "source_type": record.source_type,
             "status": record.status,
             "progress": record.progress,
-            "error_message": record.error_message,
+            "error": error_payload,
+            "error_message": get_error_detail(record.error_message),
             "created_at": record.created_at.isoformat() if record.created_at else None,
             "completed_at": record.completed_at.isoformat() if record.completed_at else None,
             "config": record.config,

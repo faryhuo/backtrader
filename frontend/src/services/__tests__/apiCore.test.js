@@ -2,7 +2,7 @@
  * Unit tests for apiCore service functions
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { parseResponse, buildRequest, setTokenGetter, getAccessToken } from '../apiCore'
+import { ApiError, parseResponse, buildRequest, setTokenGetter, getAccessToken } from '../apiCore'
 
 describe('apiCore', () => {
     describe('parseResponse', () => {
@@ -69,7 +69,12 @@ describe('apiCore', () => {
         })
 
         it('should throw error for non-OK responses with JSON error detail', async () => {
-            const errorData = { detail: 'Resource not found' }
+            const errorData = {
+                detail: 'Resource not found',
+                error_code: 'NOT_FOUND',
+                request_id: 'req-123',
+                retryable: false,
+            }
             const response = {
                 status: 404,
                 ok: false,
@@ -77,7 +82,13 @@ describe('apiCore', () => {
                 text: vi.fn().mockResolvedValue(JSON.stringify(errorData))
             }
 
-            await expect(parseResponse(response)).rejects.toThrow('Resource not found')
+            await expect(parseResponse(response)).rejects.toMatchObject({
+                name: 'ApiError',
+                message: 'Resource not found',
+                error_code: 'NOT_FOUND',
+                request_id: 'req-123',
+                retryable: false,
+            })
         })
 
         it('should throw error for non-OK responses with JSON message', async () => {
@@ -102,6 +113,15 @@ describe('apiCore', () => {
             }
 
             await expect(parseResponse(response)).rejects.toThrow('HTTP error! status: 502')
+        })
+
+        it('should throw ApiError for unauthorized responses', async () => {
+            const response = {
+                status: 401,
+                ok: false,
+            }
+
+            await expect(parseResponse(response)).rejects.toBeInstanceOf(ApiError)
         })
 
         it('should handle empty response body', async () => {
