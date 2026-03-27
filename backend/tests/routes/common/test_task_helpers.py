@@ -264,7 +264,11 @@ class TestMapExceptionToHttp:
 
         assert isinstance(http_exc, HTTPException)
         assert http_exc.status_code == 400
-        assert http_exc.detail == "Strategy file not found"
+        assert http_exc.detail == {
+            "detail": "Strategy file not found",
+            "error_code": "BAD_REQUEST",
+            "retryable": False,
+        }
 
     def test_data_load_error_returns_502(self):
         """Test DataLoadError maps to 502 Bad Gateway."""
@@ -273,7 +277,12 @@ class TestMapExceptionToHttp:
 
         assert isinstance(http_exc, HTTPException)
         assert http_exc.status_code == 502
-        assert http_exc.detail == "Failed to fetch data from Yahoo Finance"
+        assert http_exc.detail == {
+            "detail": "Failed to fetch data from Yahoo Finance",
+            "error_code": "EXTERNAL_SERVICE_ERROR",
+            "retryable": True,
+            "safe_to_expose": True,
+        }
 
     def test_value_error_returns_400(self):
         """Test ValueError maps to 400 Bad Request."""
@@ -282,7 +291,11 @@ class TestMapExceptionToHttp:
 
         assert isinstance(http_exc, HTTPException)
         assert http_exc.status_code == 400
-        assert http_exc.detail == "Invalid parameter value"
+        assert http_exc.detail == {
+            "detail": "Invalid parameter value",
+            "error_code": "BAD_REQUEST",
+            "retryable": False,
+        }
 
     def test_file_not_found_error_returns_404(self):
         """Test FileNotFoundError maps to 404 Not Found."""
@@ -291,7 +304,11 @@ class TestMapExceptionToHttp:
 
         assert isinstance(http_exc, HTTPException)
         assert http_exc.status_code == 404
-        assert http_exc.detail == "File does not exist"
+        assert http_exc.detail == {
+            "detail": "File does not exist",
+            "error_code": "NOT_FOUND",
+            "retryable": False,
+        }
 
     def test_http_exception_returns_as_is(self):
         """Test HTTPException is returned unchanged."""
