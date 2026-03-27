@@ -34,6 +34,48 @@ _session_storage: Optional[SessionStorage] = None
 _main_loop: Optional[asyncio.AbstractEventLoop] = None
 
 
+def _logger_streams_available(target_logger: logging.Logger) -> bool:
+    """Return False when a stream handler is bound to a closed stream."""
+    current: Optional[logging.Logger] = target_logger
+
+    while current is not None:
+        for handler in current.handlers:
+            stream = getattr(handler, "stream", None)
+            if stream is not None and getattr(stream, "closed", False):
+                return False
+
+        if not current.propagate:
+            break
+
+        parent = getattr(current, "parent", None)
+        current = parent if isinstance(parent, logging.Logger) else None
+
+    return True
+
+
+def _safe_thread_log(level: str, message: str, *args) -> None:
+    """Skip best-effort background-thread logs once the logging stream is closed."""
+    if not _logger_streams_available(logger):
+        return
+
+    log_method = getattr(logger, level, None)
+    if callable(log_method):
+        try:
+            log_method(message, *args)
+        except ValueError:
+            return
+
+
+def _close_pending_coro(coro) -> None:
+    """Close an unscheduled coroutine to avoid runtime warnings during teardown."""
+    close_method = getattr(coro, "close", None)
+    if callable(close_method):
+        try:
+            close_method()
+        except Exception:
+            return
+
+
 def set_main_event_loop(loop: asyncio.AbstractEventLoop) -> None:
     """Called from FastAPI startup to capture the main event loop."""
     global _main_loop
@@ -602,21 +644,21 @@ def start_session(
         # 6.1 Send historical OHLCV to frontend after WebSocket connects
         def send_initial_ohlcv():
             try:
-                logger.info(f"send_initial_ohlcv called for session {session_id}")
+                _safe_thread_log("info", "send_initial_ohlcv called for session %s", session_id)
 
                 # Wait for WebSocket client to connect (frontend needs time after receiving session response)
                 ws = _get_ws_manager()
                 for i in range(15):  # Wait up to 15 seconds
                     if ws and ws.get_connection_count(session_id) > 0:
-                        logger.info(f"WebSocket client connected after {i}s")
+                        _safe_thread_log("info", "WebSocket client connected after %ss", i)
                         break
                     time.sleep(1)
                 else:
-                    logger.warning(f"No WebSocket client connected after 15s, sending anyway")
+                    _safe_thread_log("warning", "No WebSocket client connected after 15s, sending anyway")
 
                 since_ms = _calculate_ohlcv_since_ms(timeframe, limit=100)
 
-                logger.info(f"Fetching OHLCV for {symbol} timeframe={timeframe}")
+                _safe_thread_log("info", "Fetching OHLCV for %s timeframe=%s", symbol, timeframe)
 
                 bars = store.fetch_ohlcv(
                     symbol=symbol,
@@ -625,7 +667,7 @@ def start_session(
                     since_ms=since_ms,
                 )
 
-                logger.info(f"Fetched {len(bars) if bars else 0} bars")
+                _safe_thread_log("info", "Fetched %s bars", len(bars) if bars else 0)
 
                 if not bars:
                     raise LiveTradingError(
@@ -633,18 +675,18 @@ def start_session(
                     )
 
                 ws = _get_ws_manager()
-                logger.info(f"WebSocket manager: {ws}")
+                _safe_thread_log("info", "WebSocket manager: %s", ws)
                 if ws:
                     _run_ws(ws.broadcast_ohlcv(
                         session_id=session_id,
                         symbol=symbol,
                         ohlcv_list=bars,
                     ))
-                    logger.info(f"Sent {len(bars)} historical bars to frontend")
+                    _safe_thread_log("info", "Sent %s historical bars to frontend", len(bars))
                 else:
-                    logger.warning("WS is None, cannot broadcast OHLCV")
+                    _safe_thread_log("warning", "WS is None, cannot broadcast OHLCV")
             except Exception as e:
-                logger.warning(f"Failed to send initial OHLCV: {e}")
+                _safe_thread_log("warning", "Failed to send initial OHLCV: %s", e)
 
         # 7. Store runtime objects
         session.cerebro = cerebro
@@ -1276,7 +1318,8 @@ def _run_ws(coro) -> None:
     """
     global _main_loop
     if _main_loop is None or _main_loop.is_closed():
-        logger.warning("[_run_ws] Main event loop not available, broadcast skipped")
+        _close_pending_coro(coro)
+        _safe_thread_log("warning", "[_run_ws] Main event loop not available, broadcast skipped")
         return
 
     try:
@@ -1284,7 +1327,8 @@ def _run_ws(coro) -> None:
         # Don't block waiting for result — fire and forget
         future.add_done_callback(_ws_broadcast_done)
     except Exception as e:
-        logger.warning(f"[_run_ws] Failed to schedule broadcast: {e}")
+        _close_pending_coro(coro)
+        _safe_thread_log("warning", "[_run_ws] Failed to schedule broadcast: %s", e)
 
 
 def _ws_broadcast_done(future):
@@ -1292,7 +1336,7 @@ def _ws_broadcast_done(future):
     try:
         future.result()  # Raise any exception
     except Exception as e:
-        logger.warning(f"[_run_ws] Broadcast failed: {e}")
+        _safe_thread_log("warning", "[_run_ws] Broadcast failed: %s", e)
 
 
 def _broadcast_status(session_id: str, old: str, new: str) -> None:

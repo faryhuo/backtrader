@@ -40,7 +40,9 @@ class TestCriticalAPI:
 
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            assert isinstance(data, dict)
+            assert "strategies" in data
+            assert isinstance(data["strategies"], list)
 
     def test_template_list_endpoint(self, api_client):
         """Verify template listing endpoint works."""
@@ -49,7 +51,9 @@ class TestCriticalAPI:
 
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            assert isinstance(data, dict)
+            assert "templates" in data
+            assert isinstance(data["templates"], list)
 
     def test_exchange_list_endpoint(self, api_client):
         """Verify exchange listing endpoint works."""

@@ -13,7 +13,6 @@ libs_path = Path(__file__).parent.parent / "libs"
 sys.path.insert(0, str(libs_path))
 
 from api_client import APIClient, create_mock_token
-from browser_helper import BrowserHelper
 
 
 @pytest.fixture(scope="session")
@@ -28,6 +27,13 @@ def api_client():
 @pytest.fixture(scope="session")
 def browser():
     """Provide browser for smoke tests (session-scoped for speed)."""
+    try:
+        from browser_helper import BrowserHelper
+    except ModuleNotFoundError as exc:
+        if exc.name == "playwright":
+            pytest.skip("Playwright is not installed; skipping browser smoke tests.")
+        raise
+
     browser = BrowserHelper(headless=True)
     browser.start()
     yield browser
