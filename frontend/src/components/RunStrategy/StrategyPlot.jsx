@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Empty, Image, Segmented, Space, Tooltip, Typography } from 'antd';
+import { Alert, Empty, Image, Segmented, Space, Tooltip, Typography } from 'antd';
 import ReactECharts from 'echarts-for-react';
 
 
@@ -21,8 +21,13 @@ function StrategyPlot({ result, t }) {
     const chartData = result?.chart_data || result?.metrics?.chart_data || null;
     const hasUiChart = Boolean(chartData?.ohlcv?.length);
     const hasImageChart = Boolean(result?.plot_url);
-    const effectiveRenderMode = renderMode === 'image' && hasImageChart ? 'image' : 'ui';
+    const effectiveRenderMode = resolveRenderMode(renderMode, hasUiChart, hasImageChart);
     const chartSummary = buildChartSummary(chartData, t);
+    const availabilityNotice = buildAvailabilityNotice({
+        hasUiChart,
+        hasImageChart,
+        t,
+    });
 
     if (hasUiChart || hasImageChart) {
         return (
@@ -32,29 +37,27 @@ function StrategyPlot({ result, t }) {
                         <Text type="secondary">
                             {t?.('history.render_mode', 'Render Mode')}
                         </Text>
-                        {(hasUiChart && hasImageChart) ? (
-                            <Segmented
-                                size="small"
-                                value={effectiveRenderMode}
-                                onChange={setRenderMode}
-                                options={[
-                                    {
-                                        label: t?.('history.render_mode_ui', 'UI Chart'),
-                                        value: 'ui',
-                                    },
-                                    {
-                                        label: t?.('history.render_mode_image', 'Backtrader Image'),
-                                        value: 'image',
-                                    },
-                                ]}
-                            />
-                        ) : (
-                            <Text>
-                                {hasImageChart
-                                    ? t?.('history.render_mode_image', 'Backtrader Image')
-                                    : t?.('history.render_mode_ui', 'UI Chart')}
-                            </Text>
-                        )}
+                        <Segmented
+                            size="small"
+                            value={effectiveRenderMode}
+                            onChange={setRenderMode}
+                            options={[
+                                {
+                                    label: hasUiChart
+                                        ? t?.('history.render_mode_ui', 'UI Chart')
+                                        : t?.('history.render_mode_ui_unavailable', 'UI Chart unavailable'),
+                                    value: 'ui',
+                                    disabled: !hasUiChart,
+                                },
+                                {
+                                    label: hasImageChart
+                                        ? t?.('history.render_mode_image', 'Backtrader Image')
+                                        : t?.('history.render_mode_image_unavailable', 'Backtrader Image unavailable'),
+                                    value: 'image',
+                                    disabled: !hasImageChart,
+                                },
+                            ]}
+                        />
                         {hasUiChart && (
                             <>
                                 <Tooltip
@@ -71,6 +74,16 @@ function StrategyPlot({ result, t }) {
                         )}
                     </Space>
                 </div>
+
+                {availabilityNotice && (
+                    <Alert
+                        style={{ marginBottom: 16 }}
+                        type={availabilityNotice.type}
+                        showIcon
+                        message={availabilityNotice.title}
+                        description={availabilityNotice.description}
+                    />
+                )}
 
                 <div className="plot-container dark-mode strategy-chart-container">
                     {(effectiveRenderMode === 'ui' && hasUiChart) ? (
@@ -94,11 +107,69 @@ function StrategyPlot({ result, t }) {
 
     return (
         <div className="card plot-card">
+            <Alert
+                style={{ marginBottom: 16 }}
+                type="warning"
+                showIcon
+                message={t?.('history.chart_all_unavailable_title', 'No chart output is available')}
+                description={t?.(
+                    'history.chart_all_unavailable_desc',
+                    'This run did not return structured UI chart data or a Backtrader image. Check the task error details or rerun the strategy.'
+                )}
+            />
             <div className="plot-container dark-mode strategy-chart-empty">
                 <Empty description={t?.('history.chart_data_unavailable', 'Chart data is not available.')} />
             </div>
         </div>
     );
+}
+
+
+function resolveRenderMode(renderMode, hasUiChart, hasImageChart) {
+    if (renderMode === 'image' && hasImageChart) {
+        return 'image';
+    }
+    if (renderMode === 'ui' && hasUiChart) {
+        return 'ui';
+    }
+    if (hasUiChart) {
+        return 'ui';
+    }
+    if (hasImageChart) {
+        return 'image';
+    }
+    return 'ui';
+}
+
+
+function buildAvailabilityNotice({ hasUiChart, hasImageChart, t }) {
+    if (hasUiChart && hasImageChart) {
+        return null;
+    }
+
+    if (hasImageChart && !hasUiChart) {
+        return {
+            type: 'info',
+            title: t?.('history.chart_ui_unavailable_title', 'UI chart is unavailable for this run'),
+            description: t?.(
+                'history.chart_ui_unavailable_desc',
+                'The backend returned a Backtrader image, but it did not return structured chart data for browser rendering.'
+            ),
+        };
+    }
+
+    if (hasUiChart && !hasImageChart) {
+        return {
+            type: 'warning',
+            title: t?.('history.chart_image_unavailable_title', 'Backtrader image is unavailable for this run'),
+            description: t?.(
+                'history.chart_image_unavailable_desc',
+                'The UI chart was rendered from structured data, but the server did not generate a Backtrader image.'
+            ),
+        };
+    }
+
+    return null;
 }
 
 

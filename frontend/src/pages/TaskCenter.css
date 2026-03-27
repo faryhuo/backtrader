@@ -381,12 +381,25 @@
 
 /* Error Message */
 .task-error-message {
-    max-width: 200px;
+    max-width: 280px;
     font-size: 0.75rem;
     color: #ef4444;
-    white-space: nowrap;
+    margin-top: 0.5rem;
+    line-height: 1.45;
+}
+
+.task-error-title {
+    font-weight: 600;
+    color: #f87171;
+}
+
+.task-error-description {
+    margin-top: 0.2rem;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* Loading */

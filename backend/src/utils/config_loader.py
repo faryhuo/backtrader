@@ -78,7 +78,7 @@ class TradingSettings(BaseModel):
     """General trading settings."""
     default_timeframe: str = "1m"
     supported_timeframes: List[str] = Field(
-        default=["1s", "1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+        default_factory=lambda: ["1s", "1m", "5m", "15m", "30m", "1h", "4h", "1d"]
     )
     reconnect_on_disconnect: bool = True
     max_reconnect_attempts: int = 5
@@ -88,9 +88,15 @@ class TradingSettings(BaseModel):
 class NotificationSettings(BaseModel):
     """Notification configuration."""
     enabled: bool = True
-    channels: List[str] = ["websocket"]
+    channels: List[str] = Field(default_factory=lambda: ["websocket"])
     events: List[str] = Field(
-        default=["order_filled", "position_opened", "position_closed", "error", "risk_alert"]
+        default_factory=lambda: [
+            "order_filled",
+            "position_opened",
+            "position_closed",
+            "error",
+            "risk_alert",
+        ]
     )
 
 
@@ -99,8 +105,8 @@ class BrokerConfig(BaseModel):
     version: str = "1.0"
     exchanges: Dict[str, ExchangeConfig]
     risk_management: RiskManagement
-    trading_settings: TradingSettings
-    notifications: NotificationSettings
+    trading_settings: TradingSettings = Field(default_factory=TradingSettings)
+    notifications: NotificationSettings = Field(default_factory=NotificationSettings)
     description: Optional[str] = None
     instructions: Optional[Dict] = None
 

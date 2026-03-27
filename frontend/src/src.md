@@ -25,3 +25,6 @@
 - 服务调用统一走 `services/`，不要在组件内直接写 fetch/axios。
 - 新增环境变量需同步更新 `frontend/.env` 示例及对应文档。
 
+## Recent Notes
+
+- `App.jsx` now checks `GET /api/setup/wizard` before rendering normal app routes. When `status.is_ready` is `false`, first-entry traffic is redirected to `/onboarding`; once setup is ready, normal routing resumes without forcing the wizard.

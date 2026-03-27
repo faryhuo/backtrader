@@ -140,3 +140,40 @@ class TestBuildBacktestChartData:
         marker_sides = [marker["side"] for marker in chart_data["markers"]]
         assert "buy" in marker_sides
         assert "sell" in marker_sides
+
+    def test_falls_back_to_backtrader_feed_when_price_data_is_missing(self):
+        class SampleStrategy(bt.Strategy):
+            def __init__(self):
+                self.sma = bt.indicators.SMA(self.data.close, period=3)
+
+            def next(self):
+                return None
+
+        dates = pd.date_range("2024-01-01", periods=8, freq="D")
+        closes = [10, 11, 12, 13, 12, 11, 10, 9]
+        data = pd.DataFrame(
+            {
+                "open": closes,
+                "high": [value + 1 for value in closes],
+                "low": [value - 1 for value in closes],
+                "close": closes,
+                "volume": [1000] * 8,
+            },
+            index=dates,
+        )
+
+        cerebro = bt.Cerebro()
+        cerebro.addstrategy(SampleStrategy)
+        cerebro.adddata(bt.feeds.PandasData(dataname=data))
+        strat = cerebro.run()[0]
+
+        chart_data = build_backtest_chart_data(
+            strat,
+            price_data=[],
+            metrics={"equity_curve": {}, "trade_details": {}},
+            initial_cash=10000.0,
+        )
+
+        assert len(chart_data["ohlcv"]) == 8
+        assert chart_data["ohlcv"][0]["time"] == "2024-01-01"
+        assert chart_data["ohlcv"][-1]["close"] == 9.0

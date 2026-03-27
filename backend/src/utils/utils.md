@@ -21,4 +21,5 @@
 ## Recent Notes
 
 - `credential_validator.py` now validates Binance credentials against the production endpoint by default, even for the `paper` credential slot. Testnet validation is now opt-in.
+- `config_loader.py` now backfills default broker notification settings when older `broker_config.json` files omit the `notifications` block.
 

@@ -16,3 +16,6 @@
 - 文件按功能聚合（如 `formatters.js`、`exportUtils.js`）。
 - 避免在 utils 中引入 React 或页面/组件依赖。
 
+## Recent Notes
+
+- `strategyErrorFormatter.js` now centralizes strategy/backtest failure normalization so pages can render user-friendly error summaries and next-step suggestions without duplicating backend-message parsing.

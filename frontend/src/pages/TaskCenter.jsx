@@ -25,6 +25,7 @@ import {
     getTaskStatusLabel,
 } from '../services/taskApi';
 import { useTaskWebSocket, TASK_EVENT_TYPES } from '../hooks/useTaskWebSocket';
+import { formatStrategyError } from '../utils/strategyErrorFormatter';
 
 function TaskCenter() {
     const { t } = useTranslation();
@@ -318,11 +319,17 @@ function TaskCenter() {
                                             <span className={`status-dot ${task.status}`} />
                                             {getTaskStatusLabel(task.status, t)}
                                         </span>
-                                        {task.error_message && (
-                                            <div className="task-error-message" title={task.error_message}>
-                                                {task.error_message}
-                                            </div>
-                                        )}
+                                        {task.error_message && (() => {
+                                            const formattedTaskError = formatStrategyError(task.error_message, t);
+                                            return (
+                                                <div className="task-error-message" title={formattedTaskError.detail || task.error_message}>
+                                                    <div className="task-error-title">{formattedTaskError.title}</div>
+                                                    {formattedTaskError.description && (
+                                                        <div className="task-error-description">{formattedTaskError.description}</div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </td>
                                     <td>
                                         <div className="task-progress">

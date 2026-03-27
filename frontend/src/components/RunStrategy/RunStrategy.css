@@ -58,6 +58,41 @@
     animation: slideUp 0.3s ease-out;
 }
 
+.strategy-error-alert {
+    margin-top: 1.5rem;
+    border-radius: 12px;
+}
+
+.strategy-error-alert .ant-alert-message {
+    font-weight: 600;
+}
+
+.strategy-error-alert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.strategy-error-alert-description {
+    line-height: 1.6;
+}
+
+.strategy-error-alert-list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.strategy-error-alert-list li {
+    margin-bottom: 0.35rem;
+}
+
+.strategy-error-alert-detail {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.72);
+    word-break: break-word;
+}
+
 /* Stats Grid */
 .stats-grid {
     display: grid;

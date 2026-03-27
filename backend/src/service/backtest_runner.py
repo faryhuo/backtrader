@@ -25,6 +25,11 @@ import matplotlib.pyplot as plt
 from src.db.storage.market_data import get_bt_feed as get_data
 from src.db.storage.market_data import get_raw_data_json
 from src.service.chart_data_extractor import build_backtest_chart_data
+from src.service.strategy_data_requirements import (
+    count_data_bars,
+    estimate_strategy_min_bars,
+    format_insufficient_data_error,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -113,9 +118,11 @@ def run_backtest_legacy(
     commission: float,
     stake: int,
     strategy_cls: Type[bt.Strategy],
+    strategy_name: str,
     trade_recorder_cls: Type[bt.Analyzer],
     save_path: Optional[Path],
     params: Optional[dict],
+    timeframe: str = "1d",
 ) -> dict:
     """
     Legacy in-process backtest execution.
@@ -132,8 +139,34 @@ def run_backtest_legacy(
     else:
         cerebro.addstrategy(strategy_cls)
 
-    data = get_data(ticker, start_date, end_date)
+    data = get_data(ticker, start_date, end_date, timeframe=timeframe)
     cerebro.adddata(data)
+
+    estimated_min_bars = None
+    try:
+        from src.service.strategy_repo import read_user_strategy_source
+
+        _, strategy_source = read_user_strategy_source(strategy_name)
+        estimated_min_bars = estimate_strategy_min_bars(strategy_source, params)
+    except (FileNotFoundError, OSError, ValueError):
+        estimated_min_bars = None
+
+    available_bars = count_data_bars(data)
+    if (
+        estimated_min_bars is not None
+        and available_bars is not None
+        and available_bars < estimated_min_bars
+    ):
+        error_message = format_insufficient_data_error(
+            strategy_name=strategy_name,
+            ticker=ticker,
+            timeframe=timeframe,
+            start_date=start_date,
+            end_date=end_date,
+            available_bars=available_bars,
+            required_bars=estimated_min_bars,
+        )
+        raise BacktestRunnerError(error_message)
 
     cerebro.broker.setcash(initial_cash)
     cerebro.broker.setcommission(commission=commission)
@@ -144,6 +177,24 @@ def run_backtest_legacy(
 
     try:
         results = cerebro.run()
+    except IndexError as exc:
+        if (
+            estimated_min_bars is not None
+            and available_bars is not None
+            and available_bars < estimated_min_bars
+        ):
+            error_message = format_insufficient_data_error(
+                strategy_name=strategy_name,
+                ticker=ticker,
+                timeframe=timeframe,
+                start_date=start_date,
+                end_date=end_date,
+                available_bars=available_bars,
+                required_bars=estimated_min_bars,
+            )
+            raise BacktestRunnerError(error_message) from exc
+        logger.exception("Backtest run failed: %s", exc)
+        raise
     except Exception as exc:
         logger.exception("Backtest run failed: %s", exc)
         raise

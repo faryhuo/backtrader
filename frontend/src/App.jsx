@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider, theme } from 'antd'
+import { useEffect, useRef, useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { ConfigProvider, Spin, theme } from 'antd'
 import { LogtoProvider } from './providers/LogtoProvider'
 import { LogtoConfigProvider, useLogtoConfig } from './contexts/LogtoConfigContext'
 import { NotificationProvider } from './providers/NotificationProvider'
@@ -23,8 +23,102 @@ import TaskCenter from './pages/TaskCenter'
 import ReportCenter from './pages/ReportCenter'
 import SharedReport from './pages/SharedReport'
 import { setTokenGetter } from './services/api'
+import { setupApi } from './services/setupApi'
 import { useAuth } from './hooks/useAuth'
 import './index.css'
+
+function isSetupBypassPath(pathname) {
+    return pathname === '/onboarding'
+        || pathname === '/callback'
+        || pathname.startsWith('/report/shared/')
+}
+
+function SetupRedirectGate({ authLoading, children, getAccessToken, loginEnabled }) {
+    const { pathname } = useLocation()
+    const previousPathRef = useRef(null)
+    const setupReadyRef = useRef(null)
+    const [checkingSetup, setCheckingSetup] = useState(true)
+    const [needsOnboarding, setNeedsOnboarding] = useState(false)
+
+    useEffect(() => {
+        const previousPath = previousPathRef.current
+        previousPathRef.current = pathname
+
+        if (isSetupBypassPath(pathname)) {
+            setCheckingSetup(false)
+            setNeedsOnboarding(false)
+            return
+        }
+
+        if (loginEnabled && authLoading) {
+            setCheckingSetup(true)
+            return
+        }
+
+        if (setupReadyRef.current === true && previousPath !== '/onboarding') {
+            setCheckingSetup(false)
+            setNeedsOnboarding(false)
+            return
+        }
+
+        let cancelled = false
+
+        async function checkSetupReadiness() {
+            setCheckingSetup(true)
+            try {
+                if (loginEnabled) {
+                    setTokenGetter(getAccessToken)
+                }
+                const response = await setupApi.getSetupWizard()
+                const isReady = Boolean(response?.status?.is_ready)
+
+                if (cancelled) {
+                    return
+                }
+
+                setupReadyRef.current = isReady
+                setNeedsOnboarding(!isReady)
+            } catch (error) {
+                if (cancelled) {
+                    return
+                }
+
+                if (error.message === 'Unauthorized') {
+                    setupReadyRef.current = true
+                    setNeedsOnboarding(false)
+                } else {
+                    setupReadyRef.current = null
+                    setNeedsOnboarding(false)
+                    console.error('Failed to load setup readiness:', error)
+                }
+            } finally {
+                if (!cancelled) {
+                    setCheckingSetup(false)
+                }
+            }
+        }
+
+        checkSetupReadiness()
+
+        return () => {
+            cancelled = true
+        }
+    }, [authLoading, getAccessToken, loginEnabled, pathname])
+
+    if (needsOnboarding) {
+        return <Navigate to="/onboarding" replace />
+    }
+
+    if (checkingSetup) {
+        return (
+            <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+                <Spin size="large" />
+            </div>
+        )
+    }
+
+    return children
+}
 
 /**
  * App Content Component
@@ -33,8 +127,7 @@ import './index.css'
  * Sets up token getter for API calls.
  */
 function AppContent() {
-    const { config: logtoConfig } = useLogtoConfig()
-    const { getAccessToken, loginEnabled } = useAuth()
+    const { getAccessToken, isLoading: authLoading, loginEnabled } = useAuth()
 
     // Initialize token getter for API calls
     useEffect(() => {
@@ -61,49 +154,55 @@ function AppContent() {
         >
             <SettingsProvider>
                 <NotificationProvider>
-                    <Routes>
-                        {/* Landing Page - Accessible to everyone */}
-                        <Route path="/" element={<Home />} />
-                        <Route path="/welcome" element={<Home />} />
-                        <Route path="/onboarding" element={<OnboardingSetup />} />
+                    <SetupRedirectGate
+                        authLoading={authLoading}
+                        getAccessToken={getAccessToken}
+                        loginEnabled={loginEnabled}
+                    >
+                        <Routes>
+                            {/* Landing Page - Accessible to everyone */}
+                            <Route path="/" element={<Home />} />
+                            <Route path="/welcome" element={<Home />} />
+                            <Route path="/onboarding" element={<OnboardingSetup />} />
 
-                        {/* Auth Routes */}
-                        {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
-                        {loginEnabled && <Route path="/callback" element={<Callback />} />}
+                            {/* Auth Routes */}
+                            {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
+                            {loginEnabled && <Route path="/callback" element={<Callback />} />}
 
-                        {/* Protected Application Routes */}
-                        <Route element={loginEnabled ? (
-                            <PrivateRoute>
-                                <Layout />
-                            </PrivateRoute>
-                        ) : <Layout />}>
-                            <Route path="strategy" element={<RunStrategy />} />
-                            <Route path="maintain" element={<StrategyMaintain />} />
-                            <Route path="datasource" element={<DataSource />} />
-                            <Route path="history" element={<BacktestHistory />} />
-                            <Route path="walkforward" element={<WalkForward />} />
-                            <Route path="portfolio" element={<PortfolioBacktest />} />
-                            <Route path="live" element={<LiveTradingDashboard />} />
-                            <Route path="data_management" element={<DataManagement />} />
-                            <Route path="tasks" element={<TaskCenter />} />
-                            <Route path="reports" element={<ReportCenter />} />
-                            <Route path="settings" element={<Settings />} />
-                        </Route>
+                            {/* Protected Application Routes */}
+                            <Route element={loginEnabled ? (
+                                <PrivateRoute>
+                                    <Layout />
+                                </PrivateRoute>
+                            ) : <Layout />}>
+                                <Route path="strategy" element={<RunStrategy />} />
+                                <Route path="maintain" element={<StrategyMaintain />} />
+                                <Route path="datasource" element={<DataSource />} />
+                                <Route path="history" element={<BacktestHistory />} />
+                                <Route path="walkforward" element={<WalkForward />} />
+                                <Route path="portfolio" element={<PortfolioBacktest />} />
+                                <Route path="live" element={<LiveTradingDashboard />} />
+                                <Route path="data_management" element={<DataManagement />} />
+                                <Route path="tasks" element={<TaskCenter />} />
+                                <Route path="reports" element={<ReportCenter />} />
+                                <Route path="settings" element={<Settings />} />
+                            </Route>
 
-                        {/* Public Shared Report Route - No authentication required */}
-                        <Route path="report/shared/:token" element={<SharedReport />} />
+                            {/* Public Shared Report Route - No authentication required */}
+                            <Route path="report/shared/:token" element={<SharedReport />} />
 
-                        {/* Redirects for Auth Disabled */}
-                        {!loginEnabled && (
-                            <>
-                                <Route path="/login" element={<Navigate to="/" replace />} />
-                                <Route path="/callback" element={<Navigate to="/" replace />} />
-                            </>
-                        )}
+                            {/* Redirects for Auth Disabled */}
+                            {!loginEnabled && (
+                                <>
+                                    <Route path="/login" element={<Navigate to="/" replace />} />
+                                    <Route path="/callback" element={<Navigate to="/" replace />} />
+                                </>
+                            )}
 
-                        {/* Catch-all redirect */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+                            {/* Catch-all redirect */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </SetupRedirectGate>
                 </NotificationProvider>
             </SettingsProvider>
         </ConfigProvider>

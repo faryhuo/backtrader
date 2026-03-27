@@ -81,3 +81,7 @@ metrics = run_backtest(
 
 > ⚠️ 禁用 Worker Pool (`WORKER_POOL_ENABLED=false`) 意味着用户策略代码将在 API 进程中执行。
 > 这**不安全**，仅用于本地开发或完全受信任的环境。
+
+## Recent Notes
+
+- Backtest workers now validate short datasets against estimated indicator lookback before executing user strategy code, returning an explicit insufficient-data error instead of a raw Backtrader `IndexError`.

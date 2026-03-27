@@ -153,6 +153,11 @@ DEFAULT_BROKER_CONFIG = {
         "default_timeframe": "1m",
         "supported_timeframes": ["1s", "1m", "5m", "15m", "30m", "1h", "4h", "1d"],
     },
+    "notifications": {
+        "enabled": True,
+        "channels": ["websocket"],
+        "events": ["order_filled", "position_opened", "position_closed", "error", "risk_alert"],
+    },
 }
 
 DEFAULT_REPORT_CONFIG = {

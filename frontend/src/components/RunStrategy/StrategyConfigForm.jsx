@@ -18,7 +18,11 @@ import {
     ClockCircleOutlined,
     InfoCircleOutlined
 } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { Alert, Tooltip } from 'antd';
+import {
+    formatStrategyError,
+    shouldShowStrategyErrorDetail,
+} from '../../utils/strategyErrorFormatter';
 
 // Sizer type options
 const SIZER_OPTIONS = [
@@ -71,6 +75,8 @@ function StrategyConfigForm({
     const { t } = useTranslation();
     const [paramsExpanded, setParamsExpanded] = useState(true);
     const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+    const formattedError = error ? formatStrategyError(error, t) : null;
+    const showTechnicalDetail = shouldShowStrategyErrorDetail(formattedError);
 
     // Handle sizer config changes
     const updateSizerConfig = (key, value) => {
@@ -338,10 +344,34 @@ function StrategyConfigForm({
             }
 
             {
-                error && (
-                    <div className="error-message-enhanced">
-                        <span>⚠️ {error}</span>
-                    </div>
+                formattedError && (
+                    <Alert
+                        className="strategy-error-alert"
+                        type="error"
+                        showIcon
+                        message={formattedError.title}
+                        description={(
+                            <div className="strategy-error-alert-body">
+                                {formattedError.description && (
+                                    <div className="strategy-error-alert-description">
+                                        {formattedError.description}
+                                    </div>
+                                )}
+                                {formattedError.suggestions?.length > 0 && (
+                                    <ul className="strategy-error-alert-list">
+                                        {formattedError.suggestions.map((suggestion) => (
+                                            <li key={suggestion}>{suggestion}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {showTechnicalDetail && (
+                                    <div className="strategy-error-alert-detail">
+                                        <strong>{t('common.strategy_errors.labels.technical_detail', 'Technical detail')}:</strong> {formattedError.detail}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    />
                 )
             }
         </section >

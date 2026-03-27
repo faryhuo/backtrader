@@ -234,18 +234,23 @@ def run_backtest(
             "This is NOT secure for untrusted strategy code!"
         )
         strategy_cls = load_user_strategy(strategy_name)
-        return run_backtest_legacy(
-            ticker=ticker,
-            start_date=start_date,
-            end_date=end_date,
-            initial_cash=initial_cash,
-            commission=commission,
-            stake=stake,
-            strategy_cls=strategy_cls,
-            trade_recorder_cls=TradeRecorder,
-            save_path=save_path,
-            params=params,
-        )
+        try:
+            return run_backtest_legacy(
+                ticker=ticker,
+                start_date=start_date,
+                end_date=end_date,
+                initial_cash=initial_cash,
+                commission=commission,
+                stake=stake,
+                strategy_cls=strategy_cls,
+                strategy_name=strategy_name,
+                trade_recorder_cls=TradeRecorder,
+                save_path=save_path,
+                params=params,
+                timeframe=timeframe,
+            )
+        except BacktestRunnerError as exc:
+            raise StrategyLoadError(str(exc)) from exc
 
 
 __all__ = [

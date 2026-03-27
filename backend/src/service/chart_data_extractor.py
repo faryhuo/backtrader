@@ -21,6 +21,8 @@ def build_backtest_chart_data(
 ) -> dict[str, Any]:
     """Build a structured chart payload from a completed backtest."""
     normalized_price_data = _normalize_price_data(price_data)
+    if not normalized_price_data:
+        normalized_price_data = _extract_price_data_from_strategy(strat)
     time_keys = [item["time"] for item in normalized_price_data]
     trade_details = metrics.get("trade_details", {}) or {}
     observer_payload = _extract_observers(strat, time_keys)
@@ -57,6 +59,75 @@ def _normalize_price_data(price_data: list[dict[str, Any]]) -> list[dict[str, An
 
     normalized.sort(key=lambda item: item["time"])
     return normalized
+
+
+def _extract_price_data_from_strategy(strat: bt.Strategy) -> list[dict[str, Any]]:
+    data_feeds = getattr(strat, "datas", None) or []
+    if not data_feeds:
+        return []
+
+    data_feed = data_feeds[0]
+    datetime_values = list(getattr(data_feed.datetime, "array", []) or [])
+    open_values = list(getattr(data_feed.open, "array", []) or [])
+    high_values = list(getattr(data_feed.high, "array", []) or [])
+    low_values = list(getattr(data_feed.low, "array", []) or [])
+    close_values = list(getattr(data_feed.close, "array", []) or [])
+    volume_values = list(getattr(data_feed.volume, "array", []) or [])
+
+    lengths = [
+        len(series)
+        for series in (
+            datetime_values,
+            open_values,
+            high_values,
+            low_values,
+            close_values,
+            volume_values,
+        )
+        if series
+    ]
+    if not lengths:
+        return []
+
+    series_length = min(lengths)
+    if series_length <= 0:
+        return []
+
+    has_intraday_time = False
+    normalized: list[dict[str, Any]] = []
+
+    for index in range(series_length):
+        dt_value = _safe_float(datetime_values[index], default=None)
+        if dt_value is None or not math.isfinite(dt_value) or dt_value <= 0:
+            continue
+
+        dt = bt.num2date(dt_value)
+        if dt.hour != 0 or dt.minute != 0 or dt.second != 0:
+            has_intraday_time = True
+
+        normalized.append(
+            {
+                "dt": dt,
+                "open": _safe_float(open_values[index]),
+                "high": _safe_float(high_values[index]),
+                "low": _safe_float(low_values[index]),
+                "close": _safe_float(close_values[index]),
+                "volume": _safe_float(volume_values[index]),
+            }
+        )
+
+    time_format = "%Y-%m-%d %H:%M:%S" if has_intraday_time else "%Y-%m-%d"
+    return [
+        {
+            "time": item["dt"].strftime(time_format),
+            "open": item["open"],
+            "high": item["high"],
+            "low": item["low"],
+            "close": item["close"],
+            "volume": item["volume"],
+        }
+        for item in normalized
+    ]
 
 
 def _extract_trade_markers(trade_details: dict[str, Any]) -> list[dict[str, Any]]:

@@ -229,6 +229,7 @@
 - Binance 交易配置区域必须采用 `paper` / `live` Tab，分别提供各自的官方 guide 和模式配置
 - Logto JWKS 测试
 - 最终 review 中优先展示配置改动摘要，让用户理解“改了什么”；文件写入目标只作为次级信息
+- 应用首次进入时，若 `GET /api/setup/wizard` 返回 `status.is_ready=false`，前端入口必须自动跳转到 `/onboarding`；完成初始化后不再强制跳转
 
 ### 9.2 非目标
 
@@ -245,6 +246,7 @@
   - `deployment_mode`
   - `database_config.json` 中的数据库模式
 - 完成向导后，系统能正常启动并进入首页
+- 首次进入未初始化实例时，访问 `/` 或其他常规页面会自动进入 `/onboarding`；完成初始化后再次进入不再自动跳转
 - 向导 review 页应按配置分组展示改动摘要，而不是只展示后端 bootstrap 文件列表
 
 ### 10.2 AI 验收
@@ -282,6 +284,7 @@
 - 路由：`/onboarding`
 - 页面：`frontend/src/pages/OnboardingSetup.jsx`
 - 服务：`frontend/src/services/setupApi.js`
+- 入口守卫：`frontend/src/App.jsx` 通过 `GET /api/setup/wizard` 判定是否需要首次进入自动跳转
 
 ### 11.3 后端服务
 

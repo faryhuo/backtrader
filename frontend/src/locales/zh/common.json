@@ -33,5 +33,55 @@
     "expand": "展开",
     "copy": "复制代码",
     "click_expand": "点击展开"
+  },
+  "strategy_errors": {
+    "labels": {
+      "technical_detail": "技术详情"
+    },
+    "insufficient_data": {
+      "title": "数据不足，无法运行该策略",
+      "description": "所选时间范围内的 K 线数量不足，策略指标无法完成初始化。",
+      "description_with_counts": "当前选择的 {{startDate}} 到 {{endDate}} 只返回了 {{availableBars}} 根 K 线，但该策略至少需要 {{requiredBars}} 根 K 线才能开始计算交易信号。",
+      "suggestions": {
+        "extend_range": "把开始日期往前调，给策略留出足够的指标预热数据。",
+        "reduce_periods": "如果策略支持，可以适当减小 MA、RSI、KDJ 等指标周期。"
+      }
+    },
+    "timeout": {
+      "title": "策略运行超时",
+      "description": "请尝试缩短时间范围、提高时间级别，或简化策略逻辑后再试。",
+      "suggestions": {
+        "reduce_range": "减少本次回测的历史数据量。",
+        "simplify": "检查策略是否存在过重的循环或重复指标计算。"
+      }
+    },
+    "cancelled": {
+      "title": "策略运行已取消",
+      "description": "这次没有生成回测结果，需要时可以重新发起任务。"
+    },
+    "market_data": {
+      "title": "加载市场数据失败",
+      "description": "请检查交易标的、日期范围和数据源是否可用，然后再试一次。",
+      "suggestions": {
+        "check_ticker": "确认交易代码和时间级别对应的市场是有效的。",
+        "adjust_dates": "选择该资产有实际交易数据的时间范围。"
+      }
+    },
+    "strategy_load": {
+      "title": "策略文件加载失败",
+      "description": "请检查策略文件是否存在，类名是否为 UserStrategy，以及代码能否正常编译。",
+      "suggestions": {
+        "class_name": "确认策略代码中定义了 UserStrategy 类。",
+        "syntax": "检查代码是否存在语法错误或不支持的引入。"
+      }
+    },
+    "generic": {
+      "title": "策略运行失败",
+      "description": "策略未能正常执行，请检查参数配置或策略代码后再试。",
+      "suggestions": {
+        "check_params": "先检查标的代码、时间级别、日期范围和策略参数。",
+        "check_code": "如果仍然失败，请再查看策略代码或任务中心的详细信息。"
+      }
+    }
   }
 }

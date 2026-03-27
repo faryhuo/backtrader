@@ -116,6 +116,18 @@ def test_get_exchange_config_disabled(tmp_path):
         config_loader.get_exchange_config("binance", config)
 
 
+def test_load_broker_config_missing_notifications_uses_defaults(tmp_path):
+    data = make_config_data()
+    del data["notifications"]
+    config_path = write_config(tmp_path, data)
+
+    config = config_loader.load_broker_config(config_path=config_path)
+
+    assert config.notifications.enabled is True
+    assert config.notifications.channels == ["websocket"]
+    assert "risk_alert" in config.notifications.events
+
+
 def test_get_exchange_config_unsupported_adapter(tmp_path):
     data = make_config_data()
     data["exchanges"]["binance"]["adapter"] = "custom"

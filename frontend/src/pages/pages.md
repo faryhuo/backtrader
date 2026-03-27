@@ -40,3 +40,4 @@
 - `OnboardingSetup.jsx` now mirrors the Settings page data-source priority experience with source toggles, drag sorting, and conditional EODHD credential entry.
 - `OnboardingSetup.jsx` no longer exposes a dedicated security step for `ENCRYPTION_KEY`; the wizard now carries or generates that value automatically and lets deployment mode remain the only first-step security choice.
 - `OnboardingSetup.jsx` no longer exposes default exchange, trade mode, or market in the Binance step; onboarding keeps those bootstrap defaults fixed while only collecting paper/live credentials and live enablement.
+- `RunStrategy.jsx`, `PortfolioBacktest.jsx`, and `TaskCenter.jsx` now convert raw strategy execution failures into user-facing summaries with concrete recovery hints.

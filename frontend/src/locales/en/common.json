@@ -33,5 +33,55 @@
     "expand": "Expand",
     "copy": "Copy code",
     "click_expand": "Click to expand"
+  },
+  "strategy_errors": {
+    "labels": {
+      "technical_detail": "Technical detail"
+    },
+    "insufficient_data": {
+      "title": "Not enough market data to run this strategy",
+      "description": "The selected date range does not contain enough bars for this strategy to initialize its indicators.",
+      "description_with_counts": "The selected range returned {{availableBars}} bars from {{startDate}} to {{endDate}}, but this strategy needs at least {{requiredBars}} bars before it can start calculating signals.",
+      "suggestions": {
+        "extend_range": "Move the start date earlier so the strategy has enough warm-up data.",
+        "reduce_periods": "If the strategy supports it, reduce indicator periods such as MA, RSI, or KDJ parameters."
+      }
+    },
+    "timeout": {
+      "title": "The strategy took too long to finish",
+      "description": "Try a smaller date range, a higher timeframe, or simplify the strategy logic before running again.",
+      "suggestions": {
+        "reduce_range": "Reduce the amount of historical data in this run.",
+        "simplify": "Check whether the strategy has expensive loops or repeated indicator calculations."
+      }
+    },
+    "cancelled": {
+      "title": "The strategy run was cancelled",
+      "description": "No result was generated. Start the task again when you are ready."
+    },
+    "market_data": {
+      "title": "Market data could not be loaded",
+      "description": "Check the ticker symbol, date range, and data source availability, then try again.",
+      "suggestions": {
+        "check_ticker": "Confirm the ticker symbol and timeframe are valid for the selected market.",
+        "adjust_dates": "Use a date range where the asset has trading data."
+      }
+    },
+    "strategy_load": {
+      "title": "The strategy file could not be loaded",
+      "description": "Check whether the strategy exists, whether the class is named UserStrategy, and whether the code can be compiled successfully.",
+      "suggestions": {
+        "class_name": "Make sure the strategy defines a UserStrategy class.",
+        "syntax": "Review the strategy code for syntax errors or unsupported imports."
+      }
+    },
+    "generic": {
+      "title": "Strategy execution failed",
+      "description": "The strategy could not be executed. Please review the parameters or strategy code and try again.",
+      "suggestions": {
+        "check_params": "Review the selected symbol, timeframe, date range, and strategy parameters.",
+        "check_code": "If the problem persists, inspect the strategy code or the task center details."
+      }
+    }
   }
 }

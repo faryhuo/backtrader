@@ -74,6 +74,7 @@
 - `ai_service.py` is now the unified backend AI entry point. Provider-specific calls should go through it instead of being implemented directly in route handlers.
 - AI provider selection now supports multiple enabled providers with ordered fallback priority.
 - Single-asset backtests now emit structured `chart_data` (OHLCV, indicators, trade markers, equity curve) so the frontend can render charts without relying on generated PNG output.
+- Structured backtest chart extraction now falls back to the executed Backtrader data feed when raw OHLCV fetches come back empty, preventing UI charts from disappearing when only the PNG image was produced.
 - `setup_wizard_service.py` now manages first-run bootstrap configuration by reading and writing `.env` and JSON config files used during initial installation.
 - The onboarding bootstrap flow now writes backend files only; it no longer manages `frontend/.env` or `VITE_API_BASE_URL`.
 - The onboarding AI payload mirrors the unified provider model and supports ordered fallback across OpenAI, MiniMax, Gemini, and Claude.
@@ -82,3 +83,4 @@
 - The onboarding setup test endpoint now accepts per-mode Binance validation targets so paper tabs can validate against testnet while live tabs validate against production.
 - `setup_wizard_service.py` now derives `ENABLE_LOGIN` from onboarding `deployment_mode`, so public deployments require Logto bootstrap while local installs keep authentication disabled without a separate toggle.
 - `setup_wizard_service.py` now auto-generates `ENCRYPTION_KEY` when it is absent, so onboarding no longer needs a dedicated user-facing security step for that value.
+- Backtest execution now estimates strategy indicator lookback from source code and surfaces a user-facing insufficient-data error before Backtrader raises a low-level `IndexError`.

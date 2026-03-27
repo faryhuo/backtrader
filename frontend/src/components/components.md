@@ -16,6 +16,8 @@
 ## Recent Notes
 
 - `OnboardingSetup/` now hosts the larger first-run wizard step components so `pages/OnboardingSetup.jsx` stays focused on orchestration and validation.
+- `RunStrategy/StrategyConfigForm.jsx` now renders structured strategy failure alerts with actionable guidance instead of showing raw backend error strings directly.
+- `RunStrategy/StrategyPlot.jsx` now shows both render-mode availability states and explains when the UI chart data or Backtrader image was not generated for a run.
 
 ## 功能职责（Functional）
 - 提供跨页面复用的 UI/业务组件。

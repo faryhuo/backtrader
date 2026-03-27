@@ -13,6 +13,10 @@ import { useStrategies } from '../hooks/useStrategies';
 import { useBacktest } from '../hooks/useBacktest';
 import { usePersistedState } from '../hooks/usePersistedState';
 import { getDefaults } from '../config/defaults';
+import {
+    formatStrategyError,
+    shouldShowStrategyErrorDetail,
+} from '../utils/strategyErrorFormatter';
 import { getIndividualResultsColumns } from '../utils/tableColumns';
 import {
     PortfolioHeader,
@@ -123,6 +127,8 @@ function PortfolioBacktest() {
 
     // Get individual results columns
     const individualResultsColumns = getIndividualResultsColumns({ t });
+    const formattedError = error ? formatStrategyError(error, t) : null;
+    const showTechnicalDetail = shouldShowStrategyErrorDetail(formattedError);
 
     return (
         <div className="portfolio-page">
@@ -185,7 +191,31 @@ function PortfolioBacktest() {
                     </Button>
                 </div>
 
-                {error && <Alert type="error" message={error} showIcon style={{ marginTop: 16 }} />}
+                {formattedError && (
+                    <Alert
+                        type="error"
+                        showIcon
+                        message={formattedError.title}
+                        description={(
+                            <div>
+                                {formattedError.description && <div>{formattedError.description}</div>}
+                                {formattedError.suggestions?.length > 0 && (
+                                    <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
+                                        {formattedError.suggestions.map((suggestion) => (
+                                            <li key={suggestion}>{suggestion}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {showTechnicalDetail && (
+                                    <div style={{ marginTop: 8, fontSize: 12, wordBreak: 'break-word' }}>
+                                        <strong>{t('common.strategy_errors.labels.technical_detail', 'Technical detail')}:</strong> {formattedError.detail}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        style={{ marginTop: 16 }}
+                    />
+                )}
             </Card>
 
             {loading && (

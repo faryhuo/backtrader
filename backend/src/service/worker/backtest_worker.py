@@ -81,6 +81,11 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         from src.db.storage.market_data import get_bt_feed
         from src.db.storage.market_data import get_raw_data_json
         from src.service.strategy_repo import read_user_strategy_source
+        from src.service.strategy_data_requirements import (
+            count_data_bars,
+            estimate_strategy_min_bars,
+            format_insufficient_data_error,
+        )
         from src.service.strategy_sandbox import execute_strategy_code
         from src.service.chart_data_extractor import build_backtest_chart_data
         
@@ -97,8 +102,43 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
                 str(exc),
                 "StrategyLoadError",
             )
+
+        estimated_min_bars = estimate_strategy_min_bars(source, getattr(task, "params", None))
         
-        # 2. Execute strategy code in soft sandbox (we're already isolated)
+        # 2. Load market data
+        try:
+            timeframe = getattr(task, 'timeframe', '1d') or '1d'
+            data = get_bt_feed(task.ticker, task.start_date, task.end_date, timeframe=timeframe)
+        except Exception as e:
+            return BacktestResult.error_result(
+                task_id,
+                f"Failed to load market data: {e}",
+                "DataLoadError"
+            )
+
+        available_bars = count_data_bars(data)
+        if (
+            estimated_min_bars is not None
+            and available_bars is not None
+            and available_bars < estimated_min_bars
+        ):
+            error_message = format_insufficient_data_error(
+                strategy_name=task.strategy_name,
+                ticker=task.ticker,
+                timeframe=timeframe,
+                start_date=task.start_date,
+                end_date=task.end_date,
+                available_bars=available_bars,
+                required_bars=estimated_min_bars,
+            )
+            logger.warning(f"Backtest {task_id} rejected: {error_message}")
+            return BacktestResult.error_result(
+                task_id,
+                error_message,
+                "InsufficientDataError",
+            )
+
+        # 3. Execute strategy code in soft sandbox (we're already isolated)
         try:
             module_globals = execute_strategy_code(
                 source,
@@ -111,7 +151,7 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
                 f"Strategy load failed: {e}",
                 "StrategyLoadError"
             )
-        
+
         strategy_cls = module_globals.get("UserStrategy")
         if strategy_cls is None:
             return BacktestResult.error_result(
@@ -119,23 +159,12 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
                 "UserStrategy class not found in strategy file",
                 "StrategyLoadError"
             )
-        
+
         if not issubclass(strategy_cls, bt.Strategy):
             return BacktestResult.error_result(
                 task_id,
                 "UserStrategy must inherit from backtrader.Strategy",
                 "StrategyLoadError"
-            )
-        
-        # 3. Load market data
-        try:
-            timeframe = getattr(task, 'timeframe', '1d') or '1d'
-            data = get_bt_feed(task.ticker, task.start_date, task.end_date, timeframe=timeframe)
-        except Exception as e:
-            return BacktestResult.error_result(
-                task_id,
-                f"Failed to load market data: {e}",
-                "DataLoadError"
             )
         
         # 4. Setup Cerebro
@@ -160,7 +189,30 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
         
         # 5. Run backtest
         logger.info(f"Running backtest for {task.ticker} from {task.start_date} to {task.end_date}")
-        results = cerebro.run()
+        try:
+            results = cerebro.run()
+        except IndexError:
+            if (
+                estimated_min_bars is not None
+                and available_bars is not None
+                and available_bars < estimated_min_bars
+            ):
+                error_message = format_insufficient_data_error(
+                    strategy_name=task.strategy_name,
+                    ticker=task.ticker,
+                    timeframe=timeframe,
+                    start_date=task.start_date,
+                    end_date=task.end_date,
+                    available_bars=available_bars,
+                    required_bars=estimated_min_bars,
+                )
+                logger.warning(f"Backtest {task_id} rejected after indicator initialization: {error_message}")
+                return BacktestResult.error_result(
+                    task_id,
+                    error_message,
+                    "InsufficientDataError",
+                )
+            raise
         strat = results[0]
         
         # 6. Extract metrics using centralized function

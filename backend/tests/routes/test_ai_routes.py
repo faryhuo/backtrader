@@ -32,11 +32,11 @@ class TestAnalyzeChart:
         assert result == {"analysis": "This is a test analysis"}
 
         mock_call_ai.assert_called_once()
-        call_kwargs = mock_call_ai.call_args.kwargs
-        assert call_kwargs["message"] == "Analyze this strategy"
-        assert call_kwargs["model"] == "gpt-4o"
-        assert call_kwargs["user_id"] == "test-user"
-        assert call_kwargs["image_bytes"] is None
+        call_args = mock_call_ai.call_args
+        assert call_args.args[0] == "Analyze this strategy"
+        assert call_args.kwargs["model"] == "gpt-4o"
+        assert call_args.kwargs["user_id"] == "test-user"
+        assert call_args.kwargs["image_bytes"] is None
 
     @pytest.mark.asyncio
     async def test_analyze_chart_with_image(self, mock_call_ai):
@@ -55,7 +55,7 @@ class TestAnalyzeChart:
 
         call_kwargs = mock_call_ai.call_args.kwargs
         assert call_kwargs["image_bytes"] == b"fake_image_data"
-        await mock_file.read.assert_awaited_once()
+        mock_file.read.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_analyze_chart_exception_propagation(self, mock_call_ai):

@@ -46,5 +46,18 @@
       "4h",
       "1d"
     ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": [
+      "websocket"
+    ],
+    "events": [
+      "order_filled",
+      "position_opened",
+      "position_closed",
+      "error",
+      "risk_alert"
+    ]
   }
 }
