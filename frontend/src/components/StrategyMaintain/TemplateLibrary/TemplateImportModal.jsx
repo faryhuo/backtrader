@@ -2,6 +2,29 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
+const INVALID_STRATEGY_NAME_RE = /[<>:"/\\|?*\x00-\x1f]/;
+const WINDOWS_RESERVED_NAMES = new Set([
+    'CON', 'PRN', 'AUX', 'NUL',
+    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
+]);
+
+function isValidStrategyName(name) {
+    if (!name || name === '.' || name === '..') {
+        return false;
+    }
+
+    if (name.endsWith('.') || name.endsWith(' ')) {
+        return false;
+    }
+
+    if (INVALID_STRATEGY_NAME_RE.test(name)) {
+        return false;
+    }
+
+    return !WINDOWS_RESERVED_NAMES.has(name.toUpperCase());
+}
+
 function TemplateImportModal({ template, isZh, loading, onImport, onClose }) {
     const { t } = useTranslation();
     const [name, setName] = useState('');
@@ -16,8 +39,7 @@ function TemplateImportModal({ template, isZh, loading, onImport, onClose }) {
             return;
         }
 
-        // Validate name format (alphanumeric and underscore only)
-        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(trimmedName)) {
+        if (!isValidStrategyName(trimmedName)) {
             setError(t('maintain.invalid_name_format'));
             return;
         }

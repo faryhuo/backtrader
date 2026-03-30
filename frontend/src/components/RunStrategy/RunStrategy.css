@@ -1006,3 +1006,133 @@
     font-size: 0.8rem;
     color: var(--text-muted);
 }
+
+/* ============================================
+   Task Execution Log
+   ============================================ */
+.strategy-task-log-card {
+    background: rgba(26, 27, 35, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.strategy-task-log-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.strategy-task-log-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.strategy-task-log-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.strategy-task-log-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.strategy-task-log-alert {
+    margin: 1rem 1.25rem 0;
+}
+
+.strategy-task-log-console {
+    background: #0b0d11;
+    min-height: 420px;
+    max-height: 620px;
+    overflow: auto;
+    padding: 1rem 1.1rem;
+    font-family: Consolas, 'Courier New', monospace;
+}
+
+.strategy-task-log-line {
+    display: grid;
+    grid-template-columns: 170px 64px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 0.2rem 0;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #d8dee9;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.strategy-task-log-time {
+    color: #60a5fa;
+}
+
+.strategy-task-log-level {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.strategy-task-log-level.info {
+    color: #22c55e;
+}
+
+.strategy-task-log-level.warning {
+    color: #f59e0b;
+}
+
+.strategy-task-log-level.error {
+    color: #ef4444;
+}
+
+.strategy-task-log-line.error .strategy-task-log-message {
+    color: #fecaca;
+}
+
+.strategy-task-log-line.warning .strategy-task-log-message {
+    color: #fde68a;
+}
+
+.strategy-task-log-empty {
+    min-height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.strategy-task-log-empty .ant-empty-description {
+    color: var(--text-muted);
+}
+
+.strategy-task-log-loading {
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.strategy-task-log-hint {
+    padding: 0.85rem 1.25rem 1rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 900px) {
+    .strategy-task-log-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .strategy-task-log-line {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+}

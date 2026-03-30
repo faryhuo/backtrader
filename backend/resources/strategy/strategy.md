@@ -30,3 +30,6 @@
 ## 常见协作场景
 - 需要 AI：编写/优化文档、提出代码审阅意见、生成测试用例框架。
 - 不需要 AI：直接改动策略逻辑、调整交易参数、合并未审阅的策略代码。
+# Recent Notes
+
+- Naming note: strategy filenames may use Chinese and other Unicode characters, but must not contain path separators, `\/:*?"<>|`, trailing dots/spaces, or reserved Windows device names.

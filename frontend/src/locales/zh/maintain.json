@@ -28,8 +28,8 @@
   "parameters": "参数",
   "new_strategy_name": "新策略名称",
   "name_required": "请输入策略名称",
-  "invalid_name_format": "名称必须以字母开头，只能包含字母、数字和下划线",
-  "name_hint": "名称以字母开头，只能包含字母、数字和下划线",
+  "invalid_name_format": "名称支持中文等字符，但不能包含 \\/:*?\"<>|，也不能以点号或空格结尾，且不能使用系统保留名称",
+  "name_hint": "支持中文命名，避免使用 \\/:*?\"<>|，且不要以点号或空格结尾",
   "versions": {
     "title": "版本历史",
     "versions": "个版本",

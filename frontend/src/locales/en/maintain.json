@@ -28,8 +28,8 @@
   "parameters": "Parameters",
   "new_strategy_name": "New Strategy Name",
   "name_required": "Please enter a strategy name",
-  "invalid_name_format": "Name must start with a letter and contain only letters, numbers and underscores",
-  "name_hint": "Start with a letter, use only letters, numbers and underscores",
+  "invalid_name_format": "Name can include Chinese and other Unicode characters, but cannot contain \\/:*?\"<>|, end with a dot or space, or use reserved system names",
+  "name_hint": "Chinese names are supported. Avoid \\/:*?\"<>| and trailing dots or spaces",
   "versions": {
     "title": "Version History",
     "versions": "versions",

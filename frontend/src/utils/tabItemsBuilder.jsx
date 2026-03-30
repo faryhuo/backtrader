@@ -2,6 +2,7 @@ import {
     LineChartOutlined,
     BarChartOutlined,
     SwapOutlined,
+    FileSearchOutlined,
     BulbOutlined,
     ExperimentOutlined,
     CodeOutlined
@@ -9,6 +10,7 @@ import {
 import PerformanceOverview from '../components/RunStrategy/PerformanceOverview';
 import TradeLog from '../components/RunStrategy/TradeLog';
 import StrategyPlot from '../components/RunStrategy/StrategyPlot';
+import TaskExecutionLog from '../components/RunStrategy/TaskExecutionLog';
 import DeepAnalysis from '../components/DeepAnalysis';
 import AIInsightTab from '../components/RunStrategy/AIInsightTab';
 import CodeViewer from '../components/RunStrategy/CodeViewer';
@@ -22,7 +24,7 @@ import CodeViewer from '../components/RunStrategy/CodeViewer';
 export function buildTabItems({
     t, result, tradeList, plotUrl, analyses, activeTab, setActiveTab,
     aiLoading, handleAIAnalysis,
-    strategyCode, paramOverrides, ticker, startDate, endDate, initialCash
+    strategyCode, paramOverrides, ticker, startDate, endDate, initialCash, backtestId
 }) {
     const tabItems = [
         {
@@ -43,6 +45,15 @@ export function buildTabItems({
             key: 'trades',
             label: <span><SwapOutlined className="tab-icon" /> {t('history.tab_trades', 'Trades')}</span>,
             children: <TradeLog trades={tradeList} />
+        },
+        {
+            key: 'task_logs',
+            label: <span><FileSearchOutlined className="tab-icon" /> {t('history.tab_task_logs', 'Log Output')}</span>,
+            children: (
+                <div style={{ padding: '20px 0' }}>
+                    <TaskExecutionLog backtestId={backtestId} />
+                </div>
+            )
         },
         {
             key: 'ai_insight',

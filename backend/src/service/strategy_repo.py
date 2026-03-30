@@ -16,8 +16,32 @@ from typing import Final, Tuple
 from src.config.sandbox_config import get_strategy_config_singleton
 from src.config.settings import ensure_resource_dirs
 
-_STRATEGY_NAME_RE: Final[re.Pattern[str]] = re.compile(r"^[A-Za-z0-9_-]+$")
+_INVALID_STRATEGY_NAME_RE: Final[re.Pattern[str]] = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 _UTF8_BOM: Final[str] = "\ufeff"
+_WINDOWS_RESERVED_NAMES: Final[set[str]] = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
+}
 
 
 def _get_strategy_dir() -> Path:
@@ -38,8 +62,9 @@ def sanitize_strategy_filename(name: str) -> str:
     """
     Sanitize a user-provided strategy name and return a filename.
 
-    Only allow simple names to avoid path traversal. Accepts an optional ".py"
-    suffix and always returns "<name>.py".
+    Accepts an optional ".py" suffix and always returns "<name>.py". Unicode
+    names are allowed, but path separators, Windows-invalid filename
+    characters, and reserved device names are rejected.
 
     Args:
         name: Strategy name, with or without ".py".
@@ -55,8 +80,16 @@ def sanitize_strategy_filename(name: str) -> str:
     clean = name.strip()
     if clean.lower().endswith(".py"):
         clean = clean[:-3]
-    if not _STRATEGY_NAME_RE.match(clean):
-        raise ValueError("Strategy name must use letters, numbers, '-' or '_'")
+    if not clean:
+        raise ValueError("Strategy name is required")
+    if clean in {".", ".."}:
+        raise ValueError("Strategy name cannot be '.' or '..'")
+    if clean[-1] in {".", " "}:
+        raise ValueError("Strategy name cannot end with '.' or space")
+    if _INVALID_STRATEGY_NAME_RE.search(clean):
+        raise ValueError('Strategy name contains invalid characters: <>:"/\\\\|?*')
+    if clean.upper() in _WINDOWS_RESERVED_NAMES:
+        raise ValueError("Strategy name uses a reserved system filename")
     return f"{clean}.py"
 
 

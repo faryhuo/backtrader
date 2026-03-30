@@ -20,4 +20,6 @@
 
 ## 约定与规范
 - 与后端策略存储格式与校验规则保持同步。
+# Recent Notes
 
+- Strategy naming validation now allows Chinese and other Unicode characters, but must continue rejecting `\/:*?"<>|`, trailing dots/spaces, and reserved Windows device names so frontend behavior stays aligned with backend file storage rules.

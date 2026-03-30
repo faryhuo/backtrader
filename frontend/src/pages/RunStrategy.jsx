@@ -132,6 +132,7 @@ function RunStrategy() {
         startDate,
         endDate,
         initialCash,
+        backtestId: result?.backtest_id,
     });
 
     return (

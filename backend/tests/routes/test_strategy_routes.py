@@ -270,6 +270,28 @@ class TestTemplateEndpoints:
         assert result["name"] == "my_new_strategy"
         mock_save.assert_called_once_with("my_new_strategy", "# Template code here")
 
+    @patch("src.routes.strategy_routes.save_user_strategy_code")
+    @patch("src.routes.strategy_routes.list_strategies")
+    @patch("src.routes.strategy_routes.get_template_by_id")
+    def test_import_template_success_with_chinese_name(self, mock_get_template, mock_list, mock_save):
+        """Test template import allows Unicode strategy names."""
+        mock_get_template.return_value = {
+            "id": "sma_cross",
+            "code": "# Template code here"
+        }
+        mock_list.return_value = ["existing_strategy"]
+
+        request = TemplateImportRequest(
+            template_id="sma_cross",
+            name="中文策略"
+        )
+
+        result = import_template(request=request, user_id="test-user")
+
+        assert result["status"] == "ok"
+        assert result["name"] == "中文策略"
+        mock_save.assert_called_once_with("中文策略", "# Template code here")
+
     @patch("src.routes.strategy_routes.list_strategies")
     @patch("src.routes.strategy_routes.get_template_by_id")
     def test_import_template_already_exists(self, mock_get_template, mock_list):

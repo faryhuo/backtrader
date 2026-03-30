@@ -29,6 +29,18 @@ def test_strategy_file_round_trip(tmp_path, monkeypatch):
     assert "my_strategy" in backtest_engine.list_strategies()
 
 
+def test_strategy_file_round_trip_with_chinese_name(tmp_path, monkeypatch):
+    """Test that Unicode strategy names can be saved and listed."""
+    monkeypatch.setattr(strategy_repo, "_get_strategy_dir", lambda: tmp_path)
+    monkeypatch.setattr(strategy_repo, "ensure_strategy_dirs", lambda: None)
+
+    code = "import backtrader as bt\n\nclass UserStrategy(bt.Strategy):\n    pass\n"
+    backtest_engine.save_user_strategy_code("中文策略", code)
+
+    assert backtest_engine.get_user_strategy_code("中文策略") == code
+    assert "中文策略" in backtest_engine.list_strategies()
+
+
 def test_load_user_strategy_from_sandbox(tmp_path, monkeypatch):
     # Mock the strategy directory at the source
     monkeypatch.setattr(strategy_repo, "_get_strategy_dir", lambda: tmp_path)
@@ -58,6 +70,18 @@ def test_save_user_strategy_code_invalid_name(tmp_path, monkeypatch):
     # Test path traversal attempt
     with pytest.raises(backtest_engine.StrategyLoadError):
         backtest_engine.save_user_strategy_code("../evil", code)
+
+
+@pytest.mark.parametrize("name", ["bad/name", "bad:name", "bad?", "CON", "name."])
+def test_save_user_strategy_code_rejects_invalid_filenames(tmp_path, monkeypatch, name):
+    """Test invalid filesystem names are rejected."""
+    monkeypatch.setattr(strategy_repo, "_get_strategy_dir", lambda: tmp_path)
+    monkeypatch.setattr(strategy_repo, "ensure_strategy_dirs", lambda: None)
+
+    code = "import backtrader as bt\n\nclass UserStrategy(bt.Strategy):\n    pass\n"
+
+    with pytest.raises(backtest_engine.StrategyLoadError):
+        backtest_engine.save_user_strategy_code(name, code)
 
 
 def test_load_user_strategy_not_found():
