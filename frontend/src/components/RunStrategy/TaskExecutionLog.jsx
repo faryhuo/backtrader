@@ -28,17 +28,25 @@ function normalizeLogs(logs) {
     return logs.filter((item) => item && item.message);
 }
 
-function TaskExecutionLog({ backtestId }) {
+function TaskExecutionLog({ backtestId, logs: externalLogs = [] }) {
     const { t } = useTranslation();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [filterMode, setFilterMode] = useState('all');
+    const normalizedExternalLogs = useMemo(() => normalizeLogs(externalLogs), [externalLogs]);
 
     useEffect(() => {
         let active = true;
 
         async function loadLogs() {
+            if (normalizedExternalLogs.length > 0) {
+                setLogs(normalizedExternalLogs);
+                setError('');
+                setLoading(false);
+                return;
+            }
+
             if (!backtestId) {
                 setLogs([]);
                 setError('');
@@ -87,7 +95,7 @@ function TaskExecutionLog({ backtestId }) {
         return () => {
             active = false;
         };
-    }, [backtestId, t]);
+    }, [backtestId, normalizedExternalLogs, t]);
 
     const filteredLogs = useMemo(() => {
         if (filterMode === 'error') {
@@ -180,6 +188,7 @@ function TaskExecutionLog({ backtestId }) {
 
 TaskExecutionLog.propTypes = {
     backtestId: PropTypes.string,
+    logs: PropTypes.array,
 };
 
 export default TaskExecutionLog;

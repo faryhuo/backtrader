@@ -26,6 +26,8 @@ export function buildTabItems({
     aiLoading, handleAIAnalysis,
     strategyCode, paramOverrides, ticker, startDate, endDate, initialCash, backtestId
 }) {
+    const executionLogs = result?.metrics?.execution_logs || result?.execution_logs || [];
+
     const tabItems = [
         {
             key: 'overview',
@@ -51,7 +53,7 @@ export function buildTabItems({
             label: <span><FileSearchOutlined className="tab-icon" /> {t('history.tab_task_logs', 'Log Output')}</span>,
             children: (
                 <div style={{ padding: '20px 0' }}>
-                    <TaskExecutionLog backtestId={backtestId} />
+                    <TaskExecutionLog backtestId={backtestId} logs={executionLogs} />
                 </div>
             )
         },

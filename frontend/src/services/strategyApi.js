@@ -24,6 +24,14 @@ export const strategyApi = {
         return await parseResponse(res)
     },
 
+    async validateStrategy(name, code) {
+        const res = await buildRequest('/strategy/validate', {
+            method: 'POST',
+            body: JSON.stringify({ name, code })
+        })
+        return await parseResponse(res)
+    },
+
     // Strategy Version Management
 
     async getStrategyVersions(name, limit = 50, offset = 0) {

@@ -108,10 +108,10 @@
   "buy_sell_history": "Buy/Sell History",
   "no_trade_signals": "No buy or sell signals were captured for this run.",
   "task_logs_title": "Execution Logs",
-  "task_logs_subtitle": "Task lifecycle and runtime messages for this backtest",
+  "task_logs_subtitle": "Detailed execution output for this backtest, including runtime logs, warnings, and prints",
   "task_logs_all": "Log Output",
   "task_logs_errors": "Error Logs",
-  "task_logs_empty": "No task logs are available for this backtest.",
+  "task_logs_empty": "No execution logs are available for this backtest.",
   "task_logs_no_errors": "No error logs for this backtest.",
   "task_logs_load_failed": "Failed to load task logs.",
   "task_logs_error_hint": "This run contains error-level log entries. Switch to Error Logs to review them quickly."

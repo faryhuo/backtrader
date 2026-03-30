@@ -85,3 +85,4 @@
 - `setup_wizard_service.py` now auto-generates `ENCRYPTION_KEY` when it is absent, so onboarding no longer needs a dedicated user-facing security step for that value.
 - Backtest execution now estimates strategy indicator lookback from source code and surfaces a user-facing insufficient-data error before Backtrader raises a low-level `IndexError`.
 - Strategy repository filename validation now allows Chinese and other Unicode strategy names while still rejecting path separators, Windows-invalid filename characters, trailing dots/spaces, and reserved device names.
+- `execution_log_capture.py` now captures runtime `logging`, `warnings`, and `stdout`/`stderr` lines during backtests so result payloads can expose detailed execution logs to the frontend.

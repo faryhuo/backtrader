@@ -22,6 +22,7 @@ from src.db.storage.strategy_version import StrategyVersionStorage
 from src.routes.common.dependencies import get_version_storage
 from src.routes.common.auth_dependencies import get_optional_user_id
 from src.service.version_service import compare_versions
+from src.service.strategy_sandbox import execute_strategy_code, StrategySandboxError
 from src.service.strategy_templates import (
     get_all_templates,
     get_template_by_id,
@@ -45,6 +46,11 @@ class StrategySaveRequest(BaseModel):
     name: str
     code: str
     commit_message: str | None = None
+
+
+class StrategyValidateRequest(BaseModel):
+    name: str | None = None
+    code: str
 
 
 class TemplateImportRequest(BaseModel):
@@ -123,6 +129,52 @@ def save_strategy(
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/strategy/validate")
+def validate_strategy(
+    request: StrategyValidateRequest,
+    user_id: str = Depends(get_optional_user_id),
+) -> dict:
+    """
+    Validate strategy code without saving it.
+
+    Checks:
+    - Python syntax / sandbox compilation
+    - Presence of UserStrategy class
+    - UserStrategy inheritance from backtrader.Strategy
+    """
+    try:
+        module_name = request.name or "unsaved_strategy"
+        module_globals = execute_strategy_code(
+            request.code,
+            module_name=f"strategy_validate_{module_name}",
+            filename=f"{module_name}.py",
+        )
+        strategy_cls = module_globals.get("UserStrategy")
+
+        if strategy_cls is None:
+            raise HTTPException(status_code=400, detail="UserStrategy class not found in strategy code")
+
+        import backtrader as bt
+
+        if not issubclass(strategy_cls, bt.Strategy):
+            raise HTTPException(status_code=400, detail="UserStrategy must inherit from backtrader.Strategy")
+
+        return {
+            "status": "ok",
+            "valid": True,
+            "message": "Strategy compiled successfully",
+            "strategy_class": strategy_cls.__name__,
+        }
+    except HTTPException:
+        raise
+    except StrategySandboxError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except SyntaxError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/strategy/{name}/params")

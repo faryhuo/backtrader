@@ -10,6 +10,7 @@ from src.routes.strategy_routes import (
     get_strategy_list,
     get_strategy,
     save_strategy,
+    validate_strategy,
     get_strategy_params,
     get_templates,
     get_template_detail,
@@ -21,6 +22,7 @@ from src.routes.strategy_routes import (
     rollback_to_version,
     get_version_storage,
     StrategySaveRequest,
+    StrategyValidateRequest,
     TemplateImportRequest,
     VersionCreateRequest,
 )
@@ -199,6 +201,57 @@ class TestStrategyParams:
         # Should return empty params instead of raising error
         assert result["name"] == "my_strategy"
         assert result["params"] == []
+
+
+class TestStrategyValidate:
+    """Tests for strategy validation endpoint."""
+
+    @patch("src.routes.strategy_routes.execute_strategy_code")
+    def test_validate_strategy_success(self, mock_execute_strategy):
+        import backtrader as bt
+
+        class DummyStrategy(bt.Strategy):
+            pass
+
+        mock_execute_strategy.return_value = {"UserStrategy": DummyStrategy}
+
+        result = validate_strategy(
+            request=StrategyValidateRequest(name="demo", code="class UserStrategy: pass"),
+            user_id="test-user",
+        )
+
+        assert result["status"] == "ok"
+        assert result["valid"] is True
+        assert result["strategy_class"] == "DummyStrategy"
+
+    @patch("src.routes.strategy_routes.execute_strategy_code")
+    def test_validate_strategy_missing_user_strategy(self, mock_execute_strategy):
+        mock_execute_strategy.return_value = {}
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_strategy(
+                request=StrategyValidateRequest(name="demo", code="print('x')"),
+                user_id="test-user",
+            )
+
+        assert exc_info.value.status_code == 400
+        assert "UserStrategy class not found" in str(exc_info.value.detail)
+
+    @patch("src.routes.strategy_routes.execute_strategy_code")
+    def test_validate_strategy_requires_backtrader_inheritance(self, mock_execute_strategy):
+        class PlainClass:
+            pass
+
+        mock_execute_strategy.return_value = {"UserStrategy": PlainClass}
+
+        with pytest.raises(HTTPException) as exc_info:
+            validate_strategy(
+                request=StrategyValidateRequest(name="demo", code="class UserStrategy: pass"),
+                user_id="test-user",
+            )
+
+        assert exc_info.value.status_code == 400
+        assert "must inherit from backtrader.Strategy" in str(exc_info.value.detail)
 
 
 class TestTemplateEndpoints:
