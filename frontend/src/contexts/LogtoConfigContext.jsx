@@ -32,7 +32,9 @@ export function LogtoConfigProvider({ children }) {
                         appId: null,
                         redirectUri: null,
                         postLogoutRedirectUri: null,
-                        enableLogin: false
+                        enableLogin: false,
+                        authProvider: 'none',
+                        registrationEnabled: false,
                     });
                 }
             } catch (err) {
@@ -44,7 +46,9 @@ export function LogtoConfigProvider({ children }) {
                     appId: null,
                     redirectUri: null,
                     postLogoutRedirectUri: null,
-                    enableLogin: false
+                    enableLogin: false,
+                    authProvider: 'none',
+                    registrationEnabled: false,
                 });
             } finally {
                 setLoading(false);

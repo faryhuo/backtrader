@@ -2,6 +2,7 @@
 User Models - SQLAlchemy models for user data persistence.
 
 This module defines database tables for storing:
+- System authentication users
 - User settings and credentials
 - Strategy versions
 """
@@ -11,6 +12,25 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, UniqueConstraint
 
 from src.db.models.base import Base, SafeJSON
+
+
+class SystemUserModel(Base):
+    """System-authenticated user accounts for built-in email/password login."""
+
+    __tablename__ = "system_users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    password_hash = Column(Text, nullable=False)
+    display_name = Column(String(255), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_superuser = Column(Boolean, nullable=False, default=False)
+    last_login_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<SystemUser(email={self.email}, active={self.is_active})>"
 
 
 class UserSettingsModel(Base):
@@ -60,7 +80,10 @@ class UserSettingsModel(Base):
     logto_audience = Column(String(500), nullable=True)  # Audience (not encrypted)
     logto_required_scopes = Column(String(500), nullable=True)  # Space-separated scopes (not encrypted)
     enable_login = Column(Boolean, nullable=True)  # Enable/disable login (not encrypted)
-    
+    auth_provider = Column(String(50), nullable=True)  # none / logto / system
+    system_auth_allow_registration = Column(Boolean, nullable=True)  # Allow self-service signup
+    setup_completed = Column(Boolean, nullable=True)  # Whether onboarding has been completed
+
     # Logto Frontend Configuration (for React app)
     logto_endpoint = Column(String(500), nullable=True)  # Logto server endpoint (not encrypted)
     logto_app_id = Column(String(500), nullable=True)  # Logto application (client) ID (not encrypted)
@@ -162,6 +185,7 @@ class StrategyVersionModel(Base):
 
 
 __all__ = [
+    "SystemUserModel",
     "UserSettingsModel",
     "StrategyVersionModel",
 ]

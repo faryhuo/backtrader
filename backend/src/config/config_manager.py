@@ -176,19 +176,38 @@ class ConfigManager:
 
     # ========== Logto Authentication Configuration ==========
 
-    def get_logto_config(self) -> Dict[str, Any]:
-        """
-        Get Logto authentication configuration.
+    def get_auth_config(self) -> Dict[str, Any]:
+        """Get the active authentication configuration."""
+        enable_login = self._get_enable_login()
+        auth_provider = str(self.get("AUTH_PROVIDER", "") or "").strip().lower()
+        if not auth_provider:
+            auth_provider = "logto" if enable_login else "none"
 
-        Returns:
-            Dict with Logto configuration keys
-        """
-        return {
+        allow_registration = self.get("SYSTEM_AUTH_ALLOW_REGISTRATION")
+        if isinstance(allow_registration, str):
+            allow_registration = allow_registration.lower() in {"true", "1", "yes", "on"}
+
+        logto_config = {
             "issuer": self.get("LOGTO_ISSUER"),
             "jwks_uri": self.get("LOGTO_JWKS_URI"),
             "audience": self.get("LOGTO_AUDIENCE"),
             "required_scopes": self.get("LOGTO_REQUIRED_SCOPES", ""),
-            "enable_login": self._get_enable_login()
+        }
+        return {
+            "enable_login": enable_login,
+            "auth_provider": auth_provider if enable_login else "none",
+            "system_auth_allow_registration": allow_registration,
+            "logto": logto_config,
+        }
+
+    def get_logto_config(self) -> Dict[str, Any]:
+        """Backward-compatible Logto config accessor."""
+        config = self.get_auth_config()
+        return {
+            **config["logto"],
+            "enable_login": config["enable_login"],
+            "auth_provider": config["auth_provider"],
+            "system_auth_allow_registration": config["system_auth_allow_registration"],
         }
 
     def _get_enable_login(self) -> bool:
@@ -358,6 +377,8 @@ class ConfigManager:
             _, sources["openai_base_url"] = self.get_with_source("OPENAI_BASE_URL")
 
         # Logto
+        _, sources["auth_provider"] = self.get_with_source("AUTH_PROVIDER")
+        _, sources["system_auth_allow_registration"] = self.get_with_source("SYSTEM_AUTH_ALLOW_REGISTRATION")
         _, sources["logto_issuer"] = self.get_with_source("LOGTO_ISSUER")
         _, sources["logto_jwks_uri"] = self.get_with_source("LOGTO_JWKS_URI")
         _, sources["logto_audience"] = self.get_with_source("LOGTO_AUDIENCE")

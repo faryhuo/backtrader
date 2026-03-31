@@ -211,6 +211,8 @@ class CredentialUpdate(BaseModel):
     logto_audience: Optional[str] = None
     logto_required_scopes: Optional[str] = None
     enable_login: Optional[bool] = None
+    auth_provider: Optional[str] = None
+    system_auth_allow_registration: Optional[bool] = None
     # Frontend OAuth configuration
     logto_endpoint: Optional[str] = None
     logto_app_id: Optional[str] = None
@@ -276,6 +278,8 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
         "logto_audience": credentials_nested["logto"]["audience"],
         "logto_required_scopes": credentials_nested["logto"]["required_scopes"],
         "enable_login": credentials_nested["logto"]["enable_login"],
+        "auth_provider": credentials_nested["logto"]["auth_provider"],
+        "system_auth_allow_registration": credentials_nested["logto"]["system_auth_allow_registration"],
         # Frontend OAuth configuration
         "logto_endpoint": credentials_nested["logto"]["endpoint"],
         "logto_app_id": credentials_nested["logto"]["app_id"],
@@ -300,6 +304,8 @@ def get_credentials(user_id: str = Depends(get_optional_user_id)) -> dict:
         "logto_audience": credentials_nested["logto"]["audience_source"],
         "logto_required_scopes": credentials_nested["logto"]["required_scopes_source"],
         "enable_login": credentials_nested["logto"]["enable_login_source"],
+        "auth_provider": credentials_nested["logto"]["auth_provider_source"],
+        "system_auth_allow_registration": credentials_nested["logto"]["system_auth_allow_registration_source"],
         # Frontend OAuth configuration sources
         "logto_endpoint": credentials_nested["logto"]["endpoint_source"],
         "logto_app_id": credentials_nested["logto"]["app_id_source"],

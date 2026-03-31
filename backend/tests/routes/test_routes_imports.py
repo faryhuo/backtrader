@@ -3,6 +3,7 @@ import importlib
 
 def test_routes_modules_import_and_expose_router():
     modules = [
+        "src.routes.auth_routes",
         "src.routes.ai_routes",
         "src.routes.backtest_routes",
         "src.routes.frontend_routes",

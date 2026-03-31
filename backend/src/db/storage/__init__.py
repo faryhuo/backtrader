@@ -14,6 +14,7 @@ from src.db.storage.portfolio import PortfolioStorage, get_portfolio_storage
 from src.db.storage.strategy_version import StrategyVersionStorage
 from src.db.storage.task import TaskStorage, get_task_storage
 from src.db.storage.report import ReportStorage, get_report_storage
+from src.db.storage.user_auth import UserAuthStorage
 
 # Market data functions
 from src.db.storage.market_data import (
@@ -56,6 +57,7 @@ __all__ = [
     "PortfolioStorage",
     "get_portfolio_storage",
     "StrategyVersionStorage",
+    "UserAuthStorage",
     "TaskStorage",
     "get_task_storage",
     "ReportStorage",

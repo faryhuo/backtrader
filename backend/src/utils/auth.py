@@ -1,12 +1,4 @@
-"""
-Token-based authentication helpers.
-
-The backend no longer relies on the Logto SDK config; instead it validates
-incoming Bearer tokens via Logto's JWKS endpoint using python-jose.
-
-Authentication configuration is loaded from database first, then falls back
-to environment variables for backward compatibility.
-"""
+"""Token-based authentication helpers for Logto and built-in system auth."""
 
 from __future__ import annotations
 
@@ -20,6 +12,7 @@ from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTClaimsError, JWTError
 
 from src.config.config_manager import get_global_config_manager
+from src.service.auth_service import AuthService, UnsupportedAuthProviderError
 
 security = HTTPBearer(auto_error=False)
 optional_security = HTTPBearer(auto_error=False)
@@ -52,12 +45,16 @@ def get_auth_token(credentials: Optional[HTTPAuthorizationCredentials]) -> str:
     return token
 
 
-def get_logto_config() -> Dict[str, Any]:
-    """
-    Get Logto configuration from database or environment variables.
-    """
+def get_auth_config() -> Dict[str, Any]:
+    """Get the active authentication configuration."""
     config_manager = get_global_config_manager()
-    return config_manager.get_logto_config()
+    return config_manager.get_auth_config()
+
+
+def get_logto_config() -> Dict[str, Any]:
+    """Backward-compatible Logto config accessor."""
+    config = get_auth_config()
+    return config.get("logto", {})
 
 
 @lru_cache(maxsize=1)
@@ -138,10 +135,7 @@ def validate_scopes(claims: Dict[str, Any]) -> None:
         )
 
 
-def verify_token(token: str) -> Dict[str, Any]:
-    """
-    Decode and validate the JWT using python-jose.
-    """
+def _verify_logto_token(token: str) -> Dict[str, Any]:
     config = get_logto_config()
     key = get_signing_key(token)
     header = jwt.get_unverified_header(token)
@@ -159,6 +153,7 @@ def verify_token(token: str) -> Dict[str, Any]:
             options={"verify_at_hash": False},
         )
         validate_scopes(claims)
+        claims["auth_provider"] = "logto"
         return claims
     except ExpiredSignatureError as exc:
         raise AuthError("auth.token_expired", message="Token has expired") from exc
@@ -168,13 +163,45 @@ def verify_token(token: str) -> Dict[str, Any]:
         raise AuthError("auth.invalid_token", message=str(exc)) from exc
 
 
+def _verify_system_token(token: str) -> Dict[str, Any]:
+    auth_service = AuthService()
+    try:
+        claims = auth_service.decode_access_token(token)
+    except ExpiredSignatureError as exc:
+        raise AuthError("auth.token_expired", message="Token has expired") from exc
+    except JWTClaimsError as exc:
+        raise AuthError("auth.invalid_claims", message=str(exc)) from exc
+    except (JWTError, UnsupportedAuthProviderError) as exc:
+        raise AuthError("auth.invalid_token", message=str(exc)) from exc
+
+    user_id = claims.get("user_id")
+    if user_id is None:
+        raise AuthError("auth.invalid_token", message="Missing system user id")
+
+    user = auth_service.get_current_user(int(user_id))
+    if user is None:
+        raise AuthError("auth.invalid_token", message="System user not found or inactive")
+
+    claims.update(user)
+    return claims
+
+
+def verify_token(token: str) -> Dict[str, Any]:
+    """Decode and validate the JWT using the active auth provider."""
+    config = get_auth_config()
+    provider = config.get("auth_provider", "none")
+    if provider == "system":
+        return _verify_system_token(token)
+    return _verify_logto_token(token)
+
+
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """
     FastAPI dependency to require authentication on an endpoint.
     """
-    config = get_logto_config()
+    config = get_auth_config()
     if not config.get("enable_login"):
         # Authentication disabled; allow anonymous access.
         return {"sub": "anonymous"}
@@ -189,7 +216,7 @@ async def get_optional_user(
     """
     Optional authentication dependency.
     """
-    config = get_logto_config()
+    config = get_auth_config()
     if not config.get("enable_login"):
         return {"sub": "anonymous"}
 

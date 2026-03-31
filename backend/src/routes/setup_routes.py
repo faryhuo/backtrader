@@ -13,10 +13,11 @@ from src.utils.auth import get_optional_user
 router = APIRouter(tags=["setup"])
 
 
-def _require_setup_access(user: dict | None = Depends(get_optional_user)) -> dict | None:
+def _require_setup_write_access(user: dict | None = Depends(get_optional_user)) -> dict | None:
     service = SetupWizardService()
     state = service.get_wizard_state()
-    if state["status"]["requires_login"] and state["status"]["is_ready"] and user is None:
+    has_users = bool(state.get("meta", {}).get("has_system_users"))
+    if state["status"]["requires_login"] and state["status"]["setup_completed"] and has_users and user is None:
         raise HTTPException(status_code=401, detail="Authentication required")
     return user
 
@@ -31,7 +32,7 @@ class SetupTestRequest(BaseModel):
 
 
 @router.get("/setup/wizard")
-def get_setup_wizard(_: dict | None = Depends(_require_setup_access)) -> dict[str, Any]:
+def get_setup_wizard(_: dict | None = Depends(get_optional_user)) -> dict[str, Any]:
     service = SetupWizardService()
     return service.get_wizard_state()
 
@@ -39,7 +40,7 @@ def get_setup_wizard(_: dict | None = Depends(_require_setup_access)) -> dict[st
 @router.put("/setup/wizard")
 def save_setup_wizard(
     request: SetupSaveRequest,
-    _: dict | None = Depends(_require_setup_access),
+    _: dict | None = Depends(_require_setup_write_access),
 ) -> dict[str, Any]:
     service = SetupWizardService()
     try:
@@ -51,7 +52,7 @@ def save_setup_wizard(
 @router.post("/setup/wizard/test")
 def test_setup_wizard(
     request: SetupTestRequest,
-    _: dict | None = Depends(_require_setup_access),
+    _: dict | None = Depends(_require_setup_write_access),
 ) -> dict[str, Any]:
     service = SetupWizardService()
     try:

@@ -15,9 +15,19 @@
     "public": "Public deployment with stricter auth expectations"
   },
   "deployment_local_title": "Local mode keeps login disabled",
-  "deployment_local_desc": "Selecting local deployment keeps authentication disabled and skips the Logto step.",
+  "deployment_local_desc": "Selecting local deployment keeps authentication disabled and skips the auth step.",
   "deployment_public_title": "Public mode will require login",
-  "deployment_public_desc": "Selecting public deployment automatically enables authentication and adds the Logto step to this wizard.",
+  "deployment_public_desc": "Selecting public deployment enables authentication and lets you choose between built-in email login and Logto.",
+  "auth_provider": {
+    "system": "Built-in email login",
+    "logto": "Logto"
+  },
+  "system_auth": {
+    "title": "Built-in email login",
+    "desc": "The backend will use its own user table and JWT sessions. You can allow self-registration for the first admin bootstrap, then disable it later from Settings.",
+    "bootstrap_title": "Bootstrap the first administrator",
+    "bootstrap_desc": "If self-registration is disabled and no users exist yet, create the first administrator here so the instance is not locked out."
+  },
   "steps": {
     "welcome": "Welcome",
     "security": "Security",
@@ -32,6 +42,12 @@
   "fields": {
     "encryption_key": "ENCRYPTION_KEY",
     "enable_login": "Enable login",
+    "auth_provider": "Authentication provider",
+    "system_auth_allow_registration": "Allow self registration",
+    "first_admin_email": "First admin email",
+    "first_admin_display_name": "First admin display name",
+    "first_admin_password": "First admin password",
+    "first_admin_password_placeholder": "At least 8 characters",
     "database_mode": "Database mode",
     "sqlite_path": "SQLite path",
     "pg_host": "PostgreSQL host",
@@ -85,7 +101,7 @@
   "validation": {
     "encryption_key": "Encryption key is required.",
     "sqlite_path": "SQLite path is required.",
-    "logto": "All Logto fields are required when public deployment enables authentication.",
+    "logto": "All Logto fields are required when Logto authentication is enabled.",
     "eodhd": "EODHD API key is required when EODHD is enabled.",
     "openai": "OpenAI API key is required when AI is enabled.",
     "trading_credentials": "Trading credentials are required for the selected exchange and mode.",
@@ -96,7 +112,9 @@
     "paper_credentials": "Binance paper credentials require both API key and secret.",
     "live_credentials": "Binance live credentials require both API key and secret.",
     "live_mode": "Enable live trading before selecting live as the default mode.",
-    "live_credentials_required": "Live trading requires Binance live credentials."
+    "live_credentials_required": "Live trading requires Binance live credentials.",
+    "first_admin_required": "Provide first admin credentials or enable self registration before finishing setup.",
+    "first_admin_password": "First admin password is required when first admin email is provided."
   },
   "sections": {
     "exchange": "Exchange defaults",
@@ -156,9 +174,9 @@
   "ai_note": "The wizard stores provider credentials, fallback priority, and the runtime model name used by each enabled provider.",
   "trading_note": "The onboarding flow only supports Binance and lets you configure paper and live credentials together.",
   "security_auth_enabled": "Authentication is enabled for this setup",
-  "security_auth_enabled_desc": "This is controlled by the deployment mode you selected on the first step. Public deployment requires Logto configuration before finishing setup.",
+  "security_auth_enabled_desc": "Public deployment now requires you to choose an authentication provider before finishing setup.",
   "security_auth_disabled": "Authentication is disabled for this setup",
-  "security_auth_disabled_desc": "This is controlled by the deployment mode you selected on the first step. Switch back to public deployment if this instance should require login.",
+  "security_auth_disabled_desc": "Switch back to public deployment if this instance should require login.",
   "enabled": "Enabled",
   "disabled": "Disabled",
   "live_ack": "I understand live trading can place real orders and accept that risk.",
@@ -210,6 +228,16 @@
       "configured": "Configured",
       "updated": "Updated",
       "not_configured": "Not configured"
+    },
+    "badges": {
+      "login_enabled": "Login: {{provider}}",
+      "login_disabled": "Login disabled",
+      "ai_enabled": "AI: {{providers}}",
+      "ai_skipped": "AI skipped",
+      "live_enabled": "Binance live enabled",
+      "live_skipped": "Binance live skipped",
+      "reports_enabled": "Public reports enabled",
+      "reports_skipped": "Public reports skipped"
     }
   }
 }

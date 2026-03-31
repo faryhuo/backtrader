@@ -43,6 +43,15 @@ def test_get_credential_with_fallback_env_bool(monkeypatch, storage):
     assert source == "env"
 
 
+def test_save_and_get_setup_completed_flag(storage):
+    assert storage.save_credential("setup_completed", True, user_id=None) is True
+
+    value, source = storage.get_credential_with_fallback("setup_completed", user_id=None)
+
+    assert value is True
+    assert source == "database"
+
+
 def test_get_credential_with_fallback_none_when_missing(monkeypatch, storage):
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     value, source = storage.get_credential_with_fallback("openai_base_url", user_id="missing-user")

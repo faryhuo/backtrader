@@ -36,6 +36,7 @@ from src.db.models.market import (
 
 # User models
 from src.db.models.user import (
+    SystemUserModel,
     UserSettingsModel,
     StrategyVersionModel,
 )
@@ -74,6 +75,7 @@ __all__ = [
     "MarketDataModel",
     "TickerMetadataModel",
     # User
+    "SystemUserModel",
     "UserSettingsModel",
     "StrategyVersionModel",
     # Task

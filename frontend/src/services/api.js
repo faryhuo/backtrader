@@ -28,6 +28,7 @@ import { settingsApi } from './settingsApi'
 import { portfolioApi } from './portfolioApi'
 import { reportApi } from './reportApi'
 import { setupApi } from './setupApi'
+import { authApi } from './authApi'
 
 // Re-export domain APIs for direct import
 export { strategyApi } from './strategyApi'
@@ -39,6 +40,7 @@ export { settingsApi } from './settingsApi'
 export { portfolioApi } from './portfolioApi'
 export { reportApi } from './reportApi'
 export { setupApi } from './setupApi'
+export { authApi } from './authApi'
 
 /**
  * Unified API object for backward compatibility
@@ -70,5 +72,8 @@ export const api = {
     ...reportApi,
 
     // Setup API
-    ...setupApi
+    ...setupApi,
+
+    // Auth API
+    ...authApi
 }

@@ -12,7 +12,7 @@ export function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const { t, i18n } = useTranslation();
     const isZh = i18n.language?.startsWith('zh');
-    const { signIn, loginEnabled } = useAuth();
+    const { signIn, loginEnabled, authProvider } = useAuth();
     const { config } = useLogtoConfig();
     const navigate = useNavigate();
 
@@ -32,6 +32,10 @@ export function Navbar() {
             navigate('/strategy');
             return;
         }
+        if (authProvider === 'system') {
+            navigate('/login');
+            return;
+        }
         const redirectUri = config?.redirectUri;
         if (redirectUri) {
             signIn(redirectUri);
@@ -41,6 +45,10 @@ export function Navbar() {
     const handleGetStarted = () => {
         if (!loginEnabled) {
             navigate('/strategy');
+            return;
+        }
+        if (authProvider === 'system') {
+            navigate('/login');
             return;
         }
         const redirectUri = config?.redirectUri;

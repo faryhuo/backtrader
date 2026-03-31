@@ -221,12 +221,20 @@ function deriveLoginEnabled(config) {
     return config?.deployment_mode === 'public'
 }
 
+function deriveAuthProvider(config) {
+    if (!deriveLoginEnabled(config)) {
+        return 'none'
+    }
+    return config?.auth?.auth_provider || 'system'
+}
+
 export default function ReviewSummary({ initialConfig, config, t }) {
     const reviewSections = useMemo(() => buildReviewSections(initialConfig, config, t), [config, initialConfig, t])
     const changedItemCount = useMemo(() => reviewSections.reduce((total, section) => total + section.items.length, 0), [reviewSections])
     const overridePreview = useMemo(() => buildOverridePreview(reviewSections), [reviewSections])
     const enabledProviders = config?.ai?.provider_priority || []
     const requiresLogin = deriveLoginEnabled(config)
+    const authProvider = deriveAuthProvider(config)
 
     return (
         <Card className="onboarding-card">
@@ -309,10 +317,26 @@ export default function ReviewSummary({ initialConfig, config, t }) {
                 </Space>
             )}
             <Space wrap>
-                <Tag color={requiresLogin ? 'processing' : 'default'}>{requiresLogin ? 'Logto enabled' : 'Login disabled'}</Tag>
-                <Tag color={config.ai.enabled ? 'success' : 'default'}>{config.ai.enabled ? `AI: ${enabledProviders.join(' > ')}` : 'AI skipped'}</Tag>
-                <Tag color={config.trading.live_trading_enabled ? 'warning' : 'default'}>{config.trading.live_trading_enabled ? 'Binance live enabled' : 'Binance live skipped'}</Tag>
-                <Tag color={config.report.enable_public_share ? 'processing' : 'default'}>{config.report.enable_public_share ? 'Public reports enabled' : 'Public reports skipped'}</Tag>
+                <Tag color={requiresLogin ? 'processing' : 'default'}>
+                    {requiresLogin
+                        ? t('onboarding.review.badges.login_enabled', 'Login: {{provider}}', { provider: authProvider })
+                        : t('onboarding.review.badges.login_disabled', 'Login disabled')}
+                </Tag>
+                <Tag color={config.ai.enabled ? 'success' : 'default'}>
+                    {config.ai.enabled
+                        ? t('onboarding.review.badges.ai_enabled', 'AI: {{providers}}', { providers: enabledProviders.join(' > ') })
+                        : t('onboarding.review.badges.ai_skipped', 'AI skipped')}
+                </Tag>
+                <Tag color={config.trading.live_trading_enabled ? 'warning' : 'default'}>
+                    {config.trading.live_trading_enabled
+                        ? t('onboarding.review.badges.live_enabled', 'Binance live enabled')
+                        : t('onboarding.review.badges.live_skipped', 'Binance live skipped')}
+                </Tag>
+                <Tag color={config.report.enable_public_share ? 'processing' : 'default'}>
+                    {config.report.enable_public_share
+                        ? t('onboarding.review.badges.reports_enabled', 'Public reports enabled')
+                        : t('onboarding.review.badges.reports_skipped', 'Public reports skipped')}
+                </Tag>
             </Space>
         </Card>
     )

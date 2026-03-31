@@ -38,6 +38,7 @@ import './OnboardingSetup.css'
 const { Title, Paragraph } = Typography
 
 const DEFAULT_DATA_SOURCE_PRIORITY = ['yahoo', 'database']
+const SYSTEM_AUTH_TOKEN_STORAGE_KEY = 'system_auth_token'
 const ONBOARDING_AI_PROVIDER_DEFAULTS = {
     openai: { base_url: 'https://api.openai.com/v1', default_model: 'gpt-5.1' },
     minimax: { base_url: 'https://api.minimaxi.com/anthropic', default_model: 'MiniMax-M2.7' },
@@ -47,6 +48,16 @@ const ONBOARDING_AI_PROVIDER_DEFAULTS = {
 
 function deriveLoginEnabled(deploymentMode) {
     return deploymentMode === 'public'
+}
+
+function deriveAuthProvider(deploymentMode, currentProvider) {
+    if (deploymentMode !== 'public') {
+        return 'none'
+    }
+    if (currentProvider === 'logto' || currentProvider === 'system') {
+        return currentProvider
+    }
+    return 'system'
 }
 
 function hasText(value) {
@@ -110,6 +121,14 @@ function normalizeWizardConfig(rawConfig, generatedEncryptionKey = '') {
             ...(rawConfig?.security || {}),
             encryption_key: rawConfig?.security?.encryption_key || generatedEncryptionKey,
             enable_login: deriveLoginEnabled(deploymentMode)
+        },
+        auth: {
+            auth_provider: deriveAuthProvider(deploymentMode, rawConfig?.auth?.auth_provider),
+            system_auth_allow_registration: rawConfig?.auth?.system_auth_allow_registration ?? false,
+            first_admin_email: rawConfig?.auth?.first_admin_email ?? '',
+            first_admin_password: rawConfig?.auth?.first_admin_password ?? '',
+            first_admin_display_name: rawConfig?.auth?.first_admin_display_name ?? '',
+            ...(rawConfig?.auth || {}),
         },
         ai: {
             enabled: rawConfig?.ai?.enabled ?? false,
@@ -175,6 +194,7 @@ export default function OnboardingSetup() {
     }, [loadWizard])
 
     const requiresLogin = deriveLoginEnabled(config?.deployment_mode)
+    const authProvider = deriveAuthProvider(config?.deployment_mode, config?.auth?.auth_provider)
 
     const steps = useMemo(() => {
         const base = [
@@ -226,18 +246,35 @@ export default function OnboardingSetup() {
             return false
         }
         if (currentStep === 'auth' && requiresLogin) {
-            const required = [
-                config.auth.logto_issuer,
-                config.auth.logto_jwks_uri,
-                config.auth.logto_audience,
-                config.auth.logto_endpoint,
-                config.auth.logto_app_id,
-                config.auth.logto_redirect_uri,
-                config.auth.logto_post_logout_redirect_uri
-            ]
-            if (required.some((item) => !item)) {
-                message.warning(t('onboarding.validation.logto', 'All Logto fields are required when login is enabled.'))
-                return false
+            if (authProvider === 'logto') {
+                const required = [
+                    config.auth.logto_issuer,
+                    config.auth.logto_jwks_uri,
+                    config.auth.logto_audience,
+                    config.auth.logto_endpoint,
+                    config.auth.logto_app_id,
+                    config.auth.logto_redirect_uri,
+                    config.auth.logto_post_logout_redirect_uri
+                ]
+                if (required.some((item) => !item)) {
+                    message.warning(t('onboarding.validation.logto', 'All Logto fields are required when login is enabled.'))
+                    return false
+                }
+            } else if (
+                authProvider === 'system'
+            ) {
+                if (
+                    !config.auth.system_auth_allow_registration
+                    && !wizardState?.meta?.has_system_users
+                    && !hasText(config.auth.first_admin_email)
+                ) {
+                    message.warning(t('onboarding.validation.first_admin_required', 'Provide first admin credentials or enable self registration before finishing setup.'))
+                    return false
+                }
+                if (hasText(config.auth.first_admin_email) && !hasText(config.auth.first_admin_password)) {
+                    message.warning(t('onboarding.validation.first_admin_password', 'First admin password is required when first admin email is provided.'))
+                    return false
+                }
             }
         }
         if (currentStep === 'data') {
@@ -318,15 +355,25 @@ export default function OnboardingSetup() {
     const handleSave = async () => {
         setSaving(true)
         try {
-            await setupApi.saveSetupWizard({
+            const response = await setupApi.saveSetupWizard({
                 ...config,
                 security: {
                     ...config.security,
                     enable_login: requiresLogin
+                },
+                auth: {
+                    ...config.auth,
+                    auth_provider: authProvider
                 }
             })
             message.success(t('onboarding.save_success', 'Setup configuration saved'))
-            await loadWizard()
+            const bootstrapToken = response?.bootstrap_auth?.access_token
+            if (bootstrapToken) {
+                window.localStorage.setItem(SYSTEM_AUTH_TOKEN_STORAGE_KEY, bootstrapToken)
+                window.location.assign('/strategy')
+                return
+            }
+            window.location.assign(requiresLogin ? '/login' : '/')
         } catch (error) {
             message.error(error.message || t('onboarding.save_failed', 'Failed to save setup configuration'))
         } finally {
@@ -356,7 +403,12 @@ export default function OnboardingSetup() {
                 </div>
                 <Radio.Group
                     value={config.deployment_mode}
-                    onChange={(event) => updateConfig(['deployment_mode'], event.target.value)}
+                    onChange={(event) => {
+                        const nextMode = event.target.value
+                        updateConfig(['deployment_mode'], nextMode)
+                        updateConfig(['security', 'enable_login'], deriveLoginEnabled(nextMode))
+                        updateConfig(['auth', 'auth_provider'], deriveAuthProvider(nextMode, config?.auth?.auth_provider))
+                    }}
                 >
                     <Space direction="vertical">
                         <Radio value="local">{t('onboarding.deployment.local', 'Local development or single-machine install')}</Radio>
@@ -379,6 +431,19 @@ export default function OnboardingSetup() {
                         ? t('onboarding.deployment_public_desc', 'Selecting public deployment automatically enables authentication and adds the Logto step to this wizard.')
                         : t('onboarding.deployment_local_desc', 'Selecting local deployment keeps authentication disabled and skips the Logto step.')}
                 />
+                {requiresLogin && (
+                    <SettingRow label={t('onboarding.fields.auth_provider', 'Authentication provider')}>
+                        <Radio.Group
+                            value={authProvider}
+                            onChange={(event) => updateConfig(['auth', 'auth_provider'], event.target.value)}
+                        >
+                            <Space direction="vertical">
+                                <Radio value="system">{t('onboarding.auth_provider.system', 'Built-in email login')}</Radio>
+                                <Radio value="logto">{t('onboarding.auth_provider.logto', 'Logto')}</Radio>
+                            </Space>
+                        </Radio.Group>
+                    </SettingRow>
+                )}
             </Space>
         </Card>
     )
@@ -420,22 +485,91 @@ export default function OnboardingSetup() {
 
     const renderAuth = () => (
         <Card className="onboarding-card">
-            <Row gutter={16}>
-                <Col span={12}><SettingRow label="LOGTO_ISSUER"><Input value={config.auth.logto_issuer} onChange={(event) => updateConfig(['auth', 'logto_issuer'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_JWKS_URI"><Input value={config.auth.logto_jwks_uri} onChange={(event) => updateConfig(['auth', 'logto_jwks_uri'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_AUDIENCE"><Input value={config.auth.logto_audience} onChange={(event) => updateConfig(['auth', 'logto_audience'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_REQUIRED_SCOPES"><Input value={config.auth.logto_required_scopes} onChange={(event) => updateConfig(['auth', 'logto_required_scopes'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_ENDPOINT"><Input value={config.auth.logto_endpoint} onChange={(event) => updateConfig(['auth', 'logto_endpoint'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_APP_ID"><Input value={config.auth.logto_app_id} onChange={(event) => updateConfig(['auth', 'logto_app_id'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_REDIRECT_URI"><Input value={config.auth.logto_redirect_uri} onChange={(event) => updateConfig(['auth', 'logto_redirect_uri'], event.target.value)} /></SettingRow></Col>
-                <Col span={12}><SettingRow label="LOGTO_POST_LOGOUT_REDIRECT_URI"><Input value={config.auth.logto_post_logout_redirect_uri} onChange={(event) => updateConfig(['auth', 'logto_post_logout_redirect_uri'], event.target.value)} /></SettingRow></Col>
-            </Row>
-            <Button
-                onClick={() => testConnection('logto', { issuer: config.auth.logto_issuer, jwks_uri: config.auth.logto_jwks_uri }, 'logto')}
-                loading={testing === 'logto'}
-            >
-                {t('onboarding.actions.test_logto', 'Test JWKS')}
-            </Button>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                <SettingRow label={t('onboarding.fields.auth_provider', 'Authentication provider')}>
+                    <Radio.Group
+                        value={authProvider}
+                        onChange={(event) => updateConfig(['auth', 'auth_provider'], event.target.value)}
+                    >
+                        <Space>
+                            <Radio value="system">{t('onboarding.auth_provider.system', 'Built-in email login')}</Radio>
+                            <Radio value="logto">{t('onboarding.auth_provider.logto', 'Logto')}</Radio>
+                        </Space>
+                    </Radio.Group>
+                </SettingRow>
+
+                {authProvider === 'system' ? (
+                    <>
+                        <Alert
+                            type="info"
+                            showIcon
+                            message={t('onboarding.system_auth.title', 'Built-in email login')}
+                            description={t('onboarding.system_auth.desc', 'The backend will use its own user table and JWT sessions. You can allow first-time visitors to self-register, then disable it later from Settings.')}
+                        />
+                        <SettingRow label={t('onboarding.fields.system_auth_allow_registration', 'Allow self registration')}>
+                            <Switch
+                                checked={config.auth.system_auth_allow_registration}
+                                onChange={(checked) => updateConfig(['auth', 'system_auth_allow_registration'], checked)}
+                            />
+                        </SettingRow>
+                        <Divider>{t('onboarding.sections.credentials', 'Credentials')}</Divider>
+                        <Alert
+                            type="warning"
+                            showIcon
+                            message={t('onboarding.system_auth.bootstrap_title', 'Bootstrap the first administrator')}
+                            description={t('onboarding.system_auth.bootstrap_desc', 'If self-registration is disabled and no users exist yet, create the first administrator here so the instance is not locked out.')}
+                        />
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <SettingRow label={t('onboarding.fields.first_admin_email', 'First admin email')}>
+                                    <Input
+                                        value={config.auth.first_admin_email}
+                                        onChange={(event) => updateConfig(['auth', 'first_admin_email'], event.target.value)}
+                                        placeholder="admin@example.com"
+                                    />
+                                </SettingRow>
+                            </Col>
+                            <Col span={12}>
+                                <SettingRow label={t('onboarding.fields.first_admin_display_name', 'First admin display name')}>
+                                    <Input
+                                        value={config.auth.first_admin_display_name}
+                                        onChange={(event) => updateConfig(['auth', 'first_admin_display_name'], event.target.value)}
+                                        placeholder="Administrator"
+                                    />
+                                </SettingRow>
+                            </Col>
+                            <Col span={24}>
+                                <SettingRow label={t('onboarding.fields.first_admin_password', 'First admin password')}>
+                                    <Input.Password
+                                        value={config.auth.first_admin_password}
+                                        onChange={(event) => updateConfig(['auth', 'first_admin_password'], event.target.value)}
+                                        placeholder={t('onboarding.fields.first_admin_password_placeholder', 'At least 8 characters')}
+                                    />
+                                </SettingRow>
+                            </Col>
+                        </Row>
+                    </>
+                ) : (
+                    <>
+                        <Row gutter={16}>
+                            <Col span={12}><SettingRow label="LOGTO_ISSUER"><Input value={config.auth.logto_issuer} onChange={(event) => updateConfig(['auth', 'logto_issuer'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_JWKS_URI"><Input value={config.auth.logto_jwks_uri} onChange={(event) => updateConfig(['auth', 'logto_jwks_uri'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_AUDIENCE"><Input value={config.auth.logto_audience} onChange={(event) => updateConfig(['auth', 'logto_audience'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_REQUIRED_SCOPES"><Input value={config.auth.logto_required_scopes} onChange={(event) => updateConfig(['auth', 'logto_required_scopes'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_ENDPOINT"><Input value={config.auth.logto_endpoint} onChange={(event) => updateConfig(['auth', 'logto_endpoint'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_APP_ID"><Input value={config.auth.logto_app_id} onChange={(event) => updateConfig(['auth', 'logto_app_id'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_REDIRECT_URI"><Input value={config.auth.logto_redirect_uri} onChange={(event) => updateConfig(['auth', 'logto_redirect_uri'], event.target.value)} /></SettingRow></Col>
+                            <Col span={12}><SettingRow label="LOGTO_POST_LOGOUT_REDIRECT_URI"><Input value={config.auth.logto_post_logout_redirect_uri} onChange={(event) => updateConfig(['auth', 'logto_post_logout_redirect_uri'], event.target.value)} /></SettingRow></Col>
+                        </Row>
+                        <Button
+                            onClick={() => testConnection('logto', { issuer: config.auth.logto_issuer, jwks_uri: config.auth.logto_jwks_uri }, 'logto')}
+                            loading={testing === 'logto'}
+                        >
+                            {t('onboarding.actions.test_logto', 'Test JWKS')}
+                        </Button>
+                    </>
+                )}
+            </Space>
         </Card>
     )
 

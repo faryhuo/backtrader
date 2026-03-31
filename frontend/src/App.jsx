@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ConfigProvider, Spin, theme } from 'antd'
-import { LogtoProvider } from './providers/LogtoProvider'
+import { AuthProvider } from './providers/AuthProvider'
 import { LogtoConfigProvider, useLogtoConfig } from './contexts/LogtoConfigContext'
 import { NotificationProvider } from './providers/NotificationProvider'
 import { SettingsProvider } from './contexts/SettingsContext'
@@ -19,6 +19,7 @@ import OnboardingSetup from './pages/OnboardingSetup'
 import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
 import { Callback } from './pages/Callback'
+import Login from './pages/Login'
 import TaskCenter from './pages/TaskCenter'
 import ReportCenter from './pages/ReportCenter'
 import SharedReport from './pages/SharedReport'
@@ -127,7 +128,7 @@ function SetupRedirectGate({ authLoading, children, getAccessToken, loginEnabled
  * Sets up token getter for API calls.
  */
 function AppContent() {
-    const { getAccessToken, isLoading: authLoading, loginEnabled } = useAuth()
+    const { getAccessToken, isLoading: authLoading, loginEnabled, authProvider } = useAuth()
 
     // Initialize token getter for API calls
     useEffect(() => {
@@ -166,8 +167,8 @@ function AppContent() {
                             <Route path="/onboarding" element={<OnboardingSetup />} />
 
                             {/* Auth Routes */}
-                            {loginEnabled && <Route path="/login" element={<Navigate to="/" replace />} />}
-                            {loginEnabled && <Route path="/callback" element={<Callback />} />}
+                            {loginEnabled && <Route path="/login" element={<Login />} />}
+                            {loginEnabled && authProvider === 'logto' && <Route path="/callback" element={<Callback />} />}
 
                             {/* Protected Application Routes */}
                             <Route element={loginEnabled ? (
@@ -199,6 +200,10 @@ function AppContent() {
                                 </>
                             )}
 
+                            {loginEnabled && authProvider !== 'logto' && (
+                                <Route path="/callback" element={<Navigate to="/login" replace />} />
+                            )}
+
                             {/* Catch-all redirect */}
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
@@ -228,30 +233,19 @@ function App() {
  * Has access to Logto config from context.
  */
 function AppInner() {
-    const { config, loading } = useLogtoConfig()
+    const { loading } = useLogtoConfig()
 
     // Show loading while config is being fetched
     if (loading) {
         return <div>Loading...</div>
     }
 
-    // Check if login is enabled from config
-    const loginEnabled = config?.enableLogin ?? false
-
-    if (!loginEnabled) {
-        return (
-            <BrowserRouter>
-                <AppContent />
-            </BrowserRouter>
-        )
-    }
-
     return (
-        <LogtoProvider>
+        <AuthProvider>
             <BrowserRouter>
                 <AppContent />
             </BrowserRouter>
-        </LogtoProvider>
+        </AuthProvider>
     )
 }
 

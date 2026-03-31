@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ValidationError as PydanticValidationError, model_validator
 
 from src.config.settings import CONFIG_DIR, DEFAULT_DB_PATH, PROJECT_ROOT
+from src.db.storage.settings import SettingsStorage
 from src.utils.encryption import generate_encryption_key, mask_credential
 
 SITE_ENV_MAPPING = {
@@ -193,6 +194,9 @@ DEFAULT_SITE = {
 DEFAULT_BACKEND_ENV = {
     "ENCRYPTION_KEY": "",
     "ENABLE_LOGIN": "false",
+    "AUTH_PROVIDER": "none",
+    "SYSTEM_AUTH_ALLOW_REGISTRATION": "false",
+    "SYSTEM_AUTH_SECRET": "",
     "AI_PROVIDER": "openai",
     "AI_PROVIDER_PRIORITY": "openai",
     "LOGTO_ISSUER": "",
@@ -375,6 +379,11 @@ class SecurityConfig(BaseModel):
 
 
 class AuthConfig(BaseModel):
+    auth_provider: str = "none"
+    system_auth_allow_registration: bool = False
+    first_admin_email: str = ""
+    first_admin_password: str = ""
+    first_admin_display_name: str = ""
     logto_issuer: str = ""
     logto_jwks_uri: str = ""
     logto_audience: str = ""
@@ -502,6 +511,7 @@ class SetupWizardPayload(BaseModel):
         login_enabled = _deployment_requires_login(self.deployment_mode)
         self.security.enable_login = login_enabled
         self.security.encryption_key = _clean_string(self.security.encryption_key) or generate_encryption_key()
+        self.auth.auth_provider = _clean_string(self.auth.auth_provider).lower() or ("system" if login_enabled else "none")
 
         if self.database.mode not in {"sqlite", "postgresql"}:
             raise ValueError("Database mode must be sqlite or postgresql")
@@ -521,18 +531,28 @@ class SetupWizardPayload(BaseModel):
                 raise ValueError(f"PostgreSQL fields required: {', '.join(missing_pg)}")
 
         if login_enabled:
-            required_auth = {
-                "LOGTO_ISSUER": self.auth.logto_issuer,
-                "LOGTO_JWKS_URI": self.auth.logto_jwks_uri,
-                "LOGTO_AUDIENCE": self.auth.logto_audience,
-                "LOGTO_ENDPOINT": self.auth.logto_endpoint,
-                "LOGTO_APP_ID": self.auth.logto_app_id,
-                "LOGTO_REDIRECT_URI": self.auth.logto_redirect_uri,
-                "LOGTO_POST_LOGOUT_REDIRECT_URI": self.auth.logto_post_logout_redirect_uri,
-            }
-            missing = [key for key, value in required_auth.items() if not _clean_string(value)]
-            if missing:
-                raise ValueError(f"Logto fields required when login is enabled: {', '.join(missing)}")
+            if self.auth.auth_provider not in {"logto", "system"}:
+                raise ValueError("Authentication provider must be logto or system when login is enabled")
+            if self.auth.auth_provider == "logto":
+                required_auth = {
+                    "LOGTO_ISSUER": self.auth.logto_issuer,
+                    "LOGTO_JWKS_URI": self.auth.logto_jwks_uri,
+                    "LOGTO_AUDIENCE": self.auth.logto_audience,
+                    "LOGTO_ENDPOINT": self.auth.logto_endpoint,
+                    "LOGTO_APP_ID": self.auth.logto_app_id,
+                    "LOGTO_REDIRECT_URI": self.auth.logto_redirect_uri,
+                    "LOGTO_POST_LOGOUT_REDIRECT_URI": self.auth.logto_post_logout_redirect_uri,
+                }
+                missing = [key for key, value in required_auth.items() if not _clean_string(value)]
+                if missing:
+                    raise ValueError(f"Logto fields required when login is enabled: {', '.join(missing)}")
+            if self.auth.auth_provider == "system":
+                admin_email = _clean_string(self.auth.first_admin_email)
+                admin_password = _clean_string(self.auth.first_admin_password)
+                if admin_email and not admin_password:
+                    raise ValueError("First admin password is required when first admin email is provided")
+        else:
+            self.auth.auth_provider = "none"
 
         if "eodhd" in self.data_source.priority and not _clean_string(self.data_source.eodhd_api_key):
             raise ValueError("EODHD_API_KEY is required when EODHD is enabled")
@@ -600,6 +620,7 @@ class SetupWizardService:
     """Read, validate, and persist first-run setup configuration."""
 
     def __init__(self) -> None:
+        self.settings_storage = SettingsStorage()
         self.backend_env_path = PROJECT_ROOT / ".env"
         self.backend_env_template_path = PROJECT_ROOT / ".env.template"
         self.database_config_path = CONFIG_DIR / "database_config.json"
@@ -661,6 +682,8 @@ class SetupWizardService:
             warnings.append("AI analysis remains disabled until at least one provider key is configured.")
         if not login_enabled:
             warnings.append("Authentication remains disabled; the application will be publicly accessible.")
+        elif payload.auth.auth_provider == "system" and payload.auth.system_auth_allow_registration:
+            warnings.append("Built-in self-registration is enabled; anyone who reaches the login page can create an account until you turn it off.")
         if "eodhd" not in payload.data_source.priority:
             warnings.append("Only Yahoo Finance and cached database data sources are enabled.")
         if not _clean_string(payload.trading.credentials.paper.api_key):
@@ -681,7 +704,11 @@ class SetupWizardService:
         ]
 
     def get_wizard_state(self) -> dict[str, Any]:
+        from src.db.storage.user_auth import UserAuthStorage
+
         _, backend_env = self._backend_env()
+        setup_completed, _ = self.settings_storage.get_credential_with_fallback("setup_completed", None)
+        is_setup_completed = bool(setup_completed)
         database_config = _load_json(self.database_config_path, DEFAULT_DATABASE_CONFIG)
         strategy_config = _load_json(self.strategy_config_path, DEFAULT_STRATEGY_CONFIG)
         broker_config = _load_json(self.broker_config_path, DEFAULT_BROKER_CONFIG)
@@ -696,10 +723,13 @@ class SetupWizardService:
             "binance",
             DEFAULT_BROKER_CONFIG["exchanges"]["binance"],
         )
+        system_user_count = UserAuthStorage().count_users()
 
         return {
             "status": {
-                "is_ready": bool(_clean_string(backend_env.get("ENCRYPTION_KEY"))),
+                "is_ready": is_setup_completed,
+                "is_first_open": not is_setup_completed,
+                "setup_completed": is_setup_completed,
                 "requires_login": _is_truthy(backend_env.get("ENABLE_LOGIN")),
                 "has_encryption_key": bool(_clean_string(backend_env.get("ENCRYPTION_KEY"))),
             },
@@ -724,6 +754,14 @@ class SetupWizardService:
                     },
                 },
                 "auth": {
+                    "auth_provider": (
+                        _clean_string(backend_env.get("AUTH_PROVIDER")).lower()
+                        or ("logto" if _is_truthy(backend_env.get("ENABLE_LOGIN")) else "none")
+                    ),
+                    "system_auth_allow_registration": _is_truthy(backend_env.get("SYSTEM_AUTH_ALLOW_REGISTRATION")),
+                    "first_admin_email": "",
+                    "first_admin_password": "",
+                    "first_admin_display_name": "",
                     "logto_issuer": backend_env.get("LOGTO_ISSUER", ""),
                     "logto_jwks_uri": backend_env.get("LOGTO_JWKS_URI", ""),
                     "logto_audience": backend_env.get("LOGTO_AUDIENCE", ""),
@@ -790,6 +828,8 @@ class SetupWizardService:
             },
             "meta": {
                 "generated_encryption_key": generate_encryption_key(),
+                "system_user_count": system_user_count,
+                "has_system_users": system_user_count > 0,
                 "files": [
                     "backend/.env",
                     "backend/resources/config/database_config.json",
@@ -813,6 +853,20 @@ class SetupWizardService:
         validated = self.validate_payload(payload)
         login_enabled = _deployment_requires_login(validated.deployment_mode)
         backend_lines, backend_env = self._backend_env()
+        bootstrap_auth: dict[str, Any] | None = None
+
+        if login_enabled and validated.auth.auth_provider == "system":
+            from src.db.storage.user_auth import UserAuthStorage
+
+            user_count = UserAuthStorage().count_users()
+            if (
+                user_count == 0
+                and not validated.auth.system_auth_allow_registration
+                and not _clean_string(validated.auth.first_admin_email)
+            ):
+                raise ValueError(
+                    "System auth requires either self-registration enabled or first admin credentials when no users exist"
+                )
 
         database_config = _load_json(self.database_config_path, DEFAULT_DATABASE_CONFIG)
         strategy_config = _load_json(self.strategy_config_path, DEFAULT_STRATEGY_CONFIG)
@@ -822,18 +876,27 @@ class SetupWizardService:
         backend_updates = dict(backend_env)
         backend_updates["ENCRYPTION_KEY"] = _resolve_secret(backend_env.get("ENCRYPTION_KEY"), validated.security.encryption_key)
         backend_updates["ENABLE_LOGIN"] = str(login_enabled).lower()
+        backend_updates["AUTH_PROVIDER"] = validated.auth.auth_provider if login_enabled else "none"
+        backend_updates["SYSTEM_AUTH_ALLOW_REGISTRATION"] = (
+            str(validated.auth.system_auth_allow_registration).lower() if login_enabled and validated.auth.auth_provider == "system" else "false"
+        )
+        backend_updates["SYSTEM_AUTH_SECRET"] = _resolve_secret(
+            backend_env.get("SYSTEM_AUTH_SECRET"),
+            validated.security.encryption_key,
+        ) if login_enabled and validated.auth.auth_provider == "system" else (backend_env.get("SYSTEM_AUTH_SECRET") or "")
         if "DATABASE_URL" in backend_env:
             backend_updates["DATABASE_URL"] = ""
 
-        backend_updates["LOGTO_ISSUER"] = validated.auth.logto_issuer if login_enabled else ""
-        backend_updates["LOGTO_JWKS_URI"] = validated.auth.logto_jwks_uri if login_enabled else ""
-        backend_updates["LOGTO_AUDIENCE"] = validated.auth.logto_audience if login_enabled else ""
-        backend_updates["LOGTO_REQUIRED_SCOPES"] = validated.auth.logto_required_scopes if login_enabled else ""
-        backend_updates["LOGTO_ENDPOINT"] = validated.auth.logto_endpoint if login_enabled else ""
-        backend_updates["LOGTO_APP_ID"] = validated.auth.logto_app_id if login_enabled else ""
-        backend_updates["LOGTO_REDIRECT_URI"] = validated.auth.logto_redirect_uri if login_enabled else ""
+        use_logto = login_enabled and validated.auth.auth_provider == "logto"
+        backend_updates["LOGTO_ISSUER"] = validated.auth.logto_issuer if use_logto else ""
+        backend_updates["LOGTO_JWKS_URI"] = validated.auth.logto_jwks_uri if use_logto else ""
+        backend_updates["LOGTO_AUDIENCE"] = validated.auth.logto_audience if use_logto else ""
+        backend_updates["LOGTO_REQUIRED_SCOPES"] = validated.auth.logto_required_scopes if use_logto else ""
+        backend_updates["LOGTO_ENDPOINT"] = validated.auth.logto_endpoint if use_logto else ""
+        backend_updates["LOGTO_APP_ID"] = validated.auth.logto_app_id if use_logto else ""
+        backend_updates["LOGTO_REDIRECT_URI"] = validated.auth.logto_redirect_uri if use_logto else ""
         backend_updates["LOGTO_POST_LOGOUT_REDIRECT_URI"] = (
-            validated.auth.logto_post_logout_redirect_uri if login_enabled else ""
+            validated.auth.logto_post_logout_redirect_uri if use_logto else ""
         )
         backend_updates["EODHD_API_KEY"] = _resolve_secret(backend_env.get("EODHD_API_KEY"), validated.data_source.eodhd_api_key)
 
@@ -963,8 +1026,33 @@ class SetupWizardService:
         )
         self.logger_config_path.write_text(json.dumps(logger_config, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
 
+        if login_enabled and validated.auth.auth_provider == "system":
+            from src.service.auth_service import AuthService
+
+            auth_service = AuthService()
+            if auth_service.user_storage.count_users() == 0 and _clean_string(validated.auth.first_admin_email):
+                auth_service.create_user(
+                    email=validated.auth.first_admin_email,
+                    password=validated.auth.first_admin_password,
+                    display_name=validated.auth.first_admin_display_name,
+                    is_superuser=True,
+                )
+                issued_tokens = auth_service.login_user(
+                    email=validated.auth.first_admin_email,
+                    password=validated.auth.first_admin_password,
+                )
+                bootstrap_auth = {
+                    "access_token": issued_tokens.access_token,
+                    "token_type": issued_tokens.token_type,
+                    "expires_in": issued_tokens.expires_in,
+                    "user": issued_tokens.user,
+                }
+
+        self.settings_storage.save_credential("setup_completed", True, user_id=None)
+
         return {
             "status": "ok",
+            "bootstrap_auth": bootstrap_auth,
             "saved_files": [
                 "backend/.env",
                 "backend/resources/config/database_config.json",

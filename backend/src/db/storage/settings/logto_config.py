@@ -1,19 +1,17 @@
-"""
-Logto Configuration Mixin - Logto frontend configuration management.
-
-Handles retrieval of Logto configuration for frontend, with fallback to environment variables.
-"""
+"""Frontend auth configuration mixin with Logto and system-login support."""
 
 import logging
 import os
 from typing import Dict, Optional, Any
 from sqlalchemy.orm import Session
 
+from src.db.storage.user_auth import UserAuthStorage
+
 logger = logging.getLogger(__name__)
 
 
 class LogtoConfigMixin:
-    """Mixin providing Logto frontend configuration methods."""
+    """Mixin providing frontend auth configuration methods."""
 
     def get_logto_frontend_config(
         self,
@@ -21,19 +19,21 @@ class LogtoConfigMixin:
         db: Optional[Session] = None
     ) -> Dict[str, Any]:
         """
-        Get Logto frontend configuration with fallback to environment variables.
+        Get frontend auth configuration with fallback to environment variables.
 
         Args:
             user_id: User identifier (for future user-specific configs)
             db: Optional database session
 
         Returns:
-            Dict with Logto configuration:
+            Dict with auth configuration:
             - endpoint: Logto server endpoint
             - appId: Logto application (client) ID
             - redirectUri: OAuth redirect URI
             - postLogoutRedirectUri: Post-logout redirect URI
             - enableLogin: Whether login is enabled (false if not configured)
+            - authProvider: none / logto / system
+            - registrationEnabled: built-in signup availability
         """
         with self.managed_session(db, commit_on_success=False) as session:
             try:
@@ -49,6 +49,12 @@ class LogtoConfigMixin:
                     "logto_post_logout_redirect_uri", global_user_id, session
                 )
                 enable_login, _ = self.get_credential_with_fallback("enable_login", global_user_id, session)
+                auth_provider, _ = self.get_credential_with_fallback("auth_provider", global_user_id, session)
+                registration_enabled, _ = self.get_credential_with_fallback(
+                    "system_auth_allow_registration",
+                    global_user_id,
+                    session,
+                )
 
                 # Fallback to environment variables if database values are None
                 if endpoint is None:
@@ -74,8 +80,24 @@ class LogtoConfigMixin:
                         # If no configuration exists, default to disabled
                         enable_login = False
 
+                if auth_provider is None:
+                    auth_provider = os.getenv("AUTH_PROVIDER") or os.getenv("VITE_AUTH_PROVIDER")
+                auth_provider = (auth_provider or "").strip().lower()
+                if not auth_provider:
+                    auth_provider = "logto" if enable_login else "none"
+
+                if registration_enabled is None:
+                    registration_raw = (
+                        os.getenv("SYSTEM_AUTH_ALLOW_REGISTRATION")
+                        or os.getenv("VITE_SYSTEM_AUTH_ALLOW_REGISTRATION")
+                    )
+                    if registration_raw:
+                        registration_enabled = registration_raw.lower() in {"true", "1", "yes", "on"}
+                if registration_enabled is None and auth_provider == "system":
+                    registration_enabled = UserAuthStorage().count_users() == 0
+
                 # If endpoint or app_id is not configured, disable login
-                if not endpoint or not app_id:
+                if auth_provider == "logto" and (not endpoint or not app_id):
                     enable_login = False
 
                 return {
@@ -83,7 +105,9 @@ class LogtoConfigMixin:
                     "appId": app_id,
                     "redirectUri": redirect_uri,
                     "postLogoutRedirectUri": post_logout_redirect_uri,
-                    "enableLogin": enable_login if enable_login is not None else False
+                    "enableLogin": enable_login if enable_login is not None else False,
+                    "authProvider": auth_provider if enable_login else "none",
+                    "registrationEnabled": bool(registration_enabled),
                 }
 
             except Exception as e:
@@ -94,6 +118,8 @@ class LogtoConfigMixin:
                     "appId": None,
                     "redirectUri": None,
                     "postLogoutRedirectUri": None,
-                    "enableLogin": False
+                    "enableLogin": False,
+                    "authProvider": "none",
+                    "registrationEnabled": False,
                 }
 

@@ -1,18 +1,17 @@
-# Auth 目录说明
+# Auth Components
 
-认证与授权相关组件。
+Authentication-related UI helpers live here.
 
-## 组件文件
-- `PrivateRoute.jsx`：受保护路由组件，未登录用户重定向到登录页面。
+## Responsibilities
 
-## 功能职责（Functional）
-- 登录/注册/退出等认证 UI。
-- 会话过期、权限不足等提示组件。
+- Guard protected routes.
+- Redirect unauthenticated users into the correct login flow.
+- Keep auth UX separate from page business logic.
 
-## 非功能性要求（Non-Functional）
-- 安全：不在前端持久化存储明文敏感信息；token 管理遵循 `services/api.js` 统一策略。
-- 体验：提供明确的错误提示与加载状态。
+## Modules
 
-## 约定与规范
-- 与后端认证接口变更需同步更新此目录内组件交互与校验逻辑。
+- `PrivateRoute.jsx`: guards authenticated app routes and preserves the original destination for post-login redirect.
 
+## Recent Notes
+
+- `PrivateRoute.jsx` now waits for auth hydration before redirecting, which avoids false redirects during built-in system-token bootstrap.

@@ -32,6 +32,9 @@ LOGTO_ISSUER = os.getenv("LOGTO_ISSUER")
 LOGTO_JWKS_URI = os.getenv("LOGTO_JWKS_URI")
 LOGTO_AUDIENCE = os.getenv("LOGTO_AUDIENCE")
 ENABLE_LOGIN = os.getenv("ENABLE_LOGIN", "true").lower() not in {"false", "0", "no", "off"}
+AUTH_PROVIDER = os.getenv("AUTH_PROVIDER", "logto" if ENABLE_LOGIN else "none").strip().lower()
+SYSTEM_AUTH_ALLOW_REGISTRATION = os.getenv("SYSTEM_AUTH_ALLOW_REGISTRATION", "false").lower() in {"true", "1", "yes", "on"}
+SYSTEM_AUTH_SECRET = os.getenv("SYSTEM_AUTH_SECRET")
 LOGTO_REQUIRED_SCOPES = [
     scope.strip()
     for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
@@ -340,6 +343,7 @@ __all__ = [
     "DEFAULT_EXCHANGE",
     "DEFAULT_TRADE_MODE",
     "ENABLE_LOGIN",
+    "AUTH_PROVIDER",
     "FRONTEND_DIR",
     "GEMINI_API_KEY",
     "GEMINI_BASE_URL",
@@ -349,6 +353,8 @@ __all__ = [
     "LOGTO_ISSUER",
     "LOGTO_JWKS_URI",
     "LOGTO_REQUIRED_SCOPES",
+    "SYSTEM_AUTH_ALLOW_REGISTRATION",
+    "SYSTEM_AUTH_SECRET",
     "MINIMAX_API_KEY",
     "MINIMAX_BASE_URL",
     "HTTP_PROXY",

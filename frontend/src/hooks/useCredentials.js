@@ -18,7 +18,12 @@ export function useCredentials() {
         try {
             const response = await api.getCredentials();
             if (response.credentials) {
-                setCredentials(response.credentials);
+                const normalizedCredentials = {
+                    ...response.credentials,
+                    auth_provider: response.credentials.auth_provider
+                        || (response.credentials.enable_login ? 'logto' : 'none'),
+                };
+                setCredentials(normalizedCredentials);
                 setCredentialSources(response.sources || {});
             }
         } catch (error) {
@@ -77,6 +82,8 @@ export function useCredentials() {
                     logto_audience: credentials.logto_audience,
                     logto_required_scopes: credentials.logto_required_scopes,
                     enable_login: credentials.enable_login,
+                    auth_provider: credentials.auth_provider,
+                    system_auth_allow_registration: credentials.system_auth_allow_registration,
                     // Frontend OAuth configuration
                     logto_endpoint: credentials.logto_endpoint,
                     logto_app_id: credentials.logto_app_id,

@@ -45,6 +45,13 @@
     "reset_env": "Reset to .env",
     "enable_login": "Enable Login",
     "enable_login_hint": "If disabled, users can access the app without authentication",
+    "auth_provider": "Authentication Provider",
+    "auth_provider_hint": "Choose which login backend this instance should use when authentication is enabled.",
+    "auth_provider_none": "None",
+    "auth_provider_system": "Built-in Email Login",
+    "auth_provider_logto": "Logto",
+    "system_auth_allow_registration": "Allow Self Registration",
+    "system_auth_allow_registration_hint": "Allow users to create their own email/password accounts from the login page.",
     "issuer_url": "Issuer URL",
     "issuer_url_hint": "Logto issuer URL for JWT validation",
     "jwks_uri": "JWKS URI",
@@ -82,6 +89,62 @@
     "load_error": "Failed to load site configuration",
     "save_error": "Failed to save site configuration",
     "reset_error": "Failed to reset site configuration",
+    "restart_required": "Server Restart Required",
+    "restart_hint": "These settings require a server restart to take effect. Please restart the backend server manually.",
+    "system_users": {
+        "menu": "System Users",
+        "title": "System Users",
+        "info_title": "Built-in user management",
+        "info_desc": "Create email/password accounts, disable access, and rotate passwords without leaving the Settings page.",
+        "create_title": "Create user",
+        "create_desc": "The first account should usually stay as an administrator. Use regular users for day-to-day access.",
+        "load_failed": "Failed to load system users",
+        "columns": {
+            "email": "Email",
+            "name": "Name",
+            "role": "Role",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "roles": {
+            "admin": "Admin",
+            "user": "User"
+        },
+        "status": {
+            "active": "Active",
+            "disabled": "Disabled"
+        },
+        "fields": {
+            "email": "Email",
+            "display_name": "Display name",
+            "display_name_placeholder": "Optional name",
+            "password": "Password",
+            "password_placeholder": "At least 8 characters",
+            "is_superuser": "Administrator",
+            "new_password": "New password"
+        },
+        "validation": {
+            "email_required": "Email is required",
+            "email_invalid": "Enter a valid email address",
+            "password_required": "Password is required",
+            "password_min": "Password must be at least 8 characters"
+        },
+        "actions": {
+            "create": "Create User",
+            "reset_password": "Reset Password",
+            "update_password": "Update Password"
+        },
+        "messages": {
+            "create_success": "User created",
+            "create_failed": "Failed to create user",
+            "activate_success": "User activated",
+            "deactivate_success": "User deactivated",
+            "update_failed": "Failed to update user",
+            "password_success": "Password updated",
+            "password_failed": "Failed to update password"
+        },
+        "reset_modal_title_with_email": "Reset Password: {{email}}"
+    },
     "datasource": {
         "title": "Data Source Priority",
         "priority_help": "Drag to reorder. Data will be fetched from sources in order until successful.",

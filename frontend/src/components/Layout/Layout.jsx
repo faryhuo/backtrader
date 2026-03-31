@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Dropdown, Avatar, Space } from 'antd'
@@ -16,8 +17,9 @@ import './Layout.css'
 
 function Layout() {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate()
     const [collapsed, setCollapsed] = useState(false)
-    const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled } = useAuth()
+    const { signOut, getIdTokenClaims, isAuthenticated, loginEnabled, authProvider, user } = useAuth()
     const { config } = useLogtoConfig()
     const isZh = i18n.language.startsWith('zh');
     const [userInfo, setUserInfo] = useState({
@@ -35,12 +37,19 @@ function Layout() {
         if (loginEnabled && isAuthenticated) {
             getIdTokenClaims().then((claims) => {
                 setUserInfo({
-                    email: claims?.email || null,
-                    name: claims?.name || claims?.email || null,
-                    username: claims?.username,
+                    email: claims?.email || user?.email || null,
+                    name: claims?.name || user?.name || claims?.email || user?.email || null,
+                    username: claims?.username || null,
                 })
             }).catch((error) => {
                 console.error('Failed to get user claims:', error)
+                if (authProvider === 'system' && user) {
+                    setUserInfo({
+                        email: user.email || null,
+                        name: user.name || user.email || null,
+                        username: null,
+                    })
+                }
             })
         } else {
             setUserInfo({
@@ -48,11 +57,16 @@ function Layout() {
                 name: null,
             })
         }
-    }, [isAuthenticated, getIdTokenClaims, loginEnabled])
+    }, [authProvider, getIdTokenClaims, isAuthenticated, loginEnabled, user])
 
     // Handle logout
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (!loginEnabled) {
+            return
+        }
+        if (authProvider === 'system') {
+            await signOut()
+            navigate('/login', { replace: true })
             return
         }
         const postLogoutRedirectUri = config?.postLogoutRedirectUri

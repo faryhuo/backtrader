@@ -36,6 +36,8 @@ export const DEFAULT_CREDENTIALS = {
     logto_audience: '',
     logto_required_scopes: '',
     enable_login: false,
+    auth_provider: 'none',
+    system_auth_allow_registration: false,
     // Frontend OAuth configuration
     logto_endpoint: '',
     logto_app_id: '',

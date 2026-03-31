@@ -78,3 +78,6 @@ from src.db.storage import BacktestStorage, get_raw_data_json
 
 - `user_settings` now supports unified AI provider settings via `ai_provider_priority` and `ai_provider_configs`.
 - Legacy `openai_api_key` and `openai_base_url` are retained for backward compatibility and migration fallback.
+- `system_users` now stores built-in email/password accounts for the new system authentication flow.
+- `user_settings` now also persists auth configuration such as `auth_provider` and `system_auth_allow_registration`.
+- `user_settings.setup_completed` now tracks whether first-run onboarding has finished, and setup readiness should read that database flag instead of inferring readiness only from `.env`.

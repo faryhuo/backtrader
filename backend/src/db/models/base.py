@@ -124,6 +124,13 @@ def init_database(database_url: str, echo: bool = False):
 def _apply_runtime_migrations(engine: Engine) -> None:
     """Apply lightweight schema migrations for deployments without Alembic."""
     inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+
+    if "system_users" not in existing_tables:
+        SystemUserTable = Base.metadata.tables.get("system_users")
+        if SystemUserTable is not None:
+            SystemUserTable.create(bind=engine, checkfirst=True)
+
     try:
         columns = {column["name"] for column in inspector.get_columns("user_settings")}
     except Exception:
@@ -136,6 +143,12 @@ def _apply_runtime_migrations(engine: Engine) -> None:
         alter_statements.append("ALTER TABLE user_settings ADD COLUMN ai_provider_priority TEXT")
     if "ai_provider_configs" not in columns:
         alter_statements.append("ALTER TABLE user_settings ADD COLUMN ai_provider_configs TEXT")
+    if "auth_provider" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN auth_provider VARCHAR(50)")
+    if "system_auth_allow_registration" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN system_auth_allow_registration BOOLEAN")
+    if "setup_completed" not in columns:
+        alter_statements.append("ALTER TABLE user_settings ADD COLUMN setup_completed BOOLEAN")
 
     if not alter_statements:
         return

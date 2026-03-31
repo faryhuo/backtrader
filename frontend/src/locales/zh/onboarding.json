@@ -1,23 +1,33 @@
 {
-  "title": "首次安装引导",
+  "title": "首次安装向导",
   "subtitle": "在交付给最终用户之前，先完成最小可运行配置。",
   "ready": "已配置",
   "not_ready": "需要配置",
-  "load_failed": "加载引导配置失败",
-  "save_success": "引导配置已保存",
-  "save_failed": "保存引导配置失败",
+  "load_failed": "加载向导配置失败",
+  "save_success": "向导配置已保存",
+  "save_failed": "保存向导配置失败",
   "test_success": "连接测试通过",
   "test_failed": "连接测试失败",
   "milestone_title": "MVP 范围",
-  "milestone_desc": "此向导聚焦于文件级启动配置：部署、存储、数据源、AI、交易、品牌与最终确认。",
+  "milestone_desc": "此向导聚焦文件级启动配置：部署、存储、数据源、AI、交易、品牌和最终确认。",
   "deployment": {
     "local": "本地开发或单机部署",
     "public": "公开部署，使用更严格的认证要求"
   },
-  "deployment_local_title": "本地模式会保持登录关闭",
-  "deployment_local_desc": "选择本地部署后，系统会自动关闭认证，并跳过 Logto 配置步骤。",
+  "deployment_local_title": "本地模式将保持登录关闭",
+  "deployment_local_desc": "选择本地部署后，系统会关闭认证并跳过认证步骤。",
   "deployment_public_title": "公开模式将要求登录",
-  "deployment_public_desc": "选择公开部署后，系统会自动开启认证，并在向导中加入 Logto 配置步骤。",
+  "deployment_public_desc": "选择公开部署后，系统会启用认证，并允许你在内建邮箱登录和 Logto 之间选择。",
+  "auth_provider": {
+    "system": "内建邮箱登录",
+    "logto": "Logto"
+  },
+  "system_auth": {
+    "title": "内建邮箱登录",
+    "desc": "后端将使用自己的用户表和 JWT 会话。你可以先开启自助注册完成首个管理员初始化，之后再到设置页关闭。",
+    "bootstrap_title": "初始化首个管理员",
+    "bootstrap_desc": "如果已关闭自助注册，且当前还没有用户，请在这里创建首个管理员，避免实例被锁死。"
+  },
   "steps": {
     "welcome": "欢迎",
     "security": "安全",
@@ -32,6 +42,12 @@
   "fields": {
     "encryption_key": "ENCRYPTION_KEY",
     "enable_login": "启用登录",
+    "auth_provider": "认证提供方",
+    "system_auth_allow_registration": "允许自助注册",
+    "first_admin_email": "首个管理员邮箱",
+    "first_admin_display_name": "首个管理员显示名",
+    "first_admin_password": "首个管理员密码",
+    "first_admin_password_placeholder": "至少 8 个字符",
     "database_mode": "数据库模式",
     "sqlite_path": "SQLite 路径",
     "pg_host": "PostgreSQL 主机",
@@ -85,7 +101,7 @@
   "validation": {
     "encryption_key": "必须填写加密密钥。",
     "sqlite_path": "必须填写 SQLite 路径。",
-    "logto": "公开部署启用认证时，必须完整填写全部 Logto 字段。",
+    "logto": "启用 Logto 认证时，必须完整填写全部 Logto 字段。",
     "eodhd": "启用 EODHD 时必须填写 API Key。",
     "openai": "启用 AI 时必须填写 OpenAI API Key。",
     "trading_credentials": "当前选中的交易模式必须填写完整凭证。",
@@ -95,13 +111,15 @@
     "ai_provider_models": "所有已启用的 AI provider 都必须填写运行时模型名。",
     "paper_credentials": "Binance paper 凭证必须同时填写 API Key 和 Secret Key。",
     "live_credentials": "Binance live 凭证必须同时填写 API Key 和 Secret Key。",
-    "live_mode": "将默认模式切换到 live 前，必须先启用 live trading。",
-    "live_credentials_required": "启用 live trading 时，必须填写 Binance live 凭证。"
+    "live_mode": "将默认模式切换到 live 之前，必须先启用 live trading。",
+    "live_credentials_required": "启用 live trading 时，必须填写 Binance live 凭证。",
+    "first_admin_required": "完成安装前，请提供首个管理员凭证，或开启自助注册。",
+    "first_admin_password": "填写了首个管理员邮箱时，必须同时填写密码。"
   },
   "sections": {
     "exchange": "交易所默认设置",
     "credentials": "凭证",
-    "trading_modes": "Paper 与 live 配置",
+    "trading_modes": "Paper 与 Live 配置",
     "report": "报告设置",
     "network": "网络",
     "ai_priority": "Provider 优先级",
@@ -117,20 +135,20 @@
     "live": "Live"
   },
   "guide": {
-    "paper_intro": "paper 模式使用 Binance Spot Test Network 生成沙盒凭证，并在下方 paper 配置中保留 sandbox URL 与测试网 key。",
-    "paper_step_1": "打开 Binance Spot Test Network，并使用支持的账号进入沙盒环境。",
+    "paper_intro": "paper 模式使用 Binance Spot Test Network 生成沙箱凭证，并在下方 paper 配置中保留 sandbox URL 和测试网 key。",
+    "paper_step_1": "打开 Binance Spot Test Network，并使用支持的账号进入沙箱环境。",
     "paper_step_2": "在测试网页面生成 sandbox API key 和 secret，并立即复制保存。",
     "paper_step_3": "保持 sandbox URL 为 https://testnet.binance.vision，并且这些凭证只用于 paper 模式。",
     "paper_step_4": "不要把 live 交易所 key 填到这里，paper 模式必须与真实账户隔离。",
     "paper_step_5": "把 sandbox key 对粘贴到下方 paper tab，并使用 paper 测试按钮连接 testnet。",
     "paper_warning_title": "Paper 模式检查清单",
-    "paper_warning": "沙盒凭证只用于 paper 模式。不要在 paper tab 中填写 live 凭证，并保持 sandbox URL 指向 Binance Spot Test Network。",
+    "paper_warning": "沙箱凭证只用于 paper 模式。不要在 paper tab 中填写 live 凭证，并保持 sandbox URL 指向 Binance Spot Test Network。",
     "live_intro": "先在 Binance API Management 创建 API Key，只开启实际需要的权限，再加上 IP 限制，最后回到这里填写。",
     "live_step_1": "打开 Binance API Management，点击 Create API，并选择 system-generated key。",
     "live_step_2": "完成 Binance 安全验证后，立即复制 API Key 和 Secret Key。",
     "live_step_3": "只开启需要的权限。对本系统，建议保留 Enable Reading；只有需要真实下单时才开启 Spot & Margin Trading。",
     "live_step_4": "在 API restrictions 中开启 trusted IP 限制，并填写运行本平台服务器的公网 IP。",
-    "live_step_5": "尽量为不同环境使用不同 key，然后把 key 对填回 live tab，并使用 live 测试按钮验证。",
+    "live_step_5": "尽量为不同环境使用不同 key，然后把 key 对填写到 live tab，并使用 live 测试按钮验证。",
     "live_warning_title": "安全检查清单",
     "live_warning": "Binance 官方建议只开启必要权限，密钥不要进入源码仓库，定期轮换；一旦怀疑泄露，应立即删除或替换该 key。"
   },
@@ -150,15 +168,15 @@
       "eodhd": "EODHD",
       "eodhd_desc": "付费数据源，需要 API Key",
       "database": "本地数据库",
-      "database_desc": "之前获取的缓存数据"
+      "database_desc": "之前获取过的缓存数据"
     }
   },
   "ai_note": "向导会保存 provider 凭证、回退优先级，以及每个已启用 provider 的运行时模型名。",
-  "trading_note": "首次安装引导目前只支持 Binance，并允许你在同一个步骤里同时配置 paper 和 live 凭证。",
+  "trading_note": "首次安装向导目前只支持 Binance，并允许你在同一个步骤里同时配置 paper 和 live 凭证。",
   "security_auth_enabled": "当前配置将启用认证",
-  "security_auth_enabled_desc": "这个结果由你在第一步选择的部署模式决定。公开部署在完成安装前必须补齐 Logto 配置。",
+  "security_auth_enabled_desc": "公开部署时，现在必须先选择认证提供方，才能完成安装。",
   "security_auth_disabled": "当前配置将关闭认证",
-  "security_auth_disabled_desc": "这个结果由你在第一步选择的部署模式决定。如果当前实例需要登录保护，请返回第一步切换到公开部署。",
+  "security_auth_disabled_desc": "如果当前实例需要登录保护，请切换回公开部署。",
   "enabled": "已启用",
   "disabled": "已关闭",
   "live_ack": "我理解 live trading 会下真实订单，并愿意自行承担相关风险。",
@@ -166,16 +184,16 @@
   "review_desc": "这里展示的是本次将被保存的有效 override，方便你在落盘前确认到底改了哪些值。",
   "review": {
     "metrics": {
-      "changed_areas": "改动分组",
-      "changed_items": "改动项数",
+      "changed_areas": "变更分组",
+      "changed_items": "变更项数",
       "override_groups": "Override 分组",
       "override_items": "Override 项数",
       "items_label": "项"
     },
-    "no_changes_title": "当前没有未保存的配置改动",
+    "no_changes_title": "当前没有未保存的配置变更",
     "no_changes_desc": "你当前的选择与已保存的启动配置一致。",
     "override_preview_title": "有效 Override 预览",
-    "override_preview_desc": "这里仅展示相对当前已保存 bootstrap 配置发生变化的值。",
+    "override_preview_desc": "这里只展示相对当前已保存 bootstrap 配置发生变化的值。",
     "previous_value": "原值",
     "sections": {
       "security": "安全与访问",
@@ -210,6 +228,16 @@
       "configured": "已配置",
       "updated": "已更新",
       "not_configured": "未配置"
+    },
+    "badges": {
+      "login_enabled": "???{{provider}}",
+      "login_disabled": "?????",
+      "ai_enabled": "AI?{{providers}}",
+      "ai_skipped": "??? AI",
+      "live_enabled": "??? Binance Live",
+      "live_skipped": "??? Binance Live",
+      "reports_enabled": "???????",
+      "reports_skipped": "???????"
     }
   }
 }

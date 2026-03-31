@@ -2,12 +2,23 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
-const INVALID_STRATEGY_NAME_RE = /[<>:"/\\|?*\x00-\x1f]/;
+const INVALID_STRATEGY_NAME_CHARS = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*']);
 const WINDOWS_RESERVED_NAMES = new Set([
     'CON', 'PRN', 'AUX', 'NUL',
     'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
     'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
 ]);
+
+function hasInvalidStrategyChar(name) {
+    for (const char of name) {
+        const codePoint = char.codePointAt(0) ?? 0;
+        if (INVALID_STRATEGY_NAME_CHARS.has(char) || codePoint <= 31) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 function isValidStrategyName(name) {
     if (!name || name === '.' || name === '..') {
@@ -18,7 +29,7 @@ function isValidStrategyName(name) {
         return false;
     }
 
-    if (INVALID_STRATEGY_NAME_RE.test(name)) {
+    if (hasInvalidStrategyChar(name)) {
         return false;
     }
 

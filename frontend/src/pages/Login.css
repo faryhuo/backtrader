@@ -1,0 +1,17 @@
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.22), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.18), transparent 30%),
+        linear-gradient(135deg, #0a0b10 0%, #131722 48%, #10141f 100%);
+}
+
+.login-card {
+    width: min(100%, 440px);
+    background: rgba(14, 18, 29, 0.92);
+    border-radius: 20px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+}

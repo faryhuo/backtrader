@@ -478,7 +478,7 @@ class CredentialsMixin:
         env_key = credential_key.upper()
         env_value = os.getenv(env_key)
         if env_value:
-            if credential_key == "enable_login":
+            if credential_key in {"enable_login", "system_auth_allow_registration", "setup_completed"}:
                 env_value = env_value.lower() in {"true", "1", "yes", "on"}
             return env_value, 'env'
 
@@ -537,6 +537,16 @@ class CredentialsMixin:
             enable_login, enable_login_source = self.get_credential_with_fallback("enable_login", user_id, session)
             result["logto"]["enable_login"] = enable_login
             result["logto"]["enable_login_source"] = enable_login_source
+            auth_provider, auth_provider_source = self.get_credential_with_fallback("auth_provider", user_id, session)
+            system_registration, system_registration_source = self.get_credential_with_fallback(
+                "system_auth_allow_registration",
+                user_id,
+                session,
+            )
+            result["logto"]["auth_provider"] = auth_provider
+            result["logto"]["auth_provider_source"] = auth_provider_source
+            result["logto"]["system_auth_allow_registration"] = system_registration
+            result["logto"]["system_auth_allow_registration_source"] = system_registration_source
 
             # Proxy credentials
             http_proxy, http_source = self.get_credential_with_fallback("http_proxy", user_id, session)

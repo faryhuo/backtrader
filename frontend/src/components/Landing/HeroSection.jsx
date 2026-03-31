@@ -12,12 +12,16 @@ export function HeroSection() {
     const { t } = useTranslation();
     const { config } = useSiteConfig();
     const { config: logtoConfig } = useLogtoConfig();
-    const { signIn, loginEnabled } = useAuth();
+    const { signIn, loginEnabled, authProvider } = useAuth();
     const navigate = useNavigate();
 
     const handleGetStarted = () => {
         if (!loginEnabled) {
             navigate('/strategy');
+            return;
+        }
+        if (authProvider === 'system') {
+            navigate('/login');
             return;
         }
         const redirectUri = logtoConfig?.redirectUri;

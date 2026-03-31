@@ -15,6 +15,7 @@ from src.db.storage import (
     PortfolioStorage,
     get_portfolio_storage,
     StrategyVersionStorage,
+    UserAuthStorage,
     TaskStorage,
     get_task_storage,
     # Market data
@@ -48,6 +49,7 @@ from src.db.models import (
     MarketDataModel,
     TickerMetadataModel,
     # User models
+    SystemUserModel,
     UserSettingsModel,
     StrategyVersionModel,
     # Task models
@@ -78,6 +80,7 @@ __all__ = [
     "MarketDataModel",
     "TickerMetadataModel",
     # User models
+    "SystemUserModel",
     "UserSettingsModel",
     "StrategyVersionModel",
     # Storage classes
@@ -88,6 +91,7 @@ __all__ = [
     "PortfolioStorage",
     "get_portfolio_storage",
     "StrategyVersionStorage",
+    "UserAuthStorage",
     "TaskStorage",
     "get_task_storage",
     # Task models

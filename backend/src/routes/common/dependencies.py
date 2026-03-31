@@ -9,6 +9,7 @@ from functools import lru_cache
 from src.db.storage.backtest import BacktestStorage
 from src.db.storage.settings import SettingsStorage
 from src.db.storage.strategy_version import StrategyVersionStorage
+from src.db.storage.user_auth import UserAuthStorage
 
 
 @lru_cache(maxsize=1)
@@ -27,3 +28,9 @@ def get_settings_storage() -> SettingsStorage:
 def get_version_storage() -> StrategyVersionStorage:
     """Singleton StrategyVersionStorage provider."""
     return StrategyVersionStorage()
+
+
+@lru_cache(maxsize=1)
+def get_user_auth_storage() -> UserAuthStorage:
+    """Singleton system user storage provider."""
+    return UserAuthStorage()

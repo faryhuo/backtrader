@@ -5,6 +5,7 @@ import { Layout, Menu, message } from 'antd';
 import { useSettings } from '../hooks/useSettings';
 import { useCredentials } from '../hooks/useCredentials';
 import { useSiteConfig } from '../hooks/useSiteConfig';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import {
     AISettingsSection,
@@ -13,7 +14,8 @@ import {
     ProxySettingsSection,
     ExchangeSettingsSection,
     SiteSettingsSection,
-    DataSourceSettingsSection
+    DataSourceSettingsSection,
+    SystemUsersSection
 } from '../components/Settings';
 import './Settings.css';
 
@@ -22,6 +24,10 @@ const { Sider, Content } = Layout;
 function Settings() {
     const { t } = useTranslation();
     const [activeSection, setActiveSection] = useState('ai');
+    const [systemUsers, setSystemUsers] = useState([]);
+    const [systemUsersLoading, setSystemUsersLoading] = useState(false);
+    const { authProvider, user } = useAuth();
+    const showSystemUsers = authProvider === 'system' && Boolean(user?.is_superuser);
 
     // Use custom hooks for state management
     const {
@@ -115,6 +121,24 @@ function Settings() {
         }
     }, [t, loadDataSourceSettings]);
 
+    const loadSystemUsers = useCallback(async () => {
+        if (!showSystemUsers) {
+            setSystemUsers([]);
+            return;
+        }
+
+        try {
+            setSystemUsersLoading(true);
+            const response = await api.getSystemUsers();
+            setSystemUsers(response.users || []);
+        } catch (err) {
+            message.error(err.message || t('settings.system_users.load_failed', 'Failed to load system users'));
+            console.error('Failed to load system users:', err);
+        } finally {
+            setSystemUsersLoading(false);
+        }
+    }, [showSystemUsers, t]);
+
     // Load data on mount
     useEffect(() => {
         loadSettings();
@@ -122,6 +146,18 @@ function Settings() {
         loadSiteConfig();
         loadDataSourceSettings();
     }, [loadSettings, loadCredentials, loadSiteConfig, loadDataSourceSettings]);
+
+    useEffect(() => {
+        if (showSystemUsers) {
+            loadSystemUsers();
+        }
+    }, [loadSystemUsers, showSystemUsers]);
+
+    useEffect(() => {
+        if (!showSystemUsers && activeSection === 'systemUsers') {
+            setActiveSection('auth');
+        }
+    }, [activeSection, showSystemUsers]);
 
     // Combined loading state
     const loading = settingsLoading || credentialsLoading || siteConfigLoading;
@@ -164,6 +200,14 @@ function Settings() {
             label: t('settings.site_configuration', 'Site Configuration')
         }
     ];
+
+    if (showSystemUsers) {
+        menuItems.splice(4, 0, {
+            key: 'systemUsers',
+            icon: <SafetyOutlined />,
+            label: t('settings.system_users.menu', 'System Users')
+        });
+    }
 
     // Render the active section content
     const renderContent = () => {
@@ -225,6 +269,15 @@ function Settings() {
                         onCredentialChange={handleCredentialChange}
                         onSave={handleSaveCredentials}
                         onReset={handleResetCredential}
+                    />
+                );
+            case 'systemUsers':
+                return (
+                    <SystemUsersSection
+                        currentUserId={user?.id ?? null}
+                        loading={systemUsersLoading}
+                        users={systemUsers}
+                        onReload={loadSystemUsers}
                     />
                 );
             case 'exchange':
