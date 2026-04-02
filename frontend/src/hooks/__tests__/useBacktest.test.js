@@ -2,7 +2,7 @@
  * Unit tests for useBacktest hook
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useBacktest } from '../useBacktest'
 import { api } from '../../services/api'
 import { taskApi } from '../../services/taskApi'

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Table, Tag, Card, Empty, Timeline, Segmented, Space, Typography } from 'antd';
+import { useState } from 'react';
+import { Table, Tag, Card, Empty, Timeline, Segmented, Typography } from 'antd';
 import { UnorderedListOutlined, FieldTimeOutlined, SwapOutlined, TableOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -27,7 +27,7 @@ const getTriggerColor = (trigger) => {
 /**
  * Single trade event item for timeline view
  */
-const TradeEventItem = ({ trades, date, t }) => {
+const TradeEventItem = ({ trades, t }) => {
     const buys = trades.filter(t => t.action?.toLowerCase() === 'buy');
     const sells = trades.filter(t => t.action?.toLowerCase() === 'sell');
 
@@ -265,7 +265,7 @@ function PortfolioTradeLog({ allTrades, t }) {
         color: getTriggerColor(tradesByDate[date][0]?.trigger),
         dot: <SwapOutlined />,
         label: date,
-        children: <TradeEventItem trades={tradesByDate[date]} date={date} t={t} />,
+        children: <TradeEventItem trades={tradesByDate[date]} t={t} />,
     }));
 
     return (

@@ -91,7 +91,7 @@ function ShareReportModal({ visible, report, onClose, onShareUpdate }) {
             setCopied(true);
             message.success(t('reportCenter.share.copied', 'Link copied to clipboard'));
             setTimeout(() => setCopied(false), 3000);
-        } catch (err) {
+        } catch (_err) {
             message.error(t('reportCenter.share.copyError', 'Failed to copy link'));
         }
     }, [shareData, t]);

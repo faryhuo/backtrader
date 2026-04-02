@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const NewStrategyModal = ({ isOpen, onClose, onCreate, t }) => {
     const [name, setName] = useState('')

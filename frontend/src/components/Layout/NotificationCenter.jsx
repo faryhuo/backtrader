@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Badge, Popover, List, Button, Typography, Empty, Space } from 'antd';
 import {
     BellOutlined,

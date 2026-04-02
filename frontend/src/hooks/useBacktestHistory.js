@@ -34,6 +34,8 @@ export function useBacktestHistory({ initialRecordType = 'strategy', t }) {
         pageSize: 20,
         total: 0
     });
+    const currentPage = pagination.current;
+    const pageSize = pagination.pageSize;
     const [sortField, setSortField] = useState('created_at');
     const [sortOrder, setSortOrder] = useState('desc');
 
@@ -70,8 +72,8 @@ export function useBacktestHistory({ initialRecordType = 'strategy', t }) {
                 dateRange: params.dateRange || dateRange,
                 sortField: params.sortField || sortField,
                 sortOrder: params.sortOrder || sortOrder,
-                pageSize: params.pageSize || pagination.pageSize,
-                current: params.current || pagination.current,
+                pageSize: params.pageSize || pageSize,
+                current: params.current || currentPage,
             });
 
             const result = await api.getBacktestHistory(queryParams);
@@ -83,7 +85,7 @@ export function useBacktestHistory({ initialRecordType = 'strategy', t }) {
         } finally {
             setLoading(false);
         }
-    }, [ticker, strategyName, dateRange, sortField, sortOrder, pagination.pageSize, pagination.current, t]);
+    }, [ticker, strategyName, dateRange, sortField, sortOrder, pageSize, currentPage, t]);
 
     const fetchPortfolios = useCallback(async (params = {}) => {
         setLoading(true);
@@ -91,8 +93,8 @@ export function useBacktestHistory({ initialRecordType = 'strategy', t }) {
             const queryParams = {
                 sort_by: params.sortField || sortField,
                 sort_order: params.sortOrder || sortOrder,
-                limit: params.pageSize || pagination.pageSize,
-                offset: ((params.current || pagination.current) - 1) * (params.pageSize || pagination.pageSize)
+                limit: params.pageSize || pageSize,
+                offset: ((params.current || currentPage) - 1) * (params.pageSize || pageSize)
             };
 
             const result = await api.getPortfolioHistory(queryParams);
@@ -104,7 +106,7 @@ export function useBacktestHistory({ initialRecordType = 'strategy', t }) {
         } finally {
             setLoading(false);
         }
-    }, [sortField, sortOrder, pagination.pageSize, pagination.current, t]);
+    }, [sortField, sortOrder, pageSize, currentPage, t]);
 
     // Helper: Build query params for backtest fetch
     const buildQueryParams = (params, config) => ({

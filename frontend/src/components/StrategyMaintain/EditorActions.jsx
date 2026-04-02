@@ -1,4 +1,3 @@
-import React from 'react'
 import { SaveOutlined, LoadingOutlined } from '@ant-design/icons'
 
 const EditorActions = ({ 

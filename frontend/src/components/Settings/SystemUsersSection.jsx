@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
     Alert,
     Button,
@@ -29,6 +29,20 @@ export function SystemUsersSection({ loading, users, onReload, currentUserId }) 
         open: false,
         user: null,
     })
+
+    const handleToggleActive = useCallback(async (record, isActive) => {
+        try {
+            await authApi.setSystemUserActive(record.id, isActive)
+            message.success(
+                isActive
+                    ? t('settings.system_users.messages.activate_success', 'User activated')
+                    : t('settings.system_users.messages.deactivate_success', 'User deactivated')
+            )
+            await onReload()
+        } catch (error) {
+            message.error(error.message || t('settings.system_users.messages.update_failed', 'Failed to update user'))
+        }
+    }, [onReload, t])
 
     const columns = useMemo(() => ([
         {
@@ -81,7 +95,7 @@ export function SystemUsersSection({ loading, users, onReload, currentUserId }) 
                 </Space>
             ),
         },
-    ]), [currentUserId, loading, passwordForm, t])
+    ]), [currentUserId, handleToggleActive, loading, passwordForm, t])
 
     const handleCreateUser = async (values) => {
         setSubmitting(true)
@@ -94,20 +108,6 @@ export function SystemUsersSection({ loading, users, onReload, currentUserId }) 
             message.error(error.message || t('settings.system_users.messages.create_failed', 'Failed to create user'))
         } finally {
             setSubmitting(false)
-        }
-    }
-
-    const handleToggleActive = async (record, isActive) => {
-        try {
-            await authApi.setSystemUserActive(record.id, isActive)
-            message.success(
-                isActive
-                    ? t('settings.system_users.messages.activate_success', 'User activated')
-                    : t('settings.system_users.messages.deactivate_success', 'User deactivated')
-            )
-            await onReload()
-        } catch (error) {
-            message.error(error.message || t('settings.system_users.messages.update_failed', 'Failed to update user'))
         }
     }
 

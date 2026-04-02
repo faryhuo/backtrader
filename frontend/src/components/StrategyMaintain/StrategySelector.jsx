@@ -1,4 +1,3 @@
-import React from 'react'
 import { ReloadOutlined, SyncOutlined, RobotOutlined, ThunderboltOutlined, LoadingOutlined } from '@ant-design/icons'
 
 const StrategySelector = ({

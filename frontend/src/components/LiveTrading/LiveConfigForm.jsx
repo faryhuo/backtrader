@@ -50,25 +50,6 @@ const SIZER_OPTIONS = [
   { value: 'kelly_sizer', label: 'Kelly Criterion' },
 ];
 
-const PARAM_LABELS = {
-  target_trade_value_usd: 'Trade Value per Order (USD)',
-  min_trade_value_usd: 'Minimum Trade Value (USD)',
-  size_precision: 'Quantity Precision',
-  fast_period: 'Fast Period',
-  slow_period: 'Slow Period',
-};
-
-function humanizeParamName(name) {
-  return name
-    .split('_')
-    .filter(Boolean)
-    .map((part) => {
-      if (part.toLowerCase() === 'usd') return 'USD';
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    })
-    .join(' ');
-}
-
 const LiveConfigForm = ({ onSubmit, loading }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -79,8 +60,6 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   const [symbolModalOpen, setSymbolModalOpen] = useState(false);
   const [mode, setMode] = useState('paper');
   const [paramsExpanded, setParamsExpanded] = useState(true);
-  const [symbolRules, setSymbolRules] = useState(null);
-  const [rulesLoading, setRulesLoading] = useState(false);
   const [sizerType, setSizerType] = useState('percent_sizer');
 
   const formValues = Form.useWatch([], form) || {};
@@ -134,27 +113,6 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   }, []);
 
   const selectedSymbol = formValues.symbol || 'BTC/USDT';
-
-  useEffect(() => {
-    const loadSymbolRules = async () => {
-      if (!selectedSymbol) {
-        setSymbolRules(null);
-        return;
-      }
-
-      try {
-        setRulesLoading(true);
-        const rules = await api.getSymbolRules(selectedSymbol, mode);
-        setSymbolRules(rules);
-      } catch (_error) {
-        setSymbolRules(null);
-      } finally {
-        setRulesLoading(false);
-      }
-    };
-
-    loadSymbolRules();
-  }, [selectedSymbol, mode]);
 
   const selectedStrategy = formValues.strategy_name || t('live.form.unselected', 'Not selected');
   const selectedTimeframe = formValues.timeframe || '1m';
@@ -582,4 +540,3 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
 };
 
 export default LiveConfigForm;
-

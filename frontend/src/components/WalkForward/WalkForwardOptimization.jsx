@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
     Card,
@@ -37,22 +37,15 @@ const WalkForwardOptimization = () => {
         pageSize: 20,
         total: 0
     })
+    const currentPage = pagination.current
+    const pageSize = pagination.pageSize
 
-    useEffect(() => {
-        loadOptimizations()
-        // Poll for status updates every 5 seconds
-        const interval = setInterval(() => {
-            loadOptimizations(true) // Silent reload
-        }, 5000)
-        return () => clearInterval(interval)
-    }, [pagination.current, pagination.pageSize])
-
-    const loadOptimizations = async (silent = false) => {
+    const loadOptimizations = useCallback(async (silent = false) => {
         if (!silent) setLoading(true)
         try {
             const response = await api.listWalkForward({
-                limit: pagination.pageSize,
-                offset: (pagination.current - 1) * pagination.pageSize,
+                limit: pageSize,
+                offset: (currentPage - 1) * pageSize,
                 sort_by: 'created_at',
                 sort_order: 'desc'
             })
@@ -65,7 +58,15 @@ const WalkForwardOptimization = () => {
         } finally {
             if (!silent) setLoading(false)
         }
-    }
+    }, [currentPage, pageSize, t])
+
+    useEffect(() => {
+        loadOptimizations()
+        const interval = setInterval(() => {
+            loadOptimizations(true)
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [loadOptimizations])
 
     const handleStartOptimization = () => {
         setConfigModalVisible(true)

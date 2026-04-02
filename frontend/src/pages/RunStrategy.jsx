@@ -55,7 +55,6 @@ function RunStrategy() {
     const {
         strategyParams,
         paramOverrides,
-        setParamOverrides,
         handleParamChange,
         strategyCode,
     } = useStrategyParams(selectedStrategy);

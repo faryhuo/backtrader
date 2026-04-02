@@ -5,7 +5,6 @@ import {
     LineChartOutlined,
     DollarOutlined,
     InfoCircleOutlined,
-    ClockCircleOutlined,
     RiseOutlined,
     FallOutlined,
     StarOutlined,

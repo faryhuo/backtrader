@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { message } from 'antd';
 import { performFullStrategyAnalysis } from '../services/aiAnalysis';
 
@@ -28,7 +28,10 @@ export function useAIAnalysis({
     const [aiLoading, setAiLoading] = useState(false);
 
     // Merge local analyses with initial analyses (initial has lower priority)
-    const allAnalyses = { ...initialAnalyses, ...analyses };
+    const allAnalyses = useMemo(
+        () => ({ ...initialAnalyses, ...analyses }),
+        [initialAnalyses, analyses]
+    );
 
     // Set initial active tab when analyses are available
     useEffect(() => {

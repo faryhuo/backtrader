@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     formatPortfolioCurrency,

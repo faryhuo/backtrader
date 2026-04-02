@@ -46,13 +46,22 @@ function TaskCenter() {
         offset: 0,
     });
 
+    // Fetch stats
+    const fetchStats = useCallback(async () => {
+        try {
+            const result = await getTaskStats();
+            setStats(result);
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        }
+    }, []);
+
     // WebSocket for real-time updates
     const { isConnected } = useTaskWebSocket({
         onTaskUpdate: useCallback((message) => {
             const { type, task_id, data } = message;
 
             setTasks(prevTasks => {
-                // Find and update the task
                 const taskIndex = prevTasks.findIndex(t => t.task_id === task_id);
 
                 if (taskIndex >= 0) {
@@ -62,18 +71,17 @@ function TaskCenter() {
                         ...data,
                     };
                     return updatedTasks;
-                } else if (type === TASK_EVENT_TYPES.CREATED) {
-                    // Add new task at the beginning
+                }
+                if (type === TASK_EVENT_TYPES.CREATED) {
                     return [data, ...prevTasks];
                 }
                 return prevTasks;
             });
 
-            // Refresh stats on task changes
             if ([TASK_EVENT_TYPES.CREATED, TASK_EVENT_TYPES.COMPLETED, TASK_EVENT_TYPES.FAILED, TASK_EVENT_TYPES.CANCELLED].includes(type)) {
                 fetchStats();
             }
-        }, []),
+        }, [fetchStats]),
     });
 
     // Fetch tasks
@@ -94,16 +102,6 @@ function TaskCenter() {
             setLoading(false);
         }
     }, [filters]);
-
-    // Fetch stats
-    const fetchStats = useCallback(async () => {
-        try {
-            const result = await getTaskStats();
-            setStats(result);
-        } catch (err) {
-            console.error('Failed to fetch stats:', err);
-        }
-    }, []);
 
     // Initial load
     useEffect(() => {

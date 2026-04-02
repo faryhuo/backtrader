@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react'
+import { useMemo, useRef, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Empty, Space, Tag, Button, Modal } from 'antd'
 import { LineChartOutlined, FullscreenOutlined } from '@ant-design/icons'

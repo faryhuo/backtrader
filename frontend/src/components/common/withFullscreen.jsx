@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { useState } from 'react';
 import { Button, Modal, Space, Tooltip } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 

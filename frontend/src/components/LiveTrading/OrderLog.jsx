@@ -133,61 +133,6 @@ const OrderLog = ({ orders, onCancelOrder }) => {
     },
   ];
 
-  const fillColumns = [
-    {
-      title: t('live.orders.fill_time', 'Fill Time'),
-      dataIndex: 'last_fill_at',
-      key: 'fill_time',
-      width: 90,
-      render: renderTime,
-    },
-    ...baseColumns.slice(1, 3),
-    {
-      title: t('live.orders.filled_price', 'Filled Avg'),
-      dataIndex: 'filled_price',
-      key: 'filled_price',
-      width: 100,
-      render: (v) => v ? `$${Number(v).toFixed(2)}` : '-',
-    },
-    {
-      title: t('live.orders.executed_quote_qty', 'Quote Qty'),
-      dataIndex: 'executed_quote_qty',
-      key: 'executed_quote_qty',
-      width: 110,
-      render: (v) => v ? Number(v).toFixed(4) : '-',
-    },
-    {
-      title: t('live.orders.fee', 'Fee'),
-      key: 'fee',
-      width: 110,
-      render: (_, record) => {
-        if (record.fee === null || record.fee === undefined) return '-';
-        return `${Number(record.fee).toFixed(8)}${record.fee_asset ? ` ${record.fee_asset}` : ''}`;
-      },
-    },
-    {
-      title: t('live.orders.trades', 'Trades'),
-      dataIndex: 'trade_count',
-      key: 'trade_count',
-      width: 70,
-      render: (v) => v || '-',
-    },
-    {
-      title: t('live.orders.status', 'Status'),
-      dataIndex: 'status',
-      key: 'status',
-      width: 90,
-      render: (status) => {
-        const cfg = STATUS_CONFIG[status] || { color: 'default', icon: null };
-        return (
-          <Tag color={cfg.color} icon={cfg.icon} style={{ margin: 0 }}>
-            {(status || '').toUpperCase()}
-          </Tag>
-        );
-      },
-    },
-  ];
-
   const historyColumns = [
     {
       title: t('live.orders.time', 'Time'),

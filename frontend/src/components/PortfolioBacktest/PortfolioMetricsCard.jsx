@@ -18,8 +18,6 @@ import {
 function PortfolioMetricsCard({ t, metrics }) {
     // Extract metrics from nested structure
     const portfolioMetrics = metrics?.metrics?.portfolio_metrics || {};
-    const drawdownMetrics = metrics?.metrics?.drawdown || {};
-
     // Helper to format percentage
     const formatPct = (value, decimals = 2) => {
         return value !== null && value !== undefined ? `${(value * 100).toFixed(decimals)}%` : 'N/A';

@@ -59,7 +59,7 @@ export function useTickerWeights({
     const equalWeights = useCallback(() => {
         const equalWeight = Math.round((1 / tickers.length) * 100) / 100;
         setWeights(tickers.map(() => equalWeight));
-    }, [tickers.length]);
+    }, [tickers]);
 
     // Calculate total weight
     const totalWeight = useMemo(() => {

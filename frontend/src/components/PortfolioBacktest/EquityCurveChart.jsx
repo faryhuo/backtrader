@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Card, Empty, Space, Button, Modal, Segmented } from 'antd';
 import { LineChartOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { createChart } from 'lightweight-charts';
@@ -6,7 +6,7 @@ import { createChart } from 'lightweight-charts';
 /**
  * Inner chart component that handles the lightweight-charts rendering
  */
-const EquityChartInner = ({ data, height = 300, t }) => {
+const EquityChartInner = ({ data, height = 300 }) => {
     const chartContainerRef = useRef(null);
     const chartRef = useRef(null);
     const seriesRef = useRef(null);
@@ -208,7 +208,6 @@ const EquityCurveChart = ({ equityCurve, t }) => {
                 <EquityChartInner
                     data={filteredData}
                     height={300}
-                    t={t}
                 />
             </Card>
 
@@ -236,7 +235,6 @@ const EquityCurveChart = ({ equityCurve, t }) => {
                 <EquityChartInner
                     data={filteredData}
                     height={500}
-                    t={t}
                 />
             </Modal>
         </>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Card, Empty, Space, Segmented, Button, Modal } from 'antd';
 import { PieChartOutlined, FullscreenOutlined } from '@ant-design/icons';

@@ -1,5 +1,3 @@
-import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { Space, Radio, Checkbox, Row, Col } from 'antd'
 
 /**
@@ -19,8 +17,6 @@ const ChartControls = ({
     series = [],
     onSeriesToggle
 }) => {
-    const { t } = useTranslation()
-
     return (
         <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
             <Col xs={24} md={12}>

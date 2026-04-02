@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Spin, Alert, Row, Col, Divider } from 'antd'
 import { api } from '../../services/api'
@@ -21,13 +21,7 @@ const DeepAnalysis = ({ backtest }) => {
     const [error, setError] = useState(null)
     const [analysisData, setAnalysisData] = useState(null)
 
-    useEffect(() => {
-        if (backtest?.backtest_id) {
-            loadDeepAnalysis()
-        }
-    }, [backtest?.backtest_id])
-
-    const loadDeepAnalysis = async () => {
+    const loadDeepAnalysis = useCallback(async () => {
         setLoading(true)
         setError(null)
 
@@ -44,7 +38,13 @@ const DeepAnalysis = ({ backtest }) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [backtest?.backtest_id, t])
+
+    useEffect(() => {
+        if (backtest?.backtest_id) {
+            loadDeepAnalysis()
+        }
+    }, [backtest?.backtest_id, loadDeepAnalysis])
 
     if (loading) {
         return (

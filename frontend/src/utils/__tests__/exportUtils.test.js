@@ -33,8 +33,6 @@ describe('exportUtils', () => {
 
     describe('exportToCSV', () => {
         let mockLink
-        let appendChildSpy
-        let removeChildSpy
 
         beforeEach(() => {
             // Mock DOM elements and methods
@@ -44,8 +42,8 @@ describe('exportUtils', () => {
                 click: vi.fn()
             }
             vi.spyOn(document, 'createElement').mockReturnValue(mockLink)
-            appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => { })
-            removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => { })
+            vi.spyOn(document.body, 'appendChild').mockImplementation(() => { })
+            vi.spyOn(document.body, 'removeChild').mockImplementation(() => { })
         })
 
         afterEach(() => {

@@ -1,5 +1,5 @@
 import { createChart } from 'lightweight-charts';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
 function CandleStickChart({ data, chartType = 'candlestick', indicators = {} }) {
@@ -10,32 +10,29 @@ function CandleStickChart({ data, chartType = 'candlestick', indicators = {} }) 
     const indicatorSeriesRef = useRef({});
     const [chartReady, setChartReady] = useState(false);
 
-    // Chart configuration
-    const chartConfig = {
-        width: chartContainerRef.current?.clientWidth || 800,
-        height: 500,
-        layout: {
-            background: { type: 'solid', color: '#0d1117' },
-            textColor: '#c9d1d9',
-        },
-        grid: {
-            vertLines: { color: '#30363d' },
-            horzLines: { color: '#30363d' },
-        },
-        timeScale: {
-            borderColor: '#30363d',
-            timeVisible: true,
-        },
-        rightPriceScale: {
-            borderColor: '#30363d',
-        },
-    };
-
     // 1. Initialize Chart
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        const chart = createChart(chartContainerRef.current, chartConfig);
+        const chart = createChart(chartContainerRef.current, {
+            width: chartContainerRef.current.clientWidth || 800,
+            height: 500,
+            layout: {
+                background: { type: 'solid', color: '#0d1117' },
+                textColor: '#c9d1d9',
+            },
+            grid: {
+                vertLines: { color: '#30363d' },
+                horzLines: { color: '#30363d' },
+            },
+            timeScale: {
+                borderColor: '#30363d',
+                timeVisible: true,
+            },
+            rightPriceScale: {
+                borderColor: '#30363d',
+            },
+        });
 
         chartRef.current = chart;
         setChartReady(true);
@@ -166,7 +163,7 @@ function CandleStickChart({ data, chartType = 'candlestick', indicators = {} }) 
             if (volumeSeriesRef.current && chartRef.current) {
                 try {
                     chartRef.current.removeSeries(volumeSeriesRef.current);
-                } catch (e) {
+                } catch (_error) {
                     // Series might already be removed
                 }
                 volumeSeriesRef.current = null;
@@ -182,7 +179,7 @@ function CandleStickChart({ data, chartType = 'candlestick', indicators = {} }) 
         Object.values(indicatorSeriesRef.current).forEach(series => {
             try {
                 chartRef.current.removeSeries(series);
-            } catch (e) {
+            } catch (_error) {
                 // Series might already be removed
             }
         });
@@ -218,7 +215,7 @@ function CandleStickChart({ data, chartType = 'candlestick', indicators = {} }) 
                     if (chartRef.current) {
                         chartRef.current.removeSeries(series);
                     }
-                } catch (e) {
+                } catch (_error) {
                     // Series might already be removed
                 }
             });

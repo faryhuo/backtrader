@@ -1,4 +1,3 @@
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, Table, Progress, Tag, Space, Typography } from 'antd'
 import { BarChartOutlined } from '@ant-design/icons'
