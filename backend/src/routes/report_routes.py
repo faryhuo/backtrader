@@ -113,6 +113,7 @@ async def _run_report_generation(
 @router.get("")
 def list_reports(
     report_type: Optional[str] = None,
+    status: Optional[str] = None,
     sort_by: str = "created_at",
     sort_order: str = "desc",
     limit: int = 50,
@@ -126,6 +127,7 @@ def list_reports(
 
     return storage.list_reports(
         report_type=report_type,
+        status=status,
         sort_by=sort_by,
         sort_order=sort_order,
         limit=limit,
@@ -210,7 +212,7 @@ def get_report(
     """
     storage = get_report_storage()
 
-    report = storage.get_report(report_id, user_id=user_id)
+    report = storage.get_report(report_id, user_id=user_id, include_html=True)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 

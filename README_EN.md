@@ -25,7 +25,7 @@ A next-generation AI-powered algorithmic trading platform supporting strategy ba
 ### Core Features
 
 - ✅ **Strategy Backtesting System** - Complete backtesting framework based on the Backtrader engine
-- ✅ **Live/Paper Trading** - CCXT (Cryptocurrency) and IBKR (Traditional Securities) adapter support
+- ✅ **Live/Paper Trading** - Binance Spot live and paper trading support
 - ✅ **Walk-Forward Optimization** - Train/validation set separation with overfitting detection
 - ✅ **Online Strategy Editor** - Monaco Editor for writing and debugging strategies online with syntax highlighting
 - ✅ **Strategy Sandbox Execution** - Supports subprocess/docker isolation modes to prevent malicious code execution
@@ -39,13 +39,8 @@ A next-generation AI-powered algorithmic trading platform supporting strategy ba
 
 ### Supported Exchanges
 
-#### Cryptocurrency (CCXT)
-- Binance
-- OKX
-- Bybit
-
-#### Traditional Securities (IBKR)
-- Interactive Brokers
+#### Supported Exchange
+- Binance Spot
 - Supports Paper Trading and Live Trading
 
 ---

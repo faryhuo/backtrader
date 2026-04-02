@@ -25,7 +25,7 @@
 ### 核心功能
 
 - ✅ **策略回测系统** - 基于 Backtrader 引擎的完整回测框架
-- ✅ **实盘/模拟交易** - CCXT（加密货币）和 IBKR（传统证券）适配器支持
+- ✅ **实盘/模拟交易** - 当前支持 Binance Spot 的纸盘与实盘交易
 - ✅ **Walk-Forward 参数优化** - 训练/验证集分离，过拟合检测
 - ✅ **在线策略编辑器** - Monaco Editor 在线编写和调试策略代码，支持语法高亮
 - ✅ **策略沙箱安全执行** - 支持 subprocess/docker 隔离模式，防止恶意代码执行
@@ -39,13 +39,8 @@
 
 ### 支持的交易所
 
-#### 加密货币（CCXT）
-- Binance（币安）
-- OKX（欧易）
-- Bybit
-
-#### 传统证券（IBKR）
-- Interactive Brokers（盈透证券）
+#### 当前支持的交易所
+- Binance Spot（币安现货）
 - 支持纸盘（Paper Trading）和实盘（Live Trading）
 
 ---

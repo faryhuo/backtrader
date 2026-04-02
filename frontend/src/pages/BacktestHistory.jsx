@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Table, message } from 'antd';
+import { Button, Space, Table, message } from 'antd';
+import { FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { api } from '../services/api';
 import { getStrategyBacktestColumns, getPortfolioBacktestColumns } from '../utils/tableColumns';
 import { useBacktestHistory } from '../hooks/useBacktestHistory';
@@ -18,6 +20,7 @@ import '../index.css';
  */
 function BacktestHistory() {
     const { t } = useTranslation();
+    const reportLanguage = i18n.language?.startsWith('zh') ? 'zh' : 'en';
 
     // Use custom hook for all data management
     const {
@@ -46,6 +49,9 @@ function BacktestHistory() {
     const [selectedPortfolio, setSelectedPortfolio] = useState(null);
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [portfolioModalVisible, setPortfolioModalVisible] = useState(false);
+    const [selectedComparisonRowKeys, setSelectedComparisonRowKeys] = useState([]);
+    const [selectedComparisonRows, setSelectedComparisonRows] = useState([]);
+    const [comparisonReportLoading, setComparisonReportLoading] = useState(false);
 
     // Modal handlers
     const handleViewDetail = useCallback(async (record) => {
@@ -109,6 +115,59 @@ function BacktestHistory() {
         setSelectedPortfolio(null);
     }, []);
 
+    const handleGenerateComparisonReport = useCallback(async () => {
+        if (selectedComparisonRowKeys.length < 2) {
+            message.warning(t('history.comparison_select_min', 'Select at least two backtests to generate a comparison report.'));
+            return;
+        }
+
+        try {
+            setComparisonReportLoading(true);
+            const title = t('history.comparison_report_title', {
+                count: selectedComparisonRowKeys.length,
+                defaultValue: 'Backtest Comparison ({{count}} runs)',
+            });
+
+            await api.generateReport({
+                report_type: 'comparison',
+                title,
+                source_ids: selectedComparisonRowKeys,
+                config: {
+                    selected_backtests: selectedComparisonRows.map((row) => ({
+                        backtest_id: row.backtest_id,
+                        ticker: row.ticker,
+                        strategy_name: row.strategy_name,
+                    })),
+                },
+                language: reportLanguage,
+            });
+
+            message.success(t('history.comparison_report_generating', 'Comparison report generation started. You can view it in the Report Center.'));
+            setSelectedComparisonRowKeys([]);
+            setSelectedComparisonRows([]);
+        } catch (err) {
+            console.error('Failed to generate comparison report:', err);
+            message.error(t('history.comparison_report_failed', 'Failed to generate comparison report'));
+        } finally {
+            setComparisonReportLoading(false);
+        }
+    }, [reportLanguage, selectedComparisonRowKeys, selectedComparisonRows, t]);
+
+    const rowSelection = useMemo(() => {
+        if (recordType !== 'strategy') {
+            return undefined;
+        }
+
+        return {
+            selectedRowKeys: selectedComparisonRowKeys,
+            preserveSelectedRowKeys: true,
+            onChange: (newSelectedRowKeys, newSelectedRows) => {
+                setSelectedComparisonRowKeys(newSelectedRowKeys);
+                setSelectedComparisonRows(newSelectedRows);
+            },
+        };
+    }, [recordType, selectedComparisonRowKeys]);
+
     // Get columns from utilities
     const strategyColumns = useMemo(() => getStrategyBacktestColumns({
         t,
@@ -151,10 +210,40 @@ function BacktestHistory() {
             />
 
             <div className="card">
+                {recordType === 'strategy' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ color: 'var(--text-secondary)' }}>
+                            {t('history.comparison_selection_count', {
+                                count: selectedComparisonRowKeys.length,
+                                defaultValue: '{{count}} backtests selected for comparison',
+                            })}
+                        </div>
+                        <Space wrap>
+                            <Button onClick={() => {
+                                setSelectedComparisonRowKeys([]);
+                                setSelectedComparisonRows([]);
+                            }}
+                            disabled={selectedComparisonRowKeys.length === 0}
+                            >
+                                {t('history.clear_selection', 'Clear Selection')}
+                            </Button>
+                            <Button
+                                type="primary"
+                                icon={<FileTextOutlined />}
+                                onClick={handleGenerateComparisonReport}
+                                loading={comparisonReportLoading}
+                                disabled={selectedComparisonRowKeys.length < 2}
+                            >
+                                {t('history.generate_comparison_report', 'Generate Comparison Report')}
+                            </Button>
+                        </Space>
+                    </div>
+                )}
                 <Table
                     columns={columns}
                     dataSource={dataSource}
                     rowKey={rowKey}
+                    rowSelection={rowSelection}
                     loading={loading}
                     pagination={pagination}
                     onChange={handleTableChange}

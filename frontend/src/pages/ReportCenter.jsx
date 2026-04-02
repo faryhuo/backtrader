@@ -11,7 +11,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, message } from 'antd';
+import { Modal, Spin, message } from 'antd';
 import {
     DownloadOutlined,
     EyeOutlined,
@@ -73,15 +73,32 @@ function ReportCenter() {
     const [selectedReport, setSelectedReport] = useState(null);
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [shareModalVisible, setShareModalVisible] = useState(false);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [viewHtmlContent, setViewHtmlContent] = useState('');
 
     // Handle view report
-    const handleView = useCallback((report) => {
+    const handleView = useCallback(async (report) => {
         if (report.status !== ReportStatus.COMPLETED) {
             message.warning(t('reportCenter.notReady', 'Report is not ready yet'));
             return;
         }
-        setSelectedReport(report);
-        setViewModalVisible(true);
+        try {
+            setViewLoading(true);
+            setSelectedReport(report);
+            setViewModalVisible(true);
+
+            const detail = await reportApi.getReport(report.report_id);
+            setViewHtmlContent(detail.html_content || '');
+        } catch (err) {
+            console.error('Failed to load report content:', err);
+            const formattedError = formatAppError(err, t);
+            message.error(formattedError.description || formattedError.title || t('reportCenter.viewError', 'Failed to load report'));
+            setViewModalVisible(false);
+            setSelectedReport(null);
+            setViewHtmlContent('');
+        } finally {
+            setViewLoading(false);
+        }
     }, [t]);
 
     // Handle download
@@ -128,6 +145,9 @@ function ReportCenter() {
     // Close modals
     const closeViewModal = useCallback(() => {
         setViewModalVisible(false);
+        setSelectedReport(null);
+        setViewHtmlContent('');
+        setViewLoading(false);
     }, []);
 
     const closeShareModal = useCallback(() => {
@@ -357,12 +377,27 @@ function ReportCenter() {
                     <button key="close" className="modal-btn secondary" onClick={closeViewModal}>
                         {t('common.close', 'Close')}
                     </button>,
-                    <button key="download" className="modal-btn primary" onClick={() => handleDownload(selectedReport)}>
+                    <button key="download" className="modal-btn primary" onClick={() => handleDownload(selectedReport)} disabled={!selectedReport}>
                         <DownloadOutlined /> {t('reportCenter.actions.download', 'Download')}
                     </button>,
                 ]}
             >
-                <p>{t('reportCenter.viewPlaceholder', 'Report viewer coming soon. Use download to view the full report.')}</p>
+                {viewLoading ? (
+                    <div className="report-viewer-loading">
+                        <Spin size="large" />
+                    </div>
+                ) : viewHtmlContent ? (
+                    <iframe
+                        srcDoc={viewHtmlContent}
+                        title={selectedReport?.title || t('reportCenter.actions.view', 'View')}
+                        className="report-viewer-frame"
+                        sandbox="allow-scripts allow-same-origin"
+                    />
+                ) : (
+                    <div className="report-viewer-empty">
+                        {t('reportCenter.viewEmpty', 'This report does not contain previewable HTML content.')}
+                    </div>
+                )}
             </Modal>
 
             {/* Share Modal */}

@@ -5,6 +5,10 @@
 ## 子目录
 - `binance_adapter/`: Binance 现货适配器。
 
+## 当前范围
+- 当前仓库已落地的实盘 / 模拟盘适配仅包含 Binance Spot。
+- README、路由和前端交互应与这一范围保持一致，避免再宣称未实现的 IBKR 或其他交易所支持。
+
 ## Binance 适配器分层
 `binance_adapter/` 保持三层运行时模块，各自只做一件事：
 - `binance_store.py`: 连接层。负责 Binance REST / WebSocket 访问、测试网/实盘连接、订单与行情原始读写。

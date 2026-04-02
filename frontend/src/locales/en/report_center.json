@@ -2,7 +2,7 @@
     "title": "Report Center",
     "generate": "Generate Report",
     "generateTitle": "Generate Report",
-    "generatePlaceholder": "Report generation wizard coming soon.",
+    "generatePlaceholder": "Generate reports from backtest, portfolio, walk-forward, or comparison views.",
     "generateFirst": "Generate Your First Report",
     "empty": "No reports generated yet",
     "emptyDesc": "No reports yet. Generate reports from backtest/portfolio/walk-forward result pages.",
@@ -21,7 +21,8 @@
     "deleteMessage": "Are you sure you want to delete \"{{title}}\"?",
     "deleteSuccess": "Report deleted",
     "deleteError": "Failed to delete report",
-    "viewPlaceholder": "Report viewer coming soon. Use download to view the full report.",
+    "viewError": "Failed to load report",
+    "viewEmpty": "This report does not contain previewable HTML content.",
     "shareTitle": "Share Report",
     "shared": "Shared",
     "filter": {

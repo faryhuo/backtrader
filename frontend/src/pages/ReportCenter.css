@@ -427,6 +427,22 @@
     opacity: 0.9;
 }
 
+.report-viewer-loading,
+.report-viewer-empty {
+    min-height: 60vh;
+    display: grid;
+    place-items: center;
+    color: var(--text-secondary);
+}
+
+.report-viewer-frame {
+    width: 100%;
+    min-height: 70vh;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #fff;
+}
+
 /* Share Modal Styles */
 .share-modal-content {
     padding: 8px 0;

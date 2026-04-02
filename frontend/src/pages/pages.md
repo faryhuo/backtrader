@@ -26,7 +26,11 @@ Route-level React pages live here. Pages assemble feature components, page-level
 ## Recent Notes
 
 - `Login.jsx` now provides built-in email/password login and optional registration when the backend is configured for `system` auth.
+- `Login.jsx` now uses a finance-oriented split layout with market-style summary panels while keeping the existing auth flow unchanged.
 - `App.jsx` now routes authentication through a provider-based flow so `logto` and `system` login can share the same guarded app shell.
 - `OnboardingSetup.jsx` now supports system-auth bootstrap fields for the first administrator and avoids forcing those fields once system users already exist.
 - `OnboardingSetup.jsx` now persists the bootstrap system-auth token returned after first-run admin creation and reloads into the authenticated app shell instead of re-querying the setup wizard anonymously.
 - `Settings.jsx` now exposes built-in system-user management for authenticated system admins.
+- `ReportCenter.jsx` now renders completed report HTML inline for authenticated users instead of showing a placeholder-only viewer.
+- `BacktestHistory.jsx` now supports multi-select comparison report generation for strategy backtest rows.
+- `BacktestHistory.jsx` now derives comparison report language from the shared `i18n` singleton so the history page does not crash on render when building the report callback dependencies.

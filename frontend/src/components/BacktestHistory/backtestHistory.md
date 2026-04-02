@@ -18,3 +18,4 @@
 ## Recent Notes
 
 - `BacktestDetailModal.jsx` now passes structured `chart_data` through to the shared `StrategyPlot` component so history detail charts match the Run Strategy page behavior.
+- `BacktestHistory.jsx` now supports selecting multiple strategy backtests and generating a comparison report through the shared report pipeline.

@@ -2,7 +2,7 @@
     "title": "报告中心",
     "generate": "生成报告",
     "generateTitle": "生成报告",
-    "generatePlaceholder": "报告生成向导即将推出。",
+    "generatePlaceholder": "请从回测、组合、Walk-Forward 或对比视图生成报告。",
     "generateFirst": "生成您的第一份报告",
     "empty": "尚未生成报告",
     "emptyDesc": "暂无报告。请从回测/组合/Walk-Forward结果页面生成报告。",
@@ -21,7 +21,8 @@
     "deleteMessage": "确定要删除\"{{title}}\"吗？",
     "deleteSuccess": "报告已删除",
     "deleteError": "删除报告失败",
-    "viewPlaceholder": "报告查看器即将推出。请使用下载查看完整报告。",
+    "viewError": "加载报告失败",
+    "viewEmpty": "该报告不包含可预览的 HTML 内容。",
     "shareTitle": "分享报告",
     "shared": "已分享",
     "filter": {

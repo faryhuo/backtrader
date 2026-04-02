@@ -34,3 +34,4 @@
 - Backtest result consumers should treat structured `chart_data` as the primary chart source and handle `plot_url` as optional.
 - `setupApi.js` now wraps the first-run setup wizard endpoints for loading, testing, and saving bootstrap configuration.
 - The setup wizard service contract now persists backend bootstrap files only and no longer exposes a frontend `.env` / `VITE_API_BASE_URL` write path.
+- `reportApi.getReport()` is now used by `ReportCenter.jsx` to fetch full HTML report content for inline preview.
