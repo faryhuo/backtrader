@@ -1,8 +1,9 @@
-import { Layout, Card, Space, Typography, Badge, Tag, Divider } from 'antd';
+import { Layout, Card, Space, Typography, Badge, Tag, Divider, message } from 'antd';
 import { DollarOutlined, RiseOutlined, FallOutlined, DashboardOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LiveConfigForm from '../components/LiveTrading/LiveConfigForm';
+import LiveCredentialPanel from '../components/LiveTrading/LiveCredentialPanel';
 import SessionControls from '../components/LiveTrading/SessionControls';
 import PositionTable from '../components/LiveTrading/PositionTable';
 import OrderLog from '../components/LiveTrading/OrderLog';
@@ -11,6 +12,7 @@ import PnLChart from '../components/LiveTrading/PnLChart';
 import PriceChart from '../components/LiveTrading/PriceChart';
 import StrategyLog from '../components/LiveTrading/StrategyLog';
 import TradeErrorPanel from '../components/LiveTrading/TradeErrorPanel';
+import { api } from '../services/api';
 import { useLiveTrading } from '../hooks/useLiveTrading';
 import './LiveTradingDashboard.css';
 
@@ -33,6 +35,13 @@ function getPnlTone(value) {
 
 export default function LiveTradingDashboard() {
   const { t } = useTranslation();
+  const [credentialLoading, setCredentialLoading] = useState(false);
+  const [testingMode, setTestingMode] = useState(null);
+  const [paperTestUrl, setPaperTestUrl] = useState('https://testnet.binance.vision');
+  const [credentialState, setCredentialState] = useState({
+    paper: { api_key: '', secret: '' },
+    live: { api_key: '', secret: '' },
+  });
   const {
     session,
     loading,
@@ -58,6 +67,90 @@ export default function LiveTradingDashboard() {
     handleCancelOrder,
     handleOrderBookDepthChange,
   } = useLiveTrading();
+
+  useEffect(() => {
+    const loadLauncherConfig = async () => {
+      try {
+        const [credentialsResponse, liveConfigResponse] = await Promise.all([
+          api.getCredentials(),
+          api.getConfig(),
+        ]);
+        const ccxt = credentialsResponse?.credentials?.ccxt || {};
+        setCredentialState({
+          paper: {
+            api_key: ccxt?.binance?.paper?.api_key || '',
+            secret: ccxt?.binance?.paper?.secret || '',
+          },
+          live: {
+            api_key: ccxt?.binance?.live?.api_key || '',
+            secret: ccxt?.binance?.live?.secret || '',
+          },
+        });
+        setPaperTestUrl(liveConfigResponse?.paper_test_url || 'https://testnet.binance.vision');
+      } catch (error) {
+        message.error(error.message || t('live.config.load_failed', 'Failed to load trading access configuration'));
+      }
+    };
+
+    loadLauncherConfig();
+  }, [t]);
+
+  const handleCredentialChange = (mode, field, value) => {
+    setCredentialState((prev) => ({
+      ...prev,
+      [mode]: {
+        ...prev[mode],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveCredentials = async (mode) => {
+    try {
+      setCredentialLoading(true);
+      await api.updateCCXTCredentials('binance', mode, credentialState[mode]);
+      message.success(t('live.config.credentials_saved', 'Trading credentials saved'));
+    } catch (error) {
+      message.error(error.message || t('live.config.save_failed', 'Failed to save trading access configuration'));
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
+
+  const handleTestCredentials = async (mode) => {
+    try {
+      setTestingMode(mode);
+      const response = await api.testCredential('ccxt', {
+        exchange: 'binance',
+        mode,
+        api_key: credentialState[mode]?.api_key,
+        secret: credentialState[mode]?.secret,
+        use_testnet: mode === 'paper',
+      });
+      if (response?.valid) {
+        message.success(response.message || t('live.config.test_success', 'Connection test succeeded'));
+      } else {
+        message.error(response?.message || t('live.config.test_failed', 'Connection test failed'));
+      }
+    } catch (error) {
+      message.error(error.message || t('live.config.test_failed', 'Connection test failed'));
+    } finally {
+      setTestingMode(null);
+    }
+  };
+
+  const handleSavePaperTestUrl = async () => {
+    try {
+      setCredentialLoading(true);
+      const response = await api.updateConfig({ paper_test_url: paperTestUrl });
+      setPaperTestUrl(response?.paper_test_url || paperTestUrl);
+      message.success(t('live.config.test_url_saved', 'Paper test URL saved'));
+    } catch (error) {
+      message.error(error.message || t('live.config.save_failed', 'Failed to save trading access configuration'));
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
 
   const isSessionActive = session && !['stopped', 'error'].includes(session.status);
 
@@ -174,6 +267,20 @@ export default function LiveTradingDashboard() {
 
         {!isSessionActive ? (
           <div className="dashboard-launch-shell">
+            <div className="dashboard-chart-stack" style={{ marginBottom: 18 }}>
+              <LiveCredentialPanel
+                paperCredentials={credentialState.paper}
+                liveCredentials={credentialState.live}
+                paperTestUrl={paperTestUrl}
+                loading={credentialLoading}
+                testingKey={testingMode}
+                onCredentialChange={handleCredentialChange}
+                onPaperTestUrlChange={setPaperTestUrl}
+                onSaveCredentials={handleSaveCredentials}
+                onTestCredentials={handleTestCredentials}
+                onSavePaperTestUrl={handleSavePaperTestUrl}
+              />
+            </div>
             <Card className="dashboard-panel dashboard-launch-panel" bordered={false}>
               <LiveConfigForm onSubmit={handleStartSession} loading={loading} />
             </Card>

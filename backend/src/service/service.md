@@ -31,3 +31,4 @@ This directory contains application services and orchestration logic. Services s
 - Runtime user management after bootstrap still belongs to `auth_service.py` and auth routes, not the setup wizard.
 - `auth_service.py` also owns startup-time bootstrap for the first built-in admin: when `AUTH_PROVIDER=system`, no users exist, and `SYSTEM_ADMIN_EMAIL` plus `SYSTEM_ADMIN_PASSWORD` are present in the environment, startup should create that admin in the database exactly once.
 - `live_engine.py` now needs to normalize account snapshots separately for Binance `spot` and `futures`, because order history, balances, positions, and portfolio value are sourced from different exchange payloads.
+- `live_engine.py` now also owns the small runtime config surface used by the live launcher for the Binance paper test URL, and paper-session startup passes that URL into the Binance store.

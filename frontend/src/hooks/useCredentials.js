@@ -10,6 +10,7 @@ import { DEFAULT_CREDENTIALS } from '../constants/settingsConstants';
 export function useCredentials() {
     const { t } = useTranslation();
     const [credentials, setCredentials] = useState(DEFAULT_CREDENTIALS);
+    const [initialCredentials, setInitialCredentials] = useState(DEFAULT_CREDENTIALS);
     const [credentialSources, setCredentialSources] = useState({});
     const [testingCredential, setTestingCredential] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -24,6 +25,7 @@ export function useCredentials() {
                         || (response.credentials.enable_login ? 'logto' : 'none'),
                 };
                 setCredentials(normalizedCredentials);
+                setInitialCredentials(normalizedCredentials);
                 setCredentialSources(response.sources || {});
             }
         } catch (error) {
@@ -52,6 +54,14 @@ export function useCredentials() {
         }));
     }, []);
 
+    const getChangedFields = useCallback((currentValues = {}, initialValues = {}) => {
+        return Object.fromEntries(
+            Object.entries(currentValues).filter(([, value]) => value !== undefined).filter(
+                ([key, value]) => value !== initialValues?.[key]
+            )
+        );
+    }, []);
+
     const handleSaveCredentials = useCallback(async (credentialType) => {
         try {
             setLoading(true);
@@ -59,24 +69,45 @@ export function useCredentials() {
 
             if (credentialType.startsWith('ai_model-')) {
                 const [, provider] = credentialType.split('-');
+                const currentConfig = credentials.ai_provider_configs?.[provider] || {};
+                const initialConfig = initialCredentials.ai_provider_configs?.[provider] || {};
+                const changedConfig = getChangedFields(currentConfig, initialConfig);
+                const priorityChanged = credentials.ai_provider_priority !== initialCredentials.ai_provider_priority;
+                if (!priorityChanged && Object.keys(changedConfig).length === 0) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
                 response = await api.updateCredentials({
-                    ai_provider_priority: credentials.ai_provider_priority,
+                    ...(priorityChanged ? { ai_provider_priority: credentials.ai_provider_priority } : {}),
                     ai_provider_configs: {
-                        [provider]: credentials.ai_provider_configs?.[provider] || {}
+                        [provider]: changedConfig
                     }
                 });
             } else if (credentialType === 'ai_model_priority') {
+                if (credentials.ai_provider_priority === initialCredentials.ai_provider_priority) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
                 response = await api.updateCredentials({
                     ai_provider_priority: credentials.ai_provider_priority
                 });
             } else if (credentialType === 'openai') {
-                response = await api.updateCredentials({
+                const payload = getChangedFields({
                     openai_api_key: credentials.openai_api_key,
                     openai_base_url: credentials.openai_base_url
+                }, {
+                    openai_api_key: initialCredentials.openai_api_key,
+                    openai_base_url: initialCredentials.openai_base_url
+                });
+                if (Object.keys(payload).length === 0) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
+                response = await api.updateCredentials({
+                    ...payload
                 });
             } else if (credentialType === 'logto') {
-                response = await api.updateCredentials({
-                    // Server-side JWT validation settings
+                const payload = getChangedFields({
                     logto_issuer: credentials.logto_issuer,
                     logto_jwks_uri: credentials.logto_jwks_uri,
                     logto_audience: credentials.logto_audience,
@@ -84,21 +115,55 @@ export function useCredentials() {
                     enable_login: credentials.enable_login,
                     auth_provider: credentials.auth_provider,
                     system_auth_allow_registration: credentials.system_auth_allow_registration,
-                    // Frontend OAuth configuration
                     logto_endpoint: credentials.logto_endpoint,
                     logto_app_id: credentials.logto_app_id,
                     logto_redirect_uri: credentials.logto_redirect_uri,
                     logto_post_logout_redirect_uri: credentials.logto_post_logout_redirect_uri
+                }, {
+                    logto_issuer: initialCredentials.logto_issuer,
+                    logto_jwks_uri: initialCredentials.logto_jwks_uri,
+                    logto_audience: initialCredentials.logto_audience,
+                    logto_required_scopes: initialCredentials.logto_required_scopes,
+                    enable_login: initialCredentials.enable_login,
+                    auth_provider: initialCredentials.auth_provider,
+                    system_auth_allow_registration: initialCredentials.system_auth_allow_registration,
+                    logto_endpoint: initialCredentials.logto_endpoint,
+                    logto_app_id: initialCredentials.logto_app_id,
+                    logto_redirect_uri: initialCredentials.logto_redirect_uri,
+                    logto_post_logout_redirect_uri: initialCredentials.logto_post_logout_redirect_uri
+                });
+                if (Object.keys(payload).length === 0) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
+                response = await api.updateCredentials({
+                    ...payload
                 });
             } else if (credentialType === 'proxy') {
-                response = await api.updateCredentials({
+                const payload = getChangedFields({
                     http_proxy: credentials.http_proxy,
                     https_proxy: credentials.https_proxy
+                }, {
+                    http_proxy: initialCredentials.http_proxy,
+                    https_proxy: initialCredentials.https_proxy
+                });
+                if (Object.keys(payload).length === 0) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
+                response = await api.updateCredentials({
+                    ...payload
                 });
             } else if (credentialType.startsWith('ccxt-')) {
                 const [, exchange, mode] = credentialType.split('-');
                 const creds = credentials.ccxt[exchange]?.[mode] || {};
-                response = await api.updateCCXTCredentials(exchange, mode, creds);
+                const initialCreds = initialCredentials.ccxt?.[exchange]?.[mode] || {};
+                const payload = getChangedFields(creds, initialCreds);
+                if (Object.keys(payload).length === 0) {
+                    message.info(t('settings.credentials.no_changes', 'No credential changes to save'));
+                    return;
+                }
+                response = await api.updateCCXTCredentials(exchange, mode, payload);
             }
 
             if (response.status === 'ok') {
@@ -121,7 +186,7 @@ export function useCredentials() {
         } finally {
             setLoading(false);
         }
-    }, [credentials, loadCredentials, t]);
+    }, [credentials, getChangedFields, initialCredentials, loadCredentials, t]);
 
     const handleTestCredential = useCallback(async (credentialType) => {
         try {
@@ -153,13 +218,15 @@ export function useCredentials() {
             } else if (credentialType.startsWith('ccxt-')) {
                 const [, exchange, mode] = credentialType.split('-');
                 const creds = credentials.ccxt[exchange]?.[mode] || {};
+                const initialCreds = initialCredentials.ccxt?.[exchange]?.[mode] || {};
                 params = {
                     credential_type: 'ccxt',
                     exchange,
                     mode,
-                    api_key: creds.api_key,
-                    secret: creds.secret,
-                    passphrase: creds.passphrase
+                    api_key: creds.api_key !== initialCreds.api_key ? creds.api_key : undefined,
+                    secret: creds.secret !== initialCreds.secret ? creds.secret : undefined,
+                    passphrase: creds.passphrase !== initialCreds.passphrase ? creds.passphrase : undefined,
+                    use_testnet: mode === 'paper',
                 };
             }
 
@@ -176,7 +243,7 @@ export function useCredentials() {
         } finally {
             setTestingCredential(null);
         }
-    }, [credentials, t]);
+    }, [credentials, initialCredentials, t]);
 
     const handleResetCredential = useCallback(async (credentialKey) => {
         try {

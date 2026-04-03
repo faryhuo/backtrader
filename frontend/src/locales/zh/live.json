@@ -156,6 +156,26 @@
                           "order_cancelled":  "订单已取消",
                           "order_cancel_failed":  "取消订单失败: {{error}}"
                       },
+    "config":  {
+                   "title":  "交易接入配置",
+                   "subtitle":  "启动前先配置交易所 Key 与 paper 端点。",
+                   "api_key":  "API Key",
+                   "secret":  "Secret",
+                   "api_key_placeholder":  "输入 API Key",
+                   "secret_placeholder":  "输入 Secret",
+                   "paper_test_url":  "Paper 测试 URL",
+                   "paper_hint":  "Paper 凭证应指向 Binance 测试网账户。",
+                   "live_hint":  "Live 凭证会用于真实资金执行。",
+                   "save_credentials":  "保存凭证",
+                   "save_test_url":  "保存测试 URL",
+                   "test_connection":  "测试连接",
+                   "load_failed":  "加载交易接入配置失败",
+                   "save_failed":  "保存交易接入配置失败",
+                   "credentials_saved":  "交易凭证已保存",
+                   "test_success":  "连接测试成功",
+                   "test_failed":  "连接测试失败",
+                   "test_url_saved":  "Paper 测试 URL 已保存"
+                      },
     "errors":  {
                    "title":  "最近交易错误",
                    "none":  "暂无最近交易错误",

@@ -52,6 +52,7 @@ class BinanceStore:
         self.session_id = session_id
         self.config = config or {}
         self.market = str(self.config.get("default_market") or "spot").lower()
+        self.sandbox_url = str(self.config.get("sandbox_url") or "").strip()
 
         self._running = False
         self._client: Optional[Client] = None
@@ -92,6 +93,7 @@ class BinanceStore:
                 self.api_secret,
                 testnet=self._paper_mode,
             )
+            self._apply_sandbox_url_override(self._client)
             if self.is_futures_market() and hasattr(self._client, "futures_ping"):
                 self._client.futures_ping()
             else:
@@ -122,6 +124,21 @@ class BinanceStore:
 
     def is_futures_market(self) -> bool:
         return self.market == "futures"
+
+    def _apply_sandbox_url_override(self, client: Client) -> None:
+        """Override the paper/testnet REST URL when the runtime config provides one."""
+        if not self._paper_mode or not self.sandbox_url:
+            return
+
+        normalized = self.sandbox_url.rstrip("/")
+        if self.is_futures_market():
+            endpoint = normalized if normalized.endswith("/fapi") else f"{normalized}/fapi"
+            client.FUTURES_TESTNET_URL = endpoint
+            client.FUTURES_URL = endpoint
+        else:
+            endpoint = normalized if normalized.endswith("/api") else f"{normalized}/api"
+            client.API_TESTNET_URL = endpoint
+            client.API_URL = endpoint
 
     # ═══════════════════════════ Callback Registration ═══════════════════════
 

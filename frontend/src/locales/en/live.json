@@ -170,5 +170,25 @@
     "session_refresh_failed": "Failed to refresh session status",
     "order_cancelled": "Order cancelled",
     "order_cancel_failed": "Failed to cancel order: {{error}}"
+  },
+  "config": {
+    "title": "Trading Access",
+    "subtitle": "Configure exchange keys and the paper endpoint before launching.",
+    "api_key": "API Key",
+    "secret": "Secret",
+    "api_key_placeholder": "Enter API Key",
+    "secret_placeholder": "Enter Secret",
+    "paper_test_url": "Paper Test URL",
+    "paper_hint": "Paper credentials should point to your Binance testnet account.",
+    "live_hint": "Live credentials will be used for real-money execution.",
+    "save_credentials": "Save Credentials",
+    "save_test_url": "Save Test URL",
+    "test_connection": "Test Connection",
+    "load_failed": "Failed to load trading access configuration",
+    "save_failed": "Failed to save trading access configuration",
+    "credentials_saved": "Trading credentials saved",
+    "test_success": "Connection test succeeded",
+    "test_failed": "Connection test failed",
+    "test_url_saved": "Paper test URL saved"
   }
 }

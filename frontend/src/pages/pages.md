@@ -34,3 +34,4 @@ Route-level React pages live here. Pages assemble feature components, page-level
 - `ReportCenter.jsx` now renders completed report HTML inline for authenticated users instead of showing a placeholder-only viewer.
 - `BacktestHistory.jsx` now supports multi-select comparison report generation for strategy backtest rows.
 - `BacktestHistory.jsx` now derives comparison report language from the shared `i18n` singleton so the history page does not crash on render when building the report callback dependencies.
+- `LiveTradingDashboard.jsx` now exposes an exchange-access panel ahead of the launcher so users can manage Binance paper/live API keys and the paper test URL without leaving the live page.

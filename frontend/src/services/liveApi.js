@@ -96,6 +96,19 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
+    async getConfig() {
+        const res = await buildRequest('/live/config')
+        return await parseResponse(res)
+    },
+
+    async updateConfig(config) {
+        const res = await buildRequest('/live/config', {
+            method: 'PUT',
+            body: JSON.stringify(config)
+        })
+        return await parseResponse(res)
+    },
+
     async getHealth() {
         const res = await buildRequest('/live/health')
         return await parseResponse(res)

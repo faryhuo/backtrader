@@ -6,6 +6,7 @@ event routing (broker → WebSocket + DB) → graceful shutdown.
 """
 
 import asyncio
+import json
 import logging
 import threading
 import time
@@ -17,13 +18,14 @@ import backtrader as bt
 
 from src.brokers.binance_adapter import BinanceBroker, BinanceData, BinanceStore, TIMEFRAME_SECONDS
 from src.config.config_manager import get_global_config_manager, get_user_config_manager
+from src.config.settings import CONFIG_DIR
 from src.contracts.sizer_config import SizerConfig, SizerType
 from src.db import SessionStorage
 from src.db.storage.session import build_session_order_pk
 from src.service.backtest_engine import TradeRecorder, load_user_strategy
 from src.service.live_strategy_bridge import wrap_strategy_with_live_gate
 from src.service.session_manager import SessionStatus, get_session_manager
-from src.utils.config_loader import get_exchange_config, get_risk_config, load_broker_config
+from src.utils.config_loader import get_exchange_config, get_risk_config, load_broker_config, reload_config
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +100,46 @@ class LiveTradingError(Exception):
 
 def _get_config_manager(user_id: Optional[str]):
     return get_user_config_manager(user_id) if user_id else get_global_config_manager()
+
+
+def get_live_runtime_config() -> Dict[str, str]:
+    """Return the editable runtime config used by the live launcher."""
+    broker_config = load_broker_config()
+    exchange_config = get_exchange_config("binance", broker_config)
+    paper_mode = getattr(exchange_config, "paper_mode", None)
+
+    return {
+        "paper_test_url": str(
+            getattr(paper_mode, "sandbox_url", None) or "https://testnet.binance.vision"
+        ).strip(),
+    }
+
+
+def update_live_runtime_config(*, paper_test_url: Optional[str] = None) -> Dict[str, str]:
+    """Persist editable runtime config values back to broker_config.json."""
+    config_path = CONFIG_DIR / "broker_config.json"
+    if not config_path.exists():
+        raise LiveTradingError(f"Broker configuration not found at {config_path}")
+
+    try:
+        raw_config = json.loads(config_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise LiveTradingError(f"Failed to parse broker configuration: {exc}") from exc
+
+    exchanges = raw_config.setdefault("exchanges", {})
+    binance_config = exchanges.setdefault("binance", {})
+    paper_mode = binance_config.setdefault("paper_mode", {})
+
+    if paper_test_url is not None:
+        normalized_url = str(paper_test_url).strip() or "https://testnet.binance.vision"
+        paper_mode["sandbox_url"] = normalized_url
+
+    config_path.write_text(
+        json.dumps(raw_config, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    reload_config()
+    return get_live_runtime_config()
 
 
 def _get_exchange_credentials(exchange: str, mode: str, user_id: Optional[str]) -> Dict[str, str]:
@@ -513,7 +555,11 @@ def start_session(
             api_secret=credentials['api_secret'],
             mode=mode,
             exchange_id=ex_config.ccxt_id,
-            config={'default_market': market, 'markets': enabled_markets},
+            config={
+                'default_market': market,
+                'markets': enabled_markets,
+                'sandbox_url': getattr(ex_config.paper_mode, 'sandbox_url', None),
+            },
             user_id=user_id,
             session_id=session_id,
         )
@@ -1246,7 +1292,11 @@ def get_symbol_trading_rules(
             api_secret=credentials['api_secret'],
             mode=mode,
             exchange_id=ex_config.ccxt_id,
-            config={'default_market': market, 'markets': enabled_markets},
+            config={
+                'default_market': market,
+                'markets': enabled_markets,
+                'sandbox_url': getattr(ex_config.paper_mode, 'sandbox_url', None),
+            },
             user_id=user_id,
         )
         store.start()

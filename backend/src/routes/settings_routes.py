@@ -87,6 +87,30 @@ def _resolve_masked_ccxt_value(
     return incoming_value
 
 
+def _resolve_ccxt_test_value(
+    storage: SettingsStorage,
+    exchange: str,
+    mode: str,
+    field: str,
+    incoming_value: Optional[str],
+    user_id: Optional[str],
+) -> Optional[str]:
+    """Resolve test payloads against stored CCXT credentials when the UI kept the masked value."""
+    if exchange and mode:
+        current_credentials, _ = storage.get_ccxt_credentials_all(user_id=user_id, mask_sensitive=False)
+        current_value = current_credentials.get(exchange, {}).get(mode, {}).get(field)
+    else:
+        current_value = None
+
+    if incoming_value is None:
+        return current_value
+
+    if isinstance(current_value, str) and incoming_value == mask_credential(current_value):
+        return current_value
+
+    return incoming_value
+
+
 def _resolve_masked_data_source_value(
     storage: SettingsStorage,
     field: str,
@@ -246,6 +270,7 @@ class CredentialTestRequest(BaseModel):
     mode: Optional[str] = None
     secret: Optional[str] = None
     passphrase: Optional[str] = None
+    use_testnet: Optional[bool] = None
     # For Logto
     issuer: Optional[str] = None
     jwks_uri: Optional[str] = None
@@ -511,15 +536,16 @@ def test_credentials(
             kwargs = {
                 'exchange': request.exchange,
                 'mode': request.mode,
-                'api_key': _resolve_masked_ccxt_value(
+                'api_key': _resolve_ccxt_test_value(
                     storage, request.exchange or '', request.mode or '', 'api_key', request.api_key, user_id
                 ),
-                'secret': _resolve_masked_ccxt_value(
+                'secret': _resolve_ccxt_test_value(
                     storage, request.exchange or '', request.mode or '', 'secret', request.secret, user_id
                 ),
-                'passphrase': _resolve_masked_ccxt_value(
+                'passphrase': _resolve_ccxt_test_value(
                     storage, request.exchange or '', request.mode or '', 'passphrase', request.passphrase, user_id
-                )
+                ),
+                'use_testnet': request.use_testnet,
             }
         elif credential_type == 'logto':
             kwargs = {

@@ -177,6 +177,14 @@ class ExchangeInfo(BaseModel):
     paper_mode_available: bool
 
 
+class LiveRuntimeConfigResponse(BaseModel):
+    paper_test_url: str
+
+
+class LiveRuntimeConfigUpdate(BaseModel):
+    paper_test_url: str = Field(..., min_length=1, description="Paper/testnet base URL")
+
+
 # ──────────────────────────── Endpoints ────────────────────────────
 
 
@@ -413,6 +421,30 @@ async def get_exchanges():
     """Get list of available exchanges."""
     exchanges = list_enabled_exchanges()
     return [ExchangeInfo(**ex) for ex in exchanges]
+
+
+@router.get("/live/config", tags=["Live Trading"], response_model=LiveRuntimeConfigResponse)
+async def get_live_runtime_config():
+    """Get editable runtime config values for the live launcher."""
+    try:
+        return live_engine.get_live_runtime_config()
+    except LiveTradingError as e:
+        raise HTTPException(500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to load live runtime config: {e}")
+        raise HTTPException(500, detail=f"Failed to load live runtime config: {e}")
+
+
+@router.put("/live/config", tags=["Live Trading"], response_model=LiveRuntimeConfigResponse)
+async def update_live_runtime_config(request: LiveRuntimeConfigUpdate):
+    """Update editable runtime config values for the live launcher."""
+    try:
+        return live_engine.update_live_runtime_config(paper_test_url=request.paper_test_url)
+    except LiveTradingError as e:
+        raise HTTPException(500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to update live runtime config: {e}")
+        raise HTTPException(500, detail=f"Failed to update live runtime config: {e}")
 
 
 @router.get("/live/symbols", tags=["Live Trading"])
