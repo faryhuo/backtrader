@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { message } from 'antd';
+import { Modal, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { getSiteConfigAdmin, updateSiteConfig, resetSiteConfig } from '../services/siteApi';
 
@@ -66,7 +66,18 @@ export function useSiteConfig() {
     }, [config, loadConfig, t]);
 
     const handleReset = useCallback(async () => {
-        if (!window.confirm(t('settings.reset_confirm', 'Reset site configuration to defaults?'))) {
+        const confirmed = await new Promise((resolve) => {
+            Modal.confirm({
+                title: t('settings.reset', 'Reset'),
+                content: t('settings.reset_confirm', 'Reset site configuration to defaults?'),
+                okText: t('common.confirm', 'Confirm'),
+                cancelText: t('common.cancel', 'Cancel'),
+                okType: 'danger',
+                onOk: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        });
+        if (!confirmed) {
             return;
         }
 

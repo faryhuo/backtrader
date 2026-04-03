@@ -1,4 +1,6 @@
 import dayjs from 'dayjs';
+import { useEffect } from 'react';
+import { Modal } from 'antd';
 import '../components/RunStrategy/RunStrategy.css';
 import { useSettingsContext } from '../contexts/SettingsContext';
 import { useStrategyParams } from '../hooks/useStrategyParams';
@@ -14,6 +16,13 @@ import TaskProgressCard from '../components/RunStrategy/TaskProgressCard';
 import EmptyState from '../components/RunStrategy/EmptyState';
 import { useTranslation } from 'react-i18next';
 
+const YAHOO_INTRADAY_LIMITS = {
+    '1m': 7,
+    '5m': 59,
+    '15m': 59,
+    '1h': 729,
+};
+
 /**
  * RunStrategy Page - Container Component
  * 
@@ -27,6 +36,8 @@ function RunStrategy() {
 
     // Form State - persisted in localStorage across page navigations
     const [ticker, setTicker] = usePersistedState('runStrategy.ticker', 'AAPL');
+    const [dataSource, setDataSource] = usePersistedState('runStrategy.dataSource', 'yahoo');
+    const [instrumentType, setInstrumentType] = usePersistedState('runStrategy.instrumentType', 'stock');
     const [startDate, setStartDate] = usePersistedState('runStrategy.startDate', dayjs().subtract(3, 'month').format('YYYY-MM-DD'));
     const [endDate, setEndDate] = usePersistedState('runStrategy.endDate', dayjs().format('YYYY-MM-DD'));
     const [initialCash, setInitialCash] = usePersistedState('runStrategy.initialCash', defaults.initial_cash);
@@ -76,14 +87,84 @@ function RunStrategy() {
         clearAnalyses,
     } = useAIAnalysis({ settings });
 
+    const getYahooAdjustedRange = () => {
+        const limitDays = YAHOO_INTRADAY_LIMITS[timeframe];
+        if (dataSource !== 'yahoo' || !limitDays) {
+            return null;
+        }
+
+        const today = dayjs().format('YYYY-MM-DD');
+        const latestAllowedStart = dayjs().subtract(limitDays, 'day').format('YYYY-MM-DD');
+
+        const selectedStart = dayjs(startDate);
+        const selectedEnd = dayjs(endDate);
+        if (!selectedStart.isValid() || !selectedEnd.isValid()) {
+            return null;
+        }
+
+        const minAllowed = dayjs(latestAllowedStart);
+        const maxAllowed = dayjs(today);
+        const withinWindow = !selectedStart.isBefore(minAllowed, 'day') && !selectedEnd.isAfter(maxAllowed, 'day') && !selectedEnd.isBefore(minAllowed, 'day');
+
+        if (withinWindow) {
+            return null;
+        }
+
+        return {
+            startDate: latestAllowedStart,
+            endDate: today,
+            limitDays,
+        };
+    };
+
+    const confirmRangeAdjustment = (confirmMessage) => new Promise((resolve) => {
+        Modal.confirm({
+            title: t('config_form.yahoo_intraday_title', 'Adjust backtest range'),
+            content: confirmMessage,
+            okText: t('common.confirm', 'Confirm'),
+            cancelText: t('common.cancel', 'Cancel'),
+            onOk: () => resolve(true),
+            onCancel: () => resolve(false),
+        });
+    });
+
     const handleBacktest = async (e) => {
         e.preventDefault();
         clearAnalyses();
 
+        let nextStartDate = startDate;
+        let nextEndDate = endDate;
+
+        const adjustedRange = getYahooAdjustedRange();
+        if (adjustedRange) {
+            const confirmMessage = t(
+                'config_form.yahoo_intraday_confirm',
+                {
+                    timeframe,
+                    limit_days: adjustedRange.limitDays,
+                    start_date: adjustedRange.startDate,
+                    end_date: adjustedRange.endDate,
+                    defaultValue: `Yahoo Finance ${timeframe} data is only available for the most recent ${adjustedRange.limitDays} days. Update the backtest range to ${adjustedRange.startDate} - ${adjustedRange.endDate}?`,
+                },
+            );
+
+            const confirmed = await confirmRangeAdjustment(confirmMessage);
+            if (!confirmed) {
+                return;
+            }
+
+            nextStartDate = adjustedRange.startDate;
+            nextEndDate = adjustedRange.endDate;
+            setStartDate(nextStartDate);
+            setEndDate(nextEndDate);
+        }
+
         await runBacktest({
             ticker,
-            startDate,
-            endDate,
+            dataSource,
+            instrumentType,
+            startDate: nextStartDate,
+            endDate: nextEndDate,
             initialCash,
             commission,
             stake,
@@ -108,6 +189,12 @@ function RunStrategy() {
             t,
         });
     };
+
+    useEffect(() => {
+        if (dataSource === 'eodhd' && timeframe !== '1d') {
+            setTimeframe('1d');
+        }
+    }, [dataSource, timeframe, setTimeframe]);
 
     // Derived values
     const tradeList = result?.metrics?.trade_details?.trades || result?.trade_details?.trades || [];
@@ -147,6 +234,10 @@ function RunStrategy() {
                 fetchStrategies={fetchStrategies}
                 ticker={ticker}
                 setTicker={setTicker}
+                dataSource={dataSource}
+                setDataSource={setDataSource}
+                instrumentType={instrumentType}
+                setInstrumentType={setInstrumentType}
                 startDate={startDate}
                 setStartDate={setStartDate}
                 endDate={endDate}

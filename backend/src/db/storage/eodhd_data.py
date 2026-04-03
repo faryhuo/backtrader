@@ -22,6 +22,41 @@ class EODHDError(Exception):
     pass
 
 
+EODHD_TYPE_MAP = {
+    "stock": {"stock", "common stock"},
+    "etf": {"etf"},
+    "index": {"index"},
+    "forex": {"forex", "currency"},
+    "crypto": {"crypto", "cryptocurrency"},
+    "futures": {"future", "futures"},
+    "fund": {"fund", "mutual fund"},
+}
+
+
+def _matches_eodhd_type(raw_type: str | None, instrument_type: str | None, code: str | None = None, exchange: str | None = None) -> bool:
+    normalized_type = str(instrument_type or "").strip().lower()
+    if not normalized_type or normalized_type == "all":
+        return True
+
+    normalized_raw_type = str(raw_type or "").strip().lower()
+    if normalized_raw_type and normalized_raw_type in EODHD_TYPE_MAP.get(normalized_type, set()):
+        return True
+
+    normalized_code = str(code or "").strip().upper()
+    normalized_exchange = str(exchange or "").strip().upper()
+
+    if normalized_type == "crypto":
+        return normalized_exchange in {"CC", "CRYPTO", "COINBASE"} or normalized_code.endswith(".CC")
+    if normalized_type == "forex":
+        return normalized_exchange in {"FOREX", "FX"} or normalized_code.endswith(".FOREX")
+    if normalized_type == "index":
+        return normalized_exchange in {"INDX", "INDEX"} or normalized_code.endswith(".INDX")
+    if normalized_type == "futures":
+        return normalized_exchange in {"FUT", "FUTURES"} or normalized_code.endswith(".FUT")
+
+    return False
+
+
 def fetch_from_eodhd(
     ticker: str,
     start: str,
@@ -131,7 +166,64 @@ def fetch_from_eodhd(
         return None
 
 
+def search_eodhd_instruments(
+    query: str,
+    instrument_type: str | None = None,
+    limit: int = 20,
+    api_key: Optional[str] = None,
+) -> list[dict]:
+    """
+    Search EODHD instruments directly from the platform API.
+    """
+    normalized_query = (query or "").strip()
+    if not normalized_query or not api_key:
+        return []
+
+    url = f"{EODHD_API_URL}/search/{normalized_query}"
+    params = {
+        "api_token": api_key,
+        "fmt": "json",
+        "limit": limit,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=20)
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, list):
+            return []
+
+        results: list[dict] = []
+        for item in payload:
+            code = item.get("Code")
+            exchange = item.get("Exchange")
+            raw_type = item.get("Type")
+            if not code:
+                continue
+            if not _matches_eodhd_type(raw_type, instrument_type, code=code, exchange=exchange):
+                continue
+
+            results.append({
+                "code": code,
+                "label": item.get("Name") or code,
+                "instrument_type": instrument_type or str(raw_type or "").strip().lower() or "unknown",
+                "exchange": exchange,
+                "currency": item.get("Currency"),
+                "quote_type": str(raw_type or "").strip().lower() or None,
+                "source": "eodhd",
+            })
+
+            if len(results) >= limit:
+                break
+
+        return results
+    except Exception as exc:
+        logger.warning(f"EODHD instrument search failed for '{normalized_query}': {exc}")
+        return []
+
+
 __all__ = [
     "EODHDError",
     "fetch_from_eodhd",
+    "search_eodhd_instruments",
 ]

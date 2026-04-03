@@ -53,6 +53,7 @@ def run_backtest_worker(
     sizer_type: str = "fixed_size",
     sizer_config: Optional[dict] = None,
     timeframe: str = "1d",
+    data_source: Optional[str] = None,
 ) -> dict:
     """
     Run backtest in isolated worker process (secure).
@@ -82,6 +83,7 @@ def run_backtest_worker(
         sizer_type=sizer_type,
         sizer_config=sizer_config,
         timeframe=timeframe,
+        data_source=data_source,
     )
 
     pool = get_worker_pool()
@@ -124,6 +126,7 @@ def run_backtest_legacy(
     save_path: Optional[Path],
     params: Optional[dict],
     timeframe: str = "1d",
+    data_source: Optional[str] = None,
 ) -> dict:
     """
     Legacy in-process backtest execution.
@@ -141,7 +144,8 @@ def run_backtest_legacy(
         else:
             cerebro.addstrategy(strategy_cls)
 
-        data = get_data(ticker, start_date, end_date, timeframe=timeframe)
+        priority = [data_source] if data_source else None
+        data = get_data(ticker, start_date, end_date, timeframe=timeframe, priority=priority)
         cerebro.adddata(data)
 
         estimated_min_bars = None
@@ -212,7 +216,13 @@ def run_backtest_legacy(
         metrics["returns"] = metrics["total_return"]
         metrics["chart_data"] = build_backtest_chart_data(
             strat,
-            get_raw_data_json(ticker, start_date, end_date),
+            get_raw_data_json(
+                ticker,
+                start_date,
+                end_date,
+                timeframe=timeframe,
+                priority=priority,
+            ),
             metrics,
             initial_cash,
         )

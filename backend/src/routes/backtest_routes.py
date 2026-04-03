@@ -48,6 +48,8 @@ router = APIRouter()
 
 class BacktestRequest(BaseModel):
     ticker: str
+    data_source: str | None = None
+    instrument_type: str | None = None
     start_date: str
     end_date: str
     initial_cash: float

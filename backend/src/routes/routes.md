@@ -33,3 +33,4 @@ FastAPI route modules live here. Each `{feature}_routes.py` file owns request va
 - `settings_routes.py` now exposes frontend auth configuration for both `logto` and built-in `system` providers from the existing `/api/settings/logto-config` endpoint.
 - `live_routes.py` now treats Binance `market` as an explicit request/query parameter so spot and futures sessions, symbol lookup, and symbol-rule lookup share one route surface.
 - `live_routes.py` now also exposes `/api/live/config` so the launcher page can read and update the Binance paper test URL without going through the first-run setup wizard.
+- `market_data_routes.py` now also exposes `/api/instruments/catalog` for the backtest instrument picker's platform/type/code workflow.

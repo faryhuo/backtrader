@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,7 +6,6 @@ import {
     DollarOutlined,
     PercentageOutlined,
     NumberOutlined,
-    StockOutlined,
     SyncOutlined,
     RocketOutlined,
     SettingOutlined,
@@ -16,9 +15,11 @@ import {
     ShrinkOutlined,
     PieChartOutlined,
     ClockCircleOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    SearchOutlined,
 } from '@ant-design/icons';
-import { Alert, Tooltip } from 'antd';
+import { Alert, AutoComplete, Collapse, Input, Tooltip } from 'antd';
+import { marketDataApi } from '../../services/marketDataApi';
 import {
     formatStrategyError,
     shouldShowStrategyErrorDetail,
@@ -42,6 +43,21 @@ const TIMEFRAME_OPTIONS = [
     { value: '1m', label: '1 Min' },
 ];
 
+const DATA_SOURCE_OPTIONS = [
+    { value: 'yahoo', labelKey: 'config_form.platform_yahoo', fallback: 'Yahoo Finance' },
+    { value: 'eodhd', labelKey: 'config_form.platform_eodhd', fallback: 'EODHD' },
+];
+
+const INSTRUMENT_TYPE_OPTIONS = [
+    { value: 'stock', labelKey: 'config_form.instrument_type_stock', fallback: 'Stock' },
+    { value: 'etf', labelKey: 'config_form.instrument_type_etf', fallback: 'ETF' },
+    { value: 'index', labelKey: 'config_form.instrument_type_index', fallback: 'Index' },
+    { value: 'forex', labelKey: 'config_form.instrument_type_forex', fallback: 'Forex' },
+    { value: 'crypto', labelKey: 'config_form.instrument_type_crypto', fallback: 'Crypto' },
+    { value: 'futures', labelKey: 'config_form.instrument_type_futures', fallback: 'Futures' },
+    { value: 'fund', labelKey: 'config_form.instrument_type_fund', fallback: 'Fund' },
+];
+
 function StrategyConfigForm({
     strategies,
     selectedStrategy,
@@ -49,6 +65,10 @@ function StrategyConfigForm({
     fetchStrategies,
     ticker,
     setTicker,
+    dataSource,
+    setDataSource,
+    instrumentType,
+    setInstrumentType,
     startDate,
     setStartDate,
     endDate,
@@ -75,8 +95,46 @@ function StrategyConfigForm({
     const { t } = useTranslation();
     const [paramsExpanded, setParamsExpanded] = useState(true);
     const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+    const [instrumentOptions, setInstrumentOptions] = useState([]);
+    const [instrumentExamples, setInstrumentExamples] = useState([]);
     const formattedError = error ? formatStrategyError(error, t) : null;
     const showTechnicalDetail = shouldShowStrategyErrorDetail(formattedError);
+    const autoCompleteOptions = instrumentOptions.map((option) => ({
+        value: option.code,
+        label: (
+            <div className="instrument-option">
+                <span className="instrument-option-code">{option.code}</span>
+                <span className="instrument-option-label">{option.label || option.code}</span>
+            </div>
+        ),
+    }));
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadCatalog() {
+            try {
+                const catalog = await marketDataApi.getInstrumentCatalog({
+                    platform: dataSource,
+                    instrumentType,
+                    query: ticker,
+                    limit: 20,
+                });
+                if (cancelled) return;
+                setInstrumentOptions(catalog.options || []);
+                setInstrumentExamples(catalog.examples || []);
+            } catch {
+                if (cancelled) return;
+                setInstrumentOptions([]);
+                setInstrumentExamples([]);
+            }
+        }
+
+        loadCatalog();
+        return () => {
+            cancelled = true;
+        };
+    }, [dataSource, instrumentType, ticker]);
 
     // Handle sizer config changes
     const updateSizerConfig = (key, value) => {
@@ -85,7 +143,7 @@ function StrategyConfigForm({
 
     return (
         <section className="card form-card-enhanced">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div className="strategy-form-header">
                 <h2 style={{ margin: 0 }}><RocketOutlined /> {t('config_form.title')}</h2>
                 <button
                     type="button"
@@ -100,7 +158,7 @@ function StrategyConfigForm({
             {!isFormCollapsed && (
                 <form onSubmit={onSubmit}>
                     <div className="form-grid">
-                        <div className="form-group strategy-select-group">
+                        <div className="form-group strategy-select-group form-col-span-2">
                             <label htmlFor="strategy-select">{t('config_form.strategy')}</label>
                             <div className="strategy-input-wrapper">
                                 <select
@@ -124,21 +182,74 @@ function StrategyConfigForm({
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="ticker">{t('config_form.asset_ticker')}</label>
-                            <div className="input-with-icon">
-                                <StockOutlined className="input-icon" />
-                                <input
-                                    id="ticker"
-                                    type="text"
-                                    value={ticker}
-                                    onChange={(e) => setTicker(e.target.value)}
-                                    required
-                                />
-                            </div>
+                        <div className="form-group form-col-span-2">
+                            <label htmlFor="data-source">{t('config_form.data_source', 'Data Platform')}</label>
+                            <select
+                                id="data-source"
+                                value={dataSource}
+                                onChange={(e) => setDataSource(e.target.value)}
+                                className="styled-select"
+                            >
+                                {DATA_SOURCE_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {t(opt.labelKey, opt.fallback)}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
+                            <label htmlFor="instrument-type">{t('config_form.instrument_type', 'Instrument Type')}</label>
+                            <select
+                                id="instrument-type"
+                                value={instrumentType}
+                                onChange={(e) => setInstrumentType(e.target.value)}
+                                className="styled-select"
+                            >
+                                {INSTRUMENT_TYPE_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {t(opt.labelKey, opt.fallback)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-group form-col-span-2">
+                            <label htmlFor="ticker">{t('config_form.instrument_code', 'Instrument Code')}</label>
+                            <div className="instrument-search-wrapper">
+                                <AutoComplete
+                                    id="ticker"
+                                    popupClassName="instrument-autocomplete-dropdown"
+                                    className="instrument-autocomplete"
+                                    options={autoCompleteOptions}
+                                    value={ticker}
+                                    filterOption={false}
+                                    allowClear
+                                    onChange={(value) => setTicker(String(value || '').toUpperCase())}
+                                    onSelect={(value) => setTicker(String(value || '').toUpperCase())}
+                                    placeholder={
+                                        instrumentExamples.length > 0
+                                            ? instrumentExamples.join(', ')
+                                            : t('config_form.instrument_code_placeholder', 'Search instrument code')
+                                    }
+                                >
+                                    <Input.Search
+                                        className="instrument-search-input"
+                                        required
+                                        allowClear
+                                        enterButton={false}
+                                        prefix={<SearchOutlined />}
+                                    />
+                                </AutoComplete>
+                            </div>
+                            {instrumentExamples.length > 0 && (
+                                <div className="field-hint">
+                                    {t('config_form.instrument_examples', 'Examples')}: {instrumentExamples.join(', ')}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="start-date">{t('config_form.start_date')}</label>
                             <div className="input-with-icon">
                                 <CalendarOutlined className="input-icon" />
@@ -152,7 +263,7 @@ function StrategyConfigForm({
                             </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="end-date">{t('config_form.end_date')}</label>
                             <div className="input-with-icon">
                                 <CalendarOutlined className="input-icon" />
@@ -166,7 +277,7 @@ function StrategyConfigForm({
                             </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="initial-cash">{t('config_form.initial_capital')}</label>
                             <div className="input-with-icon">
                                 <DollarOutlined className="input-icon" />
@@ -180,7 +291,7 @@ function StrategyConfigForm({
                             </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="commission">{t('config_form.commission')}</label>
                             <div className="input-with-icon">
                                 <PercentageOutlined className="input-icon" />
@@ -196,7 +307,7 @@ function StrategyConfigForm({
                         </div>
 
                         {/* Sizer Type Selector - First */}
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="sizer-type">
                                 <PieChartOutlined /> {t('config_form.sizer_type', 'Position Sizing')}
                                 <Tooltip title={t('config_form.sizer_type_desc', 'Control how position sizes are calculated for each trade')}>
@@ -219,7 +330,7 @@ function StrategyConfigForm({
 
                         {/* Sizer Config - Only render the relevant one */}
                         {sizerType === 'fixed_size' && (
-                            <div className="form-group">
+                            <div className="form-group form-col-span-2">
                                 <label htmlFor="stake">{t('config_form.order_size')}</label>
                                 <div className="input-with-icon">
                                     <NumberOutlined className="input-icon" />
@@ -235,7 +346,7 @@ function StrategyConfigForm({
                         )}
 
                         {sizerType === 'percent_sizer' && (
-                            <div className="form-group">
+                            <div className="form-group form-col-span-2">
                                 <label htmlFor="sizer-percents">
                                     <PercentageOutlined /> {t('config_form.sizer_percent', 'Position %')}
                                 </label>
@@ -255,7 +366,7 @@ function StrategyConfigForm({
                         )}
 
                         {(sizerType === 'risk_sizer' || sizerType === 'kelly_sizer') && (
-                            <div className="form-group">
+                            <div className="form-group form-col-span-2">
                                 <label htmlFor="sizer-risk">
                                     <PercentageOutlined /> {t('config_form.sizer_risk', 'Risk per Trade %')}
                                 </label>
@@ -276,7 +387,7 @@ function StrategyConfigForm({
 
 
                         {/* Timeframe Selector */}
-                        <div className="form-group">
+                        <div className="form-group form-col-span-2">
                             <label htmlFor="timeframe">
                                 <ClockCircleOutlined /> {t('config_form.timeframe', 'Data Interval')}
                                 <Tooltip title={t('config_form.timeframe_desc', 'Select the data frequency for backtesting (e.g., daily, hourly)')}>
@@ -290,11 +401,32 @@ function StrategyConfigForm({
                                 className="styled-select"
                             >
                                 {TIMEFRAME_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
+                                    <option
+                                        key={opt.value}
+                                        value={opt.value}
+                                        disabled={dataSource === 'eodhd' && opt.value !== '1d'}
+                                    >
                                         {t(`timeframe.${opt.value}`, opt.label)}
                                     </option>
                                 ))}
                             </select>
+                            {dataSource === 'eodhd' && (
+                                <div className="field-hint">
+                                    {t('config_form.eodhd_timeframe_hint', 'EODHD backtests currently use daily data only.')}
+                                </div>
+                            )}
+                            {dataSource === 'yahoo' && timeframe !== '1d' && (
+                                <div className="field-hint">
+                                    {t(
+                                        `config_form.yahoo_intraday_hint_${timeframe}`,
+                                        timeframe === '1m'
+                                            ? 'Yahoo Finance 1m data is limited to the most recent 7 days.'
+                                            : timeframe === '1h'
+                                                ? 'Yahoo Finance 1h data is limited to the most recent 729 days.'
+                                                : 'Yahoo Finance intraday data is limited to the most recent 59 days.'
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -365,9 +497,22 @@ function StrategyConfigForm({
                                     </ul>
                                 )}
                                 {showTechnicalDetail && (
-                                    <div className="strategy-error-alert-detail">
-                                        <strong>{t('common.strategy_errors.labels.technical_detail', 'Technical detail')}:</strong> {formattedError.detail}
-                                    </div>
+                                    <Collapse
+                                        className="strategy-error-alert-detail"
+                                        ghost
+                                        size="small"
+                                        items={[
+                                            {
+                                                key: 'technical-detail',
+                                                label: t('common.strategy_errors.labels.technical_detail', 'Technical detail'),
+                                                children: (
+                                                    <div className="strategy-error-alert-detail-content">
+                                                        {formattedError.detail}
+                                                    </div>
+                                                ),
+                                            },
+                                        ]}
+                                    />
                                 )}
                             </div>
                         )}
@@ -385,6 +530,10 @@ StrategyConfigForm.propTypes = {
     fetchStrategies: PropTypes.func.isRequired,
     ticker: PropTypes.string.isRequired,
     setTicker: PropTypes.func.isRequired,
+    dataSource: PropTypes.string.isRequired,
+    setDataSource: PropTypes.func.isRequired,
+    instrumentType: PropTypes.string.isRequired,
+    setInstrumentType: PropTypes.func.isRequired,
     startDate: PropTypes.string.isRequired,
     setStartDate: PropTypes.func.isRequired,
     endDate: PropTypes.string.isRequired,

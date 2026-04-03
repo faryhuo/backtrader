@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { message } from 'antd';
+import { Modal, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { DEFAULT_SETTINGS } from '../constants/settingsConstants';
@@ -120,29 +120,39 @@ export function useSettings() {
     }, [settings, saveToDatabase, t]);
 
     const handleReset = useCallback(async () => {
-        if (window.confirm(t('settings.confirm_reset', 'Are you sure you want to reset all settings to default?'))) {
-            try {
-                setLoading(true);
+        const confirmed = await new Promise((resolve) => {
+            Modal.confirm({
+                title: t('settings.reset', 'Reset'),
+                content: t('settings.confirm_reset', 'Are you sure you want to reset all settings to default?'),
+                okText: t('common.confirm', 'Confirm'),
+                cancelText: t('common.cancel', 'Cancel'),
+                okType: 'danger',
+                onOk: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        });
+        if (!confirmed) {
+            return;
+        }
 
-                try {
-                    const response = await api.resetSettings();
-                    if (response.status === 'ok') {
-                        setSettings(DEFAULT_SETTINGS);
-                        message.success(t('settings.reset_success', 'Settings reset to defaults'));
-                        setSaved(true);
-                        setTimeout(() => setSaved(false), 3000);
-                    }
-                } catch (error) {
-                    console.error('Database reset failed, using localStorage:', error);
-                    setSettings(DEFAULT_SETTINGS);
-                    localStorage.removeItem('userSettings');
-                    message.success(t('settings.reset_success', 'Settings reset to defaults'));
-                    setSaved(true);
-                    setTimeout(() => setSaved(false), 3000);
-                }
-            } finally {
-                setLoading(false);
+        try {
+            setLoading(true);
+            const response = await api.resetSettings();
+            if (response.status === 'ok') {
+                setSettings(DEFAULT_SETTINGS);
+                message.success(t('settings.reset_success', 'Settings reset to defaults'));
+                setSaved(true);
+                setTimeout(() => setSaved(false), 3000);
             }
+        } catch (error) {
+            console.error('Database reset failed, using localStorage:', error);
+            setSettings(DEFAULT_SETTINGS);
+            localStorage.removeItem('userSettings');
+            message.success(t('settings.reset_success', 'Settings reset to defaults'));
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } finally {
+            setLoading(false);
         }
     }, [t]);
 

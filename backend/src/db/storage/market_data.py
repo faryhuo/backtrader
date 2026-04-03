@@ -5,7 +5,7 @@ Provides data loading from yfinance with database caching.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import backtrader as bt
@@ -18,6 +18,13 @@ from src.contracts.exceptions import DataLoadError
 from src.db.models import MarketDataModel, init_database
 
 logger = logging.getLogger(__name__)
+
+YAHOO_INTRADAY_SAFE_LIMITS = {
+    "1m": 7,
+    "5m": 59,
+    "15m": 59,
+    "1h": 729,
+}
 
 # Use default local database if DATABASE_URL is not configured
 _DB_URL = DATABASE_URL or DEFAULT_DB_URL
@@ -226,7 +233,37 @@ def get_data_from_yahoo(ticker: str, start: str, end: str, interval: str = "1d")
         - 1d and above: full history
     """
     try:
-        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False, auto_adjust=False)
+        request_start = start
+        request_end = end
+
+        if interval in YAHOO_INTRADAY_SAFE_LIMITS:
+            start_dt = datetime.strptime(start, "%Y-%m-%d")
+            end_dt = datetime.strptime(end, "%Y-%m-%d")
+            request_end_dt = end_dt + timedelta(days=1)
+            max_lookback_days = YAHOO_INTRADAY_SAFE_LIMITS[interval]
+            earliest_start_dt = request_end_dt - timedelta(days=max_lookback_days)
+
+            if start_dt < earliest_start_dt:
+                logger.info(
+                    "Clipping Yahoo %s request for %s from %s to %s to stay within supported lookback",
+                    interval,
+                    ticker,
+                    start_dt.strftime("%Y-%m-%d"),
+                    earliest_start_dt.strftime("%Y-%m-%d"),
+                )
+                start_dt = earliest_start_dt
+
+            request_start = start_dt.strftime("%Y-%m-%d")
+            request_end = request_end_dt.strftime("%Y-%m-%d")
+
+        data = yf.download(
+            ticker,
+            start=request_start,
+            end=request_end,
+            interval=interval,
+            progress=False,
+            auto_adjust=False,
+        )
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.get_level_values(0)
         
@@ -367,7 +404,11 @@ def get_data(
 
 
 def get_bt_feed(
-    ticker: str, start: str, end: str, timeframe: str = "1d"
+    ticker: str,
+    start: str,
+    end: str,
+    timeframe: str = "1d",
+    priority: Optional[list] = None,
 ) -> bt.feeds.PandasData:
     """
     Wrapper to get data as a Backtrader feed.
@@ -398,7 +439,7 @@ def get_bt_feed(
     }
     interval = interval_map.get(timeframe, "1d")
     
-    data = get_data(ticker, start, end, interval=interval)
+    data = get_data(ticker, start, end, interval=interval, priority=priority)
     
     return bt.feeds.PandasData(dataname=data)
 
@@ -408,6 +449,7 @@ def get_raw_data_json(
     start_date: str,
     end_date: str,
     timeframe: str = "1d",
+    priority: Optional[list] = None,
 ):
     """
     Fetch market data and return as a list of dictionaries for the frontend.
@@ -422,7 +464,7 @@ def get_raw_data_json(
         }
         interval = interval_map.get(timeframe, "1d")
 
-        data = get_data(ticker, start_date, end_date, interval=interval)
+        data = get_data(ticker, start_date, end_date, interval=interval, priority=priority)
         
         # Reset index to make Date a column if it's the index
         if 'Date' not in data.columns:

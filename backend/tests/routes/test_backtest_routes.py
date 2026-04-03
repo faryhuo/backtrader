@@ -32,6 +32,8 @@ class TestPydanticModels:
         """Test creating valid BacktestRequest."""
         request = BacktestRequest(
             ticker="AAPL",
+            data_source="yahoo",
+            instrument_type="stock",
             start_date="2024-01-01",
             end_date="2024-12-31",
             initial_cash=100000.0,
@@ -42,6 +44,8 @@ class TestPydanticModels:
         )
 
         assert request.ticker == "AAPL"
+        assert request.data_source == "yahoo"
+        assert request.instrument_type == "stock"
         assert request.initial_cash == 100000.0
         assert request.params["period"] == 20
 
@@ -54,6 +58,8 @@ class TestPydanticModels:
             initial_cash=100000.0
         )
 
+        assert request.data_source is None
+        assert request.instrument_type is None
         assert request.commission == 0.0005
         assert request.stake == 100
         assert request.strategy_name is None

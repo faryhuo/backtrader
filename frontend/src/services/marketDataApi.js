@@ -31,6 +31,17 @@ export const marketDataApi = {
         return await parseResponse(res);
     },
 
+    async getInstrumentCatalog({ platform = 'yahoo', instrumentType = 'all', query = '', limit = 20 } = {}) {
+        const params = new URLSearchParams({
+            platform,
+            instrument_type: instrumentType,
+            query,
+            limit: String(limit)
+        });
+        const res = await buildRequest(`/instruments/catalog?${params}`);
+        return await parseResponse(res);
+    },
+
     // ========== Cache Management APIs ==========
 
     async getCacheStats() {

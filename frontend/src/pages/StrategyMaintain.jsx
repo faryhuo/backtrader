@@ -9,6 +9,7 @@ import {
     Empty,
     Input,
     List,
+    Modal,
     Space,
     Spin,
     Tag,
@@ -386,7 +387,17 @@ function StrategyMaintain() {
     async function handleAIRewrite() {
         const currentCode = codeRef.current;
         if (!currentCode) return;
-        if (!window.confirm(t('maintain.ai_rewrite_confirm', 'This will overwrite the current editor content with an AI rewrite. Continue?'))) {
+        const confirmed = await new Promise((resolve) => {
+            Modal.confirm({
+                title: t('maintain.ai_rewrite', 'AI Rewrite'),
+                content: t('maintain.ai_rewrite_confirm', 'This will overwrite the current editor content with an AI rewrite. Continue?'),
+                okText: t('common.confirm', 'Confirm'),
+                cancelText: t('common.cancel', 'Cancel'),
+                onOk: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -441,7 +452,18 @@ function StrategyMaintain() {
     }
 
     async function handleRollback(versionNumber) {
-        if (!window.confirm(t('maintain.versions.rollback_confirm', { version: versionNumber }))) {
+        const confirmed = await new Promise((resolve) => {
+            Modal.confirm({
+                title: t('maintain.versions.rollback', 'Rollback'),
+                content: t('maintain.versions.rollback_confirm', { version: versionNumber }),
+                okText: t('common.confirm', 'Confirm'),
+                cancelText: t('common.cancel', 'Cancel'),
+                okType: 'danger',
+                onOk: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        });
+        if (!confirmed) {
             return;
         }
 

@@ -19,3 +19,4 @@
 ## Recent Notes
 
 - `strategyErrorFormatter.js` now centralizes strategy/backtest failure normalization so pages can render user-friendly error summaries and next-step suggestions without duplicating backend-message parsing.
+- `exportUtils.js` now reports chart export failures through Ant Design `message.error` instead of browser-native alerts so utility-triggered feedback matches the application shell.

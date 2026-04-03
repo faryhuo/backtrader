@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Modal, message } from 'antd';
 import './TaskCenter.css';
 
 import {
@@ -118,6 +119,20 @@ function TaskCenter() {
         }));
     };
 
+    const confirmAction = useCallback(({ title, content, okText, okType = 'primary' }) => (
+        new Promise((resolve) => {
+            Modal.confirm({
+                title,
+                content,
+                okText,
+                okType,
+                cancelText: t('common.cancel', 'Cancel'),
+                onOk: () => resolve(true),
+                onCancel: () => resolve(false),
+            });
+        })
+    ), [t]);
+
     // Handle cancel task
     const handleCancel = async (taskId) => {
         try {
@@ -126,17 +141,22 @@ function TaskCenter() {
             fetchStats();
         } catch (err) {
             // If cancel fails, offer to delete the task record
-            const shouldDelete = confirm(
-                t('taskCenter.cancelFailedDelete',
-                    `Failed to cancel task: ${err.message}\n\nDo you want to delete this task record instead?`)
-            );
+            const shouldDelete = await confirmAction({
+                title: t('taskCenter.cancel', 'Cancel'),
+                content: t(
+                    'taskCenter.cancelFailedDelete',
+                    `Failed to cancel task: ${err.message}\n\nDo you want to delete this task record instead?`,
+                ),
+                okText: t('taskCenter.delete', 'Delete'),
+                okType: 'danger',
+            });
             if (shouldDelete) {
                 try {
                     await deleteTask(taskId, true);  // force=true for stuck running tasks
                     fetchTasks();
                     fetchStats();
                 } catch (deleteErr) {
-                    alert(`Failed to delete task: ${deleteErr.message}`);
+                    message.error(`Failed to delete task: ${deleteErr.message}`);
                 }
             }
         }
@@ -149,13 +169,19 @@ function TaskCenter() {
             fetchTasks();
             fetchStats();
         } catch (err) {
-            alert(`Failed to retry task: ${err.message}`);
+            message.error(`Failed to retry task: ${err.message}`);
         }
     };
 
     // Handle delete task
     const handleDelete = async (taskId) => {
-        if (!confirm(t('taskCenter.confirmDelete', 'Are you sure you want to delete this task?'))) {
+        const shouldDelete = await confirmAction({
+            title: t('taskCenter.delete', 'Delete'),
+            content: t('taskCenter.confirmDelete', 'Are you sure you want to delete this task?'),
+            okText: t('taskCenter.delete', 'Delete'),
+            okType: 'danger',
+        });
+        if (!shouldDelete) {
             return;
         }
         try {
@@ -163,7 +189,7 @@ function TaskCenter() {
             fetchTasks();
             fetchStats();
         } catch (err) {
-            alert(`Failed to delete task: ${err.message}`);
+            message.error(`Failed to delete task: ${err.message}`);
         }
     };
 

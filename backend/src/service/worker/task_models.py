@@ -47,6 +47,7 @@ class BacktestTask:
     sizer_config: Optional[Dict[str, Any]] = None
     # Data timeframe
     timeframe: str = BACKTEST_DEFAULTS.TIMEFRAME
+    data_source: Optional[str] = None
     params: Optional[Dict[str, Any]] = None
     generate_chart: bool = True
     chart_save_path: Optional[str] = None
@@ -65,6 +66,7 @@ class BacktestTask:
             "sizer_type": self.sizer_type,
             "sizer_config": self.sizer_config,
             "timeframe": self.timeframe,
+            "data_source": self.data_source,
             "params": self.params,
             "generate_chart": self.generate_chart,
             "chart_save_path": self.chart_save_path,

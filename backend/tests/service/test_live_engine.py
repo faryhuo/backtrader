@@ -433,7 +433,16 @@ def test_start_session_passes_strategy_params_to_cerebro(monkeypatch):
             order_limits=types.SimpleNamespace(min_order_size_usd=10, max_order_size_usd=1_000),
         ),
     )
-    monkeypatch.setattr(live_engine, "get_exchange_config", lambda _exchange, _cfg: types.SimpleNamespace(ccxt_id="binance"))
+    monkeypatch.setattr(
+        live_engine,
+        "get_exchange_config",
+        lambda _exchange, _cfg: types.SimpleNamespace(
+            ccxt_id="binance",
+            markets=["spot"],
+            default_market="spot",
+            paper_mode=types.SimpleNamespace(sandbox_url="https://testnet.binance.vision"),
+        ),
+    )
     monkeypatch.setattr(live_engine, "BinanceStore", StubStore)
     monkeypatch.setattr(live_engine, "BinanceBroker", StubBroker)
     monkeypatch.setattr(live_engine, "BinanceData", StubData)

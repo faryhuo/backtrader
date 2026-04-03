@@ -112,7 +112,14 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
             # 2. Load market data
             try:
                 timeframe = getattr(task, 'timeframe', '1d') or '1d'
-                data = get_bt_feed(task.ticker, task.start_date, task.end_date, timeframe=timeframe)
+                priority = [task.data_source] if getattr(task, "data_source", None) else None
+                data = get_bt_feed(
+                    task.ticker,
+                    task.start_date,
+                    task.end_date,
+                    timeframe=timeframe,
+                    priority=priority,
+                )
             except Exception as e:
                 result = BacktestResult.error_result(
                     task_id,
@@ -256,6 +263,7 @@ def execute_backtest_task(task: "BacktestTask") -> "BacktestResult":
                     task.start_date,
                     task.end_date,
                     timeframe=getattr(task, "timeframe", "1d") or "1d",
+                    priority=priority,
                 ),
                 metrics,
                 task.initial_cash,

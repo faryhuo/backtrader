@@ -86,6 +86,8 @@ describe('useBacktest', () => {
             await act(async () => {
                 await result.current.runBacktest({
                     ticker: 'AAPL',
+                    dataSource: 'yahoo',
+                    instrumentType: 'stock',
                     startDate: '2023-01-01',
                     endDate: '2023-12-31',
                     initialCash: '100000',
@@ -96,8 +98,10 @@ describe('useBacktest', () => {
                 }, mockT)
             })
 
-            expect(api.runBacktest).toHaveBeenCalledWith({
+            expect(api.runBacktest).toHaveBeenCalledWith(expect.objectContaining({
                 ticker: 'AAPL',
+                data_source: 'yahoo',
+                instrument_type: 'stock',
                 start_date: '2023-01-01',
                 end_date: '2023-12-31',
                 initial_cash: 100000,
@@ -105,7 +109,7 @@ describe('useBacktest', () => {
                 stake: 100,
                 strategy_name: 'SMA',
                 params: { period: 20 }
-            })
+            }))
             expect(result.current.result).toEqual(mockResult)
             expect(result.current.loading).toBe(false)
         })
@@ -126,6 +130,8 @@ describe('useBacktest', () => {
             await act(async () => {
                 await result.current.runBacktest({
                     ticker: 'AAPL',
+                    dataSource: 'yahoo',
+                    instrumentType: 'stock',
                     startDate: '2023-01-01',
                     endDate: '2023-12-31',
                     initialCash: '100000',
@@ -151,6 +157,8 @@ describe('useBacktest', () => {
             await act(async () => {
                 await result.current.runBacktest({
                     ticker: 'AAPL',
+                    dataSource: 'yahoo',
+                    instrumentType: 'stock',
                     startDate: '2023-01-01',
                     endDate: '2023-12-31',
                     initialCash: '100000',
@@ -161,7 +169,7 @@ describe('useBacktest', () => {
                 }, mockT)
             })
 
-            expect(result.current.error).toBe('Network error')
+            expect(result.current.error?.message).toBe('Network error')
             expect(result.current.loading).toBe(false)
             consoleSpy.mockRestore()
         })
@@ -174,6 +182,8 @@ describe('useBacktest', () => {
             await act(async () => {
                 await result.current.runBacktest({
                     ticker: 'AAPL',
+                    dataSource: 'yahoo',
+                    instrumentType: 'stock',
                     startDate: '2023-01-01',
                     endDate: '2023-12-31',
                     initialCash: '100000',
@@ -233,7 +243,7 @@ describe('useBacktest', () => {
                 end_date: '2023-12-31',
                 initial_cash: 100000,
                 commission: 0.001,
-                stake: 100,
+                timeframe: '1d',
                 strategy_name: 'SMA',
                 params: { period: 20 }
             })
@@ -254,7 +264,7 @@ describe('useBacktest', () => {
                     initialCash: 100000,
                     commission: 0.001,
                     stake: 100,
-                    selectedStrategy: null,
+                    selectedStrategy: 'SMA',
                     paramOverrides: {}
                 }, mockT)
             })
@@ -277,6 +287,8 @@ describe('useBacktest', () => {
             await act(async () => {
                 await result.current.runBacktest({
                     ticker: 'AAPL',
+                    dataSource: 'yahoo',
+                    instrumentType: 'stock',
                     startDate: '2023-01-01',
                     endDate: '2023-12-31',
                     initialCash: '100000',

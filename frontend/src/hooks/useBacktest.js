@@ -56,6 +56,8 @@ export function useBacktest() {
     const runBacktest = useCallback(async (params, t) => {
         const {
             ticker,
+            dataSource,
+            instrumentType,
             startDate,
             endDate,
             initialCash,
@@ -83,6 +85,8 @@ export function useBacktest() {
 
             const taskResponse = await api.runBacktest({
                 ticker,
+                data_source: dataSource || null,
+                instrument_type: instrumentType || null,
                 start_date: startDate,
                 end_date: endDate,
                 initial_cash: parseFloat(initialCash),

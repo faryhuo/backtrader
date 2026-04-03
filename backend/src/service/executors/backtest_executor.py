@@ -83,6 +83,7 @@ async def backtest_executor(config: Dict[str, Any], progress_callback: Callable)
         sizer_type=config.get("sizer_type", BACKTEST_DEFAULTS.SIZER_TYPE),
         sizer_config=config.get("sizer_config"),
         timeframe=config.get("timeframe", BACKTEST_DEFAULTS.TIMEFRAME),
+        data_source=config.get("data_source"),
     )
     
     if metrics is None:
@@ -101,6 +102,8 @@ async def backtest_executor(config: Dict[str, Any], progress_callback: Callable)
         "stake": config.get("stake", BACKTEST_DEFAULTS.STAKE),
         "strategy_name": strategy_name,
         "params": config.get("params"),
+        "data_source": config.get("data_source"),
+        "instrument_type": config.get("instrument_type"),
         "strategy_code": strategy_code,
     }
     

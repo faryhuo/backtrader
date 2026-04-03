@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import { api } from '../../../services/api';
 import TemplateCard from './TemplateCard';
 import TemplateImportModal from './TemplateImportModal';
@@ -55,7 +56,7 @@ function TemplateLibrary({ onImport, onClose }) {
                 onImport(name);
             }
         } catch (err) {
-            alert(t('maintain.import_failed') + ': ' + err.message);
+            message.error(`${t('maintain.import_failed')}: ${err.message}`);
         } finally {
             setImportLoading(false);
         }

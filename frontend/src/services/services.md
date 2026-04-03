@@ -36,3 +36,4 @@
 - The setup wizard service contract now persists backend bootstrap files only and no longer exposes a frontend `.env` / `VITE_API_BASE_URL` write path.
 - `reportApi.getReport()` is now used by `ReportCenter.jsx` to fetch full HTML report content for inline preview.
 - `liveApi.js` now needs to propagate the explicit Binance `market` field so launcher UIs can switch between `spot` and `futures` without guessing backend defaults.
+- `marketDataApi.js` now also wraps the instrument catalog endpoint used by the Run Strategy page to suggest codes after users choose a platform and instrument type.

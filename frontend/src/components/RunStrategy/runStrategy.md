@@ -27,3 +27,6 @@
 - The chart toolbar includes an info icon tooltip that explains the purpose of the main price pane, volume pane, broker observer, trades observer, and equity curve pane.
 - `TaskExecutionLog.jsx` renders backtest task logs by matching `backtest_id` to the async task `result_id`, with terminal-style log output and an error-only filter.
 - `TaskExecutionLog.jsx` should prefer detailed backtest `metrics.execution_logs` returned by the backend and only fall back to task lifecycle logs when execution logs are unavailable.
+- `StrategyConfigForm.jsx` now splits single-asset instrument selection into `platform -> instrument type -> instrument code` and consumes the market-data instrument catalog endpoint for suggestions.
+- Run Strategy form payloads now stay aligned with backend `BacktestRequest`, including `data_source` and `instrument_type`.
+- Yahoo intraday backtests now use conservative safety windows in the UI (`5m/15m=59 days`, `1h=729 days`) so auto-adjusted ranges match actual Yahoo availability more reliably.

@@ -3,6 +3,8 @@
  * Handles CSV, Excel, and image exports
  */
 
+import { message } from 'antd';
+
 /**
  * Export data to CSV format
  * @param {Array} data - Array of data objects
@@ -138,7 +140,7 @@ export const exportChartAsImage = async (chartElement, filename) => {
         });
     } catch (error) {
         console.error('Failed to export chart image:', error);
-        alert('Failed to export chart. Please try again.');
+        message.error('Failed to export chart. Please try again.');
     }
 };
 

@@ -1,7 +1,8 @@
 """
 Ticker Metadata - Functions for fetching and caching ticker information.
 
-Provides ticker validation and metadata retrieval from yfinance with database caching.
+Provides ticker validation, cached metadata retrieval, and lightweight
+instrument catalog search for UI pickers.
 """
 
 import logging
@@ -9,6 +10,7 @@ from datetime import datetime
 from typing import Optional
 
 import yfinance as yf
+from sqlalchemy import or_
 
 from src.config.settings import DATABASE_URL, DEFAULT_DB_URL
 from src.db.models import TickerMetadataModel, init_database
@@ -17,6 +19,30 @@ logger = logging.getLogger(__name__)
 
 # Use default local database if DATABASE_URL is not configured
 _DB_URL = DATABASE_URL or DEFAULT_DB_URL
+
+INSTRUMENT_TYPE_QUOTE_TYPE_MAP = {
+    "stock": {"equity"},
+    "etf": {"etf"},
+    "index": {"index"},
+    "forex": {"currency"},
+    "crypto": {"cryptocurrency", "crypto"},
+    "futures": {"future"},
+    "fund": {"mutualfund", "fund"},
+}
+
+
+def _normalize_quote_type(quote_type: str | None) -> str | None:
+    normalized = str(quote_type or "").strip().lower()
+    return normalized or None
+
+
+def _matches_instrument_type(quote_type: str | None, instrument_type: str | None) -> bool:
+    normalized_type = (instrument_type or "").strip().lower()
+    if not normalized_type or normalized_type == "all":
+        return True
+
+    normalized_quote_type = _normalize_quote_type(quote_type)
+    return bool(normalized_quote_type and normalized_quote_type in INSTRUMENT_TYPE_QUOTE_TYPE_MAP.get(normalized_type, set()))
 
 
 def _validate_ticker_info(info: dict) -> tuple[bool, str | None]:
@@ -297,8 +323,127 @@ def get_ticker_metadata(ticker: str, force_refresh: bool = False) -> dict:
         }
 
 
+def search_instrument_catalog(
+    query: str = "",
+    instrument_type: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """
+    Search cached ticker metadata for instrument picker suggestions.
+
+    The cache is populated from Yahoo Finance metadata, so this function is best
+    effort only. It intentionally returns a compact UI-focused payload.
+    """
+    _, SessionLocal = init_database(_DB_URL)
+    session = SessionLocal()
+    normalized_query = (query or "").strip().upper()
+    normalized_type = (instrument_type or "").strip().lower() or None
+    matched_quote_types = INSTRUMENT_TYPE_QUOTE_TYPE_MAP.get(normalized_type)
+
+    try:
+        db_query = session.query(TickerMetadataModel).filter(
+            TickerMetadataModel.is_valid == 1
+        )
+
+        if normalized_query:
+            like_query = f"%{normalized_query}%"
+            db_query = db_query.filter(
+                or_(
+                    TickerMetadataModel.ticker.ilike(like_query),
+                    TickerMetadataModel.long_name.ilike(like_query),
+                    TickerMetadataModel.short_name.ilike(like_query),
+                )
+            )
+
+        candidates = (
+            db_query.order_by(TickerMetadataModel.updated_at.desc())
+            .limit(max(limit * 5, 50))
+            .all()
+        )
+
+        results: list[dict] = []
+        for item in candidates:
+            additional_info = item.additional_info or {}
+            quote_type = str(additional_info.get("quote_type") or "").strip().lower()
+            if matched_quote_types and quote_type not in matched_quote_types:
+                continue
+
+            results.append({
+                "code": item.ticker,
+                "label": item.long_name or item.short_name or item.ticker,
+                "instrument_type": normalized_type or quote_type or "unknown",
+                "exchange": additional_info.get("exchange_name") or additional_info.get("exchange"),
+                "currency": additional_info.get("currency"),
+                "quote_type": quote_type or None,
+                "source": item.source,
+            })
+
+            if len(results) >= limit:
+                break
+
+        return results
+    finally:
+        session.close()
+
+
+def search_yahoo_instruments(
+    query: str,
+    instrument_type: str | None = None,
+    limit: int = 20,
+) -> list[dict]:
+    """
+    Search Yahoo Finance directly for instrument suggestions.
+    """
+    normalized_query = (query or "").strip()
+    if not normalized_query:
+        return []
+
+    try:
+        search = yf.Search(
+            normalized_query,
+            max_results=max(limit * 3, 20),
+            news_count=0,
+            lists_count=0,
+            recommended=0,
+            include_research=False,
+            include_nav_links=False,
+            raise_errors=False,
+        )
+        quotes = getattr(search, "quotes", None) or []
+    except Exception as exc:
+        logger.warning(f"Yahoo instrument search failed for '{normalized_query}': {exc}")
+        return []
+
+    results: list[dict] = []
+    for item in quotes:
+        symbol = item.get("symbol")
+        if not symbol:
+            continue
+
+        quote_type = _normalize_quote_type(item.get("quoteType") or item.get("typeDisp"))
+        if not _matches_instrument_type(quote_type, instrument_type):
+            continue
+
+        results.append({
+            "code": symbol,
+            "label": item.get("shortname") or item.get("longname") or item.get("dispSecIndFlag") or symbol,
+            "instrument_type": (instrument_type or quote_type or "unknown"),
+            "exchange": item.get("exchange") or item.get("exchDisp"),
+            "currency": item.get("currency"),
+            "quote_type": quote_type,
+            "source": "yahoo",
+        })
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
 __all__ = [
     "_validate_ticker_info",
     "_parse_ticker_info",
     "get_ticker_metadata",
+    "search_instrument_catalog",
+    "search_yahoo_instruments",
 ]

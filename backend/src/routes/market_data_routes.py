@@ -4,6 +4,7 @@ Market data routes.
 Handles:
 - Ticker info and validation
 - OHLCV price data fetching
+- Instrument catalog helpers for picker UIs
 - Basic analysis
 - Cache management (stats, warmup, cleanup)
 - OHLCV resampling
@@ -26,6 +27,40 @@ from src.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+SUPPORTED_INSTRUMENT_TYPES = {
+    "all",
+    "stock",
+    "etf",
+    "index",
+    "forex",
+    "crypto",
+    "futures",
+    "fund",
+}
+
+INSTRUMENT_EXAMPLES = {
+    "yahoo": {
+        "stock": ["AAPL", "MSFT", "NVDA"],
+        "etf": ["SPY", "QQQ", "GLD"],
+        "index": ["^GSPC", "^IXIC", "^DJI"],
+        "forex": ["EURUSD=X", "USDJPY=X", "GBPUSD=X"],
+        "crypto": ["BTC-USD", "ETH-USD", "SOL-USD"],
+        "futures": ["ES=F", "NQ=F", "CL=F"],
+        "fund": ["VTSAX", "SWPPX", "FXAIX"],
+        "all": ["AAPL", "SPY", "BTC-USD"],
+    },
+    "eodhd": {
+        "stock": ["AAPL.US", "MSFT.US", "600519.SHG"],
+        "etf": ["SPY.US", "QQQ.US", "GLD.US"],
+        "index": ["GSPC.INDX", "NDX.INDX", "DJI.INDX"],
+        "forex": ["EURUSD.FOREX", "USDJPY.FOREX", "GBPUSD.FOREX"],
+        "crypto": ["BTC-USD.CC", "ETH-USD.CC", "SOL-USD.CC"],
+        "futures": ["ES.FUT", "NQ.FUT", "CL.FUT"],
+        "fund": ["VTSAX.US", "SWPPX.US", "FXAIX.US"],
+        "all": ["AAPL.US", "SPY.US", "BTC-USD.CC"],
+    },
+}
 
 
 # ========== Pydantic Models ==========
@@ -86,6 +121,69 @@ def get_ticker_prices(
     """Get OHLCV price data for a ticker within date range."""
     data = get_raw_data_json(ticker, start_date, end_date)
     return {"data": data}
+
+
+@router.get("/instruments/catalog")
+def get_instrument_catalog(
+    platform: str = Query("yahoo", description="yahoo or eodhd"),
+    instrument_type: str = Query("all", description="Instrument type"),
+    query: str = Query("", description="Optional code or name search"),
+    limit: int = Query(20, ge=1, le=100),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Search cached instrument suggestions for the backtest instrument picker."""
+    normalized_platform = (platform or "yahoo").strip().lower()
+    normalized_type = (instrument_type or "all").strip().lower()
+
+    if normalized_platform not in {"yahoo", "eodhd"}:
+        raise HTTPException(status_code=400, detail=f"Unsupported platform: {platform}")
+    if normalized_type not in SUPPORTED_INSTRUMENT_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported instrument type: {instrument_type}")
+
+    normalized_query = (query or "").strip()
+
+    options: list[dict] = []
+    if normalized_query:
+        if normalized_platform == "yahoo":
+            from src.db.storage.ticker_metadata import search_yahoo_instruments
+
+            options = search_yahoo_instruments(
+                query=normalized_query,
+                instrument_type=None if normalized_type == "all" else normalized_type,
+                limit=limit,
+            )
+        elif normalized_platform == "eodhd":
+            from src.db.storage.eodhd_data import search_eodhd_instruments
+            from src.db.storage.settings import SettingsStorage
+
+            settings_storage = SettingsStorage()
+            eodhd_api_key = settings_storage.get_eodhd_api_key(user.get("sub") if isinstance(user, dict) else None)
+            options = search_eodhd_instruments(
+                query=normalized_query,
+                instrument_type=None if normalized_type == "all" else normalized_type,
+                limit=limit,
+                api_key=eodhd_api_key,
+            )
+
+    if not options:
+        from src.db.storage.ticker_metadata import search_instrument_catalog
+
+        options = search_instrument_catalog(
+            query=query,
+            instrument_type=None if normalized_type == "all" else normalized_type,
+            limit=limit,
+        )
+
+    return {
+        "platform": normalized_platform,
+        "instrument_type": normalized_type,
+        "query": query,
+        "options": options,
+        "examples": INSTRUMENT_EXAMPLES[normalized_platform].get(
+            normalized_type,
+            INSTRUMENT_EXAMPLES[normalized_platform]["all"],
+        ),
+    }
 
 
 # Legacy endpoint for backward compatibility

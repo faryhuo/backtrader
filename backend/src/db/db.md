@@ -82,3 +82,4 @@ from src.db.storage import BacktestStorage, get_raw_data_json
 - `user_settings` now also persists auth configuration such as `auth_provider` and `system_auth_allow_registration`.
 - `user_settings.setup_completed` now tracks whether first-run onboarding has finished, and setup readiness should read that database flag instead of inferring readiness only from `.env`.
 - `SessionStorage` now persists live-session `market` in `TradingSessionModel.config` and falls back to `spot` when loading older rows that predate that field.
+- `storage/market_data.py` now normalizes Yahoo intraday requests by making the selected end date inclusive and clipping oversized 5m/15m/1h windows to safe limits before calling yfinance.

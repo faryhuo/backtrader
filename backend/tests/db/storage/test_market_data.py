@@ -296,6 +296,40 @@ class TestGetDataFromYahoo:
         # Should flatten MultiIndex to single level
         assert not isinstance(result.columns, pd.MultiIndex)
 
+    @patch('yfinance.download')
+    def test_get_data_from_yahoo_intraday_adjusts_end_date_for_inclusive_range(self, mock_download, sample_dataframe):
+        """Test Yahoo intraday requests include the selected end date."""
+        mock_download.return_value = sample_dataframe
+
+        result = get_data_from_yahoo("AAPL", "2024-03-01", "2024-03-31", interval="15m")
+
+        assert result is not None
+        mock_download.assert_called_once_with(
+            "AAPL",
+            start="2024-03-01",
+            end="2024-04-01",
+            interval="15m",
+            progress=False,
+            auto_adjust=False,
+        )
+
+    @patch('yfinance.download')
+    def test_get_data_from_yahoo_intraday_clips_lookback_window(self, mock_download, sample_dataframe):
+        """Test Yahoo intraday requests clip oversized windows to safe limits."""
+        mock_download.return_value = sample_dataframe
+
+        result = get_data_from_yahoo("AAPL", "2024-01-01", "2024-03-31", interval="15m")
+
+        assert result is not None
+        mock_download.assert_called_once_with(
+            "AAPL",
+            start="2024-02-02",
+            end="2024-04-01",
+            interval="15m",
+            progress=False,
+            auto_adjust=False,
+        )
+
 
 class TestGetDataFromEodhd:
     """Tests for get_data_from_eodhd function."""
@@ -448,7 +482,7 @@ class TestGetBtFeed:
         result = get_bt_feed("AAPL", "2024-01-01", "2024-01-05")
 
         assert isinstance(result, bt.feeds.PandasData)
-        mock_get_data.assert_called_once_with("AAPL", "2024-01-01", "2024-01-05", interval="1d")
+        mock_get_data.assert_called_once_with("AAPL", "2024-01-01", "2024-01-05", interval="1d", priority=None)
 
     @patch('src.db.storage.market_data.get_data')
     def test_get_bt_feed_propagates_exception(self, mock_get_data):
