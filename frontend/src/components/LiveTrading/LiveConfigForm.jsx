@@ -42,6 +42,10 @@ const FALLBACK_PAIRS = [
 ];
 
 const TIMEFRAMES = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d'];
+const MARKET_OPTIONS = [
+  { value: 'spot', label: 'Spot' },
+  { value: 'futures', label: 'Futures' },
+];
 const SIZER_OPTIONS = [
   { value: 'fixed_size', label: 'Fixed Size' },
   { value: 'percent_sizer', label: 'Percent Sizer' },
@@ -59,6 +63,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
   const [symbolsLoading, setSymbolsLoading] = useState(false);
   const [symbolModalOpen, setSymbolModalOpen] = useState(false);
   const [mode, setMode] = useState('paper');
+  const [market, setMarket] = useState('spot');
   const [paramsExpanded, setParamsExpanded] = useState(true);
   const [sizerType, setSizerType] = useState('percent_sizer');
 
@@ -95,7 +100,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     const loadSymbols = async () => {
       try {
         setSymbolsLoading(true);
-        const data = await api.getSymbols();
+        const data = await api.getSymbols(market);
         const pairs = Array.isArray(data?.symbols)
           ? data.symbols.map((s) => s.symbol)
           : null;
@@ -110,7 +115,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     };
 
     loadSymbols();
-  }, []);
+  }, [market]);
 
   const selectedSymbol = formValues.symbol || 'BTC/USDT';
 
@@ -130,6 +135,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
     onSubmit({
       strategy_name: values.strategy_name,
       symbol: values.symbol,
+      market: values.market,
       mode: values.mode,
       timeframe: values.timeframe,
       params: getParamsForApi(),
@@ -181,6 +187,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
           onFinish={handleSubmit}
           initialValues={{
             mode: 'paper',
+            market: 'spot',
             timeframe: '1m',
             sizer_type: 'percent_sizer',
             sizer_percents: 10,
@@ -195,7 +202,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
             </div>
 
             <Row gutter={[16, 0]}>
-              <Col xs={24} md={14}>
+              <Col xs={24} md={9}>
                 <Form.Item
                   name="strategy_name"
                   label={t('live.form.strategy', 'Strategy')}
@@ -214,7 +221,26 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
                 </Form.Item>
               </Col>
 
-              <Col xs={24} md={10}>
+              <Col xs={24} md={7}>
+                <Form.Item
+                  name="market"
+                  label={t('live.form.market', 'Market')}
+                  rules={[{ required: true }]}
+                >
+                  <Select
+                    options={MARKET_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: t(`live.form.market_${option.value}`, option.label),
+                    }))}
+                    onChange={(value) => {
+                      setMarket(value);
+                      form.setFieldsValue({ symbol: 'BTC/USDT' });
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} md={8}>
                 <Form.Item
                   name="symbol"
                   label={t('live.form.symbol', 'Trading Pair')}
@@ -452,6 +478,12 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
               </Col>
               <Col xs={24} sm={12}>
                 <div className="launch-summary-item">
+                  <span>{t('live.form.market', 'Market')}</span>
+                  <strong>{t(`live.form.market_${market}`, market)}</strong>
+                </div>
+              </Col>
+              <Col xs={24} sm={12}>
+                <div className="launch-summary-item">
                   <span>{t('live.form.timeframe', 'Timeframe')}</span>
                   <strong>{t(`timeframe.${selectedTimeframe}`, selectedTimeframe)}</strong>
                 </div>
@@ -532,6 +564,7 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
 
     <SymbolSearchModal
       open={symbolModalOpen}
+      market={market}
       onClose={() => setSymbolModalOpen(false)}
       onSelect={(symbol) => form.setFieldsValue({ symbol })}
     />

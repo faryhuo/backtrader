@@ -86,6 +86,10 @@ class SessionStorage(BaseStorage):
                     existing.total_trades = session.total_trades
                     existing.positions = session.positions
                     existing.error_message = session.error_message
+                    existing.config = {
+                        **(existing.config or {}),
+                        'market': session.market,
+                    }
                     existing.updated_at = datetime.utcnow()
 
                     logger.debug(f"Updated session {session.session_id} in database")
@@ -107,6 +111,7 @@ class SessionStorage(BaseStorage):
                         total_pnl=session.current_pnl,
                         total_trades=session.total_trades,
                         positions=session.positions,
+                        config={'market': session.market},
                         error_message=session.error_message
                     )
 
@@ -142,6 +147,7 @@ class SessionStorage(BaseStorage):
                 strategy_name=db_record.strategy_name,
                 symbol=db_record.symbol,
                 exchange=db_record.exchange,
+                market=(db_record.config or {}).get('market', 'spot'),
                 mode=db_record.mode,
                 timeframe=db_record.timeframe,
                 initial_cash=db_record.initial_cash,
@@ -195,6 +201,7 @@ class SessionStorage(BaseStorage):
                     strategy_name=db_record.strategy_name,
                     symbol=db_record.symbol,
                     exchange=db_record.exchange,
+                    market=(db_record.config or {}).get('market', 'spot'),
                     mode=db_record.mode,
                     timeframe=db_record.timeframe,
                     initial_cash=db_record.initial_cash,

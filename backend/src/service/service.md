@@ -27,4 +27,7 @@ This directory contains application services and orchestration logic. Services s
 
 - `auth_service.py` now powers the built-in `system` auth provider, including first-user bootstrap registration.
 - `setup_wizard_service.py` now exposes system-user bootstrap state to onboarding and can create the first system administrator during initial setup when needed.
+- `setup_wizard_service.py` must treat masked onboarding secrets as placeholders: saving should preserve the real server-side value, and connection tests should resolve masked inputs back to the stored secret before validation.
 - Runtime user management after bootstrap still belongs to `auth_service.py` and auth routes, not the setup wizard.
+- `auth_service.py` also owns startup-time bootstrap for the first built-in admin: when `AUTH_PROVIDER=system`, no users exist, and `SYSTEM_ADMIN_EMAIL` plus `SYSTEM_ADMIN_PASSWORD` are present in the environment, startup should create that admin in the database exactly once.
+- `live_engine.py` now needs to normalize account snapshots separately for Binance `spot` and `futures`, because order history, balances, positions, and portfolio value are sourced from different exchange payloads.

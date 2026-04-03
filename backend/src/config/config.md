@@ -23,3 +23,4 @@
 
 - AI provider settings now support `AI_PROVIDER_PRIORITY` plus provider-specific keys for OpenAI, MiniMax, Gemini, and Claude. Database-backed settings override environment variables.
 - AI provider environment fallbacks now include provider-specific runtime model variables such as `OPENAI_MODEL`, `MINIMAX_MODEL`, `GEMINI_MODEL`, and `CLAUDE_MODEL`.
+- Built-in system auth now also recognizes startup bootstrap env vars: `SYSTEM_ADMIN_EMAIL`, `SYSTEM_ADMIN_PASSWORD`, and optional `SYSTEM_ADMIN_DISPLAY_NAME`. These values are read at startup so the first admin can be created in the database when system auth is enabled.

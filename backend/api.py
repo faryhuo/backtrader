@@ -27,6 +27,7 @@ from src.routes.report_routes import router as report_router
 from src.routes.setup_routes import router as setup_router
 from src.routes.auth_routes import router as auth_router
 from src.routes.frontend_routes import mount_frontend
+from src.service.auth_service import bootstrap_system_admin_from_env
 from src.utils.exception_handlers import create_exception_handlers
 from src.utils.request_context import RequestContextMiddleware
 from src.service.worker.worker_pool import get_worker_pool, shutdown_worker_pool
@@ -69,6 +70,14 @@ async def app_lifespan(_app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to create database directory: {e}")
         raise RuntimeError(f"Application startup failed: Cannot create database directory. {e}")
+
+    try:
+        bootstrap_user = bootstrap_system_admin_from_env()
+        if bootstrap_user:
+            logger.info(f"Initial system admin created during startup: {bootstrap_user['email']}")
+    except Exception as e:
+        logger.error(f"System admin bootstrap failed: {e}")
+        raise RuntimeError(f"Application startup failed: Cannot bootstrap system admin. {e}") from e
 
     try:
         logger.info("Warming up worker pool...")

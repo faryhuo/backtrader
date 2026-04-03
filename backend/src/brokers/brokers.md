@@ -3,10 +3,10 @@
 交易所 / 券商适配层，负责把不同外部交易接口整理成系统内部可消费的统一能力。
 
 ## 子目录
-- `binance_adapter/`: Binance 现货适配器。
+- `binance_adapter/`: Binance 现货 / U 本位合约适配器。
 
 ## 当前范围
-- 当前仓库已落地的实盘 / 模拟盘适配仅包含 Binance Spot。
+- 当前仓库已落地的实盘 / 模拟盘适配仅包含 Binance，支持 `spot` 与 `futures` 两种市场。
 - README、路由和前端交互应与这一范围保持一致，避免再宣称未实现的 IBKR 或其他交易所支持。
 
 ## Binance 适配器分层
@@ -14,6 +14,10 @@
 - `binance_store.py`: 连接层。负责 Binance REST / WebSocket 访问、测试网/实盘连接、订单与行情原始读写。
 - `binance_data.py`: 数据层。负责把 Store 提供的 OHLCV 数据转换成 Backtrader `DataBase` 数据流，并处理 backfill、去重、未收盘 K 线过滤。
 - `binance_broker.py`: 交易层。负责把 Backtrader `Order` 映射为交易所订单，维护持仓、现金、成交回报和事件通知。
+
+补充说明：
+- `binance_store.py` 内部需要显式区分 `spot` 与 `futures` 的 REST / WebSocket / 账户快照接口，禁止在 service 层重复拼装不同市场的 API 名称。
+- 合约市场当前按 Binance U 本位合约接口接入，优先支持单向持仓与交易所回传的账户 / 持仓快照。
 
 补充约束：
 - `__init__.py` 只做包入口导出，不再承载共享常量或业务逻辑。

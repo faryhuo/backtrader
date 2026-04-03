@@ -92,6 +92,7 @@ export default function LiveTradingDashboard() {
   const totalFeesDisplay = totalFeesByAsset.length > 0
     ? totalFeesByAsset.map(([asset, fee]) => `${fee.toFixed(8)} ${asset}`).join(' + ')
     : t('live.total_fees_empty', 'No fees yet');
+  const sessionMarket = session?.market || 'spot';
   const pnlTone = getPnlTone(currentPnl);
   const pnlLabel = pnlTone === 'positive'
     ? t('live.session_profit', 'Session Profit')
@@ -141,7 +142,7 @@ export default function LiveTradingDashboard() {
                   {t('live.form.eyebrow', 'Session Launcher')}
                 </Text>
                 <Title level={2} className="dashboard-title">
-                  {t('live.dashboard_title', 'Binance Spot Trading')}
+                  {t('live.dashboard_title', 'Binance Trading')}
                 </Title>
               </div>
             </Space>
@@ -160,6 +161,9 @@ export default function LiveTradingDashboard() {
                 {(session.mode || '').toUpperCase()}
               </Tag>
             )}
+            <Tag color={sessionMarket === 'futures' ? 'purple' : 'geekblue'} style={{ margin: 0 }}>
+              {t(`live.form.market_${sessionMarket}`, sessionMarket).toUpperCase()}
+            </Tag>
             {feedStatus && (
               <Tag color={feedStatus === 'live' ? 'green' : 'gold'} style={{ margin: 0 }}>
                 {feedStatus === 'live' ? t('live.live_feed', 'Live Feed') : t('live.warming_up', 'Warming Up')}

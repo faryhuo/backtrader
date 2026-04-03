@@ -124,7 +124,7 @@ DEFAULT_BROKER_CONFIG = {
             "name": "Binance",
             "adapter": "ccxt",
             "ccxt_id": "binance",
-            "markets": ["spot"],
+            "markets": ["spot", "futures"],
             "default_market": "spot",
             "paper_mode": {
                 "enabled": True,
@@ -316,6 +316,12 @@ def _resolve_secret(current_value: str | None, incoming_value: str | None) -> st
     return candidate
 
 
+def _resolve_masked_test_secret(current_value: str | None, incoming_value: str | None) -> str:
+    """Resolve a setup-wizard test payload secret against the currently stored value."""
+    resolved = _resolve_secret(current_value, incoming_value)
+    return _clean_string(resolved)
+
+
 def _normalize_provider_priority(priority: list[str] | None) -> list[str]:
     normalized: list[str] = []
     for provider in priority or []:
@@ -428,7 +434,7 @@ class BinanceCredentials(BaseModel):
 
 class BinanceTradingConfig(BaseModel):
     enabled: bool = True
-    markets: list[str] = Field(default_factory=lambda: ["spot"])
+    markets: list[str] = Field(default_factory=lambda: ["spot", "futures"])
     default_market: str = "spot"
     paper_enabled: bool = True
     sandbox_url: str = "https://testnet.binance.vision"
@@ -597,7 +603,7 @@ class SetupWizardPayload(BaseModel):
 
         self.trading.default_trade_mode = "paper"
         self.trading.binance.default_market = "spot"
-        self.trading.binance.markets = ["spot"]
+        self.trading.binance.markets = ["spot", "futures"]
 
         if self.trading.live_trading_enabled:
             if not _clean_string(live_creds.api_key) or not _clean_string(live_creds.secret):
@@ -784,7 +790,7 @@ class SetupWizardService:
                     "default_trade_mode": backend_env.get("DEFAULT_TRADE_MODE", "paper"),
                     "binance": {
                         "enabled": bool(binance_config.get("enabled", True)),
-                        "markets": binance_config.get("markets", ["spot"]),
+                        "markets": binance_config.get("markets", ["spot", "futures"]),
                         "default_market": binance_config.get("default_market", "spot"),
                         "paper_enabled": binance_config.get("paper_mode", {}).get("enabled", True),
                         "sandbox_url": binance_config.get("paper_mode", {}).get("sandbox_url", "https://testnet.binance.vision"),
@@ -874,16 +880,21 @@ class SetupWizardService:
         logger_config = _load_json(self.logger_config_path, DEFAULT_LOGGER_CONFIG)
 
         backend_updates = dict(backend_env)
-        backend_updates["ENCRYPTION_KEY"] = _resolve_secret(backend_env.get("ENCRYPTION_KEY"), validated.security.encryption_key)
+        resolved_encryption_key = _resolve_secret(
+            backend_env.get("ENCRYPTION_KEY"),
+            validated.security.encryption_key,
+        )
+        backend_updates["ENCRYPTION_KEY"] = resolved_encryption_key
         backend_updates["ENABLE_LOGIN"] = str(login_enabled).lower()
         backend_updates["AUTH_PROVIDER"] = validated.auth.auth_provider if login_enabled else "none"
         backend_updates["SYSTEM_AUTH_ALLOW_REGISTRATION"] = (
             str(validated.auth.system_auth_allow_registration).lower() if login_enabled and validated.auth.auth_provider == "system" else "false"
         )
-        backend_updates["SYSTEM_AUTH_SECRET"] = _resolve_secret(
-            backend_env.get("SYSTEM_AUTH_SECRET"),
-            validated.security.encryption_key,
-        ) if login_enabled and validated.auth.auth_provider == "system" else (backend_env.get("SYSTEM_AUTH_SECRET") or "")
+        backend_updates["SYSTEM_AUTH_SECRET"] = (
+            resolved_encryption_key
+            if login_enabled and validated.auth.auth_provider == "system"
+            else (backend_env.get("SYSTEM_AUTH_SECRET") or "")
+        )
         if "DATABASE_URL" in backend_env:
             backend_updates["DATABASE_URL"] = ""
 
@@ -1068,6 +1079,7 @@ class SetupWizardService:
         from src.utils.credential_validator import validate_credential
 
         normalized_type = test_type.lower()
+        _, backend_env = self._backend_env()
         if normalized_type == "logto":
             valid, message = validate_credential(
                 "logto",
@@ -1076,21 +1088,38 @@ class SetupWizardService:
             )
             return {"status": "ok", "valid": valid, "message": message}
         if normalized_type in {"openai", "ai_model"}:
+            provider = payload.get("provider", "openai")
+            provider_defaults = AI_PROVIDER_DEFAULTS.get(str(provider).lower(), AI_PROVIDER_DEFAULTS["openai"])
+            resolved_api_key = _resolve_masked_test_secret(
+                backend_env.get(provider_defaults["api_key_env"]),
+                payload.get("api_key"),
+            )
             valid, message = validate_credential(
                 "ai_model",
-                provider=payload.get("provider", "openai"),
-                api_key=payload.get("api_key"),
+                provider=provider,
+                api_key=resolved_api_key,
                 base_url=payload.get("base_url"),
                 model=payload.get("model"),
             )
             return {"status": "ok", "valid": valid, "message": message}
         if normalized_type == "ccxt":
+            exchange = payload.get("exchange", "binance")
+            mode = payload.get("mode")
+            env_prefix = f"CCXT_{str(exchange).upper()}_{str(mode).upper()}"
+            resolved_api_key = _resolve_masked_test_secret(
+                backend_env.get(f"{env_prefix}_API_KEY"),
+                payload.get("api_key"),
+            )
+            resolved_secret = _resolve_masked_test_secret(
+                backend_env.get(f"{env_prefix}_SECRET"),
+                payload.get("secret"),
+            )
             valid, message = validate_credential(
                 "ccxt",
-                exchange=payload.get("exchange", "binance"),
-                mode=payload.get("mode"),
-                api_key=payload.get("api_key"),
-                secret=payload.get("secret"),
+                exchange=exchange,
+                mode=mode,
+                api_key=resolved_api_key,
+                secret=resolved_secret,
                 use_testnet=payload.get("use_testnet"),
             )
             return {"status": "ok", "valid": valid, "message": message}

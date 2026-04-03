@@ -306,7 +306,8 @@ class LiveTradingTask:
     strategy_name: str
     symbol: str
     exchange: str
-    mode: str  # 'paper' or 'live'
+    market: str = "spot"
+    mode: str = "paper"  # 'paper' or 'live'
     timeframe: str = "1m"
     initial_cash: float = BACKTEST_DEFAULTS.LIVE_INITIAL_CASH
     commission: float = BACKTEST_DEFAULTS.LIVE_COMMISSION
@@ -323,6 +324,7 @@ class LiveTradingTask:
             "strategy_name": self.strategy_name,
             "symbol": self.symbol,
             "exchange": self.exchange,
+            "market": self.market,
             "mode": self.mode,
             "timeframe": self.timeframe,
             "initial_cash": self.initial_cash,

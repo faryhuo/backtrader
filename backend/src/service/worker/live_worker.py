@@ -155,7 +155,7 @@ class LiveWorkerSession:
                     exchange_id=ex_config.ccxt_id,
                     mode=self.task.mode,
                     config={
-                        "default_market": ex_config.default_market,
+                        "default_market": self.task.market or ex_config.default_market,
                         "markets": ex_config.markets,
                     },
                     user_id=self.task.user_id,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
@@ -74,6 +74,9 @@ function StrategyMaintain() {
     const { t } = useTranslation();
     const { settings } = useSettingsContext();
     const navigate = useNavigate();
+    const editorRef = useRef(null);
+    const codeRef = useRef('');
+    const codeSyncTimeoutRef = useRef(null);
 
     const [strategies, setStrategies] = useState([]);
     const [selectedStrategy, setSelectedStrategy] = useState('');
@@ -85,6 +88,7 @@ function StrategyMaintain() {
 
     const [code, setCode] = useState('');
     const [savedCode, setSavedCode] = useState('');
+    const [isDirty, setIsDirty] = useState(false);
     const [codeLoading, setCodeLoading] = useState(false);
     const [analysisResult, setAnalysisResult] = useState('');
     const [strategyParams, setStrategyParams] = useState([]);
@@ -97,39 +101,7 @@ function StrategyMaintain() {
     const [versionsLoading, setVersionsLoading] = useState(false);
     const [selectedForCompare, setSelectedForCompare] = useState([]);
     const [diffData, setDiffData] = useState(null);
-
-    useEffect(() => {
-        const init = async () => {
-            const names = await fetchStrategies();
-            if (names.length > 0) {
-                setSelectedStrategy(names[0]);
-            }
-        };
-        init();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
-        if (!selectedStrategy) {
-            setCode('');
-            setSavedCode('');
-            setStrategyParams([]);
-            return;
-        }
-
-        const loadSelectedStrategy = async () => {
-            await Promise.all([
-                fetchStrategy(selectedStrategy),
-                fetchStrategyParams(selectedStrategy),
-                showVersionPanel ? fetchVersions(selectedStrategy) : Promise.resolve(),
-            ]);
-        };
-
-        loadSelectedStrategy();
-        setSelectedForCompare([]);
-        setCompileState(null);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedStrategy, showVersionPanel]);
+    const deferredCode = useDeferredValue(code);
 
     const filteredStrategies = useMemo(() => {
         const keyword = strategySearch.trim().toLowerCase();
@@ -138,14 +110,54 @@ function StrategyMaintain() {
     }, [strategies, strategySearch]);
 
     const strategyStats = useMemo(() => {
-        const lines = code ? code.split(/\r?\n/).length : 0;
-        const characters = code.length;
-        const functions = (code.match(/^\s*def\s+/gm) || []).length;
-        const classes = (code.match(/^\s*class\s+/gm) || []).length;
+        const lines = deferredCode ? deferredCode.split(/\r?\n/).length : 0;
+        const characters = deferredCode.length;
+        const functions = (deferredCode.match(/^\s*def\s+/gm) || []).length;
+        const classes = (deferredCode.match(/^\s*class\s+/gm) || []).length;
         return { lines, characters, functions, classes };
-    }, [code]);
+    }, [deferredCode]);
 
-    const isDirty = code !== savedCode;
+    const syncCodeState = useCallback((nextCode, immediate = false) => {
+        codeRef.current = nextCode;
+
+        if (codeSyncTimeoutRef.current) {
+            window.clearTimeout(codeSyncTimeoutRef.current);
+            codeSyncTimeoutRef.current = null;
+        }
+
+        if (immediate) {
+            setCode(nextCode);
+            return;
+        }
+
+        codeSyncTimeoutRef.current = window.setTimeout(() => {
+            setCode(nextCode);
+            codeSyncTimeoutRef.current = null;
+        }, 120);
+    }, []);
+
+    const applyEditorCode = useCallback((nextCode, options = {}) => {
+        const { saved = false } = options;
+
+        syncCodeState(nextCode, true);
+        if (editorRef.current && editorRef.current.getValue() !== nextCode) {
+            editorRef.current.setValue(nextCode);
+        }
+
+        if (saved) {
+            setSavedCode(nextCode);
+            setIsDirty(false);
+            return;
+        }
+
+        setIsDirty(nextCode !== savedCode);
+    }, [savedCode, syncCodeState]);
+
+    useEffect(() => () => {
+        if (codeSyncTimeoutRef.current) {
+            window.clearTimeout(codeSyncTimeoutRef.current);
+        }
+    }, []);
 
     const fetchStrategies = useCallback(async () => {
         try {
@@ -165,15 +177,14 @@ function StrategyMaintain() {
             setCodeLoading(true);
             const data = await api.getStrategy(name);
             const nextCode = data?.code || '';
-            setCode(nextCode);
-            setSavedCode(nextCode);
+            applyEditorCode(nextCode, { saved: true });
         } catch (err) {
             console.error('Failed to fetch strategy', err);
             message.error(t('maintain.load_failed', 'Failed to load strategy'));
         } finally {
             setCodeLoading(false);
         }
-    }, [t]);
+    }, [applyEditorCode, t]);
 
     const fetchStrategyParams = useCallback(async (name) => {
         if (!name) return;
@@ -203,6 +214,36 @@ function StrategyMaintain() {
         }
     }, []);
 
+    useEffect(() => {
+        const init = async () => {
+            const names = await fetchStrategies();
+            if (names.length > 0) {
+                setSelectedStrategy(names[0]);
+            }
+        };
+        init();
+    }, [fetchStrategies]);
+
+    useEffect(() => {
+        if (!selectedStrategy) {
+            applyEditorCode('', { saved: true });
+            setStrategyParams([]);
+            return;
+        }
+
+        const loadSelectedStrategy = async () => {
+            await Promise.all([
+                fetchStrategy(selectedStrategy),
+                fetchStrategyParams(selectedStrategy),
+                showVersionPanel ? fetchVersions(selectedStrategy) : Promise.resolve(),
+            ]);
+        };
+
+        loadSelectedStrategy();
+        setSelectedForCompare([]);
+        setCompileState(null);
+    }, [applyEditorCode, fetchStrategy, fetchStrategyParams, fetchVersions, selectedStrategy, showVersionPanel]);
+
     async function saveStrategy() {
         if (!selectedStrategy) {
             message.warning(t('maintain.select_strategy_first', 'Select or create a strategy first'));
@@ -211,8 +252,11 @@ function StrategyMaintain() {
 
         try {
             setCodeLoading(true);
-            await api.saveStrategy(selectedStrategy, code);
-            setSavedCode(code);
+            const currentCode = codeRef.current;
+            await api.saveStrategy(selectedStrategy, currentCode);
+            setSavedCode(currentCode);
+            setIsDirty(false);
+            syncCodeState(currentCode, true);
             await Promise.all([fetchStrategies(), fetchStrategyParams(selectedStrategy)]);
             if (showVersionPanel) {
                 await fetchVersions(selectedStrategy);
@@ -227,21 +271,25 @@ function StrategyMaintain() {
     }
 
     function handleCodeChange(value) {
-        setCode(value ?? '');
+        const nextCode = value ?? '';
+        syncCodeState(nextCode);
+        setIsDirty(nextCode !== savedCode);
         if (compileState) {
             setCompileState(null);
         }
     }
 
     async function handleCompile() {
-        if (!code.trim()) {
+        const currentCode = codeRef.current;
+
+        if (!currentCode.trim()) {
             message.warning(t('maintain.compile_empty', 'Strategy code is empty'));
             return;
         }
 
         try {
             setCodeLoading(true);
-            const result = await api.validateStrategy(selectedStrategy, code);
+            const result = await api.validateStrategy(selectedStrategy, currentCode);
             setCompileState({
                 status: 'success',
                 message: result?.message || t('maintain.compile_success', 'Strategy compiled successfully'),
@@ -268,8 +316,11 @@ function StrategyMaintain() {
         if (isDirty) {
             try {
                 setCodeLoading(true);
-                await api.saveStrategy(selectedStrategy, code);
-                setSavedCode(code);
+                const currentCode = codeRef.current;
+                await api.saveStrategy(selectedStrategy, currentCode);
+                setSavedCode(currentCode);
+                setIsDirty(false);
+                syncCodeState(currentCode, true);
                 await Promise.all([fetchStrategies(), fetchStrategyParams(selectedStrategy)]);
                 if (showVersionPanel) {
                     await fetchVersions(selectedStrategy);
@@ -305,8 +356,7 @@ function StrategyMaintain() {
             if (!names.includes(name)) {
                 setStrategies((prev) => [...prev, name].sort());
             }
-            setCode(DEFAULT_TEMPLATE);
-            setSavedCode(DEFAULT_TEMPLATE);
+            applyEditorCode(DEFAULT_TEMPLATE, { saved: true });
             setShowNewStrategyModal(false);
             message.success(t('maintain.created', 'Strategy created'));
         } catch (err) {
@@ -318,10 +368,11 @@ function StrategyMaintain() {
     }
 
     async function handleAIAnalysis() {
-        if (!code) return;
+        const currentCode = codeRef.current;
+        if (!currentCode) return;
         try {
             setCodeLoading(true);
-            const result = await analyzeCode(code, null, settings);
+            const result = await analyzeCode(currentCode, null, settings);
             setAnalysisResult(result.analysis);
             setShowAnalysisModal(true);
         } catch (err) {
@@ -333,15 +384,16 @@ function StrategyMaintain() {
     }
 
     async function handleAIRewrite() {
-        if (!code) return;
+        const currentCode = codeRef.current;
+        if (!currentCode) return;
         if (!window.confirm(t('maintain.ai_rewrite_confirm', 'This will overwrite the current editor content with an AI rewrite. Continue?'))) {
             return;
         }
 
         try {
             setCodeLoading(true);
-            const newCode = await rewriteCode(code, null, settings);
-            setCode(newCode);
+            const newCode = await rewriteCode(currentCode, null, settings);
+            applyEditorCode(newCode);
             message.success(t('maintain.ai_rewrite_done', 'AI rewrite completed'));
         } catch (err) {
             console.error('AI Rewrite failed', err);
@@ -361,7 +413,7 @@ function StrategyMaintain() {
         try {
             const versionData = await api.getStrategyVersion(selectedStrategy, versionNumber);
             if (versionData?.code) {
-                setCode(versionData.code);
+                applyEditorCode(versionData.code);
             }
         } catch (err) {
             console.error('Failed to load version', err);
@@ -510,15 +562,15 @@ function StrategyMaintain() {
                             <Button icon={<SyncOutlined />} onClick={() => fetchStrategy(selectedStrategy)} disabled={!selectedStrategy || codeLoading}>
                                 {t('maintain.reload', 'Reload')}
                             </Button>
-                            <Button icon={<RobotOutlined />} onClick={handleAIAnalysis} disabled={!code || codeLoading}>
-                                {t('maintain.ai_analysis', 'AI Analysis')}
-                            </Button>
-                            <Button icon={<ThunderboltOutlined />} onClick={handleAIRewrite} disabled={!code || codeLoading}>
-                                {t('maintain.ai_rewrite', 'AI - Rewrite')}
-                            </Button>
-                            <Button icon={<CodeOutlined />} onClick={handleCompile} disabled={!code || codeLoading}>
-                                {t('maintain.compile', 'Compile')}
-                            </Button>
+                                    <Button icon={<RobotOutlined />} onClick={handleAIAnalysis} disabled={!codeRef.current || codeLoading}>
+                                        {t('maintain.ai_analysis', 'AI Analysis')}
+                                    </Button>
+                                    <Button icon={<ThunderboltOutlined />} onClick={handleAIRewrite} disabled={!codeRef.current || codeLoading}>
+                                        {t('maintain.ai_rewrite', 'AI - Rewrite')}
+                                    </Button>
+                                    <Button icon={<CodeOutlined />} onClick={handleCompile} disabled={!codeRef.current || codeLoading}>
+                                        {t('maintain.compile', 'Compile')}
+                                    </Button>
                             <Button type="primary" icon={<SaveOutlined />} onClick={saveStrategy} disabled={!selectedStrategy || codeLoading}>
                                 {codeLoading ? t('maintain.saving', 'Saving...') : t('maintain.save_strategy', 'Save Strategy')}
                             </Button>
@@ -552,7 +604,10 @@ function StrategyMaintain() {
                                     defaultLanguage="python"
                                     language="python"
                                     theme="vs-dark"
-                                    value={code}
+                                    defaultValue={code}
+                                    onMount={(editor) => {
+                                        editorRef.current = editor;
+                                    }}
                                     onChange={handleCodeChange}
                                     options={{
                                         fontSize: 14,
@@ -669,7 +724,7 @@ function StrategyMaintain() {
                                     <Button block onClick={() => fetchStrategies()}>
                                         {t('maintain.refresh_list', 'Refresh List')}
                                     </Button>
-                                    <Button block icon={<WarningOutlined />} disabled={!isDirty} onClick={() => setCode(savedCode)}>
+                                    <Button block icon={<WarningOutlined />} disabled={!isDirty} onClick={() => applyEditorCode(savedCode, { saved: true })}>
                                         {t('maintain.revert_changes', 'Revert Unsaved Changes')}
                                     </Button>
                                 </Space>

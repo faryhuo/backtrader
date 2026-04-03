@@ -1,5 +1,5 @@
 {
-  "dashboard_title": "Binance Spot Trading",
+  "dashboard_title": "Binance Trading",
   "dashboard_subtitle": "Confirm the market, execution mode, and exchange-backed capital source before the engine starts trading.",
   "connected": "Connected",
   "disconnected": "Disconnected",
@@ -67,6 +67,9 @@
     "title": "Build the next live trading session",
     "description": "Choose strategy, market, execution mode, and costs before the engine starts routing signals and market data.",
     "strategy": "Strategy",
+    "market": "Market",
+    "market_spot": "Spot",
+    "market_futures": "Futures",
     "strategy_required": "Select a strategy",
     "select_strategy": "Select strategy",
     "symbol": "Trading Pair",

@@ -114,7 +114,7 @@ const FALLBACK_SYMBOLS = [
   { symbol: 'RENDER/USDT', baseAsset: 'RENDER', quoteAsset: 'USDT' },
 ];
 
-const SymbolSearchModal = ({ open, onClose, onSelect }) => {
+const SymbolSearchModal = ({ open, market = 'spot', onClose, onSelect }) => {
   const { t } = useTranslation();
   const [allSymbols, setAllSymbols] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -125,7 +125,7 @@ const SymbolSearchModal = ({ open, onClose, onSelect }) => {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await api.getSymbols();
+        const data = await api.getSymbols(market);
         const list = Array.isArray(data?.symbols) && data.symbols.length > 0
           ? data.symbols
           : FALLBACK_SYMBOLS;
@@ -137,7 +137,7 @@ const SymbolSearchModal = ({ open, onClose, onSelect }) => {
       }
     };
     load();
-  }, [open]);
+  }, [market, open]);
 
   const filteredSymbols = useMemo(() => {
     if (!searchText.trim()) return allSymbols;

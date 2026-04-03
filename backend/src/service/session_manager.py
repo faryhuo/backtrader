@@ -42,6 +42,7 @@ class TradingSession:
     timeframe: str
     initial_cash: float
     commission: float
+    market: str = "spot"
     status: SessionStatus = SessionStatus.STARTING
     start_time: datetime = field(default_factory=datetime.now)
     end_time: Optional[datetime] = None
@@ -80,6 +81,7 @@ class TradingSession:
             'strategy_name': self.strategy_name,
             'symbol': self.symbol,
             'exchange': self.exchange,
+            'market': self.market,
             'mode': self.mode,
             'timeframe': self.timeframe,
             'initial_cash': self.initial_cash,
@@ -149,6 +151,7 @@ class SessionManager:
         strategy_name: str,
         symbol: str,
         exchange: str = 'binance',
+        market: str = 'spot',
         mode: str = 'paper',
         timeframe: str = '1m',
         initial_cash: float = 10000.0,
@@ -184,6 +187,7 @@ class SessionManager:
                 strategy_name=strategy_name,
                 symbol=symbol,
                 exchange=exchange,
+                market=market,
                 mode=mode,
                 timeframe=timeframe,
                 initial_cash=initial_cash,

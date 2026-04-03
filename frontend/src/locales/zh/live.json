@@ -1,5 +1,5 @@
 ﻿{
-    "dashboard_title":  "Binance 现货交易",
+    "dashboard_title":  "Binance 交易",
     "dashboard_subtitle":  "先确认市场、执行模式与交易所资金来源，再启动实时交易引擎。",
     "connected":  "已连接",
     "disconnected":  "未连接",
@@ -67,6 +67,9 @@
                  "title":  "创建下一条实时交易会话",
                  "description":  "先确定策略、市场、执行模式和成本，再让交易引擎开始接收信号与行情。",
                  "strategy":  "策略",
+                 "market":  "市场",
+                 "market_spot":  "现货",
+                 "market_futures":  "合约",
                  "strategy_required":  "请选择策略",
                  "select_strategy":  "选择策略",
                  "symbol":  "交易对",

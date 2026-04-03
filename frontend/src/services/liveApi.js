@@ -1,5 +1,5 @@
 /**
- * Live Trading API - Binance Spot sessions, orders, ticker
+ * Live Trading API - Binance spot/futures sessions, orders, ticker
  */
 import { buildRequest, parseResponse } from './apiCore'
 
@@ -85,8 +85,8 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
-    async getSymbolRules(symbol, mode = 'paper') {
-        const params = new URLSearchParams({ symbol, mode })
+    async getSymbolRules(symbol, mode = 'paper', market = 'spot') {
+        const params = new URLSearchParams({ symbol, mode, market })
         const res = await buildRequest(`/live/symbol-rules?${params.toString()}`)
         return await parseResponse(res)
     },
@@ -101,8 +101,9 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
-    async getSymbols() {
-        const res = await buildRequest('/live/symbols')
+    async getSymbols(market = 'spot') {
+        const params = new URLSearchParams({ market })
+        const res = await buildRequest(`/live/symbols?${params.toString()}`)
         return await parseResponse(res)
     }
 }

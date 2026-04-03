@@ -35,52 +35,63 @@ from src.utils.config_loader import (
 
 # ──────────────────────────── In-memory cache for exchange symbols ────────────────────────────
 # Binance public endpoint (no API key required), cache for 5 minutes to avoid rate limits
-_symbols_cache: Optional[dict] = None
-_symbols_cache_time: float = 0.0
+_symbols_cache: dict[str, dict] = {}
+_symbols_cache_time: dict[str, float] = {}
 _SYMBOLS_CACHE_TTL: float = 300.0  # 5 minutes
 
 
-def _fetch_binance_symbols() -> dict:
-    """Fetch available SPOT trading pairs from Binance (public API, no credentials)."""
+def _fetch_binance_symbols(market: str = "spot") -> dict:
+    """Fetch available trading pairs from Binance public APIs."""
     global _symbols_cache, _symbols_cache_time
 
+    market = str(market or "spot").lower()
+    if market not in {"spot", "futures"}:
+        raise HTTPException(400, f"Invalid market: '{market}'. Must be 'spot' or 'futures'")
+
     now = time.time()
-    if _symbols_cache is not None and (now - _symbols_cache_time) < _SYMBOLS_CACHE_TTL:
-        return _symbols_cache
+    if market in _symbols_cache and (now - _symbols_cache_time.get(market, 0.0)) < _SYMBOLS_CACHE_TTL:
+        return _symbols_cache[market]
 
     try:
         client = Client()  # no key/secret needed for public endpoints
-        exchange_info = client.get_exchange_info()
+        exchange_info = client.get_exchange_info() if market == "spot" else client.futures_exchange_info()
 
-        # Filter: SPOT market only, quote asset USDT or USDC for common trading
         symbols = []
         for symbol in exchange_info.get('symbols', []):
-            if (
+            tradable = (
                 symbol.get('status') == 'TRADING'
-                and symbol.get('isSpotTradingAllowed')
                 and symbol.get('quoteAsset') in ('USDT', 'USDC')
-            ):
-                # Binance returns BTCUSDT, convert to BTC/USDT
+            )
+            if market == "spot":
+                tradable = tradable and symbol.get('isSpotTradingAllowed')
+            else:
+                # The live launcher currently uses a BASE/QUOTE symbol format only.
+                # Restrict futures symbols to perpetual contracts so each displayed
+                # trading pair maps to exactly one Binance instrument.
+                tradable = tradable and symbol.get('contractType') == 'PERPETUAL'
+
+            if tradable:
                 pair = f"{symbol['baseAsset']}/{symbol['quoteAsset']}"
                 symbols.append({
                     'symbol': pair,
                     'baseAsset': symbol['baseAsset'],
                     'quoteAsset': symbol['quoteAsset'],
+                    'market': market,
                 })
 
         # Sort by base asset name
         symbols.sort(key=lambda x: x['baseAsset'])
 
-        _symbols_cache = {'symbols': symbols, 'count': len(symbols)}
-        _symbols_cache_time = now
-        logger.info(f"Fetched {len(symbols)} trading pairs from Binance (cached)")
-        return _symbols_cache
+        _symbols_cache[market] = {'symbols': symbols, 'count': len(symbols), 'market': market}
+        _symbols_cache_time[market] = now
+        logger.info(f"Fetched {len(symbols)} trading pairs from Binance ({market}, cached)")
+        return _symbols_cache[market]
 
     except Exception as e:
         logger.error(f"Failed to fetch Binance symbols: {e}")
         # Return stale cache if available, otherwise empty
-        if _symbols_cache is not None:
-            return _symbols_cache
+        if market in _symbols_cache:
+            return _symbols_cache[market]
         raise HTTPException(503, f"Failed to fetch trading pairs from Binance: {e}")
 
 logger = logging.getLogger(__name__)
@@ -92,9 +103,10 @@ router = APIRouter()
 
 
 class StartLiveRequest(BaseModel):
-    """Start a Binance Spot trading session."""
+    """Start a Binance trading session."""
     strategy_name: str = Field(..., description="Strategy file name (without .py)")
     symbol: str = Field(..., description="Trading pair (e.g., 'BTC/USDT')")
+    market: str = Field(default="spot", description="'spot' or 'futures'")
     mode: str = Field(default="paper", description="'paper' (testnet) or 'live'")
     timeframe: str = Field(default="1m", description="Bar timeframe (for example: 1s, 1m, 5m, 1h)")
     params: dict | None = Field(default=None, description="Strategy parameter overrides")
@@ -118,6 +130,7 @@ class StartLiveRequest(BaseModel):
             "example": {
                 "strategy_name": "sma_cross",
                 "symbol": "BTC/USDT",
+                "market": "spot",
                 "mode": "paper",
                 "timeframe": "1m",
                 "params": {"target_trade_value_usd": 50},
@@ -139,6 +152,7 @@ class SessionResponse(BaseModel):
     strategy_name: str
     symbol: str
     exchange: str
+    market: str = "spot"
     mode: str
     timeframe: str
     start_time: str
@@ -171,9 +185,11 @@ async def start_live_trading(
     request: StartLiveRequest,
     user_id: str = Depends(get_optional_user_id),
 ):
-    """Start a new Binance Spot live/paper trading session."""
+    """Start a new Binance spot/futures live/paper trading session."""
     if request.mode not in ('paper', 'live'):
         raise HTTPException(400, f"Invalid mode: '{request.mode}'. Must be 'paper' or 'live'")
+    if request.market not in ('spot', 'futures'):
+        raise HTTPException(400, f"Invalid market: '{request.market}'. Must be 'spot' or 'futures'")
 
     if request.mode == 'live' and not LIVE_TRADING_ENABLED:
         raise HTTPException(
@@ -183,12 +199,19 @@ async def start_live_trading(
 
     try:
         config = load_broker_config()
+        ex_config = config.exchanges['binance']
+        if request.market not in ex_config.markets:
+            raise HTTPException(
+                400,
+                f"Market '{request.market}' is not enabled for Binance. Enabled markets: {', '.join(ex_config.markets)}",
+            )
         validate_symbol(request.symbol, 'binance', config)
         validate_timeframe(request.timeframe, config)
 
         session = live_engine.start_session(
             strategy_name=request.strategy_name,
             symbol=request.symbol,
+            market=request.market,
             mode=request.mode,
             timeframe=request.timeframe,
             params=request.params,
@@ -366,16 +389,19 @@ async def get_trade_errors(session_id: str, limit: int = 20):
 async def get_symbol_rules(
     symbol: str,
     mode: str = Query("paper"),
+    market: str = Query("spot"),
     user_id: str = Depends(get_optional_user_id),
 ):
     """Get exchange trading rules for a symbol."""
     if mode not in ('paper', 'live'):
         raise HTTPException(400, f"Invalid mode: '{mode}'. Must be 'paper' or 'live'")
+    if market not in ('spot', 'futures'):
+        raise HTTPException(400, f"Invalid market: '{market}'. Must be 'spot' or 'futures'")
 
     try:
         config = load_broker_config()
         validate_symbol(symbol, 'binance', config)
-        return live_engine.get_symbol_trading_rules(symbol=symbol, mode=mode, user_id=user_id)
+        return live_engine.get_symbol_trading_rules(symbol=symbol, market=market, mode=mode, user_id=user_id)
     except ValueError as e:
         raise HTTPException(400, str(e))
     except LiveTradingError as e:
@@ -390,14 +416,14 @@ async def get_exchanges():
 
 
 @router.get("/live/symbols", tags=["Live Trading"])
-async def get_symbols():
+async def get_symbols(market: str = Query("spot")):
     """
     Get available SPOT trading pairs from Binance.
 
     Returns all TRADING-status pairs quoted in USDT or USDC.
     Results are cached for 5 minutes to avoid Binance API rate limits.
     """
-    return _fetch_binance_symbols()
+    return _fetch_binance_symbols(market)
 
 
 @router.get("/live/health", tags=["Live Trading"])

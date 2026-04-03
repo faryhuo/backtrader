@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from dataclasses import dataclass
@@ -15,6 +16,8 @@ from jose import jwt
 
 from src.db.storage.settings import SettingsStorage
 from src.db.storage.user_auth import UserAuthStorage
+
+logger = logging.getLogger(__name__)
 
 
 class AuthServiceError(Exception):
@@ -233,3 +236,45 @@ class AuthService:
         if secret:
             return secret
         raise UnsupportedAuthProviderError("SYSTEM_AUTH_SECRET or ENCRYPTION_KEY must be configured")
+
+
+def bootstrap_system_admin_from_env(
+    auth_service: AuthService | None = None,
+) -> dict[str, Any] | None:
+    """Create the initial built-in admin user from environment variables.
+
+    The bootstrap only runs when:
+    - system authentication is enabled
+    - no system users exist yet
+    - both SYSTEM_ADMIN_EMAIL and SYSTEM_ADMIN_PASSWORD are configured
+    """
+    service = auth_service or AuthService()
+    config = service.get_auth_config()
+    if not config["enable_login"] or config["auth_provider"] != "system":
+        return None
+
+    if service.user_storage.count_users() > 0:
+        return None
+
+    email = (os.getenv("SYSTEM_ADMIN_EMAIL") or "").strip()
+    password = os.getenv("SYSTEM_ADMIN_PASSWORD") or ""
+    display_name = (os.getenv("SYSTEM_ADMIN_DISPLAY_NAME") or "").strip() or None
+
+    if not email and not password and not display_name:
+        return None
+
+    if not email or not password:
+        logger.warning(
+            "Skipping system admin bootstrap because SYSTEM_ADMIN_EMAIL or "
+            "SYSTEM_ADMIN_PASSWORD is missing"
+        )
+        return None
+
+    user = service.create_user(
+        email=email,
+        password=password,
+        display_name=display_name,
+        is_superuser=True,
+    )
+    logger.info(f"Bootstrapped initial system admin from env: {user['email']}")
+    return user

@@ -7,7 +7,8 @@
       "adapter": "ccxt",
       "ccxt_id": "binance",
       "markets": [
-        "spot"
+        "spot",
+        "futures"
       ],
       "default_market": "spot",
       "paper_mode": {

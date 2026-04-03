@@ -147,33 +147,61 @@ def _extract_symbol_assets(symbol: str) -> tuple[str, str]:
     return base_asset.upper(), quote_asset.upper()
 
 
-def _get_free_quote_balance(account: dict, quote_asset: str) -> float:
-    balances = account.get('balances')
-    if not isinstance(balances, list):
-        raise LiveTradingError("Exchange account response did not include balances.")
-
-    for balance in balances:
-        if balance.get('asset', '').upper() != quote_asset:
-            continue
-        free_value = balance.get('free')
-        if free_value in (None, ''):
-            raise LiveTradingError(
-                f"Exchange account did not provide free balance for quote asset {quote_asset}."
-            )
-        return float(free_value)
-
-    raise LiveTradingError(
-        f"Exchange account does not contain quote asset balance for {quote_asset}."
-    )
-
-
-def _extract_balance_components(account: dict, symbol: str) -> Dict[str, float]:
-    """Extract base/quote balance components for a symbol from an exchange account payload."""
-    balances = account.get('balances')
-    if not isinstance(balances, list):
-        raise LiveTradingError("Exchange account response did not include balances.")
-
+def _extract_balance_components(
+    account: dict,
+    symbol: str,
+    market: str = "spot",
+    position_info: Optional[list[dict]] = None,
+) -> Dict[str, float]:
+    """Extract normalized balance components for spot/futures account payloads."""
+    market = str(market or "spot").lower()
     base_asset, quote_asset = _extract_symbol_assets(symbol)
+
+    if market == "futures":
+        assets = account.get('assets')
+        if not isinstance(assets, list):
+            raise LiveTradingError("Exchange futures account response did not include assets.")
+
+        asset_map = {
+            str(item.get('asset') or '').upper(): item
+            for item in assets
+        }
+        quote_balance = asset_map.get(quote_asset)
+        if not quote_balance:
+            raise LiveTradingError(
+                f"Exchange futures account does not contain quote asset {quote_asset}."
+            )
+
+        matching_position = None
+        for position in position_info or []:
+            symbol_name = str(position.get('symbol') or '').upper()
+            if symbol_name == symbol.replace('/', '').upper():
+                matching_position = position
+                break
+
+        base_size = _safe_float((matching_position or {}).get('positionAmt')) or 0.0
+        entry_price = _safe_float((matching_position or {}).get('entryPrice')) or 0.0
+        unrealized_pnl = _safe_float((matching_position or {}).get('unRealizedProfit')) or 0.0
+        quote_free = _safe_float(quote_balance.get('availableBalance')) or 0.0
+        quote_wallet = _safe_float(quote_balance.get('walletBalance')) or 0.0
+        quote_locked = _safe_float(quote_balance.get('initialMargin')) or 0.0
+
+        return {
+            'base_free': base_size,
+            'base_locked': 0.0,
+            'base_size': base_size,
+            'base_entry_price': entry_price,
+            'quote_free': quote_free,
+            'quote_locked': quote_locked,
+            'quote_wallet': quote_wallet,
+            'unrealized_pnl': unrealized_pnl,
+            'portfolio_value': quote_wallet + unrealized_pnl,
+        }
+
+    balances = account.get('balances')
+    if not isinstance(balances, list):
+        raise LiveTradingError("Exchange account response did not include balances.")
+
     balance_map = {
         str(item.get('asset') or '').upper(): item
         for item in balances
@@ -192,6 +220,9 @@ def _extract_balance_components(account: dict, symbol: str) -> Dict[str, float]:
         'base_size': base_free + base_locked,
         'quote_free': quote_free,
         'quote_locked': quote_locked,
+        'quote_wallet': quote_free + quote_locked,
+        'unrealized_pnl': 0.0,
+        'portfolio_value': quote_free + quote_locked,
     }
 
 
@@ -429,6 +460,7 @@ class BrokerEvent:
 def start_session(
     strategy_name: str,
     symbol: str,
+    market: str = 'spot',
     mode: str = 'paper',
     timeframe: str = '1m',
     params: Optional[dict] = None,
@@ -439,7 +471,7 @@ def start_session(
     user_id: Optional[str] = None,
 ) -> Dict:
     """
-    Start a new Binance Spot live-trading session.
+    Start a new Binance spot/futures live-trading session.
 
     Returns a session dict (including *session_id* and *ws_token*).
     """
@@ -464,6 +496,14 @@ def start_session(
         broker_config = load_broker_config()
         risk_config = get_risk_config(broker_config)
         ex_config = get_exchange_config(exchange, broker_config)
+        enabled_markets = list(
+            getattr(ex_config, 'markets', None)
+            or [getattr(ex_config, 'default_market', 'spot')]
+        )
+        if market not in enabled_markets:
+            raise LiveTradingError(
+                f"Market '{market}' is not enabled for {exchange}. Enabled markets: {', '.join(enabled_markets)}"
+            )
         credentials = _get_exchange_credentials(exchange, mode, user_id)
         quote_asset = _extract_quote_asset(symbol)
 
@@ -473,13 +513,14 @@ def start_session(
             api_secret=credentials['api_secret'],
             mode=mode,
             exchange_id=ex_config.ccxt_id,
-            config={'default_market': 'spot', 'markets': ['spot']},
+            config={'default_market': market, 'markets': enabled_markets},
             user_id=user_id,
             session_id=session_id,
         )
         store.start()
         account = store.get_account()
-        balance_snapshot = _extract_balance_components(account, symbol)
+        position_info = store.get_position_information(symbol) if market == 'futures' else None
+        balance_snapshot = _extract_balance_components(account, symbol, market, position_info)
         effective_initial_cash = balance_snapshot['quote_free']
 
         bars_probe = store.fetch_ohlcv(
@@ -494,11 +535,14 @@ def start_session(
 
         ticker = store.fetch_ticker(symbol)
         baseline_price = _safe_float(ticker.get('last')) or 0.0
-        baseline_portfolio_value = (
-            balance_snapshot['quote_free']
-            + balance_snapshot['quote_locked']
-            + (balance_snapshot['base_size'] * baseline_price)
-        )
+        if market == 'futures':
+            baseline_portfolio_value = balance_snapshot.get('portfolio_value', effective_initial_cash)
+        else:
+            baseline_portfolio_value = (
+                balance_snapshot['quote_free']
+                + balance_snapshot['quote_locked']
+                + (balance_snapshot['base_size'] * baseline_price)
+            )
 
         # 4. Create in-memory session with exchange-derived cash snapshot.
         session = session_manager.create_session(
@@ -506,6 +550,7 @@ def start_session(
             strategy_name=strategy_name,
             symbol=symbol,
             exchange=exchange,
+            market=market,
             mode=mode,
             timeframe=timeframe,
             initial_cash=effective_initial_cash,
@@ -868,7 +913,7 @@ def get_session_orders(session_id: str) -> List[Dict]:
 
 
 def get_session_positions(session_id: str) -> List[Dict]:
-    """Get current session symbol position from exchange account balances."""
+    """Get current session symbol position from the exchange."""
     session = get_session_manager().get_session(session_id)
     if not session:
         raise LiveTradingError(f"Session {session_id} not found")
@@ -877,6 +922,36 @@ def get_session_positions(session_id: str) -> List[Dict]:
         raise LiveTradingError("Exchange connection is not active")
 
     try:
+        if getattr(session, 'market', 'spot') == 'futures':
+            positions = session.store.get_position_information(session.symbol)
+            if not positions:
+                return []
+
+            ticker = session.store.fetch_ticker(session.symbol)
+            current_price = _safe_float(ticker.get('last'))
+            normalized = []
+            for position in positions:
+                size = _safe_float(position.get('positionAmt')) or 0.0
+                if size == 0:
+                    continue
+                entry_price = _safe_float(position.get('entryPrice'))
+                unrealized_pnl = _safe_float(position.get('unRealizedProfit'))
+                normalized.append({
+                    'symbol': session.symbol,
+                    'side': 'long' if size > 0 else 'short',
+                    'size': size,
+                    'avg_price': entry_price,
+                    'current_price': current_price,
+                    'pnl': unrealized_pnl,
+                    'pnl_percent': ((unrealized_pnl / (abs(size) * entry_price)) * 100.0)
+                    if unrealized_pnl is not None and entry_price and size else None,
+                    'free_size': size,
+                    'locked_size': 0.0,
+                    'source': 'exchange_futures_position',
+                    'leverage': _safe_float(position.get('leverage')),
+                })
+            return normalized
+
         base_asset, _quote_asset = _extract_symbol_assets(session.symbol)
         account = session.store.get_account()
         balances = account.get('balances')
@@ -928,7 +1003,17 @@ def get_session_account_snapshot(session_id: str) -> Dict:
 
     try:
         account = session.store.get_account()
-        balance_snapshot = _extract_balance_components(account, session.symbol)
+        position_info = (
+            session.store.get_position_information(session.symbol)
+            if getattr(session, 'market', 'spot') == 'futures' else
+            None
+        )
+        balance_snapshot = _extract_balance_components(
+            account,
+            session.symbol,
+            getattr(session, 'market', 'spot'),
+            position_info,
+        )
         base_free = balance_snapshot['base_free']
         base_locked = balance_snapshot['base_locked']
         quote_free = balance_snapshot['quote_free']
@@ -938,8 +1023,15 @@ def get_session_account_snapshot(session_id: str) -> Dict:
         ticker = session.store.fetch_ticker(session.symbol)
         current_price = _safe_float(ticker.get('last')) or 0.0
 
-        base_value = base_size * current_price
-        portfolio_value = quote_free + quote_locked + base_value
+        if getattr(session, 'market', 'spot') == 'futures':
+            base_value = base_size * current_price
+            portfolio_value = balance_snapshot.get('portfolio_value') or (
+                balance_snapshot.get('quote_wallet', quote_free + quote_locked)
+                + balance_snapshot.get('unrealized_pnl', 0.0)
+            )
+        else:
+            base_value = base_size * current_price
+            portfolio_value = quote_free + quote_locked + base_value
         baseline_portfolio_value = _safe_float(
             getattr(session, 'baseline_portfolio_value', None)
         )
@@ -951,11 +1043,14 @@ def get_session_account_snapshot(session_id: str) -> Dict:
         return {
             'session_id': session_id,
             'symbol': session.symbol,
+            'market': getattr(session, 'market', 'spot'),
             'cash': quote_free,
             'cash_locked': quote_locked,
             'base_size': base_size,
             'base_value': base_value,
             'current_price': current_price,
+            'wallet_balance': balance_snapshot.get('quote_wallet', quote_free + quote_locked),
+            'unrealized_pnl': balance_snapshot.get('unrealized_pnl', 0.0),
             'baseline_portfolio_value': baseline_portfolio_value,
             'portfolio_value': portfolio_value,
             'current_pnl': current_pnl,
@@ -1128,11 +1223,20 @@ def get_trade_errors(session_id: str, limit: int = 20) -> Dict:
     return {'session_id': session_id, 'errors': errors[-limit:]}
 
 
-def get_symbol_trading_rules(symbol: str, mode: str = 'paper', user_id: Optional[str] = None) -> Dict:
+def get_symbol_trading_rules(
+    symbol: str,
+    market: str = 'spot',
+    mode: str = 'paper',
+    user_id: Optional[str] = None,
+) -> Dict:
     """Fetch exchange trading rules for a symbol."""
     exchange = 'binance'
     broker_config = load_broker_config()
     ex_config = get_exchange_config(exchange, broker_config)
+    enabled_markets = list(
+        getattr(ex_config, 'markets', None)
+        or [getattr(ex_config, 'default_market', 'spot')]
+    )
     credentials = _get_exchange_credentials(exchange, mode, user_id)
     store: Optional[BinanceStore] = None
 
@@ -1142,7 +1246,7 @@ def get_symbol_trading_rules(symbol: str, mode: str = 'paper', user_id: Optional
             api_secret=credentials['api_secret'],
             mode=mode,
             exchange_id=ex_config.ccxt_id,
-            config={'default_market': 'spot', 'markets': ['spot']},
+            config={'default_market': market, 'markets': enabled_markets},
             user_id=user_id,
         )
         store.start()

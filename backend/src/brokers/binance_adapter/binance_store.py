@@ -1,5 +1,5 @@
 """
-Binance Store - Connection management for Binance Spot via python-binance.
+Binance Store - Connection management for Binance Spot/Futures via python-binance.
 
 Responsibilities:
 - REST client for market data and trading
@@ -27,7 +27,7 @@ from .common import TIMEFRAME_INTERVALS, TIMEFRAME_SECONDS, normalize_symbol
 
 class BinanceStore:
     """
-    Store for Binance Spot trading via python-binance.
+    Store for Binance Spot/Futures trading via python-binance.
 
     Manages:
     - REST client for market data queries and order placement
@@ -50,6 +50,8 @@ class BinanceStore:
         self.api_secret = api_secret
         self.mode = mode
         self.session_id = session_id
+        self.config = config or {}
+        self.market = str(self.config.get("default_market") or "spot").lower()
 
         self._running = False
         self._client: Optional[Client] = None
@@ -90,8 +92,11 @@ class BinanceStore:
                 self.api_secret,
                 testnet=self._paper_mode,
             )
-            self._client.ping()
-            logger.info(f"BinanceStore started ({self.mode} mode)")
+            if self.is_futures_market() and hasattr(self._client, "futures_ping"):
+                self._client.futures_ping()
+            else:
+                self._client.ping()
+            logger.info("BinanceStore started (%s mode, %s market)", self.mode, self.market)
         except Exception as e:
             logger.error(f"Failed to connect to Binance: {e}")
             raise
@@ -114,6 +119,9 @@ class BinanceStore:
         if not self._client:
             raise RuntimeError("Store not started")
         return self._client
+
+    def is_futures_market(self) -> bool:
+        return self.market == "futures"
 
     # ═══════════════════════════ Callback Registration ═══════════════════════
 
@@ -218,10 +226,12 @@ class BinanceStore:
                     logger.debug(f"Ticker callback error: {e}")
 
         try:
-            key = self._twm.start_symbol_ticker_socket(
-                callback=_on_msg,
-                symbol=normalize_symbol(symbol).lower(),
-            )
+            socket_fn = getattr(
+                self._twm,
+                "start_symbol_ticker_futures_socket" if self.is_futures_market() else "start_symbol_ticker_socket",
+                None,
+            ) or getattr(self._twm, "start_symbol_ticker_socket")
+            key = socket_fn(callback=_on_msg, symbol=normalize_symbol(symbol).lower())
             self._active_streams[stream_name] = key
             logger.info(f"Ticker stream started for {symbol}")
         except Exception as e:
@@ -271,7 +281,12 @@ class BinanceStore:
                     logger.debug(f"Kline callback error: {e}")
 
         try:
-            key = self._twm.start_kline_socket(
+            socket_fn = getattr(
+                self._twm,
+                "start_kline_futures_socket" if self.is_futures_market() else "start_kline_socket",
+                None,
+            ) or getattr(self._twm, "start_kline_socket")
+            key = socket_fn(
                 callback=_on_msg,
                 symbol=normalize_symbol(symbol).lower(),
                 interval=TIMEFRAME_INTERVALS.get(interval, interval),
@@ -306,7 +321,12 @@ class BinanceStore:
                     logger.warning(f"User data callback error: {e}")
 
         try:
-            key = self._twm.start_user_socket(callback=_on_msg)
+            socket_fn = getattr(
+                self._twm,
+                "start_futures_user_socket" if self.is_futures_market() else "start_user_socket",
+                None,
+            ) or getattr(self._twm, "start_user_socket")
+            key = socket_fn(callback=_on_msg)
             self._active_streams['user_data'] = key
             logger.info("User data stream started")
         except Exception as e:
@@ -393,7 +413,16 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
-            t = self._client.get_ticker(symbol=sym)
+            if self.is_futures_market():
+                fetch_fn = getattr(self._client, "futures_ticker", None)
+                if fetch_fn:
+                    t = fetch_fn(symbol=sym)
+                else:
+                    ticker = self._client.futures_symbol_ticker(symbol=sym)
+                    book_ticker = self._client.futures_orderbook_ticker(symbol=sym)
+                    t = {**ticker, **book_ticker}
+            else:
+                t = self._client.get_ticker(symbol=sym)
             return {
                 'last': float(t.get('lastPrice', 0)),
                 'bid': float(t.get('bidPrice', 0)),
@@ -401,7 +430,7 @@ class BinanceStore:
                 'high': float(t.get('highPrice', 0)),
                 'low': float(t.get('lowPrice', 0)),
                 'volume': float(t.get('volume', 0)),
-                'timestamp': t.get('closeTime', int(time.time() * 1000)),
+                'timestamp': t.get('closeTime') or t.get('time') or int(time.time() * 1000),
             }
         except BinanceAPIException as e:
             logger.error(f"Failed to fetch ticker for {symbol}: {e}")
@@ -418,7 +447,11 @@ class BinanceStore:
             params = self._build_kline_params(sym, interval, limit, since_ms)
             bars = [
                 [k[0], float(k[1]), float(k[2]), float(k[3]), float(k[4]), float(k[5])]
-                for k in self._client.get_klines(**params)
+                for k in (
+                    self._client.futures_klines(**params)
+                    if self.is_futures_market() else
+                    self._client.get_klines(**params)
+                )
             ]
             return bars
         except BinanceAPIException as e:
@@ -430,7 +463,11 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
-            r = self._client.get_symbol_ticker(symbol=sym)
+            r = (
+                self._client.futures_symbol_ticker(symbol=sym)
+                if self.is_futures_market() else
+                self._client.get_symbol_ticker(symbol=sym)
+            )
             return {'symbol': r['symbol'], 'price': float(r['price'])}
         except BinanceAPIException as e:
             logger.error(f"Failed to get ticker: {e}")
@@ -441,6 +478,8 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
+            if self.is_futures_market():
+                return self._client.futures_orderbook_ticker(symbol=sym)
             return self._client.get_order_book_ticker(symbol=sym)
         except BinanceAPIException as e:
             logger.error(f"Failed to get order book ticker: {e}")
@@ -451,6 +490,8 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
+            if self.is_futures_market():
+                return self._client.futures_order_book(symbol=sym, limit=limit)
             return self._client.get_order_book(symbol=sym, limit=limit)
         except BinanceAPIException as e:
             logger.error(f"Failed to get order book for {symbol}: {e}")
@@ -465,6 +506,8 @@ class BinanceStore:
 
         try:
             params = self._build_kline_params(sym, interval, limit, start_time)
+            if self.is_futures_market():
+                return self._client.futures_klines(**params)
             return self._client.get_klines(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to get klines: {e}")
@@ -489,6 +532,8 @@ class BinanceStore:
             if order_type == 'LIMIT' and price:
                 params['price'] = str(price)
                 params['timeInForce'] = 'GTC'
+            if self.is_futures_market():
+                return self._client.futures_create_order(**params)
             return self._client.create_order(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to create order: {e}")
@@ -498,6 +543,8 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
+            if self.is_futures_market():
+                return self._client.futures_cancel_order(symbol=sym, orderId=order_id)
             return self._client.cancel_order(symbol=sym, orderId=order_id)
         except BinanceAPIException as e:
             logger.error(f"Failed to cancel order: {e}")
@@ -507,6 +554,8 @@ class BinanceStore:
         sym = normalize_symbol(symbol)
 
         try:
+            if self.is_futures_market():
+                return self._client.futures_get_order(symbol=sym, orderId=order_id)
             return self._client.get_order(symbol=sym, orderId=order_id)
         except BinanceAPIException as e:
             logger.error(f"Failed to get order: {e}")
@@ -517,6 +566,8 @@ class BinanceStore:
             params = {}
             if symbol:
                 params['symbol'] = normalize_symbol(symbol)
+            if self.is_futures_market():
+                return self._client.futures_get_open_orders(**params)
             return self._client.get_open_orders(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to get open orders: {e}")
@@ -524,29 +575,49 @@ class BinanceStore:
 
     def get_all_orders(self, symbol: str, limit: int = 100) -> list:
         try:
-            return self._client.get_all_orders(
-                symbol=normalize_symbol(symbol),
-                limit=limit,
-            )
+            params = {
+                'symbol': normalize_symbol(symbol),
+                'limit': limit,
+            }
+            if self.is_futures_market():
+                return self._client.futures_get_all_orders(**params)
+            return self._client.get_all_orders(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to get all orders for {symbol}: {e}")
             raise
 
     def get_my_trades(self, symbol: str, limit: int = 100) -> list:
         try:
-            return self._client.get_my_trades(
-                symbol=normalize_symbol(symbol),
-                limit=limit,
-            )
+            params = {
+                'symbol': normalize_symbol(symbol),
+                'limit': limit,
+            }
+            if self.is_futures_market():
+                return self._client.futures_account_trades(**params)
+            return self._client.get_my_trades(**params)
         except BinanceAPIException as e:
             logger.error(f"Failed to get trade history for {symbol}: {e}")
             raise
 
     def get_account(self) -> dict:
         try:
+            if self.is_futures_market():
+                return self._client.futures_account()
             return self._client.get_account()
         except BinanceAPIException as e:
             logger.error(f"Failed to get account: {e}")
+            raise
+
+    def get_position_information(self, symbol: Optional[str] = None) -> list:
+        if not self.is_futures_market():
+            return []
+        params = {}
+        if symbol:
+            params["symbol"] = normalize_symbol(symbol)
+        try:
+            return self._client.futures_position_information(**params)
+        except BinanceAPIException as e:
+            logger.error(f"Failed to get futures positions for {symbol}: {e}")
             raise
 
     # ═══════════════════════════ Paper Trading ═══════════════════════════
@@ -560,7 +631,19 @@ class BinanceStore:
 
     def get_symbol_trading_rules(self, symbol: str) -> dict:
         sym = normalize_symbol(symbol)
-        lot_filter = self._get_symbol_filter(sym, 'LOT_SIZE')
+        filter_types = ['LOT_SIZE']
+        if self.is_futures_market():
+            filter_types.insert(0, 'MARKET_LOT_SIZE')
+
+        lot_filter = None
+        for filter_type in filter_types:
+            try:
+                lot_filter = self._get_symbol_filter(sym, filter_type)
+                break
+            except ValueError:
+                continue
+        if lot_filter is None:
+            raise ValueError(f"LOT_SIZE filter unavailable for {sym}")
 
         min_notional = None
         try:
@@ -588,7 +671,14 @@ class BinanceStore:
             return cached
 
         try:
-            info = self._client.get_symbol_info(sym)
+            if self.is_futures_market():
+                exchange_info = self._client.futures_exchange_info()
+                info = next(
+                    (item for item in exchange_info.get('symbols', []) if item.get('symbol') == sym),
+                    None,
+                )
+            else:
+                info = self._client.get_symbol_info(sym)
         except BinanceAPIException as e:
             logger.error(f"Failed to get symbol info for {sym}: {e}")
             raise
@@ -602,7 +692,19 @@ class BinanceStore:
     def normalize_quantity(self, symbol: str, quantity: float) -> Decimal:
         sym = normalize_symbol(symbol)
         quantity_decimal = Decimal(str(quantity))
-        lot_filter = self._get_symbol_filter(sym, 'LOT_SIZE')
+        filter_types = ['LOT_SIZE']
+        if self.is_futures_market():
+            filter_types.insert(0, 'MARKET_LOT_SIZE')
+
+        lot_filter = None
+        for filter_type in filter_types:
+            try:
+                lot_filter = self._get_symbol_filter(sym, filter_type)
+                break
+            except ValueError:
+                continue
+        if lot_filter is None:
+            raise ValueError(f"LOT_SIZE filter unavailable for {sym}")
         min_qty = Decimal(lot_filter['minQty'])
         max_qty = Decimal(lot_filter['maxQty'])
         step_size = Decimal(lot_filter['stepSize'])

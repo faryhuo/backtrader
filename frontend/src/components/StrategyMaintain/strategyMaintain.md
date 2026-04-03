@@ -24,3 +24,4 @@
 
 - Strategy naming validation now allows Chinese and other Unicode characters, but must continue rejecting `\/:*?"<>|`, trailing dots/spaces, and reserved Windows device names so frontend behavior stays aligned with backend file storage rules.
 - `TemplateLibrary/TemplateImportModal.jsx` now checks invalid filename characters and ASCII control characters with explicit character inspection instead of a control-character regex literal, keeping ESLint compatible with the existing validation rules.
+- `StrategyMaintain.jsx` now keeps Monaco as an editor-owned model with throttled React state sync, and the workspace CSS constrains editor height/scrolling to prevent input lag and the editor region stretching the full page during typing.

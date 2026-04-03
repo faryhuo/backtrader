@@ -81,3 +81,4 @@ from src.db.storage import BacktestStorage, get_raw_data_json
 - `system_users` now stores built-in email/password accounts for the new system authentication flow.
 - `user_settings` now also persists auth configuration such as `auth_provider` and `system_auth_allow_registration`.
 - `user_settings.setup_completed` now tracks whether first-run onboarding has finished, and setup readiness should read that database flag instead of inferring readiness only from `.env`.
+- `SessionStorage` now persists live-session `market` in `TradingSessionModel.config` and falls back to `spot` when loading older rows that predate that field.

@@ -1,6 +1,8 @@
 """
 Unit tests for live trading routes module.
 """
+from unittest.mock import patch
+
 import pytest
 
 from src.routes.live_routes import (
@@ -9,6 +11,7 @@ from src.routes.live_routes import (
     StopLiveRequest,
     SessionResponse,
     ExchangeInfo,
+    _fetch_binance_symbols,
 )
 
 
@@ -24,6 +27,7 @@ class TestStartLiveRequest:
         )
         assert request.strategy_name == "sma_cross"
         assert request.symbol == "BTC/USDT"
+        assert request.market == "spot"
         assert request.mode == "paper"
 
     def test_default_values(self):
@@ -32,6 +36,7 @@ class TestStartLiveRequest:
             strategy_name="test",
             symbol="BTC/USDT",
         )
+        assert request.market == "spot"
         assert request.mode == "paper"
         assert request.timeframe == "1m"
         assert request.initial_cash == pytest.approx(10000.0)
@@ -42,11 +47,13 @@ class TestStartLiveRequest:
         request = StartLiveRequest(
             strategy_name="test",
             symbol="ETH/USDT",
+            market="futures",
             mode="live",
             timeframe="1s",
             initial_cash=50000.0,
             commission=0.0005,
         )
+        assert request.market == "futures"
         assert request.timeframe == "1s"
         assert request.initial_cash == pytest.approx(50000.0)
         assert request.commission == pytest.approx(0.0005)
@@ -76,6 +83,7 @@ class TestSessionResponse:
             strategy_name="sma_cross",
             symbol="BTC/USDT",
             exchange="binance",
+            market="spot",
             mode="paper",
             timeframe="1m",
             start_time="2024-01-01T00:00:00Z",
@@ -95,6 +103,7 @@ class TestSessionResponse:
             strategy_name="test",
             symbol="BTC/USDT",
             exchange="binance",
+            market="spot",
             mode="paper",
             timeframe="1m",
             start_time="2024-01-01T00:00:00Z",
@@ -114,7 +123,7 @@ class TestExchangeInfo:
         info = ExchangeInfo(
             id="binance",
             name="Binance",
-            markets=["spot"],
+            markets=["spot", "futures"],
             default_market="spot",
             paper_mode_available=True,
         )
@@ -163,3 +172,41 @@ class TestLiveRouter:
         """Test that router has ticker price endpoint."""
         route_paths = [route.path for route in router.routes if hasattr(route, 'path')]
         assert any("ticker" in p for p in route_paths)
+
+
+class TestSymbolQuery:
+    def test_fetch_futures_symbols_only_returns_perpetual_contracts(self):
+        class StubClient:
+            def futures_exchange_info(self):
+                return {
+                    "symbols": [
+                        {
+                            "symbol": "BTCUSDT",
+                            "baseAsset": "BTC",
+                            "quoteAsset": "USDT",
+                            "status": "TRADING",
+                            "contractType": "PERPETUAL",
+                        },
+                        {
+                            "symbol": "BTCUSDT_250627",
+                            "baseAsset": "BTC",
+                            "quoteAsset": "USDT",
+                            "status": "TRADING",
+                            "contractType": "CURRENT_QUARTER",
+                        },
+                    ]
+                }
+
+        with patch("src.routes.live_routes.Client", return_value=StubClient()):
+            result = _fetch_binance_symbols("futures")
+
+        assert result["market"] == "futures"
+        assert result["count"] == 1
+        assert result["symbols"] == [
+            {
+                "symbol": "BTC/USDT",
+                "baseAsset": "BTC",
+                "quoteAsset": "USDT",
+                "market": "futures",
+            }
+        ]

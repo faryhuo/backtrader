@@ -29,6 +29,21 @@ class StubClient:
         self.symbol_ticker_response = {"symbol": "BTCUSDT", "price": "101.5"}
         self.order_book_ticker_response = {"bidPrice": "101.4", "askPrice": "101.6"}
         self.account_response = {"balances": [{"asset": "USDT", "free": "250.0", "locked": "0"}]}
+        self.futures_account_response = {
+            "assets": [{
+                "asset": "USDT",
+                "availableBalance": "200.0",
+                "walletBalance": "250.0",
+                "initialMargin": "25.0",
+            }]
+        }
+        self.futures_positions_response = [{
+            "symbol": "BTCUSDT",
+            "positionAmt": "0.5",
+            "entryPrice": "100.0",
+            "unRealizedProfit": "5.0",
+            "leverage": "2",
+        }]
         self.open_orders_response = []
         self.all_orders_response = []
         self.my_trades_response = []
@@ -39,53 +54,112 @@ class StubClient:
     def ping(self):
         self.ping_calls += 1
 
+    def futures_ping(self):
+        self.calls.append(("futures_ping", {}))
+
     def get_ticker(self, **kwargs):
         self.calls.append(("get_ticker", kwargs))
+        return self.ticker_response
+
+    def futures_ticker(self, **kwargs):
+        self.calls.append(("futures_ticker", kwargs))
         return self.ticker_response
 
     def get_klines(self, **kwargs):
         self.calls.append(("get_klines", kwargs))
         return self.klines_response
 
+    def futures_klines(self, **kwargs):
+        self.calls.append(("futures_klines", kwargs))
+        return self.klines_response
+
     def get_symbol_ticker(self, **kwargs):
         self.calls.append(("get_symbol_ticker", kwargs))
+        return self.symbol_ticker_response
+
+    def futures_symbol_ticker(self, **kwargs):
+        self.calls.append(("futures_symbol_ticker", kwargs))
         return self.symbol_ticker_response
 
     def get_order_book_ticker(self, **kwargs):
         self.calls.append(("get_order_book_ticker", kwargs))
         return self.order_book_ticker_response
 
+    def futures_orderbook_ticker(self, **kwargs):
+        self.calls.append(("futures_orderbook_ticker", kwargs))
+        return self.order_book_ticker_response
+
     def create_order(self, **kwargs):
         self.calls.append(("create_order", kwargs))
+        return self.created_order_response
+
+    def futures_create_order(self, **kwargs):
+        self.calls.append(("futures_create_order", kwargs))
         return self.created_order_response
 
     def cancel_order(self, **kwargs):
         self.calls.append(("cancel_order", kwargs))
         return self.cancel_order_response
 
+    def futures_cancel_order(self, **kwargs):
+        self.calls.append(("futures_cancel_order", kwargs))
+        return self.cancel_order_response
+
     def get_order(self, **kwargs):
         self.calls.append(("get_order", kwargs))
+        return self.get_order_response
+
+    def futures_get_order(self, **kwargs):
+        self.calls.append(("futures_get_order", kwargs))
         return self.get_order_response
 
     def get_open_orders(self, **kwargs):
         self.calls.append(("get_open_orders", kwargs))
         return self.open_orders_response
 
+    def futures_get_open_orders(self, **kwargs):
+        self.calls.append(("futures_get_open_orders", kwargs))
+        return self.open_orders_response
+
     def get_all_orders(self, **kwargs):
         self.calls.append(("get_all_orders", kwargs))
+        return self.all_orders_response
+
+    def futures_get_all_orders(self, **kwargs):
+        self.calls.append(("futures_get_all_orders", kwargs))
         return self.all_orders_response
 
     def get_my_trades(self, **kwargs):
         self.calls.append(("get_my_trades", kwargs))
         return self.my_trades_response
 
+    def futures_account_trades(self, **kwargs):
+        self.calls.append(("futures_account_trades", kwargs))
+        return self.my_trades_response
+
     def get_account(self):
         self.calls.append(("get_account", {}))
         return self.account_response
 
+    def futures_account(self):
+        self.calls.append(("futures_account", {}))
+        return self.futures_account_response
+
+    def futures_position_information(self, **kwargs):
+        self.calls.append(("futures_position_information", kwargs))
+        return self.futures_positions_response
+
     def get_symbol_info(self, symbol):
         self.calls.append(("get_symbol_info", {"symbol": symbol}))
         return self.symbol_info.get(symbol)
+
+    def futures_exchange_info(self):
+        self.calls.append(("futures_exchange_info", {}))
+        return {"symbols": list(self.symbol_info.values())}
+
+    def futures_order_book(self, **kwargs):
+        self.calls.append(("futures_order_book", kwargs))
+        return {"bids": [["100", "1"]], "asks": [["101", "2"]]}
 
 
 class StubTWM:
@@ -186,6 +260,14 @@ class TestBinanceStoreLifecycle:
         store.start()
         try:
             assert client_factory[0].testnet is False
+        finally:
+            store.stop()
+
+    def test_start_futures_uses_futures_ping(self, client_factory):
+        store = BinanceStore(mode="paper", config={"default_market": "futures", "markets": ["spot", "futures"]})
+        store.start()
+        try:
+            assert ("futures_ping", {}) in client_factory[0].calls
         finally:
             store.stop()
 
@@ -351,6 +433,19 @@ class TestMarketDataMethods:
             },
         )
 
+    def test_fetch_ohlcv_uses_futures_endpoint_for_futures_market(self, client_factory):
+        store = BinanceStore(mode="paper", config={"default_market": "futures", "markets": ["spot", "futures"]})
+        store.start()
+        try:
+            store.get_client().klines_response = [[1, "2", "3", "4", "5", "6", 0, 0, 0, 0, 0, 0]]
+            store.fetch_ohlcv("BTC/USDT", interval="1m", limit=1)
+            assert store.get_client().calls[-1] == (
+                "futures_klines",
+                {"symbol": "BTCUSDT", "interval": "1m", "limit": 1},
+            )
+        finally:
+            store.stop()
+
     def test_get_symbol_ticker_normalizes_symbol(self, started_store):
         result = started_store.get_symbol_ticker("BTC/USDT")
 
@@ -433,6 +528,40 @@ class TestTradingMethods:
         assert ("get_my_trades", {"symbol": "BTCUSDT", "limit": 50}) in started_store.get_client().calls
         assert ("get_account", {}) in started_store.get_client().calls
 
+    def test_futures_trading_methods_delegate_to_futures_endpoints(self, client_factory):
+        store = BinanceStore(mode="paper", config={"default_market": "futures", "markets": ["spot", "futures"]})
+        store.start()
+        try:
+            store._symbol_info_cache["BTCUSDT"] = {
+                "symbol": "BTCUSDT",
+                "filters": [{
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100.00000000",
+                    "stepSize": "0.00100000",
+                }],
+            }
+            store.create_order("BTC/USDT", "BUY", "MARKET", quantity=0.1)
+            store.cancel_order("BTC/USDT", 11)
+            store.get_order("BTC/USDT", 11)
+            store.get_open_orders("BTC/USDT")
+            store.get_all_orders("BTC/USDT", limit=50)
+            store.get_my_trades("BTC/USDT", limit=50)
+            store.get_account()
+            store.get_position_information("BTC/USDT")
+
+            calls = store.get_client().calls
+            assert ("futures_create_order", {"symbol": "BTCUSDT", "side": "BUY", "type": "MARKET", "quantity": "0.1"}) in calls
+            assert ("futures_cancel_order", {"symbol": "BTCUSDT", "orderId": 11}) in calls
+            assert ("futures_get_order", {"symbol": "BTCUSDT", "orderId": 11}) in calls
+            assert ("futures_get_open_orders", {"symbol": "BTCUSDT"}) in calls
+            assert ("futures_get_all_orders", {"symbol": "BTCUSDT", "limit": 50}) in calls
+            assert ("futures_account_trades", {"symbol": "BTCUSDT", "limit": 50}) in calls
+            assert ("futures_account", {}) in calls
+            assert ("futures_position_information", {"symbol": "BTCUSDT"}) in calls
+        finally:
+            store.stop()
+
 
 class TestTradingRules:
     def test_get_symbol_trading_rules_prefers_notional_filter(self, started_store):
@@ -482,6 +611,30 @@ class TestTradingRules:
         rules = started_store.get_symbol_trading_rules("ETHUSDT")
 
         assert rules["min_notional"] == "10.00000000"
+
+    def test_get_symbol_trading_rules_for_futures_uses_exchange_info_cache(self, client_factory):
+        store = BinanceStore(mode="paper", config={"default_market": "futures", "markets": ["spot", "futures"]})
+        store.start()
+        try:
+            store.get_client().symbol_info["BTCUSDT"] = {
+                "symbol": "BTCUSDT",
+                "filters": [
+                    {
+                        "filterType": "MARKET_LOT_SIZE",
+                        "minQty": "0.00100000",
+                        "maxQty": "100.00000000",
+                        "stepSize": "0.00100000",
+                    },
+                    {
+                        "filterType": "MIN_NOTIONAL",
+                        "minNotional": "5.00000000",
+                    },
+                ],
+            }
+            rules = store.get_symbol_trading_rules("BTC/USDT")
+            assert rules["min_qty"] == "0.00100000"
+        finally:
+            store.stop()
 
     def test_normalize_quantity_rejects_below_min_qty(self, unstarted_store):
         unstarted_store._client = object()

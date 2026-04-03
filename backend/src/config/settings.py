@@ -35,6 +35,9 @@ ENABLE_LOGIN = os.getenv("ENABLE_LOGIN", "true").lower() not in {"false", "0", "
 AUTH_PROVIDER = os.getenv("AUTH_PROVIDER", "logto" if ENABLE_LOGIN else "none").strip().lower()
 SYSTEM_AUTH_ALLOW_REGISTRATION = os.getenv("SYSTEM_AUTH_ALLOW_REGISTRATION", "false").lower() in {"true", "1", "yes", "on"}
 SYSTEM_AUTH_SECRET = os.getenv("SYSTEM_AUTH_SECRET")
+SYSTEM_ADMIN_EMAIL = os.getenv("SYSTEM_ADMIN_EMAIL")
+SYSTEM_ADMIN_PASSWORD = os.getenv("SYSTEM_ADMIN_PASSWORD")
+SYSTEM_ADMIN_DISPLAY_NAME = os.getenv("SYSTEM_ADMIN_DISPLAY_NAME")
 LOGTO_REQUIRED_SCOPES = [
     scope.strip()
     for scope in os.getenv("LOGTO_REQUIRED_SCOPES", "").split()
@@ -354,6 +357,9 @@ __all__ = [
     "LOGTO_JWKS_URI",
     "LOGTO_REQUIRED_SCOPES",
     "SYSTEM_AUTH_ALLOW_REGISTRATION",
+    "SYSTEM_ADMIN_DISPLAY_NAME",
+    "SYSTEM_ADMIN_EMAIL",
+    "SYSTEM_ADMIN_PASSWORD",
     "SYSTEM_AUTH_SECRET",
     "MINIMAX_API_KEY",
     "MINIMAX_BASE_URL",
