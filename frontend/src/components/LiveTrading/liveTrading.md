@@ -5,6 +5,7 @@ Frontend UI components for live and paper trading.
 ## Responsibilities
 - `LiveConfigForm.jsx`: session launcher workspace for strategy, market (`spot` / `futures`), execution mode, position sizing, strategy parameter overrides, exchange-backed mode selection, costs, and pre-launch summary.
   - Live timeframe options are intentionally limited to `1m`, `5m`, `15m`, `1h`, `4h`, and `1d` so the launcher stays aligned with the supported trading UX.
+  - The launcher now also accepts route query presets (`mode`, `market`, `symbol`, `strategy_name`, `timeframe`) so feature pages can deep-link into a prefilled trading workflow.
 - `LiveCredentialPanel.jsx`: launcher-adjacent access settings for Binance paper/live API keys plus the paper test URL used by the backend runtime config.
 - `SessionControls.jsx`: session status bar for runtime status, feed status (`warming_up` / `live`), elapsed time, and stop / refresh actions.
 - `PriceChart.jsx`: candlestick chart that prefers WebSocket OHLCV / ticker data and falls back to REST when needed.

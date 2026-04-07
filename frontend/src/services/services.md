@@ -17,10 +17,10 @@ Frontend service modules live here. They wrap backend APIs, websocket access, an
 ## Current Modules
 
 - `apiCore.js`: shared request helpers and auth token wiring.
-- `basisApi.js`: OKX public funding-rate and ticker snapshots for the basis arbitrage page.
+- `basisApi.js`: OKX public funding-rate and ticker snapshots plus standalone basis-trading preview/open/close/state APIs for the basis arbitrage page.
 - `strategyApi.js`, `backtestApi.js`, `marketDataApi.js`, `liveApi.js`, `walkforwardApi.js`, `settingsApi.js`, `portfolioApi.js`, `reportApi.js`, `authApi.js`, `setupApi.js`: domain services for app features.
 - `websocket.js`: realtime websocket management.
 
 ## Recent Notes
 
-- `basisApi.js` now fetches synchronized spot, perpetual, and funding-rate data from OKX public endpoints for the basis arbitrage monitor.
+- `basisApi.js` now fetches synchronized spot, perpetual, and funding-rate data from OKX public endpoints for the basis arbitrage monitor, and also wraps the dedicated backend basis-trading module for credential status, preview, open/close actions, and paper-state refresh.

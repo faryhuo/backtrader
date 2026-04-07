@@ -27,6 +27,7 @@ import {
   SwapOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStrategyParams } from '../../hooks/useStrategyParams';
 import { api } from '../../services/api';
@@ -56,6 +57,7 @@ const SIZER_OPTIONS = [
 
 const LiveConfigForm = ({ onSubmit, loading }) => {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [form] = Form.useForm();
   const [strategies, setStrategies] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
@@ -116,6 +118,41 @@ const LiveConfigForm = ({ onSubmit, loading }) => {
 
     loadSymbols();
   }, [market]);
+
+  useEffect(() => {
+    const nextMode = searchParams.get('mode');
+    const nextMarket = searchParams.get('market');
+    const nextSymbol = searchParams.get('symbol');
+    const nextStrategy = searchParams.get('strategy_name');
+    const nextTimeframe = searchParams.get('timeframe');
+    const nextValues = {};
+
+    if (nextMode === 'paper' || nextMode === 'live') {
+      nextValues.mode = nextMode;
+      setMode(nextMode);
+    }
+
+    if (nextMarket === 'spot' || nextMarket === 'futures') {
+      nextValues.market = nextMarket;
+      setMarket(nextMarket);
+    }
+
+    if (nextSymbol) {
+      nextValues.symbol = nextSymbol;
+    }
+
+    if (nextStrategy) {
+      nextValues.strategy_name = nextStrategy;
+    }
+
+    if (TIMEFRAMES.includes(nextTimeframe)) {
+      nextValues.timeframe = nextTimeframe;
+    }
+
+    if (Object.keys(nextValues).length > 0) {
+      form.setFieldsValue(nextValues);
+    }
+  }, [form, searchParams]);
 
   const selectedSymbol = formValues.symbol || 'BTC/USDT';
 

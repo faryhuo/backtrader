@@ -21,6 +21,7 @@ This directory contains application services and orchestration logic. Services s
 - `auth_service.py`: built-in email/password authentication, password hashing, JWT issuing, and system-user lookup.
 - `setup_wizard_service.py`: first-run bootstrap persistence and validation.
 - `backtest_engine.py`, `live_engine.py`, `walkforward_optimizer.py`: core trading execution flows.
+- `basis_trading_service.py`: standalone basis-arbitrage preview and dual-leg execution flow for the dedicated basis page.
 - `websocket_manager.py`: realtime push coordination.
 
 ## Recent Notes
@@ -33,3 +34,4 @@ This directory contains application services and orchestration logic. Services s
 - `live_engine.py` now needs to normalize account snapshots separately for Binance `spot` and `futures`, because order history, balances, positions, and portfolio value are sourced from different exchange payloads.
 - `live_engine.py` now also owns the small runtime config surface used by the live launcher for the Binance paper test URL, and paper-session startup passes that URL into the Binance store.
 - `live_engine.py` should provide live-chart OHLCV backfill with a timeframe-aware lookback window instead of a single fixed candle count, so the frontend can keep more natural chart context across `1s` / `1m` / `1h` sessions.
+- `basis_trading_service.py` keeps basis-page execution independent from `live_engine.py`: it owns basis preview math, per-user paper trade state, and separate Binance / OKX dual-leg open/close handlers.

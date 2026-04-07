@@ -16,6 +16,7 @@ from src.routes.ai_routes import router as ai_router
 from src.routes.strategy_routes import router as strategy_router
 from src.routes.backtest_routes import router as backtest_router
 from src.routes.market_data_routes import router as market_data_router
+from src.routes.basis_routes import router as basis_router
 from src.routes.live_routes import router as live_router
 from src.routes.portfolio_routes import router as portfolio_router
 from src.routes.settings_routes import router as settings_router
@@ -136,6 +137,7 @@ app.add_middleware(
 app.include_router(strategy_router, prefix=prefix)
 app.include_router(backtest_router, prefix=prefix)
 app.include_router(market_data_router, prefix=prefix)
+app.include_router(basis_router, prefix=prefix)
 app.include_router(ai_router, prefix=prefix)
 app.include_router(live_router, prefix=prefix)
 app.include_router(portfolio_router, prefix=prefix)

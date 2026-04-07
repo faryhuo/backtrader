@@ -247,6 +247,60 @@
     color: #f8fafc;
 }
 
+.basis-mode-card {
+    height: 100%;
+    border-radius: 18px !important;
+    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: rgba(15, 23, 42, 0.72) !important;
+}
+
+.basis-mode-card .ant-card-body {
+    display: grid;
+    gap: 12px;
+    height: 100%;
+}
+
+.basis-mode-header {
+    color: #f8fafc;
+    font-size: 16px;
+}
+
+.basis-mode-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.basis-mode-metric {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(8, 15, 29, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.basis-mode-metric .ant-typography:last-child {
+    color: #f8fafc;
+}
+
+.basis-mode-progress {
+    display: grid;
+    gap: 8px;
+}
+
+.basis-live-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(127, 29, 29, 0.18);
+    border: 1px solid rgba(248, 113, 113, 0.16);
+}
+
 @media (max-width: 1100px) {
     .basis-hero {
         grid-template-columns: 1fr;
@@ -273,5 +327,9 @@
 
     .basis-highlight-rate {
         font-size: 28px;
+    }
+
+    .basis-mode-metrics {
+        grid-template-columns: 1fr;
     }
 }

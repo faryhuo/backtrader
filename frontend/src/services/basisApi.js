@@ -1,3 +1,5 @@
+import { buildRequest, parseResponse } from './apiCore';
+
 const OKX_BASE_URL = 'https://www.okx.com/api/v5';
 
 async function fetchOkx(path) {
@@ -46,4 +48,42 @@ export async function getBasisSnapshot(symbol = 'ETH') {
 
 export const basisApi = {
     getBasisSnapshot,
+    async getCredentialStatus(exchange) {
+        const params = new URLSearchParams({ exchange });
+        const response = await buildRequest(`/basis/credentials-status?${params.toString()}`);
+        return await parseResponse(response);
+    },
+    async previewTrade(payload) {
+        const response = await buildRequest('/basis/preview', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        return await parseResponse(response);
+    },
+    async getTradePrecheck(payload) {
+        const response = await buildRequest('/basis/precheck', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        return await parseResponse(response);
+    },
+    async openTrade(payload) {
+        const response = await buildRequest('/basis/trade/open', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        return await parseResponse(response);
+    },
+    async closeTrade(payload) {
+        const response = await buildRequest('/basis/trade/close', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        return await parseResponse(response);
+    },
+    async getTradeState(exchange, mode, symbol) {
+        const params = new URLSearchParams({ exchange, mode, symbol });
+        const response = await buildRequest(`/basis/trade/state?${params.toString()}`);
+        return await parseResponse(response);
+    },
 };

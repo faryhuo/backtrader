@@ -33,6 +33,8 @@ import {
 } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import BasisTradingPanel from '../components/BasisArbitrage/BasisTradingPanel';
+import { usePersistedState } from '../hooks/usePersistedState';
 import { basisApi } from '../services/basisApi';
 import './BasisArbitrage.css';
 
@@ -54,6 +56,7 @@ const capitalSplit = [
 ];
 
 const MONITOR_SYMBOLS = ['ETH', 'BTC', 'SOL'];
+const BASIS_MONITOR_CACHE_KEY = 'basisArbitrage.monitorState';
 
 function formatPercent(value, digits = 4) {
     return `${(Number(value || 0) * 100).toFixed(digits)}%`;
@@ -83,18 +86,32 @@ function getFundingDecision(rate) {
 
 export default function BasisArbitrage() {
     const { t } = useTranslation();
-    const [symbol, setSymbol] = useState('ETH');
-    const [autoRefresh, setAutoRefresh] = useState(true);
-    const [refreshSeconds, setRefreshSeconds] = useState(30);
+    const [cachedMonitorState, setCachedMonitorState] = usePersistedState(BASIS_MONITOR_CACHE_KEY, {
+        symbol: 'ETH',
+        autoRefresh: true,
+        refreshSeconds: 30,
+        capital: 10000,
+        spotRatio: 50,
+        manualFundingRate: null,
+        entryPrice: 2000,
+        cyclesPerMonth: 4,
+        roundTripFees: 12,
+        entryPriceLocked: false,
+    });
+    const [symbol, setSymbol] = useState(cachedMonitorState.symbol || 'ETH');
+    const [autoRefresh, setAutoRefresh] = useState(cachedMonitorState.autoRefresh ?? true);
+    const [refreshSeconds, setRefreshSeconds] = useState(cachedMonitorState.refreshSeconds ?? 30);
     const [snapshot, setSnapshot] = useState(null);
     const [monitorLoading, setMonitorLoading] = useState(true);
     const [monitorError, setMonitorError] = useState('');
-    const [capital, setCapital] = useState(10000);
-    const [spotRatio, setSpotRatio] = useState(50);
-    const [manualFundingRate, setManualFundingRate] = useState(null);
-    const [entryPrice, setEntryPrice] = useState(2000);
-    const [cyclesPerMonth, setCyclesPerMonth] = useState(4);
-    const [roundTripFees, setRoundTripFees] = useState(12);
+    const [capital, setCapital] = useState(cachedMonitorState.capital ?? 10000);
+    const [spotRatio, setSpotRatio] = useState(cachedMonitorState.spotRatio ?? 50);
+    const [manualFundingRate, setManualFundingRate] = useState(cachedMonitorState.manualFundingRate ?? null);
+    const [entryPrice, setEntryPrice] = useState(cachedMonitorState.entryPrice ?? 2000);
+    const [cyclesPerMonth, setCyclesPerMonth] = useState(cachedMonitorState.cyclesPerMonth ?? 4);
+    const [roundTripFees, setRoundTripFees] = useState(cachedMonitorState.roundTripFees ?? 12);
+    const [entryPriceLocked, setEntryPriceLocked] = useState(cachedMonitorState.entryPriceLocked ?? false);
+    const [tradeRefreshNonce, setTradeRefreshNonce] = useState(0);
 
     const fundingColumns = [
         { title: t('basis.table.rate'), dataIndex: 'rate', key: 'rate', width: 180 },
@@ -119,10 +136,37 @@ export default function BasisArbitrage() {
     ];
 
     useEffect(() => {
-        if (snapshot?.spotPrice > 0) {
+        if (snapshot?.spotPrice > 0 && !entryPriceLocked) {
             setEntryPrice(Number(snapshot.spotPrice.toFixed(2)));
         }
-    }, [snapshot?.spotPrice]);
+    }, [entryPriceLocked, snapshot?.spotPrice]);
+
+    useEffect(() => {
+        setCachedMonitorState({
+            symbol,
+            autoRefresh,
+            refreshSeconds,
+            capital,
+            spotRatio,
+            manualFundingRate,
+            entryPrice,
+            cyclesPerMonth,
+            roundTripFees,
+            entryPriceLocked,
+        });
+    }, [
+        autoRefresh,
+        capital,
+        cyclesPerMonth,
+        entryPrice,
+        entryPriceLocked,
+        manualFundingRate,
+        refreshSeconds,
+        roundTripFees,
+        setCachedMonitorState,
+        spotRatio,
+        symbol,
+    ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -139,6 +183,7 @@ export default function BasisArbitrage() {
                     return;
                 }
                 setSnapshot(nextSnapshot);
+                setTradeRefreshNonce((prev) => prev + 1);
             } catch (error) {
                 if (!cancelled) {
                     setMonitorError(error.message || 'Failed to load funding snapshot');
@@ -251,7 +296,10 @@ export default function BasisArbitrage() {
                                     <Segmented
                                         options={MONITOR_SYMBOLS}
                                         value={symbol}
-                                        onChange={setSymbol}
+                                        onChange={(value) => {
+                                            setSymbol(value);
+                                            setEntryPriceLocked(false);
+                                        }}
                                     />
                                 </div>
                                 <div className="basis-toolbar-group">
@@ -336,7 +384,16 @@ export default function BasisArbitrage() {
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text className="basis-mini-label">{t('basis.calculator.price', { defaultValue: '入场价格' })}</Text>
-                                    <InputNumber className="basis-input" min={1} value={entryPrice} onChange={(value) => setEntryPrice(Number(value || 0))} addonBefore="$" />
+                                    <InputNumber
+                                        className="basis-input"
+                                        min={1}
+                                        value={entryPrice}
+                                        onChange={(value) => {
+                                            setEntryPrice(Number(value || 0));
+                                            setEntryPriceLocked(true);
+                                        }}
+                                        addonBefore="$"
+                                    />
                                 </Col>
                                 <Col xs={24} md={12}>
                                     <Text className="basis-mini-label">{t('basis.calculator.rate', { defaultValue: '资金费率（8h）' })}</Text>
@@ -370,6 +427,14 @@ export default function BasisArbitrage() {
                         </Card>
                     </Col>
                 </Row>
+
+                <BasisTradingPanel
+                    symbol={symbol}
+                    calculator={calculator}
+                    effectiveFundingRate={effectiveFundingRate}
+                    basisPositive={basisIsPositive}
+                    refreshNonce={tradeRefreshNonce}
+                />
 
                 <Row gutter={[16, 16]} className="basis-stat-grid">
                     <Col xs={24} md={12} xl={6}><Card className="basis-stat-card" bordered={false}><Statistic title={t('basis.stats.base_capital')} value="$10,000" prefix={<DollarCircleOutlined />} /></Card></Col>
