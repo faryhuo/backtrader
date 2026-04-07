@@ -1,0 +1,277 @@
+.basis-page {
+    min-height: 100vh;
+    padding: 18px;
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.14), transparent 28%),
+        radial-gradient(circle at 85% 18%, rgba(249, 115, 22, 0.12), transparent 24%),
+        linear-gradient(180deg, #07111d 0%, #0a1628 100%);
+}
+
+.basis-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.basis-hero-copy,
+.basis-highlight-card,
+.basis-panel,
+.basis-stat-card,
+.basis-nested-card {
+    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(7, 14, 25, 0.96)) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.basis-hero-copy {
+    padding: 28px;
+    border-radius: 22px;
+}
+
+.basis-eyebrow {
+    margin-bottom: 10px;
+    color: #67e8f9;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.basis-title {
+    margin: 0 !important;
+    color: #f8fafc !important;
+}
+
+.basis-subtitle,
+.basis-footnote,
+.basis-highlight-text,
+.basis-highlight-footnote,
+.basis-panel-lead,
+.basis-check-item .ant-typography,
+.basis-list,
+.basis-table,
+.basis-risk-panel .ant-alert-description {
+    color: #93a4bd !important;
+}
+
+.basis-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.basis-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.basis-toolbar-group {
+    display: grid;
+    gap: 10px;
+}
+
+.basis-input {
+    width: 100%;
+}
+
+.basis-live-stats {
+    margin-bottom: 16px;
+}
+
+.basis-monitor-descriptions .ant-descriptions-item-label,
+.basis-monitor-descriptions .ant-descriptions-item-content {
+    color: #cbd5e1 !important;
+}
+
+.basis-monitor-loading {
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+}
+
+.basis-highlight-card {
+    border-radius: 22px !important;
+}
+
+.basis-highlight-card .ant-card-body {
+    display: grid;
+    gap: 12px;
+    padding: 24px;
+}
+
+.basis-mini-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.7) !important;
+}
+
+.basis-highlight-rate {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    color: #f8fafc;
+}
+
+.basis-stat-grid {
+    margin-bottom: 18px;
+}
+
+.basis-stat-card {
+    border-radius: 18px !important;
+}
+
+.basis-stat-card .ant-card-body {
+    padding: 20px;
+}
+
+.basis-stat-card .ant-statistic-title {
+    color: rgba(148, 163, 184, 0.78);
+}
+
+.basis-stat-card .ant-statistic-content {
+    color: #f8fafc;
+}
+
+.basis-panel {
+    border-radius: 20px !important;
+}
+
+.basis-panel .ant-card-head {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    color: #f8fafc;
+}
+
+.basis-panel .ant-card-head-title {
+    color: #f8fafc;
+}
+
+.basis-panel .ant-card-body {
+    padding: 20px;
+}
+
+.basis-table .ant-table {
+    background: transparent;
+}
+
+.basis-table .ant-table-thead > tr > th {
+    background: rgba(15, 23, 42, 0.9);
+    color: #cbd5e1;
+    border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+.basis-table .ant-table-tbody > tr > td {
+    background: transparent;
+    color: #e2e8f0;
+    border-bottom-color: rgba(148, 163, 184, 0.08);
+}
+
+.basis-formula {
+    margin: 8px 0 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.18);
+    color: #ecfeff;
+    font-weight: 600;
+}
+
+.basis-list {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.basis-list li + li {
+    margin-top: 8px;
+}
+
+.basis-inline-alert {
+    margin-top: 16px;
+    border-radius: 14px;
+}
+
+.basis-check-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.basis-check-item {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.62);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.basis-check-item .anticon {
+    margin-top: 2px;
+    color: #22c55e;
+}
+
+.basis-check-item .ant-typography-paragraph {
+    margin: 4px 0 0;
+}
+
+.basis-exit-list {
+    margin-bottom: 0;
+}
+
+.basis-nested-card {
+    border-radius: 16px !important;
+}
+
+.basis-nested-card .ant-card-body {
+    padding: 18px;
+}
+
+.basis-nested-card .ant-statistic-title {
+    color: rgba(148, 163, 184, 0.74);
+}
+
+.basis-nested-card .ant-statistic-content {
+    color: #f8fafc;
+}
+
+.basis-risk-panel .ant-alert {
+    height: 100%;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(148, 163, 184, 0.14);
+}
+
+.basis-risk-panel .ant-alert-message {
+    color: #f8fafc;
+}
+
+@media (max-width: 1100px) {
+    .basis-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .basis-page {
+        padding: 12px;
+    }
+
+    .basis-hero-copy {
+        padding: 22px 18px;
+    }
+
+    .basis-highlight-card .ant-card-body,
+    .basis-panel .ant-card-body {
+        padding: 18px;
+    }
+
+    .basis-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .basis-highlight-rate {
+        font-size: 28px;
+    }
+}

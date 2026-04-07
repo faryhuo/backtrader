@@ -26,6 +26,7 @@ Route-level React pages live here. Pages assemble feature components, page-level
 
 ## Recent Notes
 
+- `BasisArbitrage.jsx` now provides a dedicated reference page for spot plus perpetual hedge workflow, including entry checks, synchronized execution, position management, exit rules, and carry/volume examples.
 - `Login.jsx` now provides built-in email/password login and optional registration when the backend is configured for `system` auth.
 - `Login.jsx` now uses a finance-oriented split layout with market-style summary panels while keeping the existing auth flow unchanged.
 - `App.jsx` now routes authentication through a provider-based flow so `logto` and `system` login can share the same guarded app shell.

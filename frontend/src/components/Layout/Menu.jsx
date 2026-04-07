@@ -14,6 +14,7 @@ import {
     SettingOutlined,
     SafetyOutlined,
     DeploymentUnitOutlined,
+    SwapOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
 } from '@ant-design/icons'
@@ -71,6 +72,14 @@ const Menu = ({ collapsed, setCollapsed }) => {
                 >
                     <span className="icon"><ThunderboltOutlined /></span>
                     {!collapsed && <span>{t('nav.live_trading', 'Live Trading')}</span>}
+                </Link>
+                <Link
+                    to="/basis-arbitrage"
+                    className={getNavClass('/basis-arbitrage')}
+                    title={t('nav.basis_arbitrage', 'Basis Arbitrage')}
+                >
+                    <span className="icon"><SwapOutlined /></span>
+                    {!collapsed && <span>{t('nav.basis_arbitrage', 'Basis Arbitrage')}</span>}
                 </Link>
 
                 {/* Analysis & Optimization Group */}

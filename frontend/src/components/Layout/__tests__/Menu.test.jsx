@@ -3,6 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Menu from '../Menu'
 
+vi.mock('../../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    authProvider: 'system',
+    loginEnabled: false,
+    user: null,
+  }),
+}))
+
 describe('Menu', () => {
   it('treats /strategy as active on root route', () => {
     render(
@@ -24,6 +32,16 @@ describe('Menu', () => {
 
     expect(screen.getByTitle('nav.history')).toHaveClass('active')
     expect(screen.getByTitle('nav.run_strategy')).not.toHaveClass('active')
+  })
+
+  it('marks basis arbitrage route as active', () => {
+    render(
+      <MemoryRouter initialEntries={['/basis-arbitrage']}>
+        <Menu collapsed={false} setCollapsed={vi.fn()} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByTitle('Basis Arbitrage')).toHaveClass('active')
   })
 
   it('hides group headers and text when collapsed', () => {

@@ -8,6 +8,7 @@
   "history": "Backtest History",
   "walkforward": "Walk-Forward Optimization",
   "live_trading": "Live Trading",
+  "basis_arbitrage": "Basis Arbitrage",
   "data_management": "Data Management",
   "task_center": "Task Center",
   "reports": "Reports",

@@ -29,6 +29,7 @@ import { portfolioApi } from './portfolioApi'
 import { reportApi } from './reportApi'
 import { setupApi } from './setupApi'
 import { authApi } from './authApi'
+import { basisApi } from './basisApi'
 
 // Re-export domain APIs for direct import
 export { strategyApi } from './strategyApi'
@@ -41,6 +42,7 @@ export { portfolioApi } from './portfolioApi'
 export { reportApi } from './reportApi'
 export { setupApi } from './setupApi'
 export { authApi } from './authApi'
+export { basisApi } from './basisApi'
 
 /**
  * Unified API object for backward compatibility
@@ -75,5 +77,8 @@ export const api = {
     ...setupApi,
 
     // Auth API
-    ...authApi
+    ...authApi,
+
+    // Basis Monitor API
+    ...basisApi
 }

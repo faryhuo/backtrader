@@ -1,20 +1,25 @@
-# Layout 目录说明
+# Layout Directory
 
-应用全局布局与导航组件。
+Global application layout and navigation components live here.
 
-## 组件文件
-- `Layout.jsx`：主布局容器，包含顶部导航、侧边栏与内容区域。
-- `Menu.jsx`：侧边导航菜单组件，支持多语言与权限控制。
-- `NotificationCenter.jsx`：全局通知中心组件，展示系统消息与操作反馈。
+## Components
 
-## 功能职责（Functional）
-- 顶部导航、侧边栏、页脚、面包屑等布局结构。
-- 提供路由容器与通用页面框架。
+- `Layout.jsx`: application shell that wraps the sidebar, header region, and routed content.
+- `Menu.jsx`: sidebar navigation with route highlighting, collapse behavior, and auth-aware entries.
+- `NotificationCenter.jsx`: shared notification surface for app-level feedback.
 
-## 非功能性要求（Non-Functional）
-- 一致性：布局组件需保持全站视觉与交互一致。
-- 响应式：支持桌面与常见分辨率适配。
+## Responsibilities
 
-## 约定与规范
-- 布局只处理结构与导航，不写具体业务逻辑。
+- Keep layout and navigation concerns separate from page business logic.
+- Maintain route discoverability and consistent grouping in the sidebar.
+- Preserve responsive behavior across desktop and smaller viewports.
 
+## Conventions
+
+- Add new sidebar destinations only when a matching route exists in `frontend/src/App.jsx`.
+- Prefer translation keys for visible labels so collapsed titles and full labels stay aligned.
+- Keep access control decisions in the menu limited to visibility logic, not feature execution.
+
+## Recent Notes
+
+- `Menu.jsx` now includes a dedicated `Basis Arbitrage` entry under the strategy and trading group.

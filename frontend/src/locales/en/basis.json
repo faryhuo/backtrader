@@ -1,0 +1,137 @@
+{
+  "eyebrow": "Cash and Perpetual Hedge",
+  "title": "Basis Arbitrage Workflow",
+  "subtitle": "A practical reference page for entering spot plus perpetual hedge positions, checking funding conditions, and managing the carry trade without directional exposure.",
+  "tags": {
+    "delta_neutral": "Delta Neutral",
+    "funding_capture": "Funding Capture",
+    "okx_eth": "OKX ETH-USDT"
+  },
+  "highlight": {
+    "label": "Entry benchmark",
+    "rate": "0.03% / 8h",
+    "description": "Funding at this level is usually the sweet spot: positive carry is large enough to absorb fees while keeping the hedge simple.",
+    "footnote": "Illustrative only. Fees, slippage, and execution quality still decide the real outcome."
+  },
+  "stats": {
+    "base_capital": "Example capital",
+    "position_example": "Matched position",
+    "settlement": "Funding settlement",
+    "settlement_value": "00:00 / 08:00 / 16:00",
+    "mode": "Margin mode",
+    "mode_value": "Isolated 1x"
+  },
+  "section": {
+    "precheck": "Step 1: Pre-entry Checks",
+    "precheck_tag": "Funding + Basis",
+    "execution": "Step 2: Open Both Legs",
+    "execution_tag": "Synchronized",
+    "management": "Step 3: Position Management",
+    "management_tag": "Daily Checklist",
+    "exit": "Step 4: Exit Rules",
+    "exit_tag": "Close Both Legs",
+    "pnl": "Yield Example",
+    "volume": "Volume Effect",
+    "risks": "Key Notes",
+    "risks_tag": "Risk Control"
+  },
+  "table": {
+    "rate": "Funding Rate",
+    "judgment": "Judgment",
+    "note": "Why"
+  },
+  "thresholds": {
+    "standard": {
+      "judgment": "Good enough to enter",
+      "note": "Roughly 13.5% annualized before fees."
+    },
+    "premium": {
+      "judgment": "High-quality setup",
+      "note": "Roughly 40% annualized before fees."
+    },
+    "weak": {
+      "judgment": "Not worth it",
+      "note": "Fees and slippage will likely consume the carry."
+    },
+    "negative": {
+      "judgment": "Do not enter",
+      "note": "You would pay funding instead of receiving it."
+    }
+  },
+  "precheck": {
+    "intro": "Check the OKX ETH-USDT perpetual funding rate first, then confirm the perp is trading above spot. Positive funding plus a positive basis is the basic setup for this strategy.",
+    "basis_formula_label": "Basis formula",
+    "basis_formula": "Basis = perpetual price - spot price",
+    "basis_positive": "Basis > 0: perpetual at a premium, suitable for spot long plus perp short.",
+    "basis_negative": "Basis < 0: perpetual at a discount, skip this setup."
+  },
+  "execution": {
+    "spot_title": "Spot leg",
+    "spot_body": "Buy 2.5 ETH on OKX spot for about $5,000 using a limit order to keep slippage under control.",
+    "perp_title": "Perpetual leg",
+    "perp_body": "Short 2.5 ETH on OKX ETH-USDT perpetual with 1x leverage and about $5,000 isolated margin.",
+    "sync_title": "Execution discipline",
+    "sync_body": "Submit both legs as close together as possible. If one leg fills first, you temporarily carry outright price risk.",
+    "warning_title": "Execution warning",
+    "warning_body": "The hedge only works when contract size matches the spot quantity. Any mismatch becomes directional exposure."
+  },
+  "management": {
+    "funding_title": "Track every 8-hour settlement",
+    "funding_body": "OKX settles funding at 00:00, 08:00, and 16:00 UTC+8. Re-check the sign before each cycle.",
+    "match_title": "Keep both legs equal",
+    "match_body": "If the spot and perp quantities drift apart, rebalance quickly so the hedge stays neutral.",
+    "margin_title": "Protect the short leg margin",
+    "margin_body": "Even with 1x leverage, the short leg still needs enough isolated margin to avoid forced reduction.",
+    "alert_title": "Set an alert",
+    "alert_body": "Use an exchange alert for funding dropping below zero so you do not miss the exit signal."
+  },
+  "exit": {
+    "negative": "Exit if funding turns negative repeatedly.",
+    "low": "Exit if funding drops below 0.005% and no longer covers fees.",
+    "capital": "Exit if you need the capital for another trade or operation.",
+    "execution_title": "Close-out process",
+    "step_spot": "Sell the 2.5 ETH spot position with a limit order.",
+    "step_perp": "Buy back the 2.5 ETH perpetual short with a limit order.",
+    "step_sync": "Close both legs nearly simultaneously to avoid reopening price risk."
+  },
+  "pnl": {
+    "per_8h": "Per 8 hours",
+    "per_day": "Per day",
+    "per_month": "Per month",
+    "annualized": "Annualized",
+    "footnote": "Assumes average funding of 0.02% per 8 hours on a $5,000 short notional. After roughly $10 to $15 in round-trip fees, net annual carry is about $1,065."
+  },
+  "volume": {
+    "extra": "Single cycle = $20,000",
+    "table_leg": "Leg",
+    "table_action": "Action",
+    "table_notional": "Notional",
+    "spot_open": {
+      "leg": "Spot",
+      "action": "Buy"
+    },
+    "spot_close": {
+      "leg": "Spot",
+      "action": "Sell"
+    },
+    "perp_open": {
+      "leg": "Perpetual",
+      "action": "Open short"
+    },
+    "perp_close": {
+      "leg": "Perpetual",
+      "action": "Close short"
+    },
+    "footnote": "If you adjust the position four times in a month, total monthly trading volume is about $80,000."
+  },
+  "risks": {
+    "capital_title": "Capital is split",
+    "capital_body": "Spot cash and perp margin are separate pools. Do not assume one side can automatically fund the other.",
+    "margin_title": "Use isolated margin",
+    "margin_body": "Isolated mode makes the loss boundary explicit and avoids contaminating the rest of the account.",
+    "symbols_title": "Liquid majors first",
+    "symbols_body": "BTC, ETH, and SOL are typical candidates, but always check live funding and liquidity before entry.",
+    "market_title": "Cycle matters",
+    "market_body": "Bull markets often pay better funding. Sideways or weak markets compress the yield materially."
+  }
+}

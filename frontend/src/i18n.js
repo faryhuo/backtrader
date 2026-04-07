@@ -28,6 +28,7 @@ import taskcenterEn from './locales/en/task_center.json';
 import sizerEn from './locales/en/sizer.json';
 import timeframeEn from './locales/en/timeframe.json';
 import onboardingEn from './locales/en/onboarding.json';
+import basisEn from './locales/en/basis.json';
 
 // Chinese imports
 import appZh from './locales/zh/app.json';
@@ -55,6 +56,7 @@ import taskcenterZh from './locales/zh/task_center.json';
 import sizerZh from './locales/zh/sizer.json';
 import timeframeZh from './locales/zh/timeframe.json';
 import onboardingZh from './locales/zh/onboarding.json';
+import basisZh from './locales/zh/basis.json';
 
 const en = {
   app: appEn,
@@ -82,6 +84,7 @@ const en = {
   sizer: sizerEn,
   timeframe: timeframeEn,
   onboarding: onboardingEn,
+  basis: basisEn,
 };
 
 const zh = {
@@ -110,6 +113,7 @@ const zh = {
   sizer: sizerZh,
   timeframe: timeframeZh,
   onboarding: onboardingZh,
+  basis: basisZh,
 };
 
 i18n

@@ -1,16 +1,19 @@
-# locales 目录说明
+# locales Directory
 
-国际化资源与语言包目录。
+Internationalization resources live here.
 
-## 功能职责（Functional）
-- 存放各语言的翻译文件（如 `en/`、`zh/`）。
-- 配合 `i18n.js` 提供多语言切换能力。
+## Responsibilities
 
-## 非功能性要求（Non-Functional）
-- 一致性：同一 key 在不同语言下必须同时存在。
-- 可扩展性：新增语言只需添加同结构目录与资源。
+- Store language packs under matching locale folders such as `en/` and `zh/`.
+- Keep translation keys aligned across supported languages.
+- Provide text-only content for `i18n.js`; business logic should stay outside locale files.
 
-## 约定与规范
-- key 命名使用点分层或模块前缀（如 `backtest.title`）。
-- 禁止在语言包中写业务逻辑，仅存放文案与简单格式化占位。
+## Conventions
 
+- Add the same key structure to every supported language when introducing a new namespace.
+- Keep module names stable so pages can bind to one namespace without fallback churn.
+- Use concise labels in `nav.json` and fuller explanatory copy in feature-specific files.
+
+## Recent Notes
+
+- Added `basis.json` for English and Chinese so the new basis arbitrage page can render bilingual content.

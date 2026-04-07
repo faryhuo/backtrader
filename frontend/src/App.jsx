@@ -24,6 +24,7 @@ import Login from './pages/Login'
 import TaskCenter from './pages/TaskCenter'
 import ReportCenter from './pages/ReportCenter'
 import SharedReport from './pages/SharedReport'
+import BasisArbitrage from './pages/BasisArbitrage'
 import { setTokenGetter } from './services/api'
 import { setupApi } from './services/setupApi'
 import { useAuth } from './hooks/useAuth'
@@ -184,6 +185,7 @@ function AppContent() {
                                 <Route path="walkforward" element={<WalkForward />} />
                                 <Route path="portfolio" element={<PortfolioBacktest />} />
                                 <Route path="live" element={<LiveTradingDashboard />} />
+                                <Route path="basis-arbitrage" element={<BasisArbitrage />} />
                                 <Route path="data_management" element={<DataManagement />} />
                                 <Route path="tasks" element={<TaskCenter />} />
                                 <Route path="reports" element={<ReportCenter />} />
