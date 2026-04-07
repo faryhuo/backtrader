@@ -94,6 +94,9 @@
     "system_users": {
         "menu": "系统用户",
         "title": "系统用户",
+        "page_desc": "管理员可以在这里创建、禁用和维护内建邮箱/密码账号。",
+        "page_notice_title": "仅限管理员访问",
+        "page_notice_desc": "只有在启用内建系统认证且当前账号具备管理员权限时，才能访问本页。",
         "info_title": "内建用户管理",
         "info_desc": "直接在设置页中创建邮箱/密码账号、禁用访问，以及轮换密码。",
         "create_title": "创建用户",

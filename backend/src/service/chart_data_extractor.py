@@ -227,11 +227,13 @@ def _extract_indicators(
         if plotinfo is not None and getattr(plotinfo, "plot", True) is False:
             continue
 
-        line_aliases = list(indicator.lines.getlinealiases())
+        line_entries = _get_line_entries(indicator)
+        if not line_entries:
+            continue
+
         line_items: list[dict[str, Any]] = []
 
-        for alias in line_aliases:
-            line = getattr(indicator.lines, alias)
+        for alias, line in line_entries:
             line_series = _build_line_series(time_keys, list(line.array))
             if line_series:
                 line_items.append(
@@ -328,6 +330,28 @@ def _extract_observers(
             continue
 
     return {"markers": markers, "indicators": indicators}
+
+
+def _get_line_entries(owner: Any) -> list[tuple[str, Any]]:
+    lines = getattr(owner, "lines", None)
+    if lines is None:
+        return []
+
+    if hasattr(lines, "getlinealiases"):
+        entries: list[tuple[str, Any]] = []
+        for alias in lines.getlinealiases():
+            line = getattr(lines, alias, None)
+            if line is not None and hasattr(line, "array"):
+                entries.append((str(alias), line))
+        return entries
+
+    # Some Backtrader internals such as LinesOperation are returned by
+    # `getindicators()` but expose `lines` as a plain list while the instance
+    # itself carries the actual series buffer in `array`.
+    if hasattr(owner, "array"):
+        return [("value", owner)]
+
+    return []
 
 
 def _build_buysell_markers(line_map: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:

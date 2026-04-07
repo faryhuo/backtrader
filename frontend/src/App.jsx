@@ -15,6 +15,7 @@ import WalkForward from './pages/WalkForward'
 import LiveTradingDashboard from './pages/LiveTradingDashboard'
 import PortfolioBacktest from './pages/PortfolioBacktest'
 import Settings from './pages/Settings'
+import UserManagement from './pages/UserManagement'
 import OnboardingSetup from './pages/OnboardingSetup'
 import DataManagement from './pages/DataManagement'
 import { Home } from './pages/Home'
@@ -187,6 +188,7 @@ function AppContent() {
                                 <Route path="tasks" element={<TaskCenter />} />
                                 <Route path="reports" element={<ReportCenter />} />
                                 <Route path="settings" element={<Settings />} />
+                                <Route path="users" element={<UserManagement />} />
                             </Route>
 
                             {/* Public Shared Report Route - No authentication required */}

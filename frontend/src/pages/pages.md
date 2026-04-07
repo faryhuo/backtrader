@@ -15,6 +15,7 @@ Route-level React pages live here. Pages assemble feature components, page-level
 - `Login.jsx`: unified login page for built-in system auth and Logto entry.
 - `Callback.jsx`: Logto OAuth callback.
 - `Settings.jsx`: runtime configuration page, including auth provider settings.
+- `UserManagement.jsx`: dedicated admin page for built-in system user management.
 - `OnboardingSetup.jsx`: first-run setup wizard.
 
 ## Conventions
@@ -31,6 +32,7 @@ Route-level React pages live here. Pages assemble feature components, page-level
 - `OnboardingSetup.jsx` now supports system-auth bootstrap fields for the first administrator and avoids forcing those fields once system users already exist.
 - `OnboardingSetup.jsx` now persists the bootstrap system-auth token returned after first-run admin creation and reloads into the authenticated app shell instead of re-querying the setup wizard anonymously.
 - `Settings.jsx` now exposes built-in system-user management for authenticated system admins.
+- `UserManagement.jsx` now provides a dedicated system-admin entry point for creating and maintaining built-in email/password users.
 - `ReportCenter.jsx` now renders completed report HTML inline for authenticated users instead of showing a placeholder-only viewer.
 - `BacktestHistory.jsx` now supports multi-select comparison report generation for strategy backtest rows.
 - `BacktestHistory.jsx` now derives comparison report language from the shared `i18n` singleton so the history page does not crash on render when building the report callback dependencies.

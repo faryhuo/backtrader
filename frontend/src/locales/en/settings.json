@@ -94,6 +94,9 @@
     "system_users": {
         "menu": "System Users",
         "title": "System Users",
+        "page_desc": "Administrators can create, disable, and maintain built-in email/password accounts here.",
+        "page_notice_title": "Administrator access only",
+        "page_notice_desc": "This page is only available when built-in system authentication is enabled and the current account has administrator privileges.",
         "info_title": "Built-in user management",
         "info_desc": "Create email/password accounts, disable access, and rotate passwords without leaving the Settings page.",
         "create_title": "Create user",

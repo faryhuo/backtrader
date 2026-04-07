@@ -26,8 +26,9 @@ function Settings() {
     const [activeSection, setActiveSection] = useState('ai');
     const [systemUsers, setSystemUsers] = useState([]);
     const [systemUsersLoading, setSystemUsersLoading] = useState(false);
-    const { authProvider, user } = useAuth();
-    const showSystemUsers = authProvider === 'system' && Boolean(user?.is_superuser);
+    const { authProvider, loginEnabled, user } = useAuth();
+    const supportsUserManagement = loginEnabled && authProvider !== 'logto';
+    const showSystemUsers = supportsUserManagement && Boolean(user?.is_superuser);
 
     // Use custom hooks for state management
     const {

@@ -177,3 +177,45 @@ class TestBuildBacktestChartData:
         assert len(chart_data["ohlcv"]) == 8
         assert chart_data["ohlcv"][0]["time"] == "2024-01-01"
         assert chart_data["ohlcv"][-1]["close"] == 9.0
+
+    def test_handles_lines_operation_indicators_without_getlinealiases(self):
+        class ComparisonStrategy(bt.Strategy):
+            def __init__(self):
+                self.slow_sma = bt.indicators.SMA(self.data.close, period=5)
+                self.above_sma = self.data.close > self.slow_sma
+
+            def next(self):
+                return None
+
+        dates = pd.date_range("2024-01-01", periods=12, freq="D")
+        closes = [10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 9]
+        data = pd.DataFrame(
+            {
+                "open": closes,
+                "high": [value + 1 for value in closes],
+                "low": [value - 1 for value in closes],
+                "close": closes,
+                "volume": [1000] * 12,
+            },
+            index=dates,
+        )
+
+        cerebro = bt.Cerebro()
+        cerebro.addstrategy(ComparisonStrategy)
+        cerebro.adddata(bt.feeds.PandasData(dataname=data))
+        strat = cerebro.run()[0]
+
+        chart_data = build_backtest_chart_data(
+            strat,
+            price_data=[],
+            metrics={"equity_curve": {}, "trade_details": {}},
+            initial_cash=10000.0,
+        )
+
+        assert chart_data["indicators"]
+        assert any(indicator["name"] == "SMA" for indicator in chart_data["indicators"])
+        assert any(
+            indicator["name"] == "LinesOperation"
+            and any(line["id"] == "value" for line in indicator["lines"])
+            for indicator in chart_data["indicators"]
+        )

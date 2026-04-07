@@ -12,16 +12,21 @@ import {
     UnorderedListOutlined,
     FileTextOutlined,
     SettingOutlined,
+    SafetyOutlined,
     DeploymentUnitOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
 } from '@ant-design/icons'
 import './Menu.css'
 import { TrendingUp } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 
 const Menu = ({ collapsed, setCollapsed }) => {
     const { t } = useTranslation()
     const location = useLocation()
+    const { authProvider, loginEnabled, user } = useAuth()
+    const supportsUserManagement = loginEnabled && authProvider !== 'logto'
+    const showUserManagement = supportsUserManagement && Boolean(user?.is_superuser)
 
     const getNavClass = (path) => {
         const current = location.pathname
@@ -137,6 +142,16 @@ const Menu = ({ collapsed, setCollapsed }) => {
                     <span className="icon"><SettingOutlined /></span>
                     {!collapsed && <span>{t('nav.settings', 'Settings')}</span>}
                 </Link>
+                {showUserManagement && (
+                    <Link
+                        to="/users"
+                        className={getNavClass('/users')}
+                        title={t('nav.user_management', 'User Management')}
+                    >
+                        <span className="icon"><SafetyOutlined /></span>
+                        {!collapsed && <span>{t('nav.user_management', 'User Management')}</span>}
+                    </Link>
+                )}
                 <Link
                     to="/onboarding"
                     className={getNavClass('/onboarding')}
