@@ -70,8 +70,9 @@ export const liveApi = {
         return await parseResponse(res)
     },
 
-    async getOhlcv(sessionId, limit = 100) {
-        const res = await buildRequest(`/live/ohlcv/${sessionId}?limit=${limit}`)
+    async getOhlcv(sessionId, limit = null) {
+        const query = Number.isFinite(limit) && limit > 0 ? `?limit=${limit}` : ''
+        const res = await buildRequest(`/live/ohlcv/${sessionId}${query}`)
         return await parseResponse(res)
     },
 

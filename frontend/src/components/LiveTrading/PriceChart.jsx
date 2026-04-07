@@ -1,11 +1,103 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import { useTranslation } from 'react-i18next';
 
-/**
- * Real-time K-line (candlestick) chart using lightweight-charts
- */
-const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, prevTicker }) => {
+function getTimeframeSeconds(timeframe) {
+  const normalized = String(timeframe || '1m').trim().toLowerCase();
+  const match = normalized.match(/^(\d+)([smhdw])$/);
+  if (!match) {
+    return 60;
+  }
+
+  const value = Number.parseInt(match[1], 10);
+  const unit = match[2];
+  const multiplierMap = {
+    s: 1,
+    m: 60,
+    h: 3600,
+    d: 86400,
+    w: 604800,
+  };
+
+  return Math.max(value * (multiplierMap[unit] || 60), 1);
+}
+
+function toChartTime(ts) {
+  if (!ts) return Math.floor(Date.now() / 1000);
+  return ts < 1e12 ? Math.floor(ts) : Math.floor(ts / 1000);
+}
+
+function toPrice(value) {
+  const parsed = Number.parseFloat(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function normalizeHistory(priceHistory) {
+  const merged = new Map();
+
+  (priceHistory || []).forEach((item) => {
+    const time = toChartTime(item?.time);
+    const open = toPrice(item?.open);
+    const high = toPrice(item?.high);
+    const low = toPrice(item?.low);
+    const close = toPrice(item?.close);
+
+    if (!Number.isFinite(time) || open <= 0 || high <= 0 || low <= 0 || close <= 0) {
+      return;
+    }
+
+    merged.set(time, {
+      time,
+      open,
+      high: Math.max(high, open, close),
+      low: Math.min(low, open, close),
+      close,
+      volume: Math.max(toPrice(item?.volume), 0),
+    });
+  });
+
+  return [...merged.values()].sort((left, right) => left.time - right.time);
+}
+
+function getHistorySignature(history) {
+  if (!history || history.length === 0) {
+    return 'empty';
+  }
+
+  const first = history[0];
+  const last = history[history.length - 1];
+  return [
+    history.length,
+    first.time,
+    first.open,
+    last.time,
+    last.open,
+    last.high,
+    last.low,
+    last.close,
+    last.volume,
+  ].join('|');
+}
+
+function calculateMovingAverageSeries(data, period) {
+  return data
+    .map((item, index) => {
+      if (index < period - 1) {
+        return null;
+      }
+
+      const slice = data.slice(index - period + 1, index + 1);
+      const avg = slice.reduce((sum, entry) => sum + toPrice(entry.close), 0) / period;
+
+      return {
+        time: item.time,
+        value: avg,
+      };
+    })
+    .filter(Boolean);
+}
+
+function PriceChart({ priceHistory, currentPrice, symbol, timeframe, ticker, openPrice, prevTicker }) {
   const { t } = useTranslation();
   const containerRef = useRef(null);
   const chartRef = useRef(null);
@@ -14,8 +106,15 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
   const ma5SeriesRef = useRef(null);
   const ma10SeriesRef = useRef(null);
   const priceHistoryRef = useRef([]);
+  const lastHistorySignatureRef = useRef('empty');
+  const lastRealtimeBarRef = useRef(null);
+  const lastSymbolRef = useRef(null);
+  const hasAutoFittedRef = useRef(false);
   const [hasData, setHasData] = useState(false);
   const [hoverData, setHoverData] = useState(null);
+
+  const normalizedHistory = useMemo(() => normalizeHistory(priceHistory), [priceHistory]);
+  const historySignature = useMemo(() => getHistorySignature(normalizedHistory), [normalizedHistory]);
 
   const formatPrice = (value, fallback = '--') => {
     const number = Number(value);
@@ -67,20 +166,23 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
       updatedAt: lastTimestamp && !Number.isNaN(lastTimestamp.getTime())
         ? lastTimestamp.toLocaleTimeString()
         : '--',
-      bars: Array.isArray(priceHistory) ? priceHistory.length : 0,
+      bars: normalizedHistory.length,
     };
-  }, [ticker, currentPrice, openPrice, prevTicker, priceHistory]);
+  }, [ticker, currentPrice, openPrice, prevTicker, normalizedHistory.length]);
 
-  const latestBar = useMemo(() => {
-    if (!priceHistory || priceHistory.length === 0) return null;
-    const lastIndex = priceHistory.length - 1;
-    const current = priceHistory[lastIndex];
-    const previous = lastIndex > 0 ? priceHistory[lastIndex - 1] : null;
+  const latestBar = (() => {
+    if (normalizedHistory.length === 0) return null;
+    const lastIndex = normalizedHistory.length - 1;
+    const current = normalizedHistory[lastIndex];
+    const previous = lastIndex > 0 ? normalizedHistory[lastIndex - 1] : null;
+    const realtimeBar = lastRealtimeBarRef.current;
+    const source = realtimeBar && realtimeBar.time >= current.time ? realtimeBar : current;
+
     return {
-      ...current,
-      previousClose: previous ? Number(previous.close ?? 0) : Number(current?.open ?? 0),
+      ...source,
+      previousClose: previous ? Number(previous.close ?? 0) : Number(source?.open ?? 0),
     };
-  }, [priceHistory]);
+  })();
 
   const indicatorSummary = useMemo(() => {
     const source = hoverData || latestBar;
@@ -109,40 +211,12 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
   }, [hoverData, latestBar]);
 
   useEffect(() => {
-    priceHistoryRef.current = Array.isArray(priceHistory) ? priceHistory : [];
-  }, [priceHistory]);
-
-  const toChartTime = (ts) => {
-    if (!ts) return Math.floor(Date.now() / 1000);
-    if (ts < 1e12) return ts;
-    return Math.floor(ts / 1000);
-  };
-
-  const toPrice = (p) => {
-    const n = Number.parseFloat(p);
-    return Number.isNaN(n) ? 0 : n;
-  };
-
-  const calculateMovingAverageSeries = useCallback((data, period) => (
-    data.map((item, index) => {
-      if (index < period - 1) {
-        return null;
-      }
-
-      const slice = data.slice(index - period + 1, index + 1);
-      const avg = slice.reduce((sum, entry) => sum + toPrice(entry.close), 0) / period;
-
-      return {
-        time: toChartTime(item.time),
-        value: avg,
-      };
-    }).filter(Boolean)
-  ), []);
+    priceHistoryRef.current = normalizedHistory;
+  }, [normalizedHistory]);
 
   useEffect(() => {
     if (!containerRef.current || chartRef.current) return;
 
-    // Create chart
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
@@ -163,7 +237,6 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
       },
     });
 
-    // Add candlestick series (K-line)
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#22c55e',
       downColor: '#ef4444',
@@ -177,9 +250,7 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
 
     const volumeSeries = chart.addHistogramSeries({
       priceScaleId: 'volume',
-      priceFormat: {
-        type: 'volume',
-      },
+      priceFormat: { type: 'volume' },
       lastValueVisible: false,
       priceLineVisible: false,
     });
@@ -237,7 +308,7 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
       const time = Number(candle.time);
       const history = priceHistoryRef.current;
       const index = Array.isArray(history)
-        ? history.findIndex((item) => toChartTime(item.time) === time)
+        ? history.findIndex((item) => item.time === time)
         : -1;
       const previousClose = index > 0 ? toPrice(history[index - 1]?.close) : toPrice(candle.open);
 
@@ -256,7 +327,6 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
 
     chart.subscribeCrosshairMove(onCrosshairMove);
 
-    // Handle resize
     const handleResize = () => {
       try {
         if (containerRef.current && chartRef.current) {
@@ -264,8 +334,8 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
             width: containerRef.current.clientWidth,
           });
         }
-      } catch (_e) {
-        // Ignore resize errors
+      } catch (_error) {
+        // Ignore resize errors.
       }
     };
 
@@ -283,96 +353,97 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
     };
   }, []);
 
-  // Update chart with historical data
   useEffect(() => {
     if (!seriesRef.current || !volumeSeriesRef.current || !ma5SeriesRef.current || !ma10SeriesRef.current) return;
 
-    if (!priceHistory || priceHistory.length === 0) {
+    if (lastSymbolRef.current !== (symbol || null)) {
+      lastSymbolRef.current = symbol || null;
+      lastHistorySignatureRef.current = 'empty';
+      lastRealtimeBarRef.current = null;
+      hasAutoFittedRef.current = false;
+    }
+
+    if (normalizedHistory.length === 0) {
       setHasData(false);
       return;
     }
 
-    const enrichedHistory = priceHistory.map((item, index) => ({
+    if (lastHistorySignatureRef.current === historySignature) {
+      setHasData(true);
+      return;
+    }
+
+    const enrichedHistory = normalizedHistory.map((item, index) => ({
       ...item,
-      previousClose: index > 0 ? toPrice(priceHistory[index - 1]?.close) : toPrice(item.open),
+      previousClose: index > 0 ? toPrice(normalizedHistory[index - 1]?.close) : toPrice(item.open),
     }));
 
     const candleData = enrichedHistory.map((item) => ({
-      time: toChartTime(item.time),
-      open: toPrice(item.open),
-      high: toPrice(item.high),
-      low: toPrice(item.low),
-      close: toPrice(item.close),
-    })).filter(c => c.open > 0 && c.high >= c.open && c.low <= c.open && c.close > 0);
+      time: item.time,
+      open: item.open,
+      high: item.high,
+      low: item.low,
+      close: item.close,
+    }));
 
-    const volumeData = enrichedHistory.map((item) => {
-      const open = toPrice(item.open);
-      const close = toPrice(item.close);
-      return {
-        time: toChartTime(item.time),
-        value: toPrice(item.volume),
-        color: close >= open ? 'rgba(34, 197, 94, 0.55)' : 'rgba(239, 68, 68, 0.55)',
-      };
-    }).filter((item) => item.value > 0);
+    const volumeData = enrichedHistory
+      .map((item) => ({
+        time: item.time,
+        value: item.volume,
+        color: item.close >= item.open ? 'rgba(34, 197, 94, 0.55)' : 'rgba(239, 68, 68, 0.55)',
+      }))
+      .filter((item) => item.value > 0);
 
-    if (candleData.length > 0) {
-      seriesRef.current.setData(candleData);
-      volumeSeriesRef.current.setData(volumeData);
-      ma5SeriesRef.current.setData(calculateMovingAverageSeries(enrichedHistory, 5));
-      ma10SeriesRef.current.setData(calculateMovingAverageSeries(enrichedHistory, 10));
-      setHasData(true);
+    seriesRef.current.setData(candleData);
+    volumeSeriesRef.current.setData(volumeData);
+    ma5SeriesRef.current.setData(calculateMovingAverageSeries(enrichedHistory, 5));
+    ma10SeriesRef.current.setData(calculateMovingAverageSeries(enrichedHistory, 10));
+    lastHistorySignatureRef.current = historySignature;
+    lastRealtimeBarRef.current = candleData[candleData.length - 1] || null;
+    setHasData(candleData.length > 0);
 
-      // Fit content to view
+    if (!hasAutoFittedRef.current) {
       try {
         chartRef.current?.timeScale().fitContent();
-      } catch (_e) {
-        // Ignore
+        hasAutoFittedRef.current = true;
+      } catch (_error) {
+        // Ignore fit errors.
       }
     }
-  }, [calculateMovingAverageSeries, priceHistory]);
+  }, [historySignature, normalizedHistory, symbol]);
 
-  // Update latest candle in real-time
   useEffect(() => {
-    if (!seriesRef.current || !currentPrice) return;
+    if (!seriesRef.current) return;
 
     const price = toPrice(currentPrice);
     if (price <= 0) return;
 
-    const now = Math.floor(Date.now() / 1000);
-    const lastCandle = priceHistory && priceHistory.length > 0
-      ? priceHistory[priceHistory.length - 1]
-      : null;
+    const history = priceHistoryRef.current;
+    const lastBar = history.length > 0 ? history[history.length - 1] : null;
+    const referenceTime = ticker?.timestamp ? toChartTime(ticker.timestamp) : Math.floor(Date.now() / 1000);
+    const timeframeSeconds = getTimeframeSeconds(timeframe);
+    const alignedTime = referenceTime - (referenceTime % timeframeSeconds);
+    const candleTime = lastBar && alignedTime <= lastBar.time + timeframeSeconds - 1
+      ? lastBar.time
+      : alignedTime;
+    const baseOpen = lastBar?.open ?? lastRealtimeBarRef.current?.open ?? price;
+    const baseHigh = lastBar?.high ?? lastRealtimeBarRef.current?.high ?? price;
+    const baseLow = lastBar?.low ?? lastRealtimeBarRef.current?.low ?? price;
+    const volume = lastBar?.volume ?? lastRealtimeBarRef.current?.volume ?? 0;
 
-    // Determine candle time (aligned to minute)
-    const candleTime = lastCandle && toChartTime(lastCandle.time) >= now - 60
-      ? toChartTime(lastCandle.time)
-      : now - (now % 60);
+    const nextBar = {
+      time: candleTime,
+      open: baseOpen,
+      high: Math.max(baseHigh, price),
+      low: Math.min(baseLow, price),
+      close: price,
+      volume,
+    };
 
-    if (lastCandle && toChartTime(lastCandle.time) >= now - 60) {
-      // Update existing candle
-      const lastOpen = toPrice(lastCandle.open);
-      const lastHigh = toPrice(lastCandle.high);
-      const lastLow = toPrice(lastCandle.low);
-
-      seriesRef.current.update({
-        time: candleTime,
-        open: lastOpen,
-        high: Math.max(lastHigh, price),
-        low: Math.min(lastLow, price),
-        close: price,
-      });
-    } else {
-      // Create new candle
-      seriesRef.current.update({
-        time: candleTime,
-        open: price,
-        high: price,
-        low: price,
-        close: price,
-      });
-      setHasData(true);
-    }
-  }, [currentPrice, priceHistory]);
+    lastRealtimeBarRef.current = nextBar;
+    seriesRef.current.update(nextBar);
+    setHasData(true);
+  }, [currentPrice, ticker?.timestamp, timeframe]);
 
   return (
     <div style={{ display: 'grid', gap: '14px' }}>
@@ -523,7 +594,7 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
 
       <div style={{ position: 'relative', width: '100%', height: '340px' }}>
         <div ref={containerRef} style={{ width: '100%', height: '340px' }} />
-        {!hasData && (!priceHistory || priceHistory.length === 0) && (
+        {!hasData && normalizedHistory.length === 0 && (
           <div
             style={{
               position: 'absolute',
@@ -547,6 +618,16 @@ const PriceChart = ({ priceHistory, currentPrice, symbol, ticker, openPrice, pre
       </div>
     </div>
   );
-};
+}
 
-export default PriceChart;
+function arePropsEqual(previousProps, nextProps) {
+  return previousProps.symbol === nextProps.symbol
+    && previousProps.timeframe === nextProps.timeframe
+    && previousProps.currentPrice === nextProps.currentPrice
+    && previousProps.openPrice === nextProps.openPrice
+    && previousProps.priceHistory === nextProps.priceHistory
+    && previousProps.ticker === nextProps.ticker
+    && previousProps.prevTicker === nextProps.prevTicker;
+}
+
+export default memo(PriceChart, arePropsEqual);

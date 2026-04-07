@@ -358,7 +358,7 @@ async def get_order_book(session_id: str, limit: int = Query(10, ge=1, le=20)):
 
 
 @router.get("/live/ohlcv/{session_id}", tags=["Live Trading"])
-async def get_ohlcv(session_id: str, limit: int = 100):
+async def get_ohlcv(session_id: str, limit: int | None = Query(None, ge=1, le=1500)):
     """Get historical OHLCV bars for the session's symbol (REST fallback)."""
     try:
         return live_engine.get_ohlcv(session_id, limit=limit)

@@ -333,6 +333,26 @@ def _calculate_ohlcv_since_ms(
     return int((current_time - timedelta(seconds=lookback_seconds)).timestamp() * 1000)
 
 
+def _get_dynamic_ohlcv_limit(
+    timeframe: str,
+    *,
+    start_time: Optional[datetime] = None,
+    now: Optional[datetime] = None,
+) -> int:
+    """Return a timeframe-aware OHLCV window instead of a hard-coded candle count."""
+    bar_seconds = _get_timeframe_seconds(timeframe)
+    min_bars = 360 if bar_seconds <= 60 else 240 if bar_seconds <= 300 else 160 if bar_seconds <= 3600 else 120
+    current_time = now or datetime.utcnow()
+
+    if start_time is not None:
+        elapsed_seconds = max(int((current_time - start_time).total_seconds()), bar_seconds)
+    else:
+        elapsed_seconds = bar_seconds * min_bars
+
+    elapsed_bars = (elapsed_seconds + bar_seconds - 1) // bar_seconds
+    return max(min(elapsed_bars + 30, 1500), min_bars)
+
+
 def _normalize_order_status(status: Optional[str]) -> str:
     mapping = {
         'NEW': 'open',
@@ -747,14 +767,15 @@ def start_session(
                 else:
                     _safe_thread_log("warning", "No WebSocket client connected after 15s, sending anyway")
 
-                since_ms = _calculate_ohlcv_since_ms(timeframe, limit=100)
+                initial_limit = _get_dynamic_ohlcv_limit(timeframe)
+                since_ms = _calculate_ohlcv_since_ms(timeframe, limit=initial_limit)
 
                 _safe_thread_log("info", "Fetching OHLCV for %s timeframe=%s", symbol, timeframe)
 
                 bars = store.fetch_ohlcv(
                     symbol=symbol,
                     interval=timeframe,
-                    limit=100,
+                    limit=initial_limit,
                     since_ms=since_ms,
                 )
 
@@ -1213,7 +1234,7 @@ def get_session_order_book(session_id: str, limit: int = 10) -> Dict:
         raise LiveTradingError(f"Failed to fetch order book: {e}") from e
 
 
-def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
+def get_ohlcv(session_id: str, limit: Optional[int] = None) -> Dict:
     """Fetch historical OHLCV bars via REST (fallback for WebSocket)."""
     session = get_session_manager().get_session(session_id)
     if not session:
@@ -1223,11 +1244,15 @@ def get_ohlcv(session_id: str, limit: int = 100) -> Dict:
         raise LiveTradingError("Exchange connection is not active")
 
     try:
-        since_ms = _calculate_ohlcv_since_ms(session.timeframe, limit=limit)
+        effective_limit = int(limit) if limit is not None else _get_dynamic_ohlcv_limit(
+            session.timeframe,
+            start_time=getattr(session, 'start_time', None),
+        )
+        since_ms = _calculate_ohlcv_since_ms(session.timeframe, limit=effective_limit)
         bars = session.store.fetch_ohlcv(
             symbol=session.symbol,
             interval=session.timeframe,
-            limit=limit,
+            limit=effective_limit,
             since_ms=since_ms,
         )
         if not bars:

@@ -36,6 +36,111 @@ const initialState = {
     error: null,
 };
 
+const MAX_PRICE_HISTORY_BARS = 5000;
+
+function getTimeframeSeconds(timeframe) {
+    const normalized = String(timeframe || '1m').trim().toLowerCase();
+    const match = normalized.match(/^(\d+)([smhdw])$/);
+    if (!match) {
+        return 60;
+    }
+
+    const value = Number.parseInt(match[1], 10);
+    const unit = match[2];
+    const multiplierMap = {
+        s: 1,
+        m: 60,
+        h: 3600,
+        d: 86400,
+        w: 604800,
+    };
+
+    return Math.max(value * (multiplierMap[unit] || 60), 1);
+}
+
+function toEpochSeconds(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value >= 1e12 ? Math.floor(value / 1000) : Math.floor(value);
+    }
+
+    const parsed = new Date(value || '').getTime();
+    return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
+}
+
+function normalizePriceBar(bar) {
+    const time = toEpochSeconds(bar?.time);
+    const open = Number(bar?.open);
+    const high = Number(bar?.high);
+    const low = Number(bar?.low);
+    const close = Number(bar?.close);
+    const volume = Number(bar?.volume ?? 0);
+
+    if (!Number.isFinite(time) || !Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+        return null;
+    }
+
+    return {
+        time,
+        open,
+        high,
+        low,
+        close,
+        volume: Number.isFinite(volume) ? volume : 0,
+    };
+}
+
+function areBarsEqual(left, right) {
+    return left?.time === right?.time
+        && left?.open === right?.open
+        && left?.high === right?.high
+        && left?.low === right?.low
+        && left?.close === right?.close
+        && (left?.volume ?? 0) === (right?.volume ?? 0);
+}
+
+function mergePriceHistory(existingBars, incomingBars) {
+    const mergedMap = new Map();
+
+    (existingBars || []).forEach((bar) => {
+        const normalized = normalizePriceBar(bar);
+        if (normalized) {
+            mergedMap.set(normalized.time, normalized);
+        }
+    });
+
+    (incomingBars || []).forEach((bar) => {
+        const normalized = normalizePriceBar(bar);
+        if (normalized) {
+            mergedMap.set(normalized.time, normalized);
+        }
+    });
+
+    const merged = [...mergedMap.values()]
+        .sort((left, right) => left.time - right.time)
+        .slice(-MAX_PRICE_HISTORY_BARS);
+
+    if (merged.length === (existingBars || []).length) {
+        const unchanged = merged.every((bar, index) => areBarsEqual(bar, existingBars[index]));
+        if (unchanged) {
+            return existingBars;
+        }
+    }
+
+    return merged;
+}
+
+function getDynamicOhlcvLimit(session) {
+    const timeframeSeconds = getTimeframeSeconds(session?.timeframe);
+    const minBars = timeframeSeconds <= 60 ? 360 : timeframeSeconds <= 300 ? 240 : timeframeSeconds <= 3600 ? 160 : 120;
+    const startEpoch = toEpochSeconds(session?.start_time);
+    const elapsedSeconds = startEpoch
+        ? Math.max(Math.floor(Date.now() / 1000) - startEpoch, timeframeSeconds)
+        : timeframeSeconds * minBars;
+    const elapsedBars = Math.ceil(elapsedSeconds / timeframeSeconds) + 30;
+
+    return Math.min(Math.max(elapsedBars, minBars), 1500);
+}
+
 function appendPnlPoint(history, payload) {
     const timestamp = payload?.timestamp || new Date().toISOString();
     const pnl = payload?.current_pnl ?? 0;
@@ -153,36 +258,18 @@ function reducer(state, action) {
 
         case 'TICKER_UPDATE': {
             const newTicker = action.payload;
-            const now = Math.floor(Date.now() / 1000);
-            const lastCandle = state.priceHistory.length > 0
-                ? state.priceHistory[state.priceHistory.length - 1]
-                : null;
-
-            let newHistory = [...state.priceHistory];
-
-            // If we have a previous candle in the same minute, update it
-            if (lastCandle && lastCandle.time >= now - 60) {
-                newHistory[newHistory.length - 1] = {
-                    time: lastCandle.time,
-                    open: lastCandle.open,
-                    high: Math.max(lastCandle.high, newTicker.last),
-                    low: Math.min(lastCandle.low, newTicker.last),
-                    close: newTicker.last,
-                    volume: lastCandle.volume ?? 0,
-                };
-            } else {
-                // Create new candle
-                newHistory.push({
-                    time: now,
-                    open: newTicker.last,
-                    high: newTicker.last,
-                    low: newTicker.last,
-                    close: newTicker.last,
-                    volume: 0,
-                });
+            if (
+                state.ticker?.last === newTicker?.last
+                && state.ticker?.bid === newTicker?.bid
+                && state.ticker?.ask === newTicker?.ask
+                && state.ticker?.high === newTicker?.high
+                && state.ticker?.low === newTicker?.low
+                && state.ticker?.volume === newTicker?.volume
+                && state.ticker?.timestamp === newTicker?.timestamp
+            ) {
+                return state;
             }
 
-            // Set open price on first ticker
             const openPrice = state.openPrice || (newTicker.last ? Number(newTicker.last) : null);
 
             return {
@@ -190,28 +277,20 @@ function reducer(state, action) {
                 prevTicker: state.ticker,
                 ticker: newTicker,
                 openPrice,
-                priceHistory: newHistory,
             };
         }
 
         case 'OHLCV_UPDATE': {
-            // Initial historical OHLCV data from backfill
             const bars = action.payload.bars || [];
             if (bars.length === 0) return state;
 
-            const history = bars.map(bar => ({
-                time: bar.time,
-                open: bar.open,
-                high: bar.high,
-                low: bar.low,
-                close: bar.close,
-                volume: bar.volume ?? 0,
-            }));
+            const history = mergePriceHistory(state.priceHistory, bars);
+            if (history === state.priceHistory) return state;
 
             return {
                 ...state,
                 priceHistory: history,
-                openPrice: history.length > 0 ? history[0].open : null,
+                openPrice: state.openPrice || (history.length > 0 ? history[0].open : null),
             };
         }
 
@@ -518,15 +597,19 @@ export const useLiveTrading = () => {
     const ohlcvIntervalRef = useRef(null);
     const logsIntervalRef = useRef(null);
 
-    const startDataPolling = useCallback((sessionId) => {
+    const startDataPolling = useCallback((sessionMeta) => {
+        const sessionId = sessionMeta?.session_id;
+        if (!sessionId) return;
+
         console.log('[POLLING] Starting data polling for session:', sessionId);
+        const getOhlcv = () => liveApi.getOhlcv(sessionId, getDynamicOhlcvLimit(sessionMeta));
 
         // Poll OHLCV every 30s
         // Initial fetch after 3s (give time for WebSocket to connect first)
         const ohlcvTimer = setTimeout(async () => {
             console.log('[POLLING] Fetching initial OHLCV...');
             try {
-                const data = await liveApi.getOhlcv(sessionId);
+                const data = await getOhlcv();
                 console.log('[POLLING] OHLCV received:', data?.bars?.length, 'bars');
                 if (data?.bars?.length > 0) {
                     dispatch({ type: 'OHLCV_UPDATE', payload: data });
@@ -540,7 +623,7 @@ export const useLiveTrading = () => {
             // Continue polling every 30s
             ohlcvIntervalRef.current = setInterval(async () => {
                 try {
-                    const data = await liveApi.getOhlcv(sessionId);
+                    const data = await getOhlcv();
                     if (data?.bars?.length > 0) {
                         dispatch({ type: 'OHLCV_UPDATE', payload: data });
                     }
@@ -598,7 +681,7 @@ export const useLiveTrading = () => {
                 console.warn('[SESSION] Missing session_id or ws_token:', result);
             }
             startTickerPolling(result.session_id);
-            startDataPolling(result.session_id);
+            startDataPolling(result);
 
         } catch (error) {
             const msg = t('live.notifications.session_start_failed', { error: error.message });
@@ -704,7 +787,7 @@ export const useLiveTrading = () => {
                             setWsToken(active.ws_token);
                         }
                         startTickerPolling(active.session_id);
-                        startDataPolling(active.session_id);
+                        startDataPolling(active);
                     }
                 }
             } catch (error) {

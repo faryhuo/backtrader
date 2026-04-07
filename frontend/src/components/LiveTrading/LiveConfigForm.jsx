@@ -41,7 +41,7 @@ const FALLBACK_PAIRS = [
   'DOGE/USDT', 'ADA/USDT', 'AVAX/USDT', 'DOT/USDT', 'MATIC/USDT',
 ];
 
-const TIMEFRAMES = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d'];
+const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
 const MARKET_OPTIONS = [
   { value: 'spot', label: 'Spot' },
   { value: 'futures', label: 'Futures' },
